@@ -1,0 +1,147 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.5'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'com.adarshr.test-logger' version '3.2.0'
+    id 'jacoco'
+}
+
+group = 'edu.stanford.slac'
+version = '1.0.0'
+def javaSourceCompatibility = JavaVersion.VERSION_21
+def javaTargetCompatibility = JavaVersion.VERSION_21
+
+java {
+    sourceCompatibility = javaSourceCompatibility
+    targetCompatibility = javaTargetCompatibility
+
+}
+
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/eed-web-application/slac-ad-eed-baselib")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GH_USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("GH_TOKEN")
+        }
+    }
+    maven {
+        url = uri("https://maven.pkg.github.com/eed-web-application/slac-ad-eed-base-mongodb-lib")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GH_USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("GH_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-test',
+            'org.springframework.boot:spring-boot-starter-web',
+            'org.springframework.boot:spring-boot-starter-security',
+            'org.springframework.boot:spring-boot-starter-validation',
+            'org.springframework.boot:spring-boot-starter-actuator',
+            'org.springframework.boot:spring-boot-starter-data-ldap',
+            'org.springframework.boot:spring-boot-starter-validation',
+            'com.unboundid:unboundid-ldapsdk:6.0.8',
+            'io.micrometer:micrometer-registry-prometheus',
+            'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2',
+            'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2',
+            'io.swagger.core.v3:swagger-annotations:2.2.8',
+            'org.mapstruct:mapstruct:1.5.3.Final'
+
+    //eed library
+    implementation 'edu.stanford.slac:slac-ad-eed-baselib:0.1.26',
+            'edu.stanford.slac:slac-ad-eed-base-mongodb-lib:0.1.11'
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    // mongock
+    implementation 'io.mongock:mongock-bom:5.3.1',
+            'io.mongock:mongock-springboot-v3:5.3.1',
+            'io.mongock:mongodb-springdata-v4-driver:5.3.1'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.awaitility:awaitility:4.0.3'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+jacoco {
+    reportsDirectory = layout.buildDirectory.dir('coverage')
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+    // Configure test logging
+    testLogging {
+        // Show standard output and error streams only for failed tests
+        showStandardStreams = false
+
+        // Set the format for the exception stack trace
+        exceptionFormat = 'full'
+
+        // Log events for failed     and skipped tests
+        events 'failed', 'skipped'
+    }
+
+    // Customize the logging for test results
+    afterTest { descriptor, result ->
+        if (result.resultType != TestResult.ResultType.SUCCESS) {
+            logger.lifecycle("Test: ${descriptor.name} - Result: ${result.resultType}")
+            if (result.exception != null) {
+                logger.error("Test exception: ", result.exception)
+            }
+            // Log standard output and error only for failed tests
+            def standardOutput = descriptor.testClass.testOutput.getStandardOutput()
+            def standardError = descriptor.testClass.testOutput.getStandardError()
+            if (standardOutput) {
+                logger.lifecycle("Standard Output: \n${standardOutput}")
+            }
+            if (standardError) {
+                logger.lifecycle("Standard Error: \n${standardError}")
+            }
+        }
+    }
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.required = true
+        csv.required = true
+        html.required = true
+    }
+}
+
+testlogger {
+    theme 'standard'
+    showExceptions true
+    showStackTraces true
+    showFullStackTraces false
+    showCauses true
+    slowThreshold 2000
+    showSummary true
+    showSimpleNames false
+    showPassed true
+    showSkipped true
+    showFailed true
+    showOnlySlow false
+    showStandardStreams false
+    showPassedStandardStreams true
+    showSkippedStandardStreams true
+    showFailedStandardStreams true
+    logLevel 'lifecycle'
+}
