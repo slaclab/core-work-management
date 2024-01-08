@@ -1,0 +1,17 @@
+name: cis
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - CIS_MONGODB_URI=mongodb://cis:cis@mongodb-primary:27017/cis?authSource=cis
+      - CIS_ADMIN_MONGODB_URI=mongodb://admin:admin@mongodb-primary:27017/?authSource=admin
+      - WAIT_LOGGER_LEVEL=debug
+      - WAIT_TIMEOUT=90
+      - WAIT_HOSTS=mongodb-primary:27017
+      - SPRING_PROFILES_ACTIVE=test,manage-root-user,init-demo-database
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb-primary

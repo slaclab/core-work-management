@@ -58,7 +58,7 @@ dependencies {
             'org.mapstruct:mapstruct:1.5.3.Final'
 
     //eed library
-    implementation 'edu.stanford.slac:slac-ad-eed-baselib:0.1.26',
+    implementation 'edu.stanford.slac:slac-ad-eed-baselib:0.1.27',
             'edu.stanford.slac:slac-ad-eed-base-mongodb-lib:0.1.11'
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
