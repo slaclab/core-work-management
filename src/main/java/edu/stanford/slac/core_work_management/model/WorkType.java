@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ActivityType {
+public class WorkType {
     @Id
     private String id;
     private String title;

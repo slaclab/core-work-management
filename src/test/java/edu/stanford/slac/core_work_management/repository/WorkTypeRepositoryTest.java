@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import edu.stanford.slac.core_work_management.model.ActivityType;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -27,9 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class ActivityTypeRepositoryTest {
+public class WorkTypeRepositoryTest {
     @Autowired
-    private ActivityTypeRepository activityTypeRepository;
+    private WorkTypeRepository workTypeRepository;
     @Autowired
     private MongoTemplate mongoTemplate;
     @BeforeEach
@@ -39,9 +40,9 @@ public class ActivityTypeRepositoryTest {
 
     @Test
     public void testEnsureActivity() {
-        ActivityType activityType = ActivityType.builder().title("Test").build();
+        WorkType workType = WorkType.builder().title("Test").build();
         String newId = assertDoesNotThrow(
-                ()-> activityTypeRepository.ensureActivityType(activityType)
+                ()-> workTypeRepository.ensureWorkType(workType)
         );
         assertThat(newId).isNotNull();
     }
@@ -51,10 +52,10 @@ public class ActivityTypeRepositoryTest {
         List<Future<String>> futures;
         try (ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads)) {
             List<Callable<String>> tasks = new ArrayList<>();
-            ActivityType activityType = ActivityType.builder().title("Test").build();
+            WorkType workType = WorkType.builder().title("Test").build();
 
             for (int i = 0; i < numberOfThreads; i++) {
-                tasks.add(() -> activityTypeRepository.ensureActivityType(activityType));
+                tasks.add(() -> workTypeRepository.ensureWorkType(workType));
             }
 
             futures = executorService.invokeAll(tasks);

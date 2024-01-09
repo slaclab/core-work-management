@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import edu.stanford.slac.core_work_management.model.ActivityType;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -16,12 +17,12 @@ import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalize
 
 @Repository
 @AllArgsConstructor
-public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom {
+public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
     MongoTemplate mongoTemplate;
     @Override
-    public String ensureActivityType(ActivityType activityType) {
+    public String ensureWorkType(WorkType workType) {
         String normalizedActivityTypeName = normalizeStringWithReplace(
-                activityType.getTitle(),
+                workType.getTitle(),
                 " ",
                 "-"
         );
@@ -34,12 +35,12 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
                 .setOnInsert("name", normalizedActivityTypeName);
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
 
-        ActivityType activityTypeCreated = mongoTemplate.findAndModify(
+        WorkType workTypeCreated = mongoTemplate.findAndModify(
                 query,
                 update,
                 options,
-                ActivityType.class
+                WorkType.class
         );
-        return Objects.requireNonNull(activityTypeCreated).getId();
+        return Objects.requireNonNull(workTypeCreated).getId();
     }
 }
