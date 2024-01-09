@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a Work entity in the system.
@@ -36,6 +38,18 @@ public class Work {
      * This field categorizes the work into a specific type
      */
     private WorkType type;
+
+    /**
+     * Is the actual status of the work.
+     */
+    @Builder.Default
+    private WorkStatusLog currentStatus = WorkStatusLog.builder().status(WorkStatus.New).build();
+
+    /**
+     * Is the full work status history
+     */
+    @Builder.Default
+    private List<WorkStatusLog> statusHistory = new ArrayList<>();
 
     /**
      * The name of the work.

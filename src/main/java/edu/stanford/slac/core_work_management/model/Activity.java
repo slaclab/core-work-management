@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +66,8 @@ public class Activity {
     /**
      * Is the full activity status history
      */
-    private List<ActivityStatusLog> statusHistory;
+    @Builder.Default
+    private List<ActivityStatusLog> statusHistory = new ArrayList<>();
 
     /**
      * The date and time when the activity was created.
