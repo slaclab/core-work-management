@@ -1,4 +1,4 @@
-name: cis
+name: cwm
 services:
   backend:
     build:
