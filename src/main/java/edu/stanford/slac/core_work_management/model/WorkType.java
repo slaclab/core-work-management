@@ -20,6 +20,7 @@ public class WorkType {
     @Id
     private String id;
     private String title;
+    private String description;
     @CreatedDate
     private LocalDateTime createdDate;
     @CreatedBy

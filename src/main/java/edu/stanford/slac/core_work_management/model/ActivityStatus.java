@@ -1,11 +1,10 @@
 package edu.stanford.slac.core_work_management.model;
 
-public enum ActivitiesStatus {
-    Created,
+public enum ActivityStatus {
+    New,
     Cancelled,
     Rejected,
     Authorized,
-    Pending,
     InProgress,
     Completed,
 }

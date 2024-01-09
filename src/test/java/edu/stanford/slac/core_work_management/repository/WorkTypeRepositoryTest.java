@@ -35,7 +35,7 @@ public class WorkTypeRepositoryTest {
     private MongoTemplate mongoTemplate;
     @BeforeEach
     public void cleanCollection() {
-        mongoTemplate.remove(new Query(), ActivityType.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.model;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,10 @@ import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 /**
  * Represents an activity associated with a work. This class encapsulates all the
@@ -18,6 +23,8 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Activity {
+    // This map defines the valid transitions for each state
+    static ActivityStatusStateMachine activityStatusStateMachine = new ActivityStatusStateMachine();
     /**
      * The unique identifier for the activity.
      * This field is annotated with @Id to indicate that it's the primary key.
@@ -52,7 +59,8 @@ public class Activity {
     /**
      * Is the actual status of the activity.
      */
-    private ActivityStatusLog currentStatus;
+    @Builder.Default
+    private ActivityStatusLog currentStatus = ActivityStatusLog.builder().status(ActivityStatus.New).build();
 
     /**
      * Is the full activity status history
@@ -93,4 +101,28 @@ public class Activity {
      */
     @Version
     private Long version;
+
+    /**
+     * The list of the identifiers of the users who are assigned to the activity.
+     * This field stores the IDs of the users who are assigned to the activity.
+     *
+     * @param newStatus the new status to transition to
+     */
+    public void setStatus(ActivityStatus newStatus) {
+        assertion(
+                () -> activityStatusStateMachine.transitionTo(currentStatus.getStatus(), newStatus),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage(String.format("Invalid status transition from %s to %s", currentStatus.getStatus(), newStatus))
+                        .errorDomain("Activity")
+                        .build()
+
+        );
+        activityStatusStateMachine.transitionTo(currentStatus.getStatus(), newStatus);
+        currentStatus = ActivityStatusLog.builder()
+                .status(newStatus)
+                .build();
+    }
+
 }
