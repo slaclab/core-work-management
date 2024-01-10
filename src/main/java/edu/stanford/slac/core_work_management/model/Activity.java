@@ -10,8 +10,6 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
@@ -43,7 +41,7 @@ public class Activity {
      * The title of the activity.
      * This field stores the title or name of the activity.
      */
-    private String name;
+    private String title;
 
     /**
      * The detailed description of the activity.
@@ -112,7 +110,7 @@ public class Activity {
      */
     public void setStatus(ActivityStatus newStatus) {
         assertion(
-                () -> activityStatusStateMachine.transitionTo(currentStatus.getStatus(), newStatus),
+                () -> activityStatusStateMachine.isValidTransition(currentStatus.getStatus(), newStatus),
                 ControllerLogicException
                         .builder()
                         .errorCode(-1)
@@ -121,10 +119,19 @@ public class Activity {
                         .build()
 
         );
-        activityStatusStateMachine.transitionTo(currentStatus.getStatus(), newStatus);
+        activityStatusStateMachine.isValidTransition(currentStatus.getStatus(), newStatus);
         currentStatus = ActivityStatusLog.builder()
                 .status(newStatus)
                 .build();
+    }
+
+    /**
+     * Get the list of available states from the current state
+     *
+     * @return the list of available states
+     */
+    public List<ActivityStatus> getAvailableStatus() {
+        return activityStatusStateMachine.getAvailableState(currentStatus.getStatus()).stream().toList();
     }
 
 }

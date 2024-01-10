@@ -6,8 +6,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.mongodb.core.mapping.event.BeforeConvertCallback;
 import org.springframework.stereotype.Component;
 
-import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalizeStringWithReplace;
-
 @Log4j2
 @Component
 @AllArgsConstructor
@@ -16,16 +14,16 @@ public class ActivitySanitizationMongodbCallback implements BeforeConvertCallbac
     @NonNull
     public Activity onBeforeConvert(@NonNull Activity activity, @NonNull String collection) {
         // normalize the class name
-        activity.setName(
-                normalizeStringWithReplace(
-                        activity.getName(),
-                        " ",
-                        "-"
-                )
-        );
+//        activity.setName(
+//                normalizeStringWithReplace(
+//                        activity.getName(),
+//                        " ",
+//                        "-"
+//                )
+//        );
         log.trace(
                 "Normalize activity class: {}",
-                activity.getName()
+                activity.getTitle()
         );
         return activity;
     }

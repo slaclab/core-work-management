@@ -9,6 +9,8 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents a Work entity in the system.
@@ -19,6 +21,7 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Work {
+    private static WorkStatusStateMachine workStatusStateMachine = new WorkStatusStateMachine();
 
     /**
      * The unique identifier for the work.
@@ -103,5 +106,14 @@ public class Work {
      */
     @Version
     private Long version;
+
+    /**
+     * updateStatus according to the list of all job statuses
+     */
+    public void updateStatus(Set<ActivityStatus> allActivitiesStatus) {
+        this.currentStatus = WorkStatusLog.builder()
+                .status(workStatusStateMachine.getNewStatus(this.currentStatus.getStatus(), allActivitiesStatus))
+                .build();
+    }
 }
 

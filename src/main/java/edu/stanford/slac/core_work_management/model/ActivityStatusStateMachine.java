@@ -19,14 +19,24 @@ public class ActivityStatusStateMachine {
             ActivityStatus.Cancelled, Set.of()
     );
 
-    synchronized public boolean transitionTo(ActivityStatus currentState, ActivityStatus newState) {
-        if (isValidTransition(currentState, newState)) {
-            return true;
-        }
-        return false;
+
+    /**
+     * Check if the transition is valid
+     * @param currentState the current state
+     * @param newState the new state
+     * @return true if the transition is valid, false otherwise
+     */
+    synchronized public boolean isValidTransition(ActivityStatus currentState, ActivityStatus newState) {
+        return validTransitions.getOrDefault(currentState, Collections.emptySet()).contains(newState);
     }
 
-    synchronized private boolean isValidTransition(ActivityStatus currentState, ActivityStatus newState) {
-        return validTransitions.getOrDefault(currentState, Collections.emptySet()).contains(newState);
+    /**
+     * Get the list of available states from the current state
+     *
+     * @param currentState the current state
+     * @return the list of available states
+     */
+    synchronized public Set<ActivityStatus> getAvailableState(ActivityStatus currentState) {
+        return validTransitions.getOrDefault(currentState, Collections.emptySet());
     }
 }
