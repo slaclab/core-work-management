@@ -17,7 +17,7 @@ spring:
     base: ${CWM_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
   data:
     mongodb:
-      uri: ${CWM_MONGODB_URI:mongodb://CWM:CWM@localhost:27017/CWM?authSource=CWM}
+      uri: ${CWM_MONGODB_URI:mongodb://cwm:cwm@localhost:27017/cwm?authSource=cwm}
   servlet:
     multipart:
       enabled: true

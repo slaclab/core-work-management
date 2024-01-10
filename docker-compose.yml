@@ -11,6 +11,21 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey123
     ports:
       - "27017:27017"
+
+  cis-backend:
+    image: ghcr.io/eed-web-application/core-inventory-system:latest
+    restart: on-failure
+    environment:
+      - CIS_MONGODB_URI=mongodb://cis:cis@mongodb-primary:27017/cis?authSource=cis
+      - CIS_ADMIN_MONGODB_URI=mongodb://admin:admin@mongodb-primary:27017/?authSource=admin
+      - WAIT_LOGGER_LEVEL=debug
+      - WAIT_TIMEOUT=90
+      - WAIT_HOSTS=mongodb-primary:27017
+      - SPRING_PROFILES_ACTIVE=test,manage-root-user,init-demo-database
+      - CIS_ROOT_AUTHENTICATION_TOKEN_JSON=[{\"name\":\"root-token-1\",\"expiration\":\"2024-12-31\"}]
+    ports:
+      - "8081:8080"
+
 #
 #  minio:
 #    image: minio/minio

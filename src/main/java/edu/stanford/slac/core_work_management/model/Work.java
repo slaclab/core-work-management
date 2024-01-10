@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Represents a Work entity in the system.
@@ -58,7 +57,7 @@ public class Work {
      * The name of the work.
      * This field stores the name or title of the work.
      */
-    private String name;
+    private String title;
 
     /**
      * The description of the work.
@@ -70,7 +69,7 @@ public class Work {
      * The identifier of the location associated with the work.
      * This field links the work to a specific location, identified by its ID.
      */
-    private String locationId;
+    private WorkLocation location;
 
     /**
      * The date and time when the work was created.

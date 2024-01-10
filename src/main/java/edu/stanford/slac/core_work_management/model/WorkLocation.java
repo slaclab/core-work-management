@@ -17,11 +17,9 @@ import lombok.EqualsAndHashCode;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class WorkLocation {
-
     /**
-     * The unique identifier for the location.
-     * This ID can correspond to a location within the system or an external system, providing
-     * a flexible reference.
+     * The unique identifier for the location, copied from the referenced system.
+     * This field is copied by the referenced system
      */
     private String id;
 
@@ -29,8 +27,22 @@ public class WorkLocation {
      * The name of the location.
      * This field stores the human-readable name or title of the location, aiding in easy
      * identification and reference.
+     * This field is copied by the referenced system
      */
     private String name;
+
+    /**
+     * The description of the location.
+     * This field stores a human-readable description of the location, providing additional
+     * information about the location.
+     * This field is copied by the referenced system
+     */
+    private String description;
+
+    /**
+     * The additional search terms for the location.
+     */
+    private String additionalSearchTerms;
 
     /**
      * The name of the external system managing this location.
