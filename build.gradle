@@ -63,7 +63,7 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
 
     //eed library
-    implementation 'edu.stanford.slac:slac-ad-eed-baselib:0.1.28',
+    implementation 'edu.stanford.slac:slac-ad-eed-baselib:0.1.29',
             'edu.stanford.slac:slac-ad-eed-base-mongodb-lib:0.1.11'
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
@@ -80,19 +80,6 @@ dependencies {
     testImplementation 'org.awaitility:awaitility:4.0.3'
 }
 
-
-//task buildCISAPI(type: GenerateTask) {
-//    generatorName.set("java")
-//    inputSpec.set("$rootDir/external-service/cis-api.json")
-//    outputDir.set("$rootDir/build/generated")
-//    apiPackage.set("edu.stanford.slac.core_work_management.cis_api.api")
-//    invokerPackage.set("edu.stanford.slac.core_work_management.cis_api.invoker")
-//    modelPackage.set("edu.stanford.slac.core_work_management.cis_api.model")
-//    configOptions.set([
-//            dateLibrary: "java8",
-//            generateClientAsBean: "true"
-//    ])
-//}
 
 task buildCISAPI(type: GenerateTask){
     generatorName = "java"

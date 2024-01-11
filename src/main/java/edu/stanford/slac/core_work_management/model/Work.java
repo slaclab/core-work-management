@@ -39,7 +39,7 @@ public class Work {
      * The type of the work.
      * This field categorizes the work into a specific type
      */
-    private WorkType type;
+    private String workTypeId;
 
     /**
      * Is the actual status of the work.

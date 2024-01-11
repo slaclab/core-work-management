@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import java.util.List;
 
 @AllArgsConstructor
-@Profile({"!test"})
+@Profile({"init-work-activity-type"})
 @ChangeUnit(id = "init-work-activity-type", order = "1000", author = "bisegni")
 public class InitWorkAndActivityType {
     private final MongoTemplate mongoTemplate;

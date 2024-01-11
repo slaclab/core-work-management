@@ -18,7 +18,7 @@ public record NewWorkDTO (
         @NotEmpty String description,
 
         @Schema(description = "Define the type of the work to do")
-        @NotEmpty String typeId,
+        @NotEmpty String workTypeId,
 
         @Schema(description =
                 """
