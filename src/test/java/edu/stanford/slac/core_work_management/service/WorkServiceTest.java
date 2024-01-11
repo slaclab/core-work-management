@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityTypeDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkTypeDTO;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
@@ -53,6 +54,49 @@ public class WorkServiceTest {
         );
 
         assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+    }
+
+    @Test
+    public void createNewActivityType() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+
+        String newActivityTypeId = assertDoesNotThrow(
+                () -> workService.ensureActivityType(
+                        newWorkTypeId,
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId).isNotNull();
+    }
+
+    @Test
+    public void errorCreatingNewActivityWithBadWorkId() {
+        WorkNotFound noWorkFoundException = assertThrows(
+                WorkNotFound.class,
+                () -> workService.ensureActivityType(
+                        "bad id",
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(noWorkFoundException).isNotNull();
+        assertThat(noWorkFoundException.getErrorCode()).isEqualTo(-1);
     }
 
     @Test

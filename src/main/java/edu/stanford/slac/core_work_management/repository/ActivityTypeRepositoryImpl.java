@@ -22,19 +22,15 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
     MongoTemplate mongoTemplate;
     SecurityAuditorAware securityAuditorAware;
     @Override
-    public String ensureActivityType(ActivityType activityType) {
-        String normalizedActivityTypeName = normalizeStringWithReplace(
-                activityType.getTitle(),
-                " ",
-                "-"
-        );
-
+    public String ensureActivityType(String workTypeId, ActivityType activityType) {
         Query query = new Query(
-                Criteria.where("name").is(normalizedActivityTypeName)
+                Criteria.where("name").is(activityType.getTitle())
         );
         Update update = new Update()
                 .setOnInsert("id", UUID.randomUUID().toString())
-                .setOnInsert("name", normalizedActivityTypeName)
+                .setOnInsert("workTypeId", workTypeId)
+                .setOnInsert("title", activityType.getTitle())
+                .setOnInsert("description", activityType.getDescription())
                 .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())

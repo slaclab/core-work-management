@@ -1,10 +1,8 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.ActivityType;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -31,6 +29,12 @@ public abstract class WorkMapper {
      */
     abstract public WorkType toModel(NewWorkTypeDTO newWorkTypeDTO);
 
+    /**
+     * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
+     * @param newActivityTypeDTO the DTO to convert
+     * @return the converted work type
+     */
+    abstract public ActivityType toModel(NewActivityTypeDTO newActivityTypeDTO);
     /**
      * Convert the {@link NewWorkDTO} to a {@link Work}
      * @param newWorkDTO the DTO to convert

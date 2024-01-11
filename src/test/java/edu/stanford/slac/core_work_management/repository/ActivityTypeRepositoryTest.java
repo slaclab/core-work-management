@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.repository;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityTypeDTO;
 import edu.stanford.slac.core_work_management.model.ActivityType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ public class ActivityTypeRepositoryTest {
     public void testEnsureActivity() {
         ActivityType activityType = ActivityType.builder().title("Test").build();
         String newId = assertDoesNotThrow(
-                ()-> activityTypeRepository.ensureActivityType(activityType)
+                ()-> activityTypeRepository.ensureActivityType("wId",activityType)
         );
         assertThat(newId).isNotNull();
     }
@@ -54,7 +55,7 @@ public class ActivityTypeRepositoryTest {
             ActivityType activityType = ActivityType.builder().title("Test").build();
 
             for (int i = 0; i < numberOfThreads; i++) {
-                tasks.add(() -> activityTypeRepository.ensureActivityType(activityType));
+                tasks.add(() -> activityTypeRepository.ensureActivityType("wId", activityType));
             }
 
             futures = executorService.invokeAll(tasks);
