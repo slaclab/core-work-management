@@ -35,6 +35,8 @@ public abstract class WorkMapper {
      * @return the converted work type
      */
     abstract public ActivityType toModel(NewActivityTypeDTO newActivityTypeDTO);
+
+
     /**
      * Convert the {@link NewWorkDTO} to a {@link Work}
      * @param newWorkDTO the DTO to convert
@@ -48,6 +50,13 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     abstract public WorkTypeDTO toDTO(WorkType workType);
+
+    /**
+     * Convert the {@link ActivityType} to a {@link ActivityTypeDTO}
+     * @param activityType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public ActivityTypeDTO toDTO(ActivityType activityType);
 
     /**
      * Convert the {@link Work} to a {@link WorkDTO}

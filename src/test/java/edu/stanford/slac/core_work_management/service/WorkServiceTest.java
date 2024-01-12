@@ -1,9 +1,11 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.ActivityTypeDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityTypeDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkTypeDTO;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
+import edu.stanford.slac.core_work_management.model.ActivityType;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +40,7 @@ public class WorkServiceTest {
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), WorkType.class);
+        mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Work.class);
     }
 
@@ -62,8 +65,8 @@ public class WorkServiceTest {
                 () -> workService.ensureWorkType(
                         NewWorkTypeDTO
                                 .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
+                                .title("Work type 1")
+                                .description("Work type 1 description")
                                 .build()
                 )
         );
@@ -74,12 +77,58 @@ public class WorkServiceTest {
                         newWorkTypeId,
                         NewActivityTypeDTO
                                 .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId).isNotNull();
+    }
+
+    @Test
+    public void findAllActivityForAWorkId() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .build()
                 )
         );
-        assertThat(newActivityTypeId).isNotNull();
+        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+
+        String newActivityTypeId1 = assertDoesNotThrow(
+                () -> workService.ensureActivityType(
+                        newWorkTypeId,
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId1).isNotNull();
+        String newActivityTypeId2 = assertDoesNotThrow(
+                () -> workService.ensureActivityType(
+                        newWorkTypeId,
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 2")
+                                .description("Activity 2 description")
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId2).isNotNull();
+
+        var allActivityFound = assertDoesNotThrow(
+                () -> workService.findAllActivityTypesByWorkId(newWorkTypeId)
+        );
+        assertThat(allActivityFound)
+                .isNotNull()
+                .hasSize(2)
+                .extracting(ActivityTypeDTO::id)
+                .contains(newActivityTypeId1, newActivityTypeId2);
     }
 
     @Test

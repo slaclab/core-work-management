@@ -21,6 +21,7 @@ public class ActivityType {
     private String id;
     private String title;
     private String description;
+    private String workTypeId;
     @CreatedDate
     private LocalDateTime createdDate;
     @CreatedBy

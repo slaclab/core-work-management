@@ -21,7 +21,7 @@ public class WorkService {
     WorkMapper workMapper;
     WorkRepository workRepository;
     WorkTypeRepository workTypeRepository;
-    ActivityTypeRepository activityTypeService;
+    ActivityTypeRepository activityTypeRepository;
 
     /**
      * Create a new work type
@@ -50,7 +50,7 @@ public class WorkService {
                 WorkNotFound.notFoundById().errorCode(-1).workId(workId).build()
         );
         return wrapCatch(
-                () -> activityTypeService.ensureActivityType(
+                () -> activityTypeRepository.ensureActivityType(
                         workId,
                         workMapper.toModel(newActivityTypeDTO)
                 ),
@@ -66,6 +66,19 @@ public class WorkService {
     public List<WorkTypeDTO> findAllWorkTypes() {
         var workTypeList = wrapCatch(
                 () -> workTypeRepository.findAll(),
+                -1
+        );
+        return workTypeList.stream().map(workMapper::toDTO).toList();
+    }
+
+    /**
+     * Return all the work types
+     *
+     * @return the list of work types
+     */
+    public List<ActivityTypeDTO> findAllActivityTypesByWorkId(String workId) {
+        var workTypeList = wrapCatch(
+                () -> activityTypeRepository.findAll(),
                 -1
         );
         return workTypeList.stream().map(workMapper::toDTO).toList();
