@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.getAllMethodInCall;
 
-@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Work has not been found")
-public class WorkNotFound extends ControllerLogicException {
+@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Activity type has not been found")
+public class ActivityTypeNotFound extends ControllerLogicException {
     @Builder(builderMethodName = "notFoundById")
-    public WorkNotFound(Integer errorCode, String workId) {
+    public ActivityTypeNotFound(Integer errorCode, String activityTypeId) {
         super(errorCode,
-                String.format("The work with id '%s' has not been found", workId),
+                String.format("The activity type with id '%s' has not been found", activityTypeId),
                 getAllMethodInCall()
         );
     }

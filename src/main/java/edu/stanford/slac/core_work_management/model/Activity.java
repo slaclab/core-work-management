@@ -53,7 +53,7 @@ public class Activity {
      * The type of the activity.
      * This field categorizes the activity into a specific type, defined by the ActivityType enum.
      */
-    private ActivityType type;
+    private String activityTypeId;
 
     /**
      * Is the actual status of the activity.

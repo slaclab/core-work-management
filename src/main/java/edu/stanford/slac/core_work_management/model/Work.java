@@ -109,10 +109,14 @@ public class Work {
     /**
      * updateStatus according to the list of all job statuses
      */
-    public void updateStatus(Set<ActivityStatus> allActivitiesStatus) {
+    public void updateStatus(Set<ActivityStatus> allActivitiesStatus, String changedBy) {
+        WorkStatusLog oldStatus = this.currentStatus;
         this.currentStatus = WorkStatusLog.builder()
                 .status(workStatusStateMachine.getNewStatus(this.currentStatus.getStatus(), allActivitiesStatus))
+                .changed_by(changedBy)
+                .changed_on(LocalDateTime.now())
                 .build();
+        this.statusHistory.add(oldStatus);
     }
 }
 
