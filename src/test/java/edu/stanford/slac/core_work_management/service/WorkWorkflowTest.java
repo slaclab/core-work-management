@@ -192,7 +192,7 @@ public class WorkWorkflowTest {
                 )
         );
         assertThat(newActivityId).isNotEmpty();
-
+        // work latest status should be review
         assertThat(
                 helperService.checkStatusAndHistoryOnWork(
                         newWorkId,
@@ -203,10 +203,14 @@ public class WorkWorkflowTest {
                         )
                 )
         ).isTrue();
+        // activity latest status should be completed
         assertThat(
                 helperService.checkStatusAndHistoryOnActivity(
                         newActivityId,
-                        of(ActivityStatusDTO.Completed,ActivityStatusDTO.New)
+                        of(
+                                ActivityStatusDTO.Completed,
+                                ActivityStatusDTO.New
+                        )
                 )
         ).isTrue();
     }

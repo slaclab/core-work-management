@@ -49,6 +49,9 @@ public class HelperService {
         return foundFullWork.currentStatus().status().equals(workStatus);
     }
 
+    /**
+     * Fetch work and check status and history from latest to oldest status value
+     */
     public boolean checkStatusAndHistoryOnWork(String workId, List<WorkStatusDTO> workStatusList){
         var foundFullWork =  assertDoesNotThrow(
                 ()->workService.findWorkById(workId)
@@ -68,7 +71,7 @@ public class HelperService {
     }
 
     /**
-     * Fetch activity and check status
+     * Fetch activity and check status from latest to oldest status value
      */
     public boolean checkStatusOnActivity(String activityId, ActivityStatusDTO activityStatus){
         var foundFullActivity =  assertDoesNotThrow(
