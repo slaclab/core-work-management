@@ -17,5 +17,6 @@ public record ActivityStatusLogDTO(
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime changed_on,
-        String changed_by
+        String changed_by,
+        String followUpDescription
 ){}

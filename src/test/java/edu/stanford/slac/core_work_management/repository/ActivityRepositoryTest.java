@@ -56,7 +56,7 @@ public class ActivityRepositoryTest {
                         .title("Update the software")
                         .currentStatus(ActivityStatusLog
                                 .builder()
-                                .status(ActivityStatus.Authorized)
+                                .status(ActivityStatus.Roll)
                                 .build())
                         .workId("1")
                         .build()
@@ -68,6 +68,6 @@ public class ActivityRepositoryTest {
                 .isNotNull()
                 .hasSize(2)
                 .extracting(ActivityStatusLog::getStatus)
-                .contains(ActivityStatus.New, ActivityStatus.Authorized);
+                .contains(ActivityStatus.New, ActivityStatus.Roll);
     }
 }

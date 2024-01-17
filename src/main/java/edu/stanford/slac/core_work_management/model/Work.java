@@ -72,6 +72,12 @@ public class Work {
     private WorkLocation location;
 
     /**
+     * The identifier of the user assigned to the work.
+     * This field links the work to a specific user, identified by its ID.
+     */
+    private String assignedTo;
+
+    /**
      * The date and time when the work was created.
      * This field is automatically populated with the date and time of creation, using @CreatedDate annotation.
      */
@@ -109,14 +115,8 @@ public class Work {
     /**
      * updateStatus according to the list of all job statuses
      */
-    public void updateStatus(Set<ActivityStatus> allActivitiesStatus, String changedBy) {
-        WorkStatusLog oldStatus = this.currentStatus;
-        this.currentStatus = WorkStatusLog.builder()
-                .status(workStatusStateMachine.getNewStatus(this.currentStatus.getStatus(), allActivitiesStatus))
-                .changed_by(changedBy)
-                .changed_on(LocalDateTime.now())
-                .build();
-        this.statusHistory.add(oldStatus);
+    public void updateStatus(Set<ActivityStatus> allActivitiesStatus) {
+        workStatusStateMachine.updateModel(this, allActivitiesStatus);
     }
 }
 

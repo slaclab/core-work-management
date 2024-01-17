@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -11,8 +13,8 @@ import java.time.LocalDateTime;
 @Builder
 public class WorkStatusLog {
     private WorkStatus status;
-    @CreatedDate
+    @LastModifiedDate
     private LocalDateTime changed_on;
-    @CreatedBy
+    @LastModifiedBy
     private String changed_by;
 }

@@ -2,8 +2,8 @@ package edu.stanford.slac.core_work_management.model;
 
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -11,8 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 public class ActivityStatusLog {
     private ActivityStatus status;
-    @CreatedDate
+    private String followUpDescription;
+    @LastModifiedDate
     private LocalDateTime changed_on;
-    @CreatedBy
+    @LastModifiedBy
     private String changed_by;
 }

@@ -4,16 +4,15 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
-import edu.stanford.slac.core_work_management.model.Activity;
-import edu.stanford.slac.core_work_management.model.ActivityType;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 
 /**
  * Mapper for the entity {@link Work}
@@ -63,7 +62,12 @@ public abstract class WorkMapper {
      * @param workId the id of the work
      * @return the converted entity
      */
+    @Mapping(target = "currentStatus", expression =
+            """
+            java(mapWorkStatusToLogModel(newActivityDTO.activityStatus()))
+            """)
     abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
+    abstract public ActivityStatus toModel(ActivityStatusDTO activityStatusDTO);
     /**
      * Convert the {@link Work} to a {@link WorkDTO}
      * @param work the entity to convert
@@ -74,6 +78,10 @@ public abstract class WorkMapper {
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     abstract public ActivityDTO toDTO(Activity activity);
+
+    public ActivityStatusLog mapWorkStatusToLogModel(ActivityStatusDTO activityStatusDTO) {
+        return ActivityStatusLog.builder().status(activityStatusDTO!= null?toModel(activityStatusDTO):ActivityStatus.New).build();
+    }
 
     /**
      * Convert the {@link String} work type id to a {@link WorkTypeDTO}

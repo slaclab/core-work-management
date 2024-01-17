@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -25,6 +26,8 @@ public record WorkDTO(
         WorkTypeDTO workType,
         @Schema(description = "The current status of the work")
         WorkStatusLogDTO currentStatus,
+        @Schema(description = "The full work status history")
+        List<WorkStatusLogDTO> statusHistory,
         @Schema(description = "The title of the work")
         String title,
         @Schema(description = "The description of the work")

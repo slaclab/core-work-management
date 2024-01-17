@@ -1,10 +1,10 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
@@ -13,6 +13,7 @@ import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +25,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Service
+@Log4j2
 @Validated
 @AllArgsConstructor
 public class WorkService {
@@ -106,6 +108,7 @@ public class WorkService {
                 () -> workRepository.save(workToSave),
                 -1
         );
+        log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
         return savedWork.getId();
     }
 
@@ -166,14 +169,15 @@ public class WorkService {
                 activityStatusList
                         .stream()
                         .map(ActivityStatusLog::getStatus)
-                        .collect(Collectors.toSet()),
-                savedActivity.getCreatedBy());
+                        .collect(Collectors.toSet())
+        );
 
         // save work and unlock
         wrapCatch(
                 () -> workRepository.save(work),
                 -4
         );
+        log.info("New Activity '{}' has been added to work '{}'", savedActivity.getTitle(), work.getTitle());
         return savedActivity.getId();
     }
 
@@ -194,5 +198,79 @@ public class WorkService {
                 ),
                 -1
         );
+    }
+
+    /**
+     * Change the status of an activity
+     *
+     * @param workId the id of the work
+     * @param activityID the id of the activity
+     * @param updateActivityStatusDTO the DTO to update the activity status
+     */
+    @Transactional
+    public void setActivityStatus(String workId, String activityID,  UpdateActivityStatusDTO updateActivityStatusDTO) {
+        // check for work existence
+        var workFound = wrapCatch(
+                () -> workRepository.findById(workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+        // check for activity
+        var activityFound = wrapCatch(
+                () -> activityRepository.findById(activityID).orElseThrow(
+                        () -> ActivityNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .activityId(activityID)
+                                .build()
+                ),
+                -2
+        );
+        // assert that activity need to be related to the work
+        assertion(
+                () -> workFound.getId().equals(activityFound.getWorkId()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("The activity does not belong to the work")
+                        .errorDomain("WorkService::changeActivityStatus")
+                        .build()
+        );
+        // switch to current status. internal is checked the validity of the transition
+        activityFound.setStatus(
+                workMapper.toModel(updateActivityStatusDTO.newStatus()),
+                updateActivityStatusDTO.followupDescription()
+        );
+        // save the activity
+        var savedActivity = wrapCatch(
+                () -> activityRepository.save(activityFound),
+                -2
+        );
+        log.info("Activity '{}' has change his status to '{}' by '{}'", savedActivity.getId(), savedActivity.getCurrentStatus().getStatus(), savedActivity.getCurrentStatus().getChanged_by());
+        // fetch all activity status for work
+        var activityStatusList = wrapCatch(
+                () -> activityRepository.findAllActivityStatusByWorkId(workId),
+                -3
+        );
+
+        // update the work status
+        workFound.updateStatus(
+                activityStatusList
+                        .stream()
+                        .map(ActivityStatusLog::getStatus)
+                        .collect(Collectors.toSet())
+        );
+
+        // save work and unlock
+        var savedWork = wrapCatch(
+                () -> workRepository.save(workFound),
+                -4
+        );
+        log.info("Work '{}' has change his status to status '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus());
     }
 }

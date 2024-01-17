@@ -17,6 +17,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.List;
+
+import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,18 +48,16 @@ public class WorkWorkflowTest {
     }
 
     @Test
-    public void createNewActivitySendWorkInPendingOK(){
-        //create work type
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
+    public void creatingNewWorkItIsInNewState() {
+        var listIds = helperService.ensureWorkAndActivitiesTypes(
+                NewWorkTypeDTO
+                        .builder()
+                        .title("Update the documentation")
+                        .description("Update the documentation description")
+                        .build(),
+                emptyList()
         );
-        assertThat(newWorkTypeId).isNotNull();
+        assertThat(listIds).hasSize(1);
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
@@ -63,16 +65,24 @@ public class WorkWorkflowTest {
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
+                                .workTypeId(listIds.getFirst())
                                 .build()
                 )
         );
         assertThat(newWorkId).isNotEmpty();
+        // work should be in state new
         assertThat(helperService.checkStatusOnWork(newWorkId, WorkStatusDTO.New)).isTrue();
-        // create new activity type for work type
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
-                        newWorkTypeId,
+    }
+
+    @Test
+    public void createNewActivitySendWorkInScheduledJobOK() {
+        var listIds = helperService.ensureWorkAndActivitiesTypes(
+                NewWorkTypeDTO
+                        .builder()
+                        .title("Update the documentation")
+                        .description("Update the documentation description")
+                        .build(),
+                of(
                         NewActivityTypeDTO
                                 .builder()
                                 .title("Activity 1")
@@ -80,21 +90,21 @@ public class WorkWorkflowTest {
                                 .build()
                 )
         );
-        assertThat(newActivityTypeId).isNotEmpty();
-
-        // create new activity fail with wrong DTO
-        var errorCreatingActivityWithEmptyDTO = assertThrows(
-                ConstraintViolationException.class,
+        assertThat(listIds).hasSize(2);
+        // create work plan
+        var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
+                        NewWorkDTO
                                 .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(listIds.get(0))
                                 .build()
                 )
         );
-        assertThat(errorCreatingActivityWithEmptyDTO).isNotNull();
+        assertThat(newWorkId).isNotEmpty();
 
-        // create new activity OK
+        // create new activity for work plan send it to ScheduledJob state
         var newActivityId = assertDoesNotThrow(
                 () -> workService.createNew(
                         newWorkId,
@@ -102,13 +112,102 @@ public class WorkWorkflowTest {
                                 .builder()
                                 .title("Activity 1")
                                 .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
+                                .activityTypeId(listIds.get(1))
                                 .build()
                 )
         );
         assertThat(newActivityId).isNotEmpty();
 
-        assertThat(helperService.checkStatusOnWork(newWorkId, WorkStatusDTO.InProgress)).isTrue();
-        assertThat(helperService.checkStatusOnActivity(newActivityId, ActivityStatusDTO.New)).isTrue();
+        assertThat(
+                helperService.checkStatusAndHistoryOnWork(
+                        newWorkId,
+                        of(
+                                WorkStatusDTO.ScheduledJob,
+                                WorkStatusDTO.New
+                        )
+                )
+        ).isTrue();
+        assertThat(
+                helperService.checkStatusAndHistoryOnActivity(
+                        newActivityId,
+                        of(ActivityStatusDTO.New)
+                )
+        ).isTrue();
+    }
+
+    @Test
+    public void createNewActivitySetToCloseSendWorkInReviewToWorkOK() {
+        var listIds = helperService.ensureWorkAndActivitiesTypes(
+                NewWorkTypeDTO
+                        .builder()
+                        .title("Update the documentation")
+                        .description("Update the documentation description")
+                        .build(),
+                of(
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .build()
+                )
+        );
+        assertThat(listIds).hasSize(2);
+        // create work plan
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(listIds.get(0))
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotEmpty();
+
+        // create new activity for work plan send it to ScheduledJob state
+        var newActivityId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        newWorkId,
+                        NewActivityDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .activityTypeId(listIds.get(1))
+                                .build()
+                )
+        );
+        assertThat(newActivityId).isNotEmpty();
+
+        // change status to close for the job
+        assertDoesNotThrow(
+                () -> workService.setActivityStatus(
+                        newWorkId,
+                        newActivityId,
+                        UpdateActivityStatusDTO
+                                .builder()
+                                .newStatus(ActivityStatusDTO.Completed)
+                                .followupDescription("Activity has been completed")
+                                .build()
+                )
+        );
+        assertThat(newActivityId).isNotEmpty();
+
+        assertThat(
+                helperService.checkStatusAndHistoryOnWork(
+                        newWorkId,
+                        of(
+                                WorkStatusDTO.Review,
+                                WorkStatusDTO.ScheduledJob,
+                                WorkStatusDTO.New
+                        )
+                )
+        ).isTrue();
+        assertThat(
+                helperService.checkStatusAndHistoryOnActivity(
+                        newActivityId,
+                        of(ActivityStatusDTO.Completed,ActivityStatusDTO.New)
+                )
+        ).isTrue();
     }
 }

@@ -107,22 +107,27 @@ public class Activity {
      * This field stores the IDs of the users who are assigned to the activity.
      *
      * @param newStatus the new status to transition to
+     * @param followupDescription the followup description
      */
-    public void setStatus(ActivityStatus newStatus) {
+    public void setStatus(ActivityStatus newStatus, String followupDescription) {
+        ActivityStatusLog currentStatus = getCurrentStatus();
         assertion(
                 () -> activityStatusStateMachine.isValidTransition(currentStatus.getStatus(), newStatus),
                 ControllerLogicException
                         .builder()
                         .errorCode(-1)
                         .errorMessage(String.format("Invalid status transition from %s to %s", currentStatus.getStatus(), newStatus))
-                        .errorDomain("Activity")
+                        .errorDomain("Activity::setStatus")
                         .build()
 
         );
-        activityStatusStateMachine.isValidTransition(currentStatus.getStatus(), newStatus);
-        currentStatus = ActivityStatusLog.builder()
+        setCurrentStatus(
+                ActivityStatusLog.builder()
                 .status(newStatus)
-                .build();
+                .followUpDescription(followupDescription)
+                .build()
+        );
+        getStatusHistory().addFirst(currentStatus);
     }
 
     /**
