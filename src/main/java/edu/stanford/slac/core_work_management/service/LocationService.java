@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static java.util.Arrays.stream;
 
@@ -35,7 +36,14 @@ public class LocationService {
      */
     public String createNew(@Valid NewLocationDTO newLocationDTO) {
         if(newLocationDTO.parentId()!=null && !newLocationDTO.parentId().isBlank()) {
-
+            assertion(
+                    ()->locationRepository.existsById(newLocationDTO.parentId()),
+                    LocationNotFound
+                            .notFoundById()
+                            .errorCode(-1)
+                            .locationId(newLocationDTO.parentId())
+                            .build()
+            );
         }
         var newSavedLocation = wrapCatch(
                 () -> locationRepository.save(locationMapper.toModel(newLocationDTO)),

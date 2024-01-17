@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
+import edu.stanford.slac.core_work_management.exception.LocationNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -100,5 +102,54 @@ public class LocationServiceTest {
                 )
         );
         assertThat(foundLocations).isNotNull().hasSize(2);
+    }
+
+    @Test
+    public void testLocationWithParentOK() {
+        var newLocationId = assertDoesNotThrow(
+                () -> locationService.createNew(
+                        NewLocationDTO.builder()
+                                .name("test")
+                                .description("test")
+                                .locationManagerUserId("adminUserid")
+                                .build()
+                )
+        );
+        var newLocationWithParentId = assertDoesNotThrow(
+                () -> locationService.createNew(
+                        NewLocationDTO.builder()
+                                .name("test")
+                                .description("test")
+                                .parentId(newLocationId)
+                                .locationManagerUserId("adminUserid")
+                                .build()
+                )
+        );
+        assertThat(newLocationWithParentId).isNotNull();
+        var newCreatedLocation = assertDoesNotThrow(
+                () -> locationService.findById(
+                        newLocationWithParentId
+                )
+        );
+        assertThat(newCreatedLocation).isNotNull();
+        assertThat(newCreatedLocation.id()).isEqualTo(newLocationWithParentId);
+        assertThat(newCreatedLocation.parentId()).isEqualTo(newLocationId);
+    }
+
+    @Test
+    public void testErrorCreatingLocationWithNotFoundParent() {
+        var locationNotFoundForParent = assertThrows(
+                LocationNotFound.class,
+                () -> locationService.createNew(
+                        NewLocationDTO.builder()
+                                .name("test")
+                                .description("test")
+                                .parentId("bad id")
+                                .locationManagerUserId("adminUserid")
+                                .build()
+                )
+        );
+        assertThat(locationNotFoundForParent).isNotNull();
+
     }
 }
