@@ -14,7 +14,7 @@ import java.util.List;
 
 @AllArgsConstructor
 @Profile({"init-work-activity-type"})
-@ChangeUnit(id = "init-work-activity-type", order = "1000", author = "bisegni")
+@ChangeUnit(id = "init-work-activity-type", order = "1001", author = "bisegni")
 public class InitWorkAndActivityType {
     private final MongoTemplate mongoTemplate;
     private final WorkTypeRepository workTypeRepository;
