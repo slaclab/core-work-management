@@ -150,6 +150,5 @@ public class LocationServiceTest {
                 )
         );
         assertThat(locationNotFoundForParent).isNotNull();
-
     }
 }

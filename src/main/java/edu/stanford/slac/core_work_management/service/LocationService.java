@@ -76,6 +76,7 @@ public class LocationService {
     /**
      * Find all locations
      *
+     * @param locationFilterDTO the filter to use
      * @return the list of locations
      */
     public List<LocationDTO> findAll(LocationFilterDTO locationFilterDTO) {
