@@ -10,11 +10,18 @@ import org.springframework.data.mongodb.core.query.TextQuery;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-
+/**
+ * This class is used to implement the custom query for the LocationRepository
+ */
 @Repository
 @AllArgsConstructor
 public class LocationRepositoryImpl implements LocationRepositoryCustom {
     private final MongoTemplate mongoTemplate;
+    /**
+     * This method is used to find the location by the location filter
+     * @param locationFilter the location filter
+     * @return List<Location>
+     */
     @Override
     public List<Location> findByLocationFilter(LocationFilter locationFilter) {
         if(locationFilter.getText() == null || locationFilter.getText().isEmpty()) {

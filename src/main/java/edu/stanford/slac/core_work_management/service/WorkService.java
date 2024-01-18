@@ -7,6 +7,8 @@ import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkStatus;
+import edu.stanford.slac.core_work_management.model.WorkStatusLog;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,6 +113,51 @@ public class WorkService {
         );
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
         return savedWork.getId();
+    }
+
+    /**
+     * Close a work
+     *
+     * @param workId     the id of the work
+     * @param closeWorkDTO the DTO to close the work
+     */
+    public void closeWork(String workId, CloseWorkDTO closeWorkDTO) {
+        // check for work existence
+        var work = wrapCatch(
+                () -> workRepository.findById(workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+        // check for work status
+        assertion(
+                () -> work.getCurrentStatus().getStatus()== WorkStatus.Review,
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-2)
+                        .errorMessage("The work is not closeable")
+                        .errorDomain("WorkService::closeWork")
+                        .build()
+        );
+        // update put current status on history
+        work.getStatusHistory().addFirst(work.getCurrentStatus());
+        // set to close
+        work.setCurrentStatus(
+                WorkStatusLog.builder()
+                        .status(WorkStatus.Closed)
+                        .build()
+        );
+        work.setFollowupDescriptionOnClose(closeWorkDTO.followUpDescription());
+        // save work and unlock
+        var savedWork = wrapCatch(
+                () -> workRepository.save(work),
+                -3
+        );
+        log.info("Work '{}' has change his status to status '{}' by '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus(), savedWork.getCurrentStatus().getChanged_by());
     }
 
     /**

@@ -18,7 +18,7 @@ public class WorkStatusStateMachine {
         } else if(work.getAssignedTo()!=null) {
             nextStatus = WorkStatus.InProgress;
         }
-        if(nextStatus!=null) {
+        if(nextStatus!=null && currentStatus.getStatus()!=nextStatus) {
             // update current status and log the old one
             work.getStatusHistory().addFirst(currentStatus);
             work.setCurrentStatus(

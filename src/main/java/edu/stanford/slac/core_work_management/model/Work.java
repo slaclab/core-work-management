@@ -40,7 +40,10 @@ public class Work {
      * This field categorizes the work into a specific type
      */
     private String workTypeId;
-
+    /**
+     * Give a followup description when the work is closed
+     */
+    private String followupDescriptionOnClose;
     /**
      * Is the actual status of the work.
      */

@@ -16,9 +16,7 @@ import java.util.List;
 @Profile({"init-work-activity-type"})
 @ChangeUnit(id = "init-work-activity-type", order = "1001", author = "bisegni")
 public class InitWorkAndActivityType {
-    private final MongoTemplate mongoTemplate;
     private final WorkTypeRepository workTypeRepository;
-    private final ActivityTypeRepository activityTypeRepository;
 
     @Execution
     public void changeSet() {
