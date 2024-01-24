@@ -22,6 +22,7 @@ public class Location {
     String name;
     String description;
     String locationManagerUserId;
+    String locationShopGroupId;
     @CreatedDate
     private LocalDateTime createdDate;
     @CreatedBy
@@ -30,7 +31,6 @@ public class Location {
     private LocalDateTime lastModifiedDate;
     @LastModifiedBy
     private String lastModifiedBy;
-
     @Version
     private Long version;
 }
