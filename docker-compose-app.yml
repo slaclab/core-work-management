@@ -5,8 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - CIS_MONGODB_URI=mongodb://cis:cis@mongodb-primary:27017/cis?authSource=cis
-      - CIS_ADMIN_MONGODB_URI=mongodb://admin:admin@mongodb-primary:27017/?authSource=admin
+      - CWM_MONGODB_URI=mongodb://cis:cis@mongodb-primary:27017/cis?authSource=cis
+      - CWM_ADMIN_MONGODB_URI=mongodb://admin:admin@mongodb-primary:27017/?authSource=admin
       - WAIT_LOGGER_LEVEL=debug
       - WAIT_TIMEOUT=90
       - WAIT_HOSTS=mongodb-primary:27017

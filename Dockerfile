@@ -12,8 +12,8 @@ RUN useradd -rm -d /home/app -s /bin/bash -g root -G sudo -u 1001 app
 
 WORKDIR /home/app
 COPY --from=builder /opt/app/tools/run.sh /home/app
-COPY --from=builder /opt/app/build/libs/code-inventory-system-*-plain.jar /home/app/app-plain.jar
-COPY --from=builder /opt/app/build/libs/code-inventory-system-*.jar /home/app/app.jar
+COPY --from=builder /opt/app/build/libs/core-work-management-*-plain.jar /home/app/app-plain.jar
+COPY --from=builder /opt/app/build/libs/core-work-management-*.jar /home/app/app.jar
 RUN chown app:root /home/app/*.jar \
     && chmod 755 /home/app/*.jar
 

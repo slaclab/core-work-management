@@ -1,3 +1,4 @@
+name: cwm
 services:
   mongodb-primary:
     image: ghcr.io/zcube/bitnami-compat/mongodb:6.0.5

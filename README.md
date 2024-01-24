@@ -81,3 +81,114 @@ The architecture is scalable and robust, capable of handling large volumes of da
 }
 
 ```
+
+### Location
+
+```json lines
+{
+  "id": "1",
+  "name": "Location Name",
+  "description": "Location Description",
+  "shopGroupId": "1",
+  "areaManagerUserId": "1"
+}
+```
+
+### Shop Group
+
+```json lines
+{
+  "id": "1",
+  "name": "Shop Group Name",
+  "description": "Shop Group Description",
+  "userEmails": ["user@domain.com"]
+}
+```
+
+## Configuration
+
+below is the standard configuration of the CIS backend application
+```yaml
+logging:
+  level:
+    edu.stanford.slac.code_inventory_system: ${CWM_LOG_LEVEL:DEBUG}
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+spring:
+  application:
+    name: 'CWM'
+  cache:
+    type: hazelcast
+  ldap:
+    urls: ${CWM_LDAP_URI:ldap://localhost:8389}
+    base: ${CWM_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
+  data:
+    mongodb:
+      uri: ${CWM_MONGODB_URI:mongodb://cwm:cwm@localhost:27017/cwm?authSource=cwm}
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 1MB
+      max-file-size: ${CWM_MAX_POST_SIZE:100MB}
+      max-request-size: ${CWM_MAX_POST_SIZE:100MB}
+
+edu:
+  stanford:
+    slac:
+      ad:
+        eed:
+          baselib:
+            app-token-prefix: ${spring.application.name}
+            app-token-jwt-key: ${CWM_APP_TOKEN_JWT:token-header-key}
+            user-header-name: ${CWM_AUTH_HEADER:x-vouch-idp-accesstoken}
+            oauth-server-discover: ${CWM_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
+            root-user-list: ${CWM_ROOT_USERS}
+            root-authentication-token-list-json: ${CWM_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
+          mongodb:
+            db_admin_uri: ${CWM_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# swagger-ui custom path
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    path: /api-docs
+
+mongock:
+  migration-scan-package:
+    - edu.stanford.slac.core_work_management.migration
+  throw-exception-if-cannot-obtain-lock: true #Default true
+  track-ignored: false #Default true
+  transaction-enabled: false
+  runner-type: initializingbean
+  enabled: true #Default true
+```
+
+## Demo
+
+### Starting the Demo with Docker-Compose Files
+
+To initiate the demo, use the provided docker-compose files. The `docker-compose.yml` is the default file
+for starting the necessary services for the CIS backend to conduct unit and integration tests. Alongside,
+the `docker-compose-app.yml` is used to enable the CIS backend in demo mode.
+
+```shell
+docker compose -f docker-compose.yml -f docker-compose-app.yml up
+```
+in case of application updates the docker image need to be rebuilt so in this case this command can be used:
+```shell
+docker compose -f docker-compose.yml -f docker-compose-app.yml up --build backend
+```
