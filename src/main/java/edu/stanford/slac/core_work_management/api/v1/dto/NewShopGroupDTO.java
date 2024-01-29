@@ -21,4 +21,4 @@ public record NewShopGroupDTO (
     String description,
     @Schema(description = "The user ids that are part of the shop group")
     @NotEmpty(message = "The user email of the shop group cannot be empty")
-    Set<String> usersEmails){}
+    Set<String> userEmails){}
