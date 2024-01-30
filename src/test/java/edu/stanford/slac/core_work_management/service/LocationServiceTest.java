@@ -40,7 +40,7 @@ public class LocationServiceTest {
     private MongoTemplate mongoTemplate;
     @Autowired
     private ShopGroupService shopGroupService;
-    private List<String> shopGroupIds = new ArrayList<>();
+    private final List<String> shopGroupIds = new ArrayList<>();
 
     @BeforeAll
     public void init() {
@@ -78,7 +78,7 @@ public class LocationServiceTest {
                                 .name("test")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -103,7 +103,7 @@ public class LocationServiceTest {
                                     .name(String.format("%d_text", finalIdx))
                                     .description(String.format("%d_text", finalIdx))
                                     .locationManagerUserId("user1@slac.stanford.edu")
-                                    .locationShopGroupId(shopGroupIds.get(0).toString())
+                                    .locationShopGroupId(shopGroupIds.getFirst())
                                     .build()
                     )
             );
@@ -146,7 +146,7 @@ public class LocationServiceTest {
                                 .name("test")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -157,7 +157,7 @@ public class LocationServiceTest {
                                 .description("test")
                                 .parentId(newLocationId)
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -182,7 +182,7 @@ public class LocationServiceTest {
                                 .description("test")
                                 .parentId("bad id")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );

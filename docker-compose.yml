@@ -16,6 +16,7 @@ services:
   cis-backend:
     image: ghcr.io/eed-web-application/core-inventory-system:latest
     restart: on-failure
+    pull_policy: always
     environment:
       - CIS_MONGODB_URI=mongodb://cis:cis@mongodb-primary:27017/cis?authSource=cis
       - CIS_ADMIN_MONGODB_URI=mongodb://admin:admin@mongodb-primary:27017/?authSource=admin

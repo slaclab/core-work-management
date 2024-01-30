@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.controller;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
@@ -22,6 +23,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +82,69 @@ public class LocationControllerTest {
 
     @Test
     public void createNewStandaloneLocation() {
+        var exceptionOnMandatoryField = assertThrows(
+                MethodArgumentNotValidException.class,
+                () -> testControllerHelperService.locationControllerCreateNew(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocationDTO.builder()
+                                .build()
+                )
+        );
+        assertThat(exceptionOnMandatoryField).isNotNull();
+        exceptionOnMandatoryField = assertThrows(
+                MethodArgumentNotValidException.class,
+                () -> testControllerHelperService.locationControllerCreateNew(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocationDTO.builder()
+                                .name("location1")
+                                .build()
+                )
+        );
+        assertThat(exceptionOnMandatoryField).isNotNull();
+        exceptionOnMandatoryField = assertThrows(
+                MethodArgumentNotValidException.class,
+                () -> testControllerHelperService.locationControllerCreateNew(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocationDTO.builder()
+                                .description("location1 description")
+                                .build()
+                )
+        );
+        assertThat(exceptionOnMandatoryField).isNotNull();
+        exceptionOnMandatoryField = assertThrows(
+                MethodArgumentNotValidException.class,
+                () -> testControllerHelperService.locationControllerCreateNew(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocationDTO.builder()
+                                .locationManagerUserId("user1@slac.stanford.edu")
+                                .build()
+                )
+        );
+        assertThat(exceptionOnMandatoryField).isNotNull();
+        exceptionOnMandatoryField = assertThrows(
+                MethodArgumentNotValidException.class,
+                () -> testControllerHelperService.locationControllerCreateNew(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewLocationDTO.builder()
+                                .locationShopGroupId(shopGroupIds.getFirst())
+                                .build()
+                )
+        );
+        assertThat(exceptionOnMandatoryField).isNotNull();
+    }
+
+    @Test
+    public void heckAllMandatoryField() {
         var createNewLocationResult = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerCreateNew(
                         mockMvc,
@@ -89,7 +154,7 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -127,7 +192,7 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("bad@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -147,7 +212,7 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -176,7 +241,7 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
