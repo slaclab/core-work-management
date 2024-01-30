@@ -1,17 +1,44 @@
 logging:
   level:
-    edu.stanford.slac.core_work_management: DEBUG
-    org.springdoc: debug
+    edu.stanford.slac.code_inventory_system: ${CWM_LOG_LEVEL:DEBUG}
 
 server:
   tomcat:
     mbeanregistry:
       enabled: true
 
+spring:
+  application:
+    name: 'CWM'
+  cache:
+    type: hazelcast
+  ldap:
+    urls: ${CWM_LDAP_URI:ldap://localhost:8389}
+    base: ${CWM_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
+  data:
+    mongodb:
+      uri: ${CWM_MONGODB_URI:mongodb://cwm:cwm@localhost:27017/cwm?authSource=cwm}
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 1MB
+      max-file-size: ${CWM_MAX_POST_SIZE:100MB}
+      max-request-size: ${CWM_MAX_POST_SIZE:100MB}
+
 edu:
   stanford:
     slac:
-      core_work_management:
+      ad:
+        eed:
+          baselib:
+            app-token-prefix: ${spring.application.name}
+            app-token-jwt-key: ${CWM_APP_TOKEN_JWT:token-header-key}
+            user-header-name: ${CWM_AUTH_HEADER:x-vouch-idp-accesstoken}
+            oauth-server-discover: ${CWM_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
+            root-user-list: ${CWM_ROOT_USERS}
+            root-authentication-token-list-json: ${CWM_ROOT_AUTHENTICATION_TOKEN_JSON:[]}
+          mongodb:
+            db_admin_uri: ${CWM_ADMIN_MONGODB_URI:mongodb://admin:admin@localhost:27017/?authSource=admin}
 
 management:
   endpoints:
@@ -22,13 +49,18 @@ management:
     tags:
       application: ${spring.application.name}
 
-spring:
-  application:
-    name: 'core-work-management' 
-
 # swagger-ui custom path
 springdoc:
   swagger-ui:
-    path: /swagger-ui.html
+    enabled: false
   api-docs:
     path: /api-docs
+
+mongock:
+  migration-scan-package:
+    - edu.stanford.slac.core_work_management.migration
+  throw-exception-if-cannot-obtain-lock: true #Default true
+  track-ignored: false #Default true
+  transaction-enabled: false
+  runner-type: initializingbean
+  enabled: true #Default true
