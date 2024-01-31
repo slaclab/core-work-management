@@ -105,7 +105,7 @@ task buildCISAPI(type: GenerateTask){
     invokerPackage = "edu.stanford.slac.core_work_management.cis_api.invoker"
     modelPackage = "edu.stanford.slac.core_work_management.cis_api.dto"
     configOptions = [
-            dateLibrary: "java8",
+            dateLibrary: "java8-localdatetime",
             generateClientAsBean: "true",
             hideGenerationTimestamp:"true",
             generateAliasAsModel:"false",
@@ -119,7 +119,6 @@ task buildCISAPI(type: GenerateTask){
     generateModelDocumentation = false
     generateApiTests = false
     generateApiDocumentation = false
-
 }
 
 
@@ -204,3 +203,7 @@ testlogger {
 }
 
 compileJava.dependsOn buildCISAPI
+
+assemble.doLast {
+    println "built app version: ${project.version}"
+}

@@ -5,6 +5,10 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
+import edu.stanford.slac.core_work_management.cis_api.dto.InventoryDomainDTO;
+import edu.stanford.slac.core_work_management.cis_api.dto.InventoryDomainSummaryDTO;
+import edu.stanford.slac.core_work_management.cis_api.invoker.ApiClient;
 import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -50,7 +55,10 @@ public class LocationControllerTest {
     private TestControllerHelperService testControllerHelperService;
     @Autowired
     private ShopGroupService shopGroupService;
+    @Autowired
+    private InventoryElementControllerApi inventoryElementControllerApi;
     private List<String> shopGroupIds = new ArrayList<>();
+    private InventoryDomainSummaryDTO inventoryDomainDTO;
 
     @BeforeAll
     public void init() {
@@ -73,6 +81,14 @@ public class LocationControllerTest {
                                 .build()
                 )
         );
+        // fetch all inventory elements from demo
+        var foundDomains = inventoryElementControllerApi.findAllDomain();
+        assertThat(foundDomains.getErrorCode()).isEqualTo(0);
+        assertThat(foundDomains.getPayload())
+                .isNotNull()
+                .size()
+                .isGreaterThan(0);
+        inventoryDomainDTO = Objects.requireNonNull(foundDomains.getPayload()).getFirst();
     }
 
     @BeforeEach

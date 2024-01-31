@@ -28,6 +28,8 @@ spring:
 edu:
   stanford:
     slac:
+      core_work_management:
+        cis_backend_url: ${CWM_CIS_URL:https://localhost:8081}
       ad:
         eed:
           baselib:
