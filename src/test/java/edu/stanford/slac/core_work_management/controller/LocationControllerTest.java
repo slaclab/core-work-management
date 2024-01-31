@@ -1,14 +1,11 @@
 package edu.stanford.slac.core_work_management.controller;
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
-import edu.stanford.slac.core_work_management.cis_api.dto.InventoryDomainDTO;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryDomainSummaryDTO;
-import edu.stanford.slac.core_work_management.cis_api.invoker.ApiClient;
 import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
@@ -57,7 +54,7 @@ public class LocationControllerTest {
     private ShopGroupService shopGroupService;
     @Autowired
     private InventoryElementControllerApi inventoryElementControllerApi;
-    private List<String> shopGroupIds = new ArrayList<>();
+    private final List<String> shopGroupIds = new ArrayList<>();
     private InventoryDomainSummaryDTO inventoryDomainDTO;
 
     @BeforeAll
@@ -88,6 +85,7 @@ public class LocationControllerTest {
                 .isNotNull()
                 .size()
                 .isGreaterThan(0);
+        // get the first domain to test
         inventoryDomainDTO = Objects.requireNonNull(foundDomains.getPayload()).getFirst();
     }
 
