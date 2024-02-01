@@ -9,7 +9,7 @@ server:
 
 spring:
   application:
-    name: 'CWM'
+    name: 'cwm'
   cache:
     type: hazelcast
   ldap:
@@ -34,7 +34,7 @@ edu:
         eed:
           baselib:
             app-token-prefix: ${spring.application.name}
-            app-token-jwt-key: ${CWM_APP_TOKEN_JWT:token-header-key}
+            app-token-jwt-key: ${CWM_APP_TOKEN_JWT_KEY:token-header-key}
             user-header-name: ${CWM_AUTH_HEADER:x-vouch-idp-accesstoken}
             oauth-server-discover: ${CWM_OIDC_CONFIGURATION_ENDPOINT:https://dex.slac.stanford.edu/.well-known/openid-configuration}
             root-user-list: ${CWM_ROOT_USERS}

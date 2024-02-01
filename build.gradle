@@ -12,12 +12,11 @@ plugins {
 group = 'edu.stanford.slac'
 version = '1.0.0'
 ext{
-    ad_eed_baselib_version="0.1.29"
-    ad_eed_base_mongodb_lib_version="0.1.11"
+    ad_eed_baselib_version="0.1.35"
+    ad_eed_base_mongodb_lib_version="0.1.14"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
-
 
 java {
     sourceCompatibility = javaSourceCompatibility
@@ -96,7 +95,6 @@ dependencies {
     testImplementation 'org.awaitility:awaitility:4.0.3'
 }
 
-
 task buildCISAPI(type: GenerateTask){
     generatorName = "java"
     inputSpec = "$rootDir/external-service/cis-api.json".toString()
@@ -121,7 +119,6 @@ task buildCISAPI(type: GenerateTask){
     generateApiDocumentation = false
 }
 
-
 sourceSets {
     getByName("main") {
         java {
@@ -129,7 +126,6 @@ sourceSets {
         }
     }
 }
-
 
 tasks.named('test') {
     useJUnitPlatform()
@@ -145,10 +141,8 @@ test {
     testLogging {
         // Show standard output and error streams only for failed tests
         showStandardStreams = false
-
         // Set the format for the exception stack trace
         exceptionFormat = 'full'
-
         // Log events for failed     and skipped tests
         events 'failed', 'skipped'
     }
