@@ -14,9 +14,8 @@ edu:
       ad:
         eed:
           baselib:
-            root-user-list:
-              - user1@slac.stanford.edu
-            app-token-jwt-key: dabd148ddd89bf64236b3c2563a54921d95c959dbe6a872be3eefaa2f284a4cb
+            root-user-list: ${CWM_ROOT_USERS:user1@slac.stanford.edu}
+            app-token-jwt-key: ${CWM_APP_TOKEN_JWT_KEY:dabd148ddd89bf64236b3c2563a54921d95c959dbe6a872be3eefaa2f284a4cb}
             root-authentication-token-list-json: |
               [{"name":"root-token-1","expiration":"2024-12-31"}]
 logging:

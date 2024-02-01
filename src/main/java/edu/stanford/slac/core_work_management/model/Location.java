@@ -17,11 +17,35 @@ import java.time.LocalDateTime;
 public class Location {
     @Id
     String id;
+    /**
+     * The parent location id
+     */
     @Field(targetType = FieldType.OBJECT_ID)
     String parentId;
+    /**
+     * The name of the location
+     */
     String name;
+    /**
+     * The description of the location
+     */
     String description;
+    /**
+     * The external location identifier
+     * if an external location is used, the name and description
+     * will be copied by the external location found by this information
+     */
+    String externalLocationIdentifier;
+    /**
+     * The location manager user id
+     * is the user that is responsible for the location and need to
+     * review to work done in that location
+     */
     String locationManagerUserId;
+    /**
+     * The shop group id
+     * is the shop group that is authorized to make the works in that location
+     */
     String locationShopGroupId;
     @CreatedDate
     private LocalDateTime createdDate;

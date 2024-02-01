@@ -4,7 +4,10 @@ import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
-import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.Location;
+import edu.stanford.slac.core_work_management.model.ShopGroup;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +24,11 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -40,7 +43,9 @@ public class LocationServiceTest {
     private MongoTemplate mongoTemplate;
     @Autowired
     private ShopGroupService shopGroupService;
-    private List<String> shopGroupIds = new ArrayList<>();
+    @Autowired
+    private Validator validator;
+    private final List<String> shopGroupIds = new ArrayList<>();
 
     @BeforeAll
     public void init() {
@@ -78,7 +83,7 @@ public class LocationServiceTest {
                                 .name("test")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -103,7 +108,7 @@ public class LocationServiceTest {
                                     .name(String.format("%d_text", finalIdx))
                                     .description(String.format("%d_text", finalIdx))
                                     .locationManagerUserId("user1@slac.stanford.edu")
-                                    .locationShopGroupId(shopGroupIds.get(0).toString())
+                                    .locationShopGroupId(shopGroupIds.getFirst())
                                     .build()
                     )
             );
@@ -146,7 +151,7 @@ public class LocationServiceTest {
                                 .name("test")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -157,7 +162,7 @@ public class LocationServiceTest {
                                 .description("test")
                                 .parentId(newLocationId)
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -182,10 +187,49 @@ public class LocationServiceTest {
                                 .description("test")
                                 .parentId("bad id")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.get(0).toString())
+                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
         assertThat(locationNotFoundForParent).isNotNull();
+    }
+
+    @Test
+    public void testErrorOnNameDescriptionAndExternalLocation() {
+        // Test when externalLocationIdentifier is null and name and description are not empty
+        NewLocationDTO newLocationDTO = new NewLocationDTO(
+                null,
+                "test",
+                "test",
+                null,
+                "user1@slac.stanford.edu",
+                shopGroupIds.getFirst()
+        );
+        Set<ConstraintViolation<NewLocationDTO>> violations = validator.validate(newLocationDTO);
+        assertTrue(violations.isEmpty());
+
+        // Test when externalLocationIdentifier is not empty and name and description are empty
+        newLocationDTO = new NewLocationDTO(
+                null,
+                null,
+                null,
+                "external id",
+                "user1@slac.stanford.edu",
+                shopGroupIds.getFirst()
+        );
+        violations = validator.validate(newLocationDTO);
+        assertTrue(violations.isEmpty());
+
+        // Test when externalLocationIdentifier is not empty and name and description are not empty
+        newLocationDTO = new NewLocationDTO(
+                null,
+                "test",
+                "test",
+                "external id",
+                "user1@slac.stanford.edu",
+                shopGroupIds.getFirst()
+        );
+        violations = validator.validate(newLocationDTO);
+        assertFalse(violations.isEmpty());
     }
 }
