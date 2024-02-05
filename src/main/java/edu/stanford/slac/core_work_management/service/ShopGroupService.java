@@ -2,12 +2,15 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.ShopGroupMapper;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.repository.ShopGroupRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
@@ -27,12 +30,26 @@ public class ShopGroupService {
      */
     public String createNew(@Validated NewShopGroupDTO newShopGroupDTO) {
         // validate user emails
-        newShopGroupDTO.userEmails().forEach(peopleGroupService::findPersonByMain);
+        newShopGroupDTO.userEmails().forEach(
+                (email)->peopleGroupService.findPersonByEMail(email)
+        );
         ShopGroup savedShopGroup = wrapCatch(
                 () -> shopGroupRepository.save(shopGroupMapper.toModel(newShopGroupDTO)),
                 -1
         );
         return savedShopGroup.getId();
+    }
+
+    /**
+     * Get all shop groups
+     *
+     * @return the list of shop groups
+     */
+    public List<ShopGroupDTO> getAllShopGroups() {
+        return wrapCatch(
+                () -> shopGroupRepository.findAll(),
+                -1
+        ).stream().map(shopGroupMapper::toDTO).toList();
     }
 
     /**
