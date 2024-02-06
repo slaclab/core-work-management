@@ -77,7 +77,7 @@ public class LocationService {
 
         // check if are manager exists
         assertion(
-                () -> peopleGroupService.findPersonByMain(newLocationDTO.locationManagerUserId()) != null,
+                () -> peopleGroupService.findPersonByEMail(newLocationDTO.locationManagerUserId()) != null,
                 ShopGroupNotFound.notFoundById()
                         .errorCode(-2)
                         .shopGroupId(

@@ -8,6 +8,8 @@ import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,6 +31,88 @@ public class TestControllerHelperService {
         this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
 
+    }
+
+    /**
+     * Create new shop group
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created shop group
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> shopGroupControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewShopGroupDTO newShopGroupDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/shop-group")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(newShopGroupDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Get all shop groups
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the list of shop groups
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<ShopGroupDTO>> shopGroupControllerFindAll(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/shop-group")
+                .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Get shop group by id
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the list of shop groups
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<ShopGroupDTO> shopGroupControllerFindById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id
+    ) throws Exception {
+        var requestBuilder = get("/v1/shop-group/{id}", id)
+                .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
     }
 
     /**

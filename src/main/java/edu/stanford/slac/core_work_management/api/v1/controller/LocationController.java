@@ -57,7 +57,7 @@ public class LocationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Find a location by id")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<LocationDTO> findLocationById(
             Authentication authentication,
             @PathVariable("locationId") String locationId

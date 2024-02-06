@@ -12,7 +12,7 @@ import java.util.Set;
  * notified for execute the work/activity
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class ShopGroup {
     @Id
     String id;
