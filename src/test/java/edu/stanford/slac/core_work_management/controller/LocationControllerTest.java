@@ -176,7 +176,7 @@ public class LocationControllerTest {
     }
 
     @Test
-    public void heckAllMandatoryField() {
+    public void checkAllMandatoryField() {
         var createNewLocationResult = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerCreateNew(
                         mockMvc,
@@ -253,7 +253,7 @@ public class LocationControllerTest {
         var fullLocationFound = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerFindById(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         createNewLocationResult.getPayload()
                 )
@@ -333,7 +333,7 @@ public class LocationControllerTest {
         var fullLocationFound = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerFindById(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         createNewLocationResult.getPayload()
                 )
