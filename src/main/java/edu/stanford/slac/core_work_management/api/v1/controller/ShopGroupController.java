@@ -13,6 +13,8 @@ import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.springframework.http.HttpStatus;
@@ -78,14 +80,12 @@ public class ShopGroupController {
     }
 
     @GetMapping(
-            consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a new shop group")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResultResponse<List<ShopGroupDTO>> getAllShop(
-            Authentication authentication,
-            @Valid @RequestBody NewShopGroupDTO newShopGroupDTO
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResultResponse<List<ShopGroupDTO>> findAll(
+            Authentication authentication
     ) {
         // check for auth
         assertion(
@@ -99,7 +99,33 @@ public class ShopGroupController {
                 () -> authService.checkForRoot(authentication)
         );
         return ApiResultResponse.of(
-                shopGroupService.getAllShopGroups()
+                shopGroupService.findAll()
+        );
+    }
+
+    @GetMapping(
+            path = "/{id}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(summary = "Create a new shop group")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResultResponse<ShopGroupDTO> findById(
+            Authentication authentication,
+            @PathVariable @NotEmpty String id
+    ) {
+        // check for auth
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LocationController::createNew")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // should be root
+                () -> authService.checkForRoot(authentication)
+        );
+        return ApiResultResponse.of(
+                shopGroupService.findById(id)
         );
     }
 }

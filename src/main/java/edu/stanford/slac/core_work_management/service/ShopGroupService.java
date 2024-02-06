@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.ShopGroupMapper;
+import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.repository.ShopGroupRepository;
 import lombok.AllArgsConstructor;
@@ -45,7 +46,7 @@ public class ShopGroupService {
      *
      * @return the list of shop groups
      */
-    public List<ShopGroupDTO> getAllShopGroups() {
+    public List<ShopGroupDTO> findAll() {
         return wrapCatch(
                 () -> shopGroupRepository.findAll(),
                 -1
@@ -62,6 +63,26 @@ public class ShopGroupService {
         return wrapCatch(
                 () -> shopGroupRepository.existsById(shopGroupId),
                 -1
+        );
+    }
+
+    /**
+     * Find a shop group by id
+     *
+     * @param shopGroupId the id of the shop group
+     * @return the shop group
+     */
+    public ShopGroupDTO findById(String shopGroupId) {
+        return wrapCatch(
+                () -> shopGroupRepository.findById(shopGroupId)
+                        .map(shopGroupMapper::toDTO)
+                        .orElseThrow(
+                                ()->ShopGroupNotFound.notFoundById()
+                                        .errorCode(-2)
+                                        .shopGroupId(shopGroupId)
+                                        .build()
+                        ),
+                -3
         );
     }
 }

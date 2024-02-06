@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.controller;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,5 +84,97 @@ public class ShopGroupControllerTest {
         );
         assertThat(shopGroupCreationResult).isNotNull();
         assertThat(shopGroupCreationResult.getPayload()).isNotEmpty();
+    }
+
+    @Test
+    public void createShopGroupFindByIdOK() {
+        var shopGroupCreationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.shopGroupControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewShopGroupDTO
+                                .builder()
+                                .name("shopGroup1")
+                                .description("shopGroup1 description")
+                                .userEmails(
+                                        Set.of(
+                                                "user1@slac.stanford.edu",
+                                                "user2@slac.stanford.edu"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(shopGroupCreationResult).isNotNull();
+        assertThat(shopGroupCreationResult.getPayload()).isNotEmpty();
+
+        var getShopGroupResult = assertDoesNotThrow(
+                () -> testControllerHelperService.shopGroupControllerFindById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        shopGroupCreationResult.getPayload()
+                )
+        );
+        assertThat(getShopGroupResult.getPayload()).isNotNull();
+        assertThat(getShopGroupResult.getPayload().name()).isEqualTo("shopGroup1");
+    }
+
+    @Test
+    public void findAllOK() {
+        var shopGroupCreation1Result = assertDoesNotThrow(
+                () -> testControllerHelperService.shopGroupControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewShopGroupDTO
+                                .builder()
+                                .name("shopGroup1")
+                                .description("shopGroup1 description")
+                                .userEmails(
+                                        Set.of(
+                                                "user1@slac.stanford.edu",
+                                                "user2@slac.stanford.edu"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(shopGroupCreation1Result).isNotNull();
+        assertThat(shopGroupCreation1Result.getPayload()).isNotEmpty();
+
+        var shopGroupCreation2Result = assertDoesNotThrow(
+                () -> testControllerHelperService.shopGroupControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewShopGroupDTO
+                                .builder()
+                                .name("shopGroup2")
+                                .description("shopGroup2 description")
+                                .userEmails(
+                                        Set.of(
+                                                "user1@slac.stanford.edu",
+                                                "user3@slac.stanford.edu"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(shopGroupCreation2Result).isNotNull();
+        assertThat(shopGroupCreation2Result.getPayload()).isNotEmpty();
+
+        var findAllResult = assertDoesNotThrow(
+                () ->testControllerHelperService.shopGroupControllerFindAll(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(findAllResult.getErrorCode()).isEqualTo(0);
+        assertThat(findAllResult.getPayload())
+                .extracting(ShopGroupDTO::name)
+                .contains("shopGroup1", "shopGroup2");
     }
 }

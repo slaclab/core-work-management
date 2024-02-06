@@ -6,9 +6,8 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,10 +16,12 @@ import static java.util.Collections.emptySet;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        componentModel = "spring"
+        componentModel = MappingConstants.ComponentModel.SPRING
 )
 public abstract class ShopGroupMapper {
-    AuthMapper authMapper;
+    @Autowired
+    private AuthMapper authMapper;
+    @Autowired
     PeopleGroupService peopleGroupService;
     /**
      * Map a shop group to a DTO

@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -70,12 +71,39 @@ public class TestControllerHelperService {
      * @return the list of shop groups
      * @throws Exception the exception
      */
-    public ApiResultResponse<ShopGroupDTO> shopGroupControllerGetAllShop(
+    public ApiResultResponse<List<ShopGroupDTO>> shopGroupControllerFindAll(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo
     ) throws Exception {
         var requestBuilder = get("/v1/shop-group")
+                .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Get shop group by id
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the list of shop groups
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<ShopGroupDTO> shopGroupControllerFindById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id
+    ) throws Exception {
+        var requestBuilder = get("/v1/shop-group/{id}", id)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
