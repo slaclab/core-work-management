@@ -53,6 +53,12 @@ management:
 
 # swagger-ui custom path
 springdoc:
+  title: 'Work Management API'
+  description: 'Work Management API for the Accelerator Division at SLAC National Accelerator Laboratory'
+  contact:
+    name: 'API Support'
+    url: 'https://confluence.slac.stanford.edu/display/EEDWAD/EED+Web+Applications'
+    email: 'bisegni@sac.stanford.edu'
   swagger-ui:
     enabled: false
   api-docs:

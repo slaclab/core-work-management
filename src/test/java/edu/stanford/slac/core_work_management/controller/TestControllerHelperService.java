@@ -144,6 +144,16 @@ public class TestControllerHelperService {
         );
     }
 
+    /**
+     * Find location by id
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param locationId    the location id
+     * @return the location dto
+     * @throws Exception the exception
+     */
     public ApiResultResponse<LocationDTO> locationControllerFindById(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
@@ -152,6 +162,35 @@ public class TestControllerHelperService {
     ) throws Exception {
         var requestBuilder = get("/v1/location/{locationId}", locationId)
                 .accept(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find all locations
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param filter        the filter
+     * @return the list of locations
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<LocationDTO>> locationControllerFindAll(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> filter
+    ) throws Exception {
+        var requestBuilder = get("/v1/location")
+                .accept(MediaType.APPLICATION_JSON);
+        filter.ifPresent(s -> requestBuilder.param("filter", s));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

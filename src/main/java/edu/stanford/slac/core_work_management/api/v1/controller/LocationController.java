@@ -5,9 +5,11 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -15,6 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
@@ -34,6 +39,7 @@ public class LocationController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResultResponse<String> createNew(
             Authentication authentication,
+            @Parameter(description = "The new location to create")
             @Valid @RequestBody NewLocationDTO newLocationDTO
     ) {
         // check for auth
@@ -60,6 +66,7 @@ public class LocationController {
     @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<LocationDTO> findLocationById(
             Authentication authentication,
+            @Parameter(description = "The id of the location to find")
             @PathVariable("locationId") String locationId
     ) {
         // check for auth
@@ -69,20 +76,49 @@ public class LocationController {
                         .errorDomain("LocationController::findLocationById")
                         .build(),
                 // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be root
-                () -> authService.checkForRoot(authentication),
-                // or a reader
-                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                        authentication,
-                        // only admin can update the domain
-                        AuthorizationTypeDTO.Read,
-                        // domain for all the application
-                        "/cwm"
-                )
+                () -> authService.checkAuthentication(authentication)
+//                // should be root
+//                () -> authService.checkForRoot(authentication),
+//                // or a reader
+//                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+//                        authentication,
+//                        // only admin can update the domain
+//                        AuthorizationTypeDTO.Read,
+//                        // domain for all the application
+//                        "/cwm"
+//                )
         );
         return ApiResultResponse.of(
                 locationService.findById(locationId)
+        );
+    }
+
+    @GetMapping(
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(summary = "Find all locations")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResultResponse<List<LocationDTO>> findAllLocations(
+            Authentication authentication,
+            @Parameter(description = "The filter for the location")
+            @RequestParam(value = "filter") Optional<String> filter
+    ) {
+        // check authentication
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LocationController::findAllLocations")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication)
+        );
+        return ApiResultResponse.of(
+                locationService.findAll(
+                        LocationFilterDTO
+                                .builder()
+                                .text(filter.orElse(null))
+                                .build()
+                )
         );
     }
 }
