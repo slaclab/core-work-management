@@ -1,11 +1,7 @@
 package edu.stanford.slac.core_work_management.controller;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
-<<<<<<< Updated upstream
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
-import edu.stanford.slac.core_work_management.model.Location;
-=======
->>>>>>> Stashed changes
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

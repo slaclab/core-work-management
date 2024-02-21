@@ -338,7 +338,7 @@ public class LocationControllerTest {
                 () -> testControllerHelperService.locationControllerFindById(
                         mockMvc,
                         status().isUnauthorized(),
-                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty(),
                         createNewLocationResult.getPayload()
                 )
         );
