@@ -186,11 +186,13 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            Optional<String> filter
+            Optional<String> filter,
+            Optional<String> externalId
     ) throws Exception {
         var requestBuilder = get("/v1/location")
                 .accept(MediaType.APPLICATION_JSON);
         filter.ifPresent(s -> requestBuilder.param("filter", s));
+        externalId.ifPresent(s -> requestBuilder.param("externalId", s));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

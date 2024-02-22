@@ -289,8 +289,9 @@ public class LocationControllerTest {
         var allLocationsResult = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerFindAll(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
@@ -305,7 +306,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
-                        Optional.of("1")
+                        Optional.of("1"),
+                        Optional.empty()
                 )
         );
         assertThat(allLocationsResult.getErrorCode()).isEqualTo(0);
@@ -395,5 +397,20 @@ public class LocationControllerTest {
         assertThat(fullLocationFound.getPayload()).isNotNull();
         assertThat(fullLocationFound.getPayload().id()).isEqualTo(createNewLocationResult.getPayload());
         assertThat(fullLocationFound.getPayload().name()).isEqualTo(firstLocation.getName());
+
+        var findAllForExternalId = assertDoesNotThrow(
+                () -> testControllerHelperService.locationControllerFindAll(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.of(externalLocationIdentifier)
+                )
+        );
+        assertThat(findAllForExternalId.getPayload()).isNotNull();
+        assertThat(findAllForExternalId.getPayload())
+                .hasSize(1)
+                .extracting(LocationDTO::id)
+                .contains(createNewLocationResult.getPayload());
     }
 }

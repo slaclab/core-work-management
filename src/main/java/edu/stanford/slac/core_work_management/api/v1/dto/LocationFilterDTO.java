@@ -9,6 +9,10 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define a new activity for an work-plan")
-public record LocationFilterDTO (
-    String text
-){}
+public record LocationFilterDTO(
+        @Schema(description = "Filter for the name and description of the location")
+        String text,
+        @Schema(description = "Filter for the external id of the location")
+        String externalId
+) {
+}

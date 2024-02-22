@@ -1,3 +1,20 @@
+/*
+ * -----------------------------------------------------------------------------
+ * Title      : LocationController
+ * ----------------------------------------------------------------------------
+ * File       : LocationController.java
+ * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
+ * ----------------------------------------------------------------------------
+ * This file is part of core-work-management. It is subject to
+ * the license terms in the LICENSE.txt file found in the top-level directory
+ * of this distribution and at:
+ * <a href="https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html"/>.
+ * No part of core-work-management, including this file, may be
+ * copied, modified, propagated, or distributed except according to the terms
+ *  contained in the LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ */
+
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
@@ -77,16 +94,7 @@ public class LocationController {
                         .build(),
                 // should be authenticated
                 () -> authService.checkAuthentication(authentication)
-//                // should be root
-//                () -> authService.checkForRoot(authentication),
-//                // or a reader
-//                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-//                        authentication,
-//                        // only admin can update the domain
-//                        AuthorizationTypeDTO.Read,
-//                        // domain for all the application
-//                        "/cwm"
-//                )
+                // should be root
         );
         return ApiResultResponse.of(
                 locationService.findById(locationId)
@@ -97,11 +105,12 @@ public class LocationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Find all locations")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     public ApiResultResponse<List<LocationDTO>> findAllLocations(
             Authentication authentication,
             @Parameter(description = "The filter for the location")
-            @RequestParam(value = "filter") Optional<String> filter
+            @RequestParam(value = "filter") Optional<String> filter,
+            @RequestParam(value = "externalId") Optional<String> externalId
     ) {
         // check authentication
         assertion(
@@ -117,6 +126,7 @@ public class LocationController {
                         LocationFilterDTO
                                 .builder()
                                 .text(filter.orElse(null))
+                                .externalId(externalId.orElse(null))
                                 .build()
                 )
         );
