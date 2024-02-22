@@ -304,7 +304,7 @@ public class LocationControllerTest {
         allLocationsResult = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerFindAll(
                         mockMvc,
-                        status().isCreated(),
+                        status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         Optional.of("1"),
                         Optional.empty()
