@@ -4,11 +4,13 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryElementDTO;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
+@Log4j2
 @Repository
 @AllArgsConstructor
 public class ExternalLocationRepository {
@@ -21,6 +23,7 @@ public class ExternalLocationRepository {
      * @return the location info
      */
     public InventoryElementDTO getLocationInfo(String externalLocationIdentifier) {
+        log.info("Get location info from the external inventory for the location id: {}", externalLocationIdentifier);
         String[] domainElementIds = externalLocationIdentifier.split("/");
         assertion(
                 ()->domainElementIds.length==2,
