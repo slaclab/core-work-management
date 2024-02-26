@@ -34,6 +34,8 @@ public class CisApiConfig {
 
         // Set the message converter to the RestTemplate
         serviceRestTemplate.setMessageConverters(List.of(converter));
-        return new InventoryElementControllerApi(new ApiClient(serviceRestTemplate));
+        ApiClient newApiClient = new ApiClient(serviceRestTemplate);
+        newApiClient.setBasePath(cisBackendUrl);
+        return new InventoryElementControllerApi(newApiClient);
     }
 }
