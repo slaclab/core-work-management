@@ -35,7 +35,6 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
                 Criteria.where("name").is(normalizedActivityTypeName)
         );
         Update update = new Update()
-                .setOnInsert("id", UUID.randomUUID().toString())
                 .setOnInsert("name", normalizedActivityTypeName)
                 .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
