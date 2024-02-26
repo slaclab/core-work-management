@@ -27,6 +27,7 @@ public class CisApiConfig {
 
     @Bean
     public InventoryElementControllerApi inventoryElementControllerApi(RestTemplate serviceRestTemplate) {
+        log.info("Configure CIS client to URL: {}", cisBackendUrl);
         // Create a message converter with your custom ObjectMapper
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setObjectMapper(objectMapper);

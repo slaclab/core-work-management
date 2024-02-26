@@ -1,8 +1,10 @@
 package edu.stanford.slac.core_work_management.controller;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
@@ -263,6 +265,60 @@ public class LocationControllerTest {
     }
 
     @Test
+    public void createMultipleStandaloneLocationAndFindAll() {
+        String[] idsCreated = new String[10];
+        for (int i = 0; i < 10; i++) {
+            int finalI = i;
+            var result = assertDoesNotThrow(
+                    () -> testControllerHelperService.locationControllerCreateNew(
+                            mockMvc,
+                            status().isCreated(),
+                            Optional.of("user1@slac.stanford.edu"),
+                            NewLocationDTO.builder()
+                                    .name("location-%d".formatted((finalI)))
+                                    .description("location-%d description".formatted((finalI)))
+                                    .locationManagerUserId("user1@slac.stanford.edu")
+                                    .locationShopGroupId(shopGroupIds.getFirst())
+                                    .build()
+                    )
+            );
+            assertThat(result).isNotNull();
+            idsCreated[i] = result.getPayload();
+        }
+
+        var allLocationsResult = assertDoesNotThrow(
+                () -> testControllerHelperService.locationControllerFindAll(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.empty()
+                )
+        );
+        assertThat(allLocationsResult.getErrorCode()).isEqualTo(0);
+        assertThat(allLocationsResult.getPayload())
+                .hasSize(10)
+                .extracting(LocationDTO::id)
+                .contains(idsCreated);
+
+        allLocationsResult = assertDoesNotThrow(
+                () -> testControllerHelperService.locationControllerFindAll(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("1"),
+                        Optional.empty()
+                )
+        );
+        assertThat(allLocationsResult.getErrorCode()).isEqualTo(0);
+        assertThat(allLocationsResult.getPayload())
+                .hasSize(1)
+                .extracting(LocationDTO::id)
+                .contains(idsCreated[1]);
+    }
+
+
+    @Test
     public void failCreateNewStandaloneLocationAndFindByIdWithUnauthorizedUser() {
         var createNewLocationResult = assertDoesNotThrow(
                 () -> testControllerHelperService.locationControllerCreateNew(
@@ -284,7 +340,7 @@ public class LocationControllerTest {
                 () -> testControllerHelperService.locationControllerFindById(
                         mockMvc,
                         status().isUnauthorized(),
-                        Optional.of("user2@slac.stanford.edu"),
+                        Optional.empty(),
                         createNewLocationResult.getPayload()
                 )
         );
@@ -341,5 +397,20 @@ public class LocationControllerTest {
         assertThat(fullLocationFound.getPayload()).isNotNull();
         assertThat(fullLocationFound.getPayload().id()).isEqualTo(createNewLocationResult.getPayload());
         assertThat(fullLocationFound.getPayload().name()).isEqualTo(firstLocation.getName());
+
+        var findAllForExternalId = assertDoesNotThrow(
+                () -> testControllerHelperService.locationControllerFindAll(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.empty(),
+                        Optional.of(externalLocationIdentifier)
+                )
+        );
+        assertThat(findAllForExternalId.getPayload()).isNotNull();
+        assertThat(findAllForExternalId.getPayload())
+                .hasSize(1)
+                .extracting(LocationDTO::id)
+                .contains(createNewLocationResult.getPayload());
     }
 }

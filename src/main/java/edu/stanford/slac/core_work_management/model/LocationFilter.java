@@ -7,4 +7,5 @@ import lombok.Data;
 @Builder
 public class LocationFilter {
     public String text;
+    public String externalId;
 }
