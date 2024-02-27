@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +19,7 @@ import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
 @Service()
 public class TestControllerHelperService {
     private final JWTHelper jwtHelper;
@@ -202,6 +200,96 @@ public class TestControllerHelperService {
                 requestBuilder
         );
     }
+
+    /**
+     * Create new work
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param newWorkDTO    the new work dto
+     * @return the id of the newly created work
+     */
+    public ApiResultResponse<String> workControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewWorkDTO newWorkDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/work")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(newWorkDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find a work by id
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the i dof the work to find
+     * @return the work
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<WorkDTO> workControllerFindById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/{workId}", workId)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Create new work activity
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the work id
+     * @param newActivityDTO the new activity dto
+     * @return the work dto
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<WorkDTO> workControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId,
+            NewActivityDTO newActivityDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/work/{workId}/activity", workId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(newActivityDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
 
     public <T> ApiResultResponse<T> executeHttpRequest(
             TypeReference<ApiResultResponse<T>> typeRef,

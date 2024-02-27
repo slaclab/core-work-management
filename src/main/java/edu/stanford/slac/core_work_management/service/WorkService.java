@@ -1,6 +1,10 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
@@ -16,6 +20,8 @@ import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -24,14 +30,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 @Service
 @Log4j2
 @Validated
 @AllArgsConstructor
 public class WorkService {
+    AuthService authService;
     WorkMapper workMapper;
     WorkRepository workRepository;
     WorkTypeRepository workTypeRepository;
@@ -105,13 +115,32 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
+    @Transactional
     public String createNew(NewWorkDTO newWorkDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Work workToSave = workMapper.toModel(newWorkDTO);
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
                 -1
         );
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
+        if(authentication!=null) {
+            // authorize creator to be admin
+            authService.addNewAuthorization(
+                    NewAuthorizationDTO.builder()
+                            .authorizationType(Admin)
+                            .owner(savedWork.getCreatedBy())
+                            .ownerType(User)
+                            .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
+                            .build()
+            );
+            log.info(
+                    "User '{}' has been granted as admin for work {}[{}]",
+                    savedWork.getCreatedBy(),
+                    savedWork.getCreatedBy(),
+                    savedWork.getId()
+            );
+        }
         return savedWork.getId();
     }
 

@@ -22,17 +22,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.ActivityDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +48,7 @@ import java.util.Optional;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.any;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 /**
  * -----------------------------------------------------------------------------
@@ -64,25 +68,37 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
  * ----------------------------------------------------------------------------
  **/
 
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "/v1/work")
+@AllArgsConstructor
+@RestController
+@RequestMapping("/v1/work")
+@Schema(description = "Set of api for the work management")
 public class WorkController {
+    private final AuthService authService;
+    private final WorkService workService;
 
-    @Operation(summary = "Create a new work")
+    @Operation(summary = "Create a new work and return his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Work saved")
     })
     @ResponseStatus(HttpStatus.CREATED)
-    @GetMapping(
+    @PostMapping(
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    public ApiResultResponse<WorkDTO> createNew(
+    public ApiResultResponse<String> createNew(
             Authentication authentication,
-            @Valid @RequestBody NewWorkDTO newWorkDTO) {
-        return ApiResultResponse.of(null);
+            @Valid @RequestBody NewWorkDTO newWorkDTO
+    ) {
+        // check for auth
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LocationController::createNew")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication)
+        );
+        return ApiResultResponse.of(workService.createNew(newWorkDTO));
     }
 
     @Operation(summary = "Get work by id")
@@ -95,9 +111,18 @@ public class WorkController {
     public ApiResultResponse<WorkDTO> findById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
-            @PathVariable("workId") String id
+            @PathVariable String workId
     ) {
-        return ApiResultResponse.of(null);
+        // check for auth
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LocationController::createNew")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication)
+        );
+        return ApiResultResponse.of(workService.findWorkById(workId));
     }
 
     @Operation(summary = "Create a new work activity")
@@ -110,13 +135,29 @@ public class WorkController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    public ApiResultResponse<ActivityDTO> createNew(
+    public ApiResultResponse<String> createNew(
             Authentication authentication,
             @Parameter(description = "Is the work id for wich needs to be creates the activity", required = true)
             @PathVariable("workId") String workId,
             @Parameter(description = "The new activity to create", required = true)
             @Valid @RequestBody NewActivityDTO newActivityDTO) {
-        return ApiResultResponse.of(null);
+        // check for auth
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("LocationController::createNew")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // should be one of these
+                () -> any(
+                        // a root users
+                        () -> authService.checkForRoot(authentication),
+                        // or a user that has the right to write on the work
+                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(authentication, AuthorizationTypeDTO.Write, WORK_AUTHORIZATION_TEMPLATE.formatted(workId))
+                )
+        );
+        return ApiResultResponse.of(workService.createNew(workId, newActivityDTO));
     }
 
     @Operation(summary = "find all element that respect the criteria")
