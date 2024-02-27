@@ -21,7 +21,8 @@ public class Location {
      * The parent location id
      */
     @Field(targetType = FieldType.OBJECT_ID)
-    String parentId;
+    @Builder.Default
+    String parentId = null;
     /**
      * The name of the location
      */
