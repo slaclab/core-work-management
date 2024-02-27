@@ -17,7 +17,12 @@
 
 package edu.stanford.slac.core_work_management.controller;
 
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.HelperService;
 import edu.stanford.slac.core_work_management.service.LocationService;
@@ -72,6 +77,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorkControllerTest {
+    @Autowired
+    AppProperties appProperties;
+    @Autowired
+    AuthService authService;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -197,12 +206,12 @@ public class WorkControllerTest {
                         )
                 )
         );
-        // create activity type for work 1
-        testActivityTypeIds.put(testWorkTypeIds.get(0), new ArrayList<>());
-        testActivityTypeIds.get(testWorkTypeIds.get(0)).add(
+        // create activity type for work 2
+        testActivityTypeIds.put(testWorkTypeIds.get(1), new ArrayList<>());
+        testActivityTypeIds.get(testWorkTypeIds.get(1)).add(
                 assertDoesNotThrow(
                         () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(0),
+                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 1 work type 2")
@@ -211,10 +220,10 @@ public class WorkControllerTest {
                         )
                 )
         );
-        testActivityTypeIds.get(testWorkTypeIds.get(0)).add(
+        testActivityTypeIds.get(testWorkTypeIds.get(1)).add(
                 assertDoesNotThrow(
                         () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(0),
+                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 2 work type 2")
@@ -229,6 +238,12 @@ public class WorkControllerTest {
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Activity.class);
+        mongoTemplate.remove(new Query(), Authorization.class);
+
+        appProperties.getRootUserList().clear();
+        appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        authService.updateRootUser();
+
     }
 
     @Test
@@ -249,5 +264,130 @@ public class WorkControllerTest {
                         )
         );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+    }
+
+    @Test
+    public void testWorkFindById() {
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        ()->testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        var fullWorkDTO = assertDoesNotThrow(
+                ()->testControllerHelperService.workControllerFindById(
+                mockMvc,
+                status().isOk(),
+                Optional.of("user1@slac.stanford.edu"),
+                newWorkIdResult.getPayload()
+            )
+        );
+        assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
+        assertThat(fullWorkDTO.getPayload()).isNotNull();
+        assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+    }
+
+    @Test
+    public void testCreateActivity() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        ()->testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        var newActivityIdResult =
+                assertDoesNotThrow(
+                        ()->testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                NewActivityDTO.builder()
+                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.get(0)).get(0))
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newActivityIdResult.getPayload()).isNotNull();
+    }
+
+    @Test
+    public void testCreateActivityExceptionOnWrongActivityType() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        ()->testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        var exceptionForWrongActivityType =
+                assertThrows(
+                        ControllerLogicException.class,
+                        ()->testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().is5xxServerError(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                NewActivityDTO.builder()
+                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.get(1)).get(0))
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(exceptionForWrongActivityType.getErrorCode()).isEqualTo(-3);
+
+        var exceptionForNotFoundActivityType =
+                assertThrows(
+                        ActivityTypeNotFound.class,
+                        ()->testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().is4xxClientError(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                NewActivityDTO.builder()
+                                        .activityTypeId("not-found-activity-type-id")
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(exceptionForNotFoundActivityType.getErrorCode()).isEqualTo(-2);
     }
 }

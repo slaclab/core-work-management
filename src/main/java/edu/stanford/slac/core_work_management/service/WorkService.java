@@ -8,6 +8,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
+import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
 import edu.stanford.slac.core_work_management.model.Work;
@@ -32,8 +33,7 @@ import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 @Service
@@ -227,6 +227,25 @@ public class WorkService {
                                 .build()
                 ),
                 -1
+        );
+
+        // check activity type id is permitted for the type of the work
+        assertion(
+                // find the activity and check if the work type is the same
+                () -> activityTypeRepository.findById(newActivityDTO.activityTypeId())
+                        .orElseThrow(
+                                ()-> ActivityTypeNotFound
+                                        .notFoundById()
+                                        .errorCode(-2)
+                                        .activityTypeId(newActivityDTO.activityTypeId())
+                                        .build()
+                        ).getWorkTypeId().equals(work.getWorkTypeId()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("The activity type is not permitted by the work %s".formatted(work.getTitle()))
+                        .errorDomain("WorkService::createNew(String, NewActivityDTO)")
+                        .build()
         );
 
         var newActivity = workMapper.toModel(newActivityDTO, workId);

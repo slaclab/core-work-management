@@ -269,7 +269,7 @@ public class TestControllerHelperService {
      * @return the work dto
      * @throws Exception the exception
      */
-    public ApiResultResponse<WorkDTO> workControllerCreateNew(
+    public ApiResultResponse<String> workControllerCreateNew(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
