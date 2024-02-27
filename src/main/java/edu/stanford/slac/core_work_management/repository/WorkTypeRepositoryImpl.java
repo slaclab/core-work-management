@@ -25,22 +25,22 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
 
     @Override
     public String ensureWorkType(WorkType workType) {
-        String normalizedActivityTypeName = normalizeStringWithReplace(
+        String normalizedTitle = normalizeStringWithReplace(
                 workType.getTitle(),
-                " ",
-                "-"
+                "",
+                ""
         );
 
         Query query = new Query(
-                Criteria.where("name").is(normalizedActivityTypeName)
+                Criteria.where("title").is(normalizedTitle)
         );
         Update update = new Update()
-                .setOnInsert("name", normalizedActivityTypeName)
+                .setOnInsert("title", normalizedTitle)
+                .setOnInsert("description", workType.getDescription())
                 .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())
-                .setOnInsert("lastModifiedDate", LocalDateTime.now())
-                .setOnInsert("version", 0);
+                .setOnInsert("lastModifiedDate", LocalDateTime.now());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
 
         WorkType workTypeCreated = mongoTemplate.findAndModify(

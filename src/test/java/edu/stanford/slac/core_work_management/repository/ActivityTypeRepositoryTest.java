@@ -48,13 +48,13 @@ public class ActivityTypeRepositoryTest {
     }
     @Test
     public void testEnsureActivityTypeWithMultipleThreads() throws InterruptedException, ExecutionException {
-        int numberOfThreads = 10; // Number of concurrent threads
+        int numberOfThreads = 20; // Number of concurrent threads
         List<Future<String>> futures;
         try (ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads)) {
             List<Callable<String>> tasks = new ArrayList<>();
             ActivityType activityType = ActivityType.builder().title("Test").build();
 
-            for (int i = 0; i < numberOfThreads; i++) {
+            for (int i = 0; i < numberOfThreads*10; i++) {
                 tasks.add(() -> activityTypeRepository.ensureActivityType("wId", activityType));
             }
 

@@ -23,13 +23,17 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
     SecurityAuditorAware securityAuditorAware;
     @Override
     public String ensureActivityType(String workTypeId, ActivityType activityType) {
+        String normalizedTitle = normalizeStringWithReplace(
+                activityType.getTitle(),
+                "",
+                ""
+        );
         Query query = new Query(
-                Criteria.where("name").is(activityType.getTitle())
+                Criteria.where("title").is(normalizedTitle)
         );
         Update update = new Update()
-                .setOnInsert("id", UUID.randomUUID().toString())
                 .setOnInsert("workTypeId", workTypeId)
-                .setOnInsert("title", activityType.getTitle())
+                .setOnInsert("title", normalizedTitle)
                 .setOnInsert("description", activityType.getDescription())
                 .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))

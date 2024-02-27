@@ -232,4 +232,19 @@ public class LocationServiceTest {
         violations = validator.validate(newLocationDTO);
         assertFalse(violations.isEmpty());
     }
+
+    @Test
+    public void testErrorOrParentId() {
+        // Test when externalLocationIdentifier is null and name and description are not empty
+        NewLocationDTO newLocationDTO = new NewLocationDTO(
+                "",
+                "test",
+                "test",
+                null,
+                "user1@slac.stanford.edu",
+                shopGroupIds.getFirst()
+        );
+        Set<ConstraintViolation<NewLocationDTO>> violations = validator.validate(newLocationDTO);
+        assertThat(violations).hasSize(2);
+    }
 }
