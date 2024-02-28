@@ -72,7 +72,7 @@ public class Work {
      * The identifier of the location associated with the work.
      * This field links the work to a specific location, identified by its ID.
      */
-    private WorkLocation location;
+    private String locationId;
 
     /**
      * The identifier of the user assigned to the work.

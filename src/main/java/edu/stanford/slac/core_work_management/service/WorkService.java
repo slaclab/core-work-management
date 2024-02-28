@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 @Service
@@ -47,6 +48,7 @@ public class WorkService {
     WorkTypeRepository workTypeRepository;
     ActivityTypeRepository activityTypeRepository;
     ActivityRepository activityRepository;
+    LocationService locationService;
 
     /**
      * Create a new work type
@@ -118,6 +120,10 @@ public class WorkService {
     @Transactional
     public String createNew(NewWorkDTO newWorkDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // this will fire exception in case the location has not been found
+        LocationDTO locationDTO = locationService.findById(newWorkDTO.locationId());
+
         Work workToSave = workMapper.toModel(newWorkDTO);
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -141,6 +147,26 @@ public class WorkService {
                     savedWork.getId()
             );
         }
+
+        // authorize location manager as admin
+        authService.addNewAuthorization(
+                NewAuthorizationDTO.builder()
+                        .authorizationType(Admin)
+                        .owner(locationDTO.locationManagerUserId())
+                        .ownerType(User)
+                        .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
+                        .build()
+        );
+
+//        // authorize shop group to
+//        authService.addNewAuthorization(
+//                NewAuthorizationDTO.builder()
+//                        .authorizationType(Admin)
+//                        .owner(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()))
+//                        .ownerType(User)
+//                        .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
+//                        .build()
+//        );
         return savedWork.getId();
     }
 
@@ -206,6 +232,27 @@ public class WorkService {
                 ),
                 -1
         );
+    }
+
+    /**
+     * Return the shop group id by the work id
+     *
+     * @param workId the id of the work
+     * @return the shop group id
+     */
+    public String getShopGroupIdByWorkId(String workId) {
+        String locationId =  wrapCatch(
+                () -> workRepository.findById(workId).map(Work::getLocationId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+
+        return locationService.findById(locationId).locationShopGroupId();
     }
 
     /**

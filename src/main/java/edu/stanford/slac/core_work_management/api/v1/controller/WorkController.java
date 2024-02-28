@@ -28,6 +28,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -75,7 +76,7 @@ import static edu.stanford.slac.core_work_management.config.AuthorizationStringC
 public class WorkController {
     private final AuthService authService;
     private final WorkService workService;
-
+    private final ShopGroupService shopGroupService;
     @Operation(summary = "Create a new work and return his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Work saved")
@@ -141,6 +142,7 @@ public class WorkController {
             @PathVariable("workId") String workId,
             @Parameter(description = "The new activity to create", required = true)
             @Valid @RequestBody NewActivityDTO newActivityDTO) {
+
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
@@ -154,7 +156,13 @@ public class WorkController {
                         // a root users
                         () -> authService.checkForRoot(authentication),
                         // or a user that has the right to write on the work
-                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(authentication, AuthorizationTypeDTO.Write, WORK_AUTHORIZATION_TEMPLATE.formatted(workId))
+                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(authentication, AuthorizationTypeDTO.Write, WORK_AUTHORIZATION_TEMPLATE.formatted(workId)),
+                        // user of the shop group are always treated as admin on the work
+                        ()-> shopGroupService.checkContainsAUserEmail(
+                                // fire not found work exception
+                                workService.getShopGroupIdByWorkId(workId),
+                                authentication.getCredentials().toString()
+                        )
                 )
         );
         return ApiResultResponse.of(workService.createNew(workId, newActivityDTO));

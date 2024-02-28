@@ -23,5 +23,13 @@ package edu.stanford.slac.core_work_management.config;
 
  */
 public class AuthorizationStringConfig {
+    /**
+     * The work authorization template
+     */
     public static final String WORK_AUTHORIZATION_TEMPLATE = "/cwm/work/%s";
+    /**
+     * The fake user for the shop group id to be used in the authorization check
+     * in this way we can use the shop group id as an user
+     */
+    public static final String SHOP_GROUP_FAKE_USER_TEMPLATE = "%s@shopgroup.cws.slac.stanford.edu";
 }
