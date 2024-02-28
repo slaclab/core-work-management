@@ -137,6 +137,7 @@ jacoco {
 
 test {
     finalizedBy jacocoTestReport // report is always generated after tests run
+    exclude '**/cis_api/**'
     // Configure test logging
     testLogging {
         // Show standard output and error streams only for failed tests

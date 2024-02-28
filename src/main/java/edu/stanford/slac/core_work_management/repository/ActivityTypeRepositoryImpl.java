@@ -1,7 +1,9 @@
 package edu.stanford.slac.core_work_management.repository;
 
+import com.mongodb.DuplicateKeyException;
 import edu.stanford.slac.core_work_management.config.SecurityAuditorAware;
 import edu.stanford.slac.core_work_management.model.ActivityType;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -21,8 +23,10 @@ import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalize
 public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom {
     MongoTemplate mongoTemplate;
     SecurityAuditorAware securityAuditorAware;
+
     @Override
     public String ensureActivityType(String workTypeId, ActivityType activityType) {
+        ActivityType activityTypeCreated = null;
         String normalizedTitle = normalizeStringWithReplace(
                 activityType.getTitle(),
                 "",
@@ -40,13 +44,17 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
                 .setOnInsert("createdDate", LocalDateTime.now())
                 .setOnInsert("lastModifiedDate", LocalDateTime.now());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
-
-        ActivityType activityTypeCreated = mongoTemplate.findAndModify(
-                query,
-                update,
-                options,
-                ActivityType.class
-        );
+        try {
+            activityTypeCreated = mongoTemplate.findAndModify(
+                    query,
+                    update,
+                    options,
+                    ActivityType.class
+            );
+        } catch (DuplicateKeyException e) {
+            // The insert failed because the document already exists, so fetch and return it
+            activityTypeCreated = mongoTemplate.findOne(query, ActivityType.class);
+        }
         return Objects.requireNonNull(activityTypeCreated).getId();
     }
 }

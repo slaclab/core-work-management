@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.repository;
 
+import com.mongodb.DuplicateKeyException;
 import edu.stanford.slac.core_work_management.config.SecurityAuditorAware;
 import edu.stanford.slac.core_work_management.model.ActivityType;
 import edu.stanford.slac.core_work_management.model.WorkType;
@@ -25,6 +26,7 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
 
     @Override
     public String ensureWorkType(WorkType workType) {
+        WorkType workTypeCreated = null;
         String normalizedTitle = normalizeStringWithReplace(
                 workType.getTitle(),
                 "",
@@ -42,13 +44,17 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
                 .setOnInsert("createdDate", LocalDateTime.now())
                 .setOnInsert("lastModifiedDate", LocalDateTime.now());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
-
-        WorkType workTypeCreated = mongoTemplate.findAndModify(
-                query,
-                update,
-                options,
-                WorkType.class
-        );
+        try {
+            workTypeCreated = mongoTemplate.findAndModify(
+                    query,
+                    update,
+                    options,
+                    WorkType.class
+            );
+        } catch (DuplicateKeyException e) {
+            // The insert failed because the document already exists, so fetch and return it
+            workTypeCreated = mongoTemplate.findOne(query, WorkType.class);
+        }
         return Objects.requireNonNull(workTypeCreated).getId();
     }
 }
