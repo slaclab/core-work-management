@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,5 +33,11 @@ public record NewWorkDTO (
                 """
         )
         @NotEmpty(message = "Location is required")
-        String locationId
+        String locationId,
+        @Schema(description =
+                """
+                The list of the user that are assigned to the work plan
+                """
+        )
+        List<String> assignedTo
 ){}

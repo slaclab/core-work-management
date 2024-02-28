@@ -28,7 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
@@ -119,6 +122,8 @@ public class WorkService {
      */
     @Transactional
     public String createNew(NewWorkDTO newWorkDTO) {
+        // contain the set of all user that will become admin for this new work
+        Set<String> adminUserList = new HashSet<>();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // this will fire exception in case the location has not been found
@@ -131,42 +136,37 @@ public class WorkService {
         );
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
         if(authentication!=null) {
-            // authorize creator to be admin
-            authService.addNewAuthorization(
-                    NewAuthorizationDTO.builder()
-                            .authorizationType(Admin)
-                            .owner(savedWork.getCreatedBy())
-                            .ownerType(User)
-                            .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
-                            .build()
-            );
-            log.info(
-                    "User '{}' has been granted as admin for work {}[{}]",
-                    savedWork.getCreatedBy(),
-                    savedWork.getCreatedBy(),
-                    savedWork.getId()
-            );
+            adminUserList.add(savedWork.getCreatedBy());
         }
 
         // authorize location manager as admin
-        authService.addNewAuthorization(
-                NewAuthorizationDTO.builder()
-                        .authorizationType(Admin)
-                        .owner(locationDTO.locationManagerUserId())
-                        .ownerType(User)
-                        .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
-                        .build()
-        );
+        adminUserList.add(locationDTO.locationManagerUserId());
 
-//        // authorize shop group to
-//        authService.addNewAuthorization(
-//                NewAuthorizationDTO.builder()
-//                        .authorizationType(Admin)
-//                        .owner(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()))
-//                        .ownerType(User)
-//                        .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
-//                        .build()
-//        );
+        // add shop group as virtual user admin
+        adminUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()));
+        // add assigned to users
+        if(newWorkDTO.assignedTo() != null) {
+            adminUserList.addAll(newWorkDTO.assignedTo());
+        }
+
+        adminUserList.forEach(
+                (user)->{
+                    authService.addNewAuthorization(
+                            NewAuthorizationDTO.builder()
+                                    .authorizationType(Admin)
+                                    .owner(user)
+                                    .ownerType(User)
+                                    .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
+                                    .build()
+                    );
+                }
+        );
+        log.info(
+                "Users '{}' has been granted as admin for work {}[{}]",
+                String.join(",", adminUserList),
+                savedWork.getTitle(),
+                savedWork.getId()
+        );
         return savedWork.getId();
     }
 

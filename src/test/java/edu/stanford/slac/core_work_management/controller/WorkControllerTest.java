@@ -610,5 +610,44 @@ public class WorkControllerTest {
         assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
     }
 
+    @Test
+    public void testCreateActivityByAssignedToUsers() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                // this should be admin because is the user that created the work
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // the location manager is user2@slac.stanford.edu and also this should be admin
+                                        // the group contains user2 and user3 and all of them should be admin
+                                        .locationId(testLocationIds.getFirst())
+                                        .workTypeId(testWorkTypeIds.getFirst())
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .assignedTo(List.of("user3@slac.stanford.edu"))
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
 
+        var newActivityIdResultByUser3 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user3@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                NewActivityDTO.builder()
+                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
+        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
+    }
 }
