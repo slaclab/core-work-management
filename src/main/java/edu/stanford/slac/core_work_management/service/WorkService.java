@@ -141,7 +141,6 @@ public class WorkService {
 
         // authorize location manager as admin
         adminUserList.add(locationDTO.locationManagerUserId());
-
         // add shop group as virtual user admin
         adminUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()));
         // add assigned to users
