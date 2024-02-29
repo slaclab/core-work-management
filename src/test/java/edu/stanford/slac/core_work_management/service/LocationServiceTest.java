@@ -159,7 +159,7 @@ public class LocationServiceTest {
         var newLocationWithParentId = assertDoesNotThrow(
                 () -> locationService.createNew(
                         NewLocationDTO.builder()
-                                .name("test")
+                                .name("test child")
                                 .description("test")
                                 .parentId(newLocationId)
                                 .locationManagerUserId("user1@slac.stanford.edu")
