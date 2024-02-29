@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : CheckAuthorization
+ * Title      : WorkAuthorizationService
  * ----------------------------------------------------------------------------
- * File       : CheckAuthorization.java
+ * File       : WorkAuthorizationService.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,24 +15,25 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.api.v1.authorization;
+package edu.stanford.slac.core_work_management.service.authorization;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.any;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
-@Component
+@Service
 @AllArgsConstructor
-public class CheckWorkAuthorization {
+public class WorkAuthorizationService {
     private final AuthService authService;
     private final WorkService workService;
     private final ShopGroupService shopGroupService;
@@ -48,7 +49,7 @@ public class CheckWorkAuthorization {
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("CheckAuthorization::checkAuthorizationCreateNewWork")
+                        .errorDomain("WorkAuthorizationService::checkAuthenticated")
                         .build(),
                 // should be authenticated
                 () -> authService.checkAuthentication(authentication)
@@ -67,7 +68,7 @@ public class CheckWorkAuthorization {
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
                         .errorCode(-1)
-                        .errorDomain("LocationController::createNew")
+                        .errorDomain("WorkAuthorizationService::checkCreateNewActivity")
                         .build(),
                 // should be authenticated
                 () -> authService.checkAuthentication(authentication),
@@ -78,13 +79,72 @@ public class CheckWorkAuthorization {
                         // or a user that has the right to write on the work
                         () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(authentication, AuthorizationTypeDTO.Write, WORK_AUTHORIZATION_TEMPLATE.formatted(workId)),
                         // user of the shop group are always treated as admin on the work
-                        ()-> shopGroupService.checkContainsAUserEmail(
+                        () -> shopGroupService.checkContainsAUserEmail(
                                 // fire not found work exception
                                 workService.getShopGroupIdByWorkId(workId),
                                 authentication.getCredentials().toString()
                         )
                 )
         );
+        return true;
+    }
+
+    /**
+     * Check if the user can update a work
+     *
+     * @param authentication the authentication object
+     * @param workId         the work id
+     * @param updateWorkDTO  the update work dto
+     * @return true if the user can update the work, false otherwise
+     */
+    public boolean checkUpdate(Authentication authentication, String workId, UpdateWorkDTO updateWorkDTO) {
+        // check for auth
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("WorkAuthorizationService::checkUpdateWork")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // should be one of these
+                () -> any(
+                        // a root users
+                        () -> authService.checkForRoot(authentication),
+                        // or a user that has the right as writer on the work
+                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                authentication,
+                                AuthorizationTypeDTO.Write,
+                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
+                        ),
+                        // user of the shop group are always treated as admin on the work
+                        () -> shopGroupService.checkContainsAUserEmail(
+                                // fire not found work exception
+                                workService.getShopGroupIdByWorkId(workId),
+                                authentication.getCredentials().toString()
+                        )
+                )
+        );
+
+        // check for only admin update
+        if(updateWorkDTO.locationId() != null) {
+            assertion(
+                    NotAuthorized.notAuthorizedBuilder()
+                            .errorCode(-1)
+                            .errorDomain("WorkAuthorizationService::checkUpdateWork")
+                            .build(),
+                    // should be one of these
+                    () -> any(
+                            // a root users
+                            () -> authService.checkForRoot(authentication),
+                            // or a user that has the right as admin on the work
+                            () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                    authentication,
+                                    AuthorizationTypeDTO.Admin,
+                                    WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
+                            )
+                    )
+            );
+        }
         return true;
     }
 }

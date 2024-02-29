@@ -137,7 +137,7 @@ public class WorkControllerTest {
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
                                         .name("shop3")
-                                        .description("shop1 user3")
+                                        .description("shop3 user3")
                                         .userEmails(of("user3@slac.stanford.edu"))
                                         .build()
                         )
@@ -147,8 +147,8 @@ public class WorkControllerTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
-                                        .name("shop2")
-                                        .description("shop1 user[3]")
+                                        .name("shop4")
+                                        .description("shop4 user[3]")
                                         .userEmails(of("user3@slac.stanford.edu"))
                                         .build()
                         )
@@ -671,5 +671,119 @@ public class WorkControllerTest {
                 );
         assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
         assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
+    }
+
+    @Test
+    public void testUpdateWorkFailOnLocationIdOnNonAdmin() {
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // user2@slac.stanford.edu si the are manager
+                                        // user[1-3]@slac.stanford.edu are in the shop group
+                                        .locationId(testLocationIds.get(2))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        // try to update but
+        assertThrows(
+                NotAuthorized.class,
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                .locationId(testLocationIds.get(1))
+                                .build()
+                )
+        );
+    }
+
+    @Test
+    public void testUpdateWorkOk() {
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // user2@slac.stanford.edu si the are manager
+                                        // user[1-3]@slac.stanford.edu are in the shop group
+                                        .locationId(testLocationIds.get(2))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        // check authorization on location manager
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        "user2@slac.stanford.edu",
+                        AuthorizationTypeDTO.Admin,
+                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
+                        Optional.empty()
+                )
+        ).hasSize(1);
+
+        // check authorization on shop group
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(testShopGroupIds.get(2)),
+                        AuthorizationTypeDTO.Read,
+                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
+                        Optional.empty()
+                )
+        ).hasSize(1);
+
+        // try to update but
+        assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        // this is the admin fo the location 2
+                        Optional.of("user2@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                .locationId(testLocationIds.getFirst())
+                                .build()
+                )
+        );
+
+        // check authorization on location manager
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        "user1@slac.stanford.edu",
+                        AuthorizationTypeDTO.Admin,
+                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
+                        Optional.empty()
+                )
+        ).hasSize(1);
+
+        // check authorization on shop group
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(testShopGroupIds.getFirst()),
+                        AuthorizationTypeDTO.Read,
+                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
+                        Optional.empty()
+                )
+        ).hasSize(1);
     }
 }

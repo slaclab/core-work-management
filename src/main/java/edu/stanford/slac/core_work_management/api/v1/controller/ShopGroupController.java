@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,27 +54,18 @@ import static java.util.Collections.emptyList;
 public class ShopGroupController {
     AuthService authService;
     ShopGroupService shopGroupService;
+
     @PostMapping(
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a new shop group")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
             @Valid @RequestBody NewShopGroupDTO newShopGroupDTO
     ) {
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LocationController::createNew")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be root
-                () -> authService.checkForRoot(authentication)
-        );
         return ApiResultResponse.of(
                 shopGroupService.createNew(newShopGroupDTO)
         );
@@ -84,20 +76,11 @@ public class ShopGroupController {
     )
     @Operation(summary = "Create a new shop group")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
+
     public ApiResultResponse<List<ShopGroupDTO>> findAll(
             Authentication authentication
     ) {
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LocationController::createNew")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be root
-                () -> authService.checkForRoot(authentication)
-        );
         return ApiResultResponse.of(
                 shopGroupService.findAll()
         );
@@ -109,21 +92,11 @@ public class ShopGroupController {
     )
     @Operation(summary = "Create a new shop group")
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<ShopGroupDTO> findById(
             Authentication authentication,
             @PathVariable @NotEmpty String id
     ) {
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LocationController::createNew")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be root
-                () -> authService.checkForRoot(authentication)
-        );
         return ApiResultResponse.of(
                 shopGroupService.findById(id)
         );

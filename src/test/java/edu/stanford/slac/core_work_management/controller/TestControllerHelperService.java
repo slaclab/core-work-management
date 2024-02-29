@@ -17,8 +17,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import java.util.List;
 import java.util.Optional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 @Service()
 public class TestControllerHelperService {
@@ -220,6 +219,37 @@ public class TestControllerHelperService {
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(newWorkDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Update a work
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the id of the work to update
+     * @param updateWorkDTO the update work dto
+     * @return the id of the newly created work
+     */
+    public ApiResultResponse<String> workControllerUpdate(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId,
+            UpdateWorkDTO updateWorkDTO
+    ) throws Exception {
+        var requestBuilder = put("/v1/work/{workId}", workId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(updateWorkDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

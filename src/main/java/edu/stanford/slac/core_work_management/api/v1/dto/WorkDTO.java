@@ -32,6 +32,8 @@ public record WorkDTO(
         String title,
         @Schema(description = "The description of the work")
         String description,
+        @Schema(description = "The list of the user that are assigned to the work")
+        List<String> assignedTo,
         @Schema(description = "The location of the work, if any")
         WorkLocation location,
         @Schema(description = "The created date of the work")

@@ -18,15 +18,14 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.core_work_management.api.v1.authorization.CheckWorkAuthorization;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
+import edu.stanford.slac.core_work_management.service.authorization.WorkAuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,10 +42,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.any;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 /**
  * -----------------------------------------------------------------------------
@@ -71,10 +66,7 @@ import static edu.stanford.slac.core_work_management.config.AuthorizationStringC
 @RequestMapping("/v1/work")
 @Schema(description = "Set of api for the work management")
 public class WorkController {
-    private final AuthService authService;
     private final WorkService workService;
-    private final ShopGroupService shopGroupService;
-    private final CheckWorkAuthorization checkWorkAuthorization;
 
     @Operation(summary = "Create a new work and return his id")
     @ApiResponses(value = {
@@ -85,12 +77,33 @@ public class WorkController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@checkWorkAuthorization.checkAuthenticated(#authentication)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
             @Valid @RequestBody NewWorkDTO newWorkDTO
     ) {
         return ApiResultResponse.of(workService.createNew(newWorkDTO));
+    }
+
+    @Operation(summary = "Update a work")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Work saved")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping(
+            path = "/{workId}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@workAuthorizationService.checkUpdate(#authentication, #workId, #updateWorkDTO)")
+    public ApiResultResponse<Boolean> update(
+            Authentication authentication,
+            @Parameter(description = "Is the work id to update", required = true)
+            @PathVariable() String workId,
+            @Valid @RequestBody UpdateWorkDTO updateWorkDTO
+    ) {
+        workService.update(workId, updateWorkDTO);
+        return ApiResultResponse.of(true);
     }
 
     @Operation(summary = "Get work by id")
@@ -100,7 +113,7 @@ public class WorkController {
     })
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("@checkWorkAuthorization.checkAuthenticated(#authentication)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<WorkDTO> findById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
@@ -119,7 +132,7 @@ public class WorkController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@checkWorkAuthorization.checkCreateNewActivity(#authentication, #workId)")
+    @PreAuthorize("@workAuthorizationService.checkCreateNewActivity(#authentication, #workId)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
             @Parameter(description = "Is the work id for wich needs to be creates the activity", required = true)

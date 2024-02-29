@@ -32,6 +32,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,24 +53,14 @@ public class LocationController {
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(summary = "Create a new location")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new location")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
             @Parameter(description = "The new location to create")
             @Valid @RequestBody NewLocationDTO newLocationDTO
     ) {
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LocationController::createNew")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be root
-                () -> authService.checkForRoot(authentication)
-        );
         return ApiResultResponse.of(
                 locationService.createNew(newLocationDTO)
         );
@@ -79,8 +70,9 @@ public class LocationController {
             path = "/{locationId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(summary = "Find a location by id")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Find a location by id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<LocationDTO> findLocationById(
             Authentication authentication,
             @Parameter(description = "The id of the location to find")
@@ -104,23 +96,15 @@ public class LocationController {
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(summary = "Find all locations")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Find all locations")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<LocationDTO>> findAllLocations(
             Authentication authentication,
             @Parameter(description = "The filter for the location")
             @RequestParam(value = "filter") Optional<String> filter,
             @RequestParam(value = "externalId") Optional<String> externalId
     ) {
-        // check authentication
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("LocationController::findAllLocations")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication)
-        );
         return ApiResultResponse.of(
                 locationService.findAll(
                         LocationFilterDTO
