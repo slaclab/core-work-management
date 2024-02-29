@@ -49,6 +49,7 @@ public class LocationServiceTest {
 
     @BeforeAll
     public void init() {
+        mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         shopGroupIds.add(
                 shopGroupService.createNew(
