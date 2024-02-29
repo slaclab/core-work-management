@@ -20,6 +20,7 @@ package edu.stanford.slac.core_work_management.controller;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
@@ -302,6 +303,27 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
+    }
+
+    @Test
+    public void testCreateNewWorkFailNoAuthentication() {
+        // create new work
+        var notAuthorizedException =
+                assertThrows(
+                        NotAuthorized.class,
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isUnauthorized(),
+                                Optional.empty(),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(notAuthorizedException.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
