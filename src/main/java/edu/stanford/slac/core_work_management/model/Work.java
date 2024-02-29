@@ -72,13 +72,13 @@ public class Work {
      * The identifier of the location associated with the work.
      * This field links the work to a specific location, identified by its ID.
      */
-    private WorkLocation location;
+    private String locationId;
 
     /**
      * The identifier of the user assigned to the work.
      * This field links the work to a specific user, identified by its ID.
      */
-    private String assignedTo;
+    private List<String> assignedTo;
 
     /**
      * The date and time when the work was created.

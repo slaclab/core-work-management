@@ -1,9 +1,14 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
+import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
 import edu.stanford.slac.core_work_management.model.Work;
@@ -16,27 +21,37 @@ import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 @Service
 @Log4j2
 @Validated
 @AllArgsConstructor
 public class WorkService {
+    AuthService authService;
     WorkMapper workMapper;
     WorkRepository workRepository;
     WorkTypeRepository workTypeRepository;
     ActivityTypeRepository activityTypeRepository;
     ActivityRepository activityRepository;
+    LocationService locationService;
 
     /**
      * Create a new work type
@@ -105,13 +120,52 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
+    @Transactional
     public String createNew(NewWorkDTO newWorkDTO) {
+        // contain the set of all user that will become admin for this new work
+        Set<String> adminUserList = new HashSet<>();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // this will fire exception in case the location has not been found
+        LocationDTO locationDTO = locationService.findById(newWorkDTO.locationId());
+
         Work workToSave = workMapper.toModel(newWorkDTO);
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
                 -1
         );
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
+        if(authentication!=null) {
+            adminUserList.add(savedWork.getCreatedBy());
+        }
+
+        // authorize location manager as admin
+        adminUserList.add(locationDTO.locationManagerUserId());
+        // add shop group as virtual user admin
+        adminUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()));
+        // add assigned to users
+        if(newWorkDTO.assignedTo() != null) {
+            adminUserList.addAll(newWorkDTO.assignedTo());
+        }
+
+        adminUserList.forEach(
+                (user)->{
+                    authService.addNewAuthorization(
+                            NewAuthorizationDTO.builder()
+                                    .authorizationType(Admin)
+                                    .owner(user)
+                                    .ownerType(User)
+                                    .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
+                                    .build()
+                    );
+                }
+        );
+        log.info(
+                "Users '{}' has been granted as admin for work {}[{}]",
+                String.join(",", adminUserList),
+                savedWork.getTitle(),
+                savedWork.getId()
+        );
         return savedWork.getId();
     }
 
@@ -180,6 +234,27 @@ public class WorkService {
     }
 
     /**
+     * Return the shop group id by the work id
+     *
+     * @param workId the id of the work
+     * @return the shop group id
+     */
+    public String getShopGroupIdByWorkId(String workId) {
+        String locationId =  wrapCatch(
+                () -> workRepository.findById(workId).map(Work::getLocationId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+
+        return locationService.findById(locationId).locationShopGroupId();
+    }
+
+    /**
      * Create a new activity
      *
      * @param workId         the id of the work
@@ -198,6 +273,25 @@ public class WorkService {
                                 .build()
                 ),
                 -1
+        );
+
+        // check activity type id is permitted for the type of the work
+        assertion(
+                // find the activity and check if the work type is the same
+                () -> activityTypeRepository.findById(newActivityDTO.activityTypeId())
+                        .orElseThrow(
+                                ()-> ActivityTypeNotFound
+                                        .notFoundById()
+                                        .errorCode(-2)
+                                        .activityTypeId(newActivityDTO.activityTypeId())
+                                        .build()
+                        ).getWorkTypeId().equals(work.getWorkTypeId()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("The activity type is not permitted by the work %s".formatted(work.getTitle()))
+                        .errorDomain("WorkService::createNew(String, NewActivityDTO)")
+                        .build()
         );
 
         var newActivity = workMapper.toModel(newActivityDTO, workId);

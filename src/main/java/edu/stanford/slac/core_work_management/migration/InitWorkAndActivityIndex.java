@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-work-activity-index", order = "2", author = "bisegni")
+@ChangeUnit(id = "init-work-activity-index", order = "3", author = "bisegni")
 public class InitWorkAndActivityIndex {
     private final MongoTemplate mongoTemplate;
 

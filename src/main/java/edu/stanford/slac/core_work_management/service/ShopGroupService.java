@@ -85,4 +85,18 @@ public class ShopGroupService {
                 -3
         );
     }
+
+    /**
+     * Check if a specific shop group contains a user email
+     *
+     * @param shopGroupId the id of the shop group
+     * @param userEmail the email of the user
+     * @return true if the shop group exists
+     */
+    public Boolean checkContainsAUserEmail(String shopGroupId, String userEmail) {
+        return wrapCatch(
+                () -> shopGroupRepository.existsByIdAndUserEmailsContainingIgnoreCase(shopGroupId, userEmail),
+                -1
+        );
+    }
 }

@@ -21,15 +21,14 @@ public record LocationDTO(
         String id,
         @Schema(description = "The unique identifier of the parent location")
         String parentId,
-        @NotEmpty
         @Schema(description = "The name of the location")
         String name,
-        @NotEmpty
         @Schema(description = "The description of the location")
         String description,
-        @NotEmpty
         @Schema(description = "The user id that represent the location manager")
         String locationManagerUserId,
+        @Schema(description = "The shop group id that is authorized to make the works in that location")
+        String locationShopGroupId,
         @Schema(description = "The created date of the location")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

@@ -6,19 +6,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the information for create new work plan")
 public record NewWorkDTO (
         @Schema(description = "The title of the work plan")
-        @NotEmpty String title,
+        @NotEmpty(message = "Title is required")
+        String title,
 
         @Schema(description = "The description of the work plan")
-        @NotEmpty String description,
+        @NotEmpty(message = "Description is required")
+        String description,
 
         @Schema(description = "Define the type of the work to do")
-        @NotEmpty String workTypeId,
+        @NotEmpty(message = "Work type is required")
+        String workTypeId,
 
         @Schema(description =
                 """
@@ -27,5 +32,12 @@ public record NewWorkDTO (
                 shall to be matched with an inventory item frm core inventory system
                 """
         )
-        String locationId
+        @NotEmpty(message = "Location is required")
+        String locationId,
+        @Schema(description =
+                """
+                The list of the user that are assigned to the work plan
+                """
+        )
+        List<String> assignedTo
 ){}

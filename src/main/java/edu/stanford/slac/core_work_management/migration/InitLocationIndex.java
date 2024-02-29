@@ -22,6 +22,16 @@ public class InitLocationIndex {
         MongoDDLOps.createIndex(
                 Location.class,
                 mongoTemplate,
+                new Index().on(
+                                "name",
+                                Sort.Direction.ASC
+                        )
+                        .named("name")
+                        .unique()
+        );
+        MongoDDLOps.createIndex(
+                Location.class,
+                mongoTemplate,
                 new TextIndexDefinition.TextIndexDefinitionBuilder()
                         .onField("name")
                         .onField("description")
