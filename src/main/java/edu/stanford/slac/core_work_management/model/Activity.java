@@ -50,6 +50,41 @@ public class Activity {
     private String description;
 
     /**
+     * The description of the test plan for the activity.
+     * This field provides a detailed description of the test plan associated with the activity.
+     */
+    private String testPlanDescription;
+
+    /**
+     * The description of the backout plan for the activity.
+     * This field provides a detailed description of the backout plan associated with the activity.
+     */
+    private String backoutPlanDescription;
+
+    /**
+     * The description of the system requirements for the activity.
+     * This field provides a detailed description of the system requirements associated with the activity.
+     */
+    private String systemRequiredDescription;
+
+    /**
+     * The description of the system effects for the activity.
+     * This field provides a detailed description of the system effects associated with the activity.
+     */
+    private String systemEffectedDescription;
+
+    /**
+     * The description of the risk and benefits for the activity.
+     * This field provides a detailed description of the risk and benefits associated with the activity.
+     */
+    private String riskBenefitDescription;
+
+    /**
+     * The description of the dependencies for the activity.
+     * This field provides a detailed description of the dependencies associated with the activity.
+     */
+    private String dependenciesDescription;
+    /**
      * The type of the activity.
      * This field categorizes the activity into a specific type, defined by the ActivityType enum.
      */
@@ -106,7 +141,7 @@ public class Activity {
      * The list of the identifiers of the users who are assigned to the activity.
      * This field stores the IDs of the users who are assigned to the activity.
      *
-     * @param newStatus the new status to transition to
+     * @param newStatus           the new status to transition to
      * @param followupDescription the followup description
      */
     public void setStatus(ActivityStatus newStatus, String followupDescription) {
@@ -123,9 +158,9 @@ public class Activity {
         );
         setCurrentStatus(
                 ActivityStatusLog.builder()
-                .status(newStatus)
-                .followUpDescription(followupDescription)
-                .build()
+                        .status(newStatus)
+                        .followUpDescription(followupDescription)
+                        .build()
         );
         getStatusHistory().addFirst(currentStatus);
     }

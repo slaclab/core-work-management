@@ -7,9 +7,7 @@ import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
@@ -18,8 +16,9 @@ import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
  * Mapper for the entity {@link Work}
  */
 @Mapper(
+        componentModel = "spring",
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        componentModel = "spring"
+        nullValuePropertyMappingStrategy = IGNORE
 )
 public abstract class WorkMapper {
     @Autowired
@@ -32,6 +31,7 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     abstract public WorkType toModel(NewWorkTypeDTO newWorkTypeDTO);
+
     /**
      * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
      * @param newActivityTypeDTO the DTO to convert
@@ -44,6 +44,13 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     abstract public Work toModel(NewWorkDTO newWorkDTO);
+
+    /**
+     * Update the {@link Work} with the data from the {@link UpdateWorkDTO}
+     * @param dto the DTO with the data to update
+     * @param work the entity to update
+     */
+    abstract public void updateModel(UpdateWorkDTO dto, @MappingTarget Work work);
     /**
      * Convert the {@link WorkType} to a {@link WorkTypeDTO}
      * @param workType the entity to convert
@@ -67,6 +74,17 @@ public abstract class WorkMapper {
             java(mapWorkStatusToLogModel(newActivityDTO.activityStatus()))
             """)
     abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
+    /**
+     * Update the {@link Activity} with the data from the {@link UpdateActivityDTO}
+     * @param dto the DTO with the data to update
+     * @param work the entity to update
+     */
+    abstract public void updateModel(UpdateActivityDTO dto, @MappingTarget Activity work);
+    /**
+     * Convert the {@link ActivityStatusDTO} to a {@link ActivityStatus}
+     * @param activityStatusDTO the DTO to convert
+     * @return the converted entity
+     */
     abstract public ActivityStatus toModel(ActivityStatusDTO activityStatusDTO);
     /**
      * Convert the {@link Work} to a {@link WorkDTO}
@@ -76,9 +94,19 @@ public abstract class WorkMapper {
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getWorkTypeId()))")
     abstract public WorkDTO toDTO(Work work);
 
+    /**
+     * Convert the {@link Activity} to a {@link ActivityDTO}
+     * @param activity the entity to convert
+     * @return the converted DTO
+     */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
+    /**
+     * Convert the {@link ActivityStatusDTO} to a {@link ActivityStatusLog}
+     * @param activityStatusDTO the DTO to convert
+     * @return the converted entity
+     */
     public ActivityStatusLog mapWorkStatusToLogModel(ActivityStatusDTO activityStatusDTO) {
         return ActivityStatusLog.builder().status(activityStatusDTO!= null?toModel(activityStatusDTO):ActivityStatus.New).build();
     }
@@ -105,4 +133,5 @@ public abstract class WorkMapper {
                         .build()
         );
     }
+
 }

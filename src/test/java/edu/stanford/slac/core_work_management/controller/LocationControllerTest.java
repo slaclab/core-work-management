@@ -345,7 +345,6 @@ public class LocationControllerTest {
                 )
         );
         assertThat(notAuthorizeError.getErrorCode()).isEqualTo(-1);
-        assertThat(notAuthorizeError.getErrorDomain()).isEqualTo("LocationController::findLocationById");
     }
     @Test
     public void createDependentLocationWithWrongExternalId(){

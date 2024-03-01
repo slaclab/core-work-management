@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
+import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
@@ -123,30 +124,76 @@ public class WorkService {
     @Transactional
     public String createNew(NewWorkDTO newWorkDTO) {
         // contain the set of all user that will become admin for this new work
-        Set<String> adminUserList = new HashSet<>();
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // this will fire exception in case the location has not been found
-        LocationDTO locationDTO = locationService.findById(newWorkDTO.locationId());
-
         Work workToSave = workMapper.toModel(newWorkDTO);
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
                 -1
         );
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
+        updateWorkAuthorization(savedWork);
+        return savedWork.getId();
+    }
+
+    /**
+     * Update a work
+     *
+     * @param workId         the id of the work
+     * @param updateWorkDTO the DTO to update the work
+     */
+    @Transactional
+    public void update(String workId, @Valid UpdateWorkDTO updateWorkDTO) {
+        // fetch stored work to check if the work exists
+        Work storedWork = wrapCatch(
+                ()->workRepository.findById(workId).orElseThrow(
+                        ()-> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -2
+        );
+
+
+        // update the model
+        workMapper.updateModel(updateWorkDTO, storedWork);
+        updateWorkAuthorization(storedWork);
+    }
+
+    /**
+     * Update the work authorization
+     *
+     * @param work the work to update
+     */
+    private void updateWorkAuthorization(Work work) {
+        Set<String> adminUserList = new HashSet<>();
+        Set<String> writerUserList = new HashSet<>();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // delete old authorization
+        authService.deleteAuthorizationForResourcePrefix(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()));
+
+        // this will fire exception in case the location has not been found
+        LocationDTO locationDTO = locationService.findById(work.getLocationId());
         if(authentication!=null) {
-            adminUserList.add(savedWork.getCreatedBy());
+            // the creator is a writer
+            writerUserList.add(work.getCreatedBy());
         }
 
         // authorize location manager as admin
         adminUserList.add(locationDTO.locationManagerUserId());
-        // add shop group as virtual user admin
-        adminUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()));
+        // add shop group as writer in the form of virtual user
+        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()));
         // add assigned to users
-        if(newWorkDTO.assignedTo() != null) {
-            adminUserList.addAll(newWorkDTO.assignedTo());
+        if(work.getAssignedTo() != null) {
+            writerUserList.addAll(work.getAssignedTo());
         }
+
+        // some user for various reason could be either admin and read
+        // so removing the common from the reader list we are going
+        // to give to the user only the higher permission
+        // so remove all the admin that are also reader
+        writerUserList.removeAll(adminUserList);
 
         adminUserList.forEach(
                 (user)->{
@@ -155,7 +202,19 @@ public class WorkService {
                                     .authorizationType(Admin)
                                     .owner(user)
                                     .ownerType(User)
-                                    .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(savedWork.getId()))
+                                    .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()))
+                                    .build()
+                    );
+                }
+        );
+        writerUserList.forEach(
+                (user)->{
+                    authService.addNewAuthorization(
+                            NewAuthorizationDTO.builder()
+                                    .authorizationType(Write)
+                                    .owner(user)
+                                    .ownerType(User)
+                                    .resource(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()))
                                     .build()
                     );
                 }
@@ -163,10 +222,9 @@ public class WorkService {
         log.info(
                 "Users '{}' has been granted as admin for work {}[{}]",
                 String.join(",", adminUserList),
-                savedWork.getTitle(),
-                savedWork.getId()
+                work.getTitle(),
+                work.getId()
         );
-        return savedWork.getId();
     }
 
     /**
@@ -321,6 +379,54 @@ public class WorkService {
         );
         log.info("New Activity '{}' has been added to work '{}'", savedActivity.getTitle(), work.getTitle());
         return savedActivity.getId();
+    }
+
+    /**
+     * Update an activity
+     *
+     * @param workId the id of the work
+     * @param activityId the id of the activity
+     * @param updateActivityDTO the DTO to update the activity
+     */
+    public void update(String workId, String activityId, UpdateActivityDTO updateActivityDTO) {
+        // check for work existence
+        assertion(
+                () -> workRepository.existsById(workId),
+                WorkNotFound
+                        .notFoundById()
+                        .errorCode(-1)
+                        .workId(workId)
+                        .build()
+        );
+        // check for activity
+        var activityStored = wrapCatch(
+                () -> activityRepository.findById(activityId).orElseThrow(
+                        () -> ActivityNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .activityId(activityId)
+                                .build()
+                ),
+                -2
+        );
+        // assert that activity need to be related to the work
+        assertion(
+                () -> workId.equals(activityStored.getWorkId()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("The activity does not belong to the work")
+                        .errorDomain("WorkService::update(String,String,UpdateActivityDTO)")
+                        .build()
+        );
+        // update the model
+        workMapper.updateModel(updateActivityDTO, activityStored);
+        // save the activity
+        var savedActivity = wrapCatch(
+                () -> activityRepository.save(activityStored),
+                -2
+        );
+        log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
     }
 
     /**
