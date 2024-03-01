@@ -17,6 +17,7 @@
 
 package edu.stanford.slac.core_work_management.controller;
 
+import com.google.common.collect.ImmutableList;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
@@ -943,6 +944,129 @@ public class WorkControllerTest {
         assertThat(fulActivityResult.getPayload().riskBenefitDescription()).isEqualTo("risk benefit description");
         assertThat(fulActivityResult.getPayload().systemEffectedDescription()).isEqualTo("system effected description");
         assertThat(fulActivityResult.getPayload().systemRequiredDescription()).isEqualTo("system required description");
+    }
 
+    @Test
+    public void testUpdateActivityStatusByCreator() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                // this should be admin because is the user that created the work
+                                Optional.of("user3@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // the location manager is user2@slac.stanford.edu and also this should be admin
+                                        .locationId(testLocationIds.get(1))
+                                        // the group contains user1 and user2 and all of them should be admin
+                                        .workTypeId(testWorkTypeIds.getFirst())
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotEmpty();
+
+        var newActivityIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user3@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                NewActivityDTO.builder()
+                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newActivityIdResult.getPayload()).isNotEmpty();
+
+        var updateStatusResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerUpdateStatus(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user3@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                newActivityIdResult.getPayload(),
+                                UpdateActivityStatusDTO
+                                        .builder()
+                                        .newStatus(ActivityStatusDTO.Completed)
+                                        .build()
+                        )
+                );
+        assertThat(updateStatusResult.getErrorCode()).isEqualTo(0);
+
+        // check the workflow status
+        assertThat(
+                helperService.checkStatusAndHistoryOnActivity(
+                        newActivityIdResult.getPayload(),
+                        ImmutableList.of(
+                                ActivityStatusDTO.Completed,
+                                ActivityStatusDTO.New
+                        )
+                )
+        ).isTrue();
+        // work latest status should be review
+        assertThat(
+                helperService.checkStatusAndHistoryOnWork(
+                        newWorkIdResult.getPayload(),
+                        ImmutableList.of(
+                                WorkStatusDTO.Review,
+                                WorkStatusDTO.ScheduledJob,
+                                WorkStatusDTO.New
+                        )
+                )
+        ).isTrue();
+
+        // try closing the work with an unauthorized user
+        var reviewNotAuthorizeOnCreator =
+                assertThrows(
+                        NotAuthorized.class,
+                        () -> testControllerHelperService.workControllerReviewWork(
+                                mockMvc,
+                                status().isUnauthorized(),
+                                Optional.of("user3@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                newActivityIdResult.getPayload(),
+                                ReviewWorkDTO
+                                        .builder()
+                                        .followUpDescription("work has completely finished")
+                                        .build()
+                        )
+                );
+        assertThat(reviewNotAuthorizeOnCreator.getErrorCode()).isEqualTo(-1);
+        // review the work with location area manager
+        var reviewWorkResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerReviewWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user2@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                newActivityIdResult.getPayload(),
+                                ReviewWorkDTO
+                                        .builder()
+                                        .followUpDescription("work has completely finished")
+                                        .build()
+                        )
+                );
+        assertThat(reviewWorkResult.getErrorCode()).isEqualTo(0);
+        // check the updated workflow states
+        assertThat(
+                helperService.checkStatusAndHistoryOnWork(
+                        newWorkIdResult.getPayload(),
+                        ImmutableList.of(
+                                WorkStatusDTO.Closed,
+                                WorkStatusDTO.Review,
+                                WorkStatusDTO.ScheduledJob,
+                                WorkStatusDTO.New
+                        )
+                )
+        ).isTrue();
     }
 }

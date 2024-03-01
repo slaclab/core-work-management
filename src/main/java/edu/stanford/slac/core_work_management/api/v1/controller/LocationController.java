@@ -18,7 +18,6 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;

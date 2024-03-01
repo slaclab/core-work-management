@@ -1,7 +1,5 @@
 package edu.stanford.slac.core_work_management.service;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
@@ -27,8 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -231,9 +227,9 @@ public class WorkService {
      * Close a work
      *
      * @param workId     the id of the work
-     * @param closeWorkDTO the DTO to close the work
+     * @param reviewWorkDTO the DTO to close the work
      */
-    public void closeWork(String workId, CloseWorkDTO closeWorkDTO) {
+    public void reviewWork(String workId, ReviewWorkDTO reviewWorkDTO) {
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -263,7 +259,7 @@ public class WorkService {
                         .status(WorkStatus.Closed)
                         .build()
         );
-        work.setFollowupDescriptionOnClose(closeWorkDTO.followUpDescription());
+        work.setFollowupDescriptionOnClose(reviewWorkDTO.followUpDescription());
         // save work and unlock
         var savedWork = wrapCatch(
                 () -> workRepository.save(work),

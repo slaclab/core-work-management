@@ -355,6 +355,74 @@ public class TestControllerHelperService {
     }
 
     /**
+     * Update an activity status
+     *
+     * @param mockMvc                   the mock mvc
+     * @param resultMatcher             the result matcher
+     * @param userInfo                  the user info
+     * @param workId                    the work id
+     * @param activityId                the activity id
+     * @param updateActivityStatusDTO   the update activity status dto
+     * @return the work dto
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<Boolean> workControllerUpdateStatus(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId,
+            String activityId,
+            UpdateActivityStatusDTO updateActivityStatusDTO
+    ) throws Exception {
+        var requestBuilder = put("/v1/work/{workId}/activity/{activityId}/status", workId, activityId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(updateActivityStatusDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Review a work
+     *
+     * @param mockMvc           the mock mvc
+     * @param resultMatcher     the result matcher
+     * @param userInfo          the user info
+     * @param workId            the work id
+     * @param activityId        the activity id
+     * @param reviewWorkDTO     the review work dto
+     * @return the work dto
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<Boolean> workControllerReviewWork(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId,
+            String activityId,
+            ReviewWorkDTO reviewWorkDTO
+    ) throws Exception {
+        var requestBuilder = put("/v1/work/{workId}/review", workId, activityId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(reviewWorkDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Find an activity by id
      *
      * @param mockMvc       the mock mvc

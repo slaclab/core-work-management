@@ -100,6 +100,27 @@ public class WorkController {
         return ApiResultResponse.of(true);
     }
 
+    @Operation(summary = "Update an activity")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Activity updated")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping(
+            path = "/{workId}/review",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@workAuthorizationService.checkReviewWork(#authentication, #workId,#reviewWorkDTO)")
+    public ApiResultResponse<Boolean> reviewWork(
+            Authentication authentication,
+            @Parameter(description = "Is the work id that contains the activity", required = true)
+            @PathVariable String workId,
+            @Valid @RequestBody ReviewWorkDTO reviewWorkDTO
+    ) {
+        workService.reviewWork(workId, reviewWorkDTO);
+        return ApiResultResponse.of(true);
+    }
+
     @Operation(summary = "Get work by id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Work found"),
@@ -156,6 +177,30 @@ public class WorkController {
             @Valid @RequestBody UpdateActivityDTO updateActivityDTO
     ) {
         workService.update(workId, activityId, updateActivityDTO);
+        return ApiResultResponse.of(true);
+    }
+
+
+    @Operation(summary = "Update an activity status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Activity updated")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping(
+            path = "/{workId}/activity/{activityId}/status",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@workAuthorizationService.checkUpdateStatus(#authentication, #workId,#activityId, #updateActivityStatusDTO)")
+    public ApiResultResponse<Boolean> setActivityStatus(
+            Authentication authentication,
+            @Parameter(description = "Is the work id that contains the activity", required = true)
+            @PathVariable String workId,
+            @Parameter(description = "Is the activity id to update", required = true)
+            @PathVariable String activityId,
+            @Valid @RequestBody UpdateActivityStatusDTO updateActivityStatusDTO
+    ) {
+        workService.setActivityStatus(workId, activityId, updateActivityStatusDTO);
         return ApiResultResponse.of(true);
     }
 

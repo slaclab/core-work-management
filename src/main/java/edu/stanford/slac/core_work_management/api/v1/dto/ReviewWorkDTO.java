@@ -9,6 +9,6 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Close Work DTO")
-public record CloseWorkDTO(
+public record ReviewWorkDTO(
     String followUpDescription
 ) {}

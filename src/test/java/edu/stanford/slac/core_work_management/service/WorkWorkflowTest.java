@@ -3,9 +3,7 @@ package edu.stanford.slac.core_work_management.service;
 import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.*;
-import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -18,8 +16,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.List;
 
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Collections.emptyList;
@@ -407,9 +403,9 @@ public class WorkWorkflowTest {
 
         var exceptionOnBadClose = assertThrows(
                 ControllerLogicException.class,
-                () -> workService.closeWork(
+                () -> workService.reviewWork(
                         newWorkId,
-                        CloseWorkDTO
+                        ReviewWorkDTO
                                 .builder()
                                 .followUpDescription("Work has been completed")
                                 .build()
@@ -499,9 +495,9 @@ public class WorkWorkflowTest {
 
         // close work
         assertDoesNotThrow(
-                () -> workService.closeWork(
+                () -> workService.reviewWork(
                         newWorkId,
-                        CloseWorkDTO
+                        ReviewWorkDTO
                                 .builder()
                                 .followUpDescription("Work has been completed")
                                 .build()
