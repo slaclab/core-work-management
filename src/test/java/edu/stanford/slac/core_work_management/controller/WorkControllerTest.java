@@ -863,4 +863,86 @@ public class WorkControllerTest {
                 )
         ).hasSize(1);
     }
+
+    @Test
+    public void testUpdateActivityByCreator() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                // this should be admin because is the user that created the work
+                                Optional.of("user3@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // the location manager is user2@slac.stanford.edu and also this should be admin
+                                        .locationId(testLocationIds.get(1))
+                                        // the group contains user1 and user2 and all of them should be admin
+                                        .workTypeId(testWorkTypeIds.getFirst())
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        var newActivityIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user3@slac.stanford.edu"),
+                                newWorkIdResult.getPayload(),
+                                NewActivityDTO.builder()
+                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newActivityIdResult.getPayload()).isNotNull();
+
+        // try to update
+        assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        newActivityIdResult.getPayload(),
+                        UpdateActivityDTO.builder()
+                                .title("New activity 1 updated")
+                                .description("activity 1 description updated")
+                                .testPlanDescription("test plan description")
+                                .backoutPlanDescription("backout plan description")
+                                .dependenciesDescription("dependencies description")
+                                .riskBenefitDescription("risk benefit description")
+                                .systemEffectedDescription("system effected description")
+                                .systemRequiredDescription("system required description")
+                                .build()
+                )
+        );
+
+        var fulActivityResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        newActivityIdResult.getPayload()
+                )
+        );
+        assertThat(fulActivityResult.getErrorCode()).isEqualTo(0);
+        assertThat(fulActivityResult.getPayload()).isNotNull();
+        assertThat(fulActivityResult.getPayload().title()).isEqualTo("New activity 1 updated");
+        assertThat(fulActivityResult.getPayload().description()).isEqualTo("activity 1 description updated");
+        assertThat(fulActivityResult.getPayload().testPlanDescription()).isEqualTo("test plan description");
+        assertThat(fulActivityResult.getPayload().backoutPlanDescription()).isEqualTo("backout plan description");
+        assertThat(fulActivityResult.getPayload().dependenciesDescription()).isEqualTo("dependencies description");
+        assertThat(fulActivityResult.getPayload().riskBenefitDescription()).isEqualTo("risk benefit description");
+        assertThat(fulActivityResult.getPayload().systemEffectedDescription()).isEqualTo("system effected description");
+        assertThat(fulActivityResult.getPayload().systemRequiredDescription()).isEqualTo("system required description");
+
+    }
 }

@@ -18,14 +18,8 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
-import edu.stanford.slac.core_work_management.service.ShopGroupService;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.service.WorkService;
-import edu.stanford.slac.core_work_management.service.authorization.WorkAuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -140,6 +134,47 @@ public class WorkController {
             @Parameter(description = "The new activity to create", required = true)
             @Valid @RequestBody NewActivityDTO newActivityDTO) {
         return ApiResultResponse.of(workService.createNew(workId, newActivityDTO));
+    }
+
+    @Operation(summary = "Update an activity")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Activity updated")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping(
+            path = "/{workId}/activity/{activityId}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@workAuthorizationService.checkUpdate(#authentication, #workId,#activityId, #updateActivityDTO)")
+    public ApiResultResponse<Boolean> update(
+            Authentication authentication,
+            @Parameter(description = "Is the work id that contains the activity", required = true)
+            @PathVariable String workId,
+            @Parameter(description = "Is the activity id to update", required = true)
+            @PathVariable String activityId,
+            @Valid @RequestBody UpdateActivityDTO updateActivityDTO
+    ) {
+        workService.update(workId, activityId, updateActivityDTO);
+        return ApiResultResponse.of(true);
+    }
+
+    @Operation(summary = "Get work by id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Work found"),
+            @ApiResponse(responseCode = "404", description = "Work not found")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(value = "/{workId}/activity/{activityId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<ActivityDTO> findById(
+            Authentication authentication,
+            @Parameter(description = "Is the id of the work to find", required = true)
+            @PathVariable String workId,
+            @Parameter(description = "Is the id of the activity to find", required = true)
+            @PathVariable String activityId
+    ) {
+        return ApiResultResponse.of(workService.findActivityById(activityId));
     }
 
     @Operation(summary = "find all element that respect the criteria")

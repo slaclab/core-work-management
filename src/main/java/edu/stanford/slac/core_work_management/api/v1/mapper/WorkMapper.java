@@ -45,7 +45,11 @@ public abstract class WorkMapper {
      */
     abstract public Work toModel(NewWorkDTO newWorkDTO);
 
-
+    /**
+     * Update the {@link Work} with the data from the {@link UpdateWorkDTO}
+     * @param dto the DTO with the data to update
+     * @param work the entity to update
+     */
     abstract public void updateModel(UpdateWorkDTO dto, @MappingTarget Work work);
     /**
      * Convert the {@link WorkType} to a {@link WorkTypeDTO}
@@ -70,6 +74,17 @@ public abstract class WorkMapper {
             java(mapWorkStatusToLogModel(newActivityDTO.activityStatus()))
             """)
     abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
+    /**
+     * Update the {@link Activity} with the data from the {@link UpdateActivityDTO}
+     * @param dto the DTO with the data to update
+     * @param work the entity to update
+     */
+    abstract public void updateModel(UpdateActivityDTO dto, @MappingTarget Activity work);
+    /**
+     * Convert the {@link ActivityStatusDTO} to a {@link ActivityStatus}
+     * @param activityStatusDTO the DTO to convert
+     * @return the converted entity
+     */
     abstract public ActivityStatus toModel(ActivityStatusDTO activityStatusDTO);
     /**
      * Convert the {@link Work} to a {@link WorkDTO}

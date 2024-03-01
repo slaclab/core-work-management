@@ -28,6 +28,18 @@ public record ActivityDTO(
         String title,
         @Schema(description = "The description of the activity")
         String description,
+        @Schema(description = "The description of the test plan for the activity. This field provides a detailed description of the test plan associated with the activity.")
+        String testPlanDescription,
+        @Schema(description = "The description of the backout plan for the activity. This field provides a detailed description of the backout plan associated with the activity.")
+        String backoutPlanDescription,
+        @Schema(description = "The description of the system requirements for the activity. This field provides a detailed description of the system requirements associated with the activity.")
+        String systemRequiredDescription,
+        @Schema(description = "The description of the system effects for the activity. This field provides a detailed description of the system effects associated with the activity.")
+        String systemEffectedDescription,
+        @Schema(description = "The description of the risk and benefits for the activity. This field provides a detailed description of the risk and benefits associated with the activity.")
+        String riskBenefitDescription,
+        @Schema(description = "The description of the dependencies for the activity. This field provides a detailed description of the dependencies associated with the activity.")
+        String dependenciesDescription,
         @Schema(description = "The type of the activity")
         ActivityTypeDTO activityType,
         @Schema(description = "The current status of the activity")
