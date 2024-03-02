@@ -6,5 +6,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 /**
  * Repository for Work objects
  */
-public interface WorkRepository extends MongoRepository<Work, String> {
+public interface WorkRepository extends MongoRepository<Work, String>,WorkRepositoryCustom {
 }

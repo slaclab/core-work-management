@@ -452,6 +452,82 @@ public class TestControllerHelperService {
         );
     }
 
+    /**
+     * Search all the work
+     *
+     * @param mockMvc           the mock mvc
+     * @param resultMatcher     the result matcher
+     * @param userInfo          the user info
+     * @param anchorID          the anchor id
+     * @param contextSize       the context size
+     * @param limit             the limit
+     * @param search            the search
+     * @return the list of work
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<WorkDTO>> workControllerSearchAllWork(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> anchorID,
+            Optional<Integer> contextSize,
+            Optional<Integer> limit,
+            Optional<String> search
+    ) throws Exception {
+        var requestBuilder = get("/v1/work")
+                .contentType(MediaType.APPLICATION_JSON);
+        anchorID.ifPresent(s -> requestBuilder.param("anchorId", s));
+        contextSize.ifPresent(s -> requestBuilder.param("contextSize", s.toString()));
+        limit.ifPresent(s -> requestBuilder.param("limit", s.toString()));
+        search.ifPresent(s -> requestBuilder.param("search", s));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Search all the activities
+     *
+     * @param mockMvc           the mock mvc
+     * @param resultMatcher     the result matcher
+     * @param userInfo          the user info
+     * @param anchorID          the anchor id
+     * @param contextSize       the context size
+     * @param limit             the limit
+     * @param search            the search
+     * @return the list of activities
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<ActivityDTO>> workControllerSearchAllActivities(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> anchorID,
+            Optional<Integer> contextSize,
+            Optional<Integer> limit,
+            Optional<String> search
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/activity")
+                .contentType(MediaType.APPLICATION_JSON);
+        anchorID.ifPresent(s -> requestBuilder.param("anchorId", s));
+        contextSize.ifPresent(s -> requestBuilder.param("contextSize", s.toString()));
+        limit.ifPresent(s -> requestBuilder.param("limit", s.toString()));
+        search.ifPresent(s -> requestBuilder.param("search", s));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
     public <T> ApiResultResponse<T> executeHttpRequest(
             TypeReference<ApiResultResponse<T>> typeRef,
             MockMvc mockMvc,

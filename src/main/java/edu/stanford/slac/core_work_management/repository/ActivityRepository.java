@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface ActivityRepository extends MongoRepository<Activity, String> {
+public interface ActivityRepository extends MongoRepository<Activity, String>, ActivityRepositoryCustom {
     @Aggregation(pipeline = {
             "{ $match: { 'workId': ?0 } }",
             "{ $project: { 'currentStatus': 1, '_id': 0 } }",
