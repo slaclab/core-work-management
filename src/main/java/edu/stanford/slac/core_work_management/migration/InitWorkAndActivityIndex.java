@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 
 @AllArgsConstructor
 @ChangeUnit(id = "init-work-activity-index", order = "3", author = "bisegni")
@@ -27,26 +28,26 @@ public class InitWorkAndActivityIndex {
      * This method creates the index for the work collection
      */
     private void initWorkIndex() {
-        MongoDDLOps.createIndex(
-                Work.class,
-                mongoTemplate,
-                new Index().on(
-                                "title",
-                                Sort.Direction.ASC
-                        )
-                        .named("title")
-                        .sparse()
-        );
-        MongoDDLOps.createIndex(
-                Work.class,
-                mongoTemplate,
-                new Index().on(
-                                "description",
-                                Sort.Direction.ASC
-                        )
-                        .named("description")
-                        .sparse()
-        );
+//        MongoDDLOps.createIndex(
+//                Work.class,
+//                mongoTemplate,
+//                new Index().on(
+//                                "title",
+//                                Sort.Direction.ASC
+//                        )
+//                        .named("title")
+//                        .sparse()
+//        );
+//        MongoDDLOps.createIndex(
+//                Work.class,
+//                mongoTemplate,
+//                new Index().on(
+//                                "description",
+//                                Sort.Direction.ASC
+//                        )
+//                        .named("description")
+//                        .sparse()
+//        );
         MongoDDLOps.createIndex(
                 Work.class,
                 mongoTemplate,
@@ -57,32 +58,40 @@ public class InitWorkAndActivityIndex {
                         .named("relatedToWorkId")
                         .sparse()
         );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new TextIndexDefinition.TextIndexDefinitionBuilder()
+                        .onField("title")
+                        .onField("description")
+                        .build()
+        );
     }
 
     /**
      * This method creates the index for the activity collection
      */
     private void initActivityIndex() {
-        MongoDDLOps.createIndex(
-                Activity.class,
-                mongoTemplate,
-                new Index().on(
-                                "title",
-                                Sort.Direction.ASC
-                        )
-                        .named("title")
-                        .sparse()
-        );
-        MongoDDLOps.createIndex(
-                Activity.class,
-                mongoTemplate,
-                new Index().on(
-                                "description",
-                                Sort.Direction.ASC
-                        )
-                        .named("description")
-                        .sparse()
-        );
+//        MongoDDLOps.createIndex(
+//                Activity.class,
+//                mongoTemplate,
+//                new Index().on(
+//                                "title",
+//                                Sort.Direction.ASC
+//                        )
+//                        .named("title")
+//                        .sparse()
+//        );
+//        MongoDDLOps.createIndex(
+//                Activity.class,
+//                mongoTemplate,
+//                new Index().on(
+//                                "description",
+//                                Sort.Direction.ASC
+//                        )
+//                        .named("description")
+//                        .sparse()
+//        );
         MongoDDLOps.createIndex(
                 Activity.class,
                 mongoTemplate,
@@ -92,6 +101,14 @@ public class InitWorkAndActivityIndex {
                         )
                         .named("activityTypeId")
                         .sparse()
+        );
+        MongoDDLOps.createIndex(
+                Activity.class,
+                mongoTemplate,
+                new TextIndexDefinition.TextIndexDefinitionBuilder()
+                        .onField("title")
+                        .onField("description")
+                        .build()
         );
     }
 

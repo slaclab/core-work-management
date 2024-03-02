@@ -33,7 +33,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -222,13 +221,13 @@ public class WorkController {
         return ApiResultResponse.of(workService.findActivityById(activityId));
     }
 
-    @Operation(summary = "find all element that respect the criteria")
+    @Operation(summary = "find all works that respect the criteria")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Search operation completed successfully")
     })
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ApiResultResponse<List<WorkDTO>> findAllElements(
+    public ApiResultResponse<List<WorkDTO>> findAllWork(
             Authentication authentication,
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
             @RequestParam("anchorId") Optional<String> anchorId,
@@ -237,14 +236,49 @@ public class WorkController {
             @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
             @RequestParam(value = "limit") Optional<Integer> limit,
             @Parameter(name = "search", description = "Typical search functionality")
-            @RequestParam("search") Optional<String> search,
-            @Parameter(name = "tags", description = "Only include entries that use one of these tags")
-            @RequestParam("tags") Optional<List<String>> tags,
-            @Parameter(name = "requireAllTags", description = "Require that all entries found includes all the tags")
-            @RequestParam(value = "requireAllTags", defaultValue = "false") Optional<Boolean> requireAllTags
+            @RequestParam(value = "search") Optional<String> search
     ) {
         return ApiResultResponse.of(
-                Collections.emptyList()
+                workService.searchAllWork(
+                        WorkQueryParameterDTO.builder()
+                                .anchorID(anchorId.orElse(null))
+                                .contextSize(contextSize.orElse(null))
+                                .limit(limit.orElse(null))
+                                .search(search.orElse(null))
+                                .build()
+                )
+        );
+    }
+
+    @Operation(summary = "find all activities that respect the criteria")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Search operation completed successfully")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/activity",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public ApiResultResponse<List<ActivityDTO>> findAllActivities(
+            Authentication authentication,
+            @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
+            @RequestParam("anchorId") Optional<String> anchorId,
+            @Parameter(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
+            @RequestParam("contextSize") Optional<Integer> contextSize,
+            @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
+            @RequestParam(value = "limit") Optional<Integer> limit,
+            @Parameter(name = "search", description = "Typical search functionality")
+            @RequestParam(value = "search") Optional<String> search
+    ) {
+        return ApiResultResponse.of(
+                workService.searchAllActivities(
+                        ActivityQueryParameterDTO.builder()
+                                .anchorID(anchorId.orElse(null))
+                                .contextSize(contextSize.orElse(null))
+                                .limit(limit.orElse(null))
+                                .search(search.orElse(null))
+                                .build()
+                )
         );
     }
 }

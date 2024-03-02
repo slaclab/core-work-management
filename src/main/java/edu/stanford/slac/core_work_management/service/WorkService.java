@@ -8,10 +8,7 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
-import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkStatus;
-import edu.stanford.slac.core_work_management.model.WorkStatusLog;
+import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
@@ -516,5 +513,30 @@ public class WorkService {
                 -4
         );
         log.info("Work '{}' has change his status to status '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus());
+    }
+
+    /**
+     * Search on all the works
+     *
+     * @return the list of work
+     */
+    public List<WorkDTO> searchAllWork(WorkQueryParameterDTO workQueryParameterDTO) {
+        var workList = wrapCatch(
+                () -> workRepository.searchAll(workMapper.toModel(workQueryParameterDTO)),
+                -1
+        );
+        return workList.stream().map(workMapper::toDTO).toList();
+    }
+
+    /**
+     * Search on all the activities
+     * @return the found activities
+     */
+    public List<ActivityDTO> searchAllActivities(ActivityQueryParameterDTO activityQueryParameterDTO) {
+        var activittList = wrapCatch(
+                () -> activityRepository.searchAll(workMapper.toModel(activityQueryParameterDTO)),
+                -1
+        );
+        return activittList.stream().map(workMapper::toDTO).toList();
     }
 }

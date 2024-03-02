@@ -103,6 +103,15 @@ public abstract class WorkMapper {
     abstract public ActivityDTO toDTO(Activity activity);
 
     /**
+     * Convert the {@link WorkQueryParameterDTO} to a {@link WorkQueryParameter}
+     * @param workQueryParameterDTO the DTO to convert
+     * @return the converted entity
+     */
+    abstract public WorkQueryParameter toModel(WorkQueryParameterDTO workQueryParameterDTO);
+
+    abstract public ActivityQueryParameter toModel(ActivityQueryParameterDTO activityQueryParameterDTO);
+
+    /**
      * Convert the {@link ActivityStatusDTO} to a {@link ActivityStatusLog}
      * @param activityStatusDTO the DTO to convert
      * @return the converted entity
