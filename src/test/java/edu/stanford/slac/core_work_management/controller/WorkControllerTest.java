@@ -594,6 +594,7 @@ public class WorkControllerTest {
                                         // the group contains user2 and user3 and all of them should be admin
                                         .locationId(testLocationIds.getFirst())
                                         .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.getFirst())
                                         .title("work 1")
                                         .description("work 1 description")
                                         .assignedTo(List.of("user3@slac.stanford.edu"))
@@ -635,6 +636,7 @@ public class WorkControllerTest {
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
                                         .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(2))  // user2 and user3
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -672,6 +674,7 @@ public class WorkControllerTest {
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
                                         .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(2))  // user2 and user3
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -710,6 +713,7 @@ public class WorkControllerTest {
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .locationId(testLocationIds.getFirst())
+                                .shopGroupId(testShopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -749,6 +753,7 @@ public class WorkControllerTest {
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
                                         .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(2))  // user2 and user3
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -787,6 +792,7 @@ public class WorkControllerTest {
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .locationId(testLocationIds.getFirst())
+                                .shopGroupId(testShopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -826,6 +832,7 @@ public class WorkControllerTest {
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
                                         .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.get(1)) // user1 and user2
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -907,6 +914,7 @@ public class WorkControllerTest {
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
                                         .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.get(1))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()

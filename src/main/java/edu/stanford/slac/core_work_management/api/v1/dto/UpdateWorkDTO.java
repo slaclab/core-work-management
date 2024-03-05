@@ -46,7 +46,7 @@ public record UpdateWorkDTO(
         )
         @NullOrNotEmpty(message = "Location id can be null or not empty")
         String locationId,
-        @NotEmpty(message = "Shop group is mandatory is required")
+        @NullOrNotEmpty(message = "Shop group can be null or not empty")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId
 ){}
