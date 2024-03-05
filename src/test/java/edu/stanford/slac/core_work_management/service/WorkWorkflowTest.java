@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.*;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -70,7 +71,6 @@ public class WorkWorkflowTest {
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")
-                                        .locationShopGroupId(shopGroupId)
                                         .build()
                         )
                 );
@@ -79,15 +79,14 @@ public class WorkWorkflowTest {
 
     @Test
     public void creatingNewWorkItIsInNewState() {
-        var listIds = helperService.ensureWorkAndActivitiesTypes(
+        var wtId = workService.ensureWorkType(
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
                         .description("Update the documentation description")
-                        .build(),
-                emptyList()
+                        .build()
         );
-        assertThat(listIds).hasSize(1);
+        assertThat(wtId).isNotNull();
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
@@ -95,7 +94,7 @@ public class WorkWorkflowTest {
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
-                                .workTypeId(listIds.getFirst())
+                                .workTypeId(wtId)
                                 .locationId(locationId)
                                 .build()
                 )
@@ -107,21 +106,22 @@ public class WorkWorkflowTest {
 
     @Test
     public void createNewActivitySendWorkInScheduledJobOK() {
-        var listIds = helperService.ensureWorkAndActivitiesTypes(
+        var wtId = workService.ensureWorkType(
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
                         .description("Update the documentation description")
-                        .build(),
-                of(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .build()
-                )
+                        .build()
         );
-        assertThat(listIds).hasSize(2);
+        assertThat(wtId).isNotNull();
+        var atId = workService.ensureActivityType(
+                NewActivityTypeDTO
+                        .builder()
+                        .title("Activity 1")
+                        .description("Activity 1 description")
+                        .build()
+        );
+        assertThat(atId).isNotNull();
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
@@ -129,7 +129,7 @@ public class WorkWorkflowTest {
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
-                                .workTypeId(listIds.get(0))
+                                .workTypeId(wtId)
                                 .locationId(locationId)
                                 .build()
                 )
@@ -144,7 +144,7 @@ public class WorkWorkflowTest {
                                 .builder()
                                 .title("Activity 1")
                                 .description("Activity 1 description")
-                                .activityTypeId(listIds.get(1))
+                                .activityTypeId(atId)
                                 .build()
                 )
         );

@@ -28,7 +28,6 @@ public class HelperService {
         for(NewActivityTypeDTO newActivityDTO : newActivityTypeDTOS) {
             String newActivityTypeId = assertDoesNotThrow(
                     () -> workService.ensureActivityType(
-                            newWorkTypeId,
                             newActivityDTO
                     )
             );

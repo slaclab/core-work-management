@@ -170,7 +170,6 @@ public class LocationControllerTest {
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
                         NewLocationDTO.builder()
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -188,30 +187,10 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
         assertThat(createNewLocationResult.getPayload()).isNotNull();
-    }
-
-    @Test
-    public void creatingLocationFailWithNotFoundShopGroup() {
-        ShopGroupNotFound shopGroupNotFound = assertThrows(
-                ShopGroupNotFound.class,
-                () -> testControllerHelperService.locationControllerCreateNew(
-                        mockMvc,
-                        status().is4xxClientError(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        NewLocationDTO.builder()
-                                .name("location1")
-                                .description("location1 description")
-                                .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId("bad-id")
-                                .build()
-                )
-        );
-        assertThat(shopGroupNotFound.getErrorCode()).isEqualTo(-3);
     }
 
     @Test
@@ -226,7 +205,6 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("bad@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -246,7 +224,6 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -278,7 +255,6 @@ public class LocationControllerTest {
                                     .name("location-%d".formatted((finalI)))
                                     .description("location-%d description".formatted((finalI)))
                                     .locationManagerUserId("user1@slac.stanford.edu")
-                                    .locationShopGroupId(shopGroupIds.getFirst())
                                     .build()
                     )
             );
@@ -329,7 +305,6 @@ public class LocationControllerTest {
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -359,7 +334,6 @@ public class LocationControllerTest {
                         NewLocationDTO.builder()
                                 .externalLocationIdentifier(externalLocationIdentifier)
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );
@@ -379,7 +353,6 @@ public class LocationControllerTest {
                         NewLocationDTO.builder()
                                 .externalLocationIdentifier(externalLocationIdentifier)
                                 .locationManagerUserId("user1@slac.stanford.edu")
-                                .locationShopGroupId(shopGroupIds.getFirst())
                                 .build()
                 )
         );

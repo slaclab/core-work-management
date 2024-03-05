@@ -103,7 +103,7 @@ public class WorkControllerTest {
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
-    private final Map<String, List<String>> testActivityTypeIds = new HashMap<>();
+    private final List<String> testActivityTypeIds = new ArrayList<>();
 
     @BeforeAll
     public void init() {
@@ -164,7 +164,6 @@ public class WorkControllerTest {
                                         .name("location1")
                                         .description("location1 description")
                                         .locationManagerUserId("user1@slac.stanford.edu")
-                                        .locationShopGroupId(testShopGroupIds.get(0))
                                         .build()
                         )
                 )
@@ -176,7 +175,6 @@ public class WorkControllerTest {
                                         .name("location2")
                                         .description("location2 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
-                                        .locationShopGroupId(testShopGroupIds.get(1))
                                         .build()
                         )
                 )
@@ -188,7 +186,6 @@ public class WorkControllerTest {
                                         .name("location3")
                                         .description("location3 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
-                                        .locationShopGroupId(testShopGroupIds.get(2))
                                         .build()
                         )
                 )
@@ -206,33 +203,6 @@ public class WorkControllerTest {
                         )
                 )
         );
-        // create activity type for work 1
-        testActivityTypeIds.put(testWorkTypeIds.get(0), new ArrayList<>());
-        testActivityTypeIds.get(testWorkTypeIds.get(0)).add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(0),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 1 work type 1")
-                                        .description("Activity 1 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.get(testWorkTypeIds.get(0)).add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(0),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 2 work type 1")
-                                        .description("Activity 2 description")
-                                        .build()
-                        )
-                )
-        );
-
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
@@ -245,28 +215,51 @@ public class WorkControllerTest {
                         )
                 )
         );
-        // create activity type for work 2
-        testActivityTypeIds.put(testWorkTypeIds.get(1), new ArrayList<>());
-        testActivityTypeIds.get(testWorkTypeIds.get(1)).add(
+
+        // create activity type for work 1
+        testActivityTypeIds.add(
                 assertDoesNotThrow(
                         () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
-                                        .title("Activity 1 work type 2")
+                                        .title("Activity 1")
                                         .description("Activity 1 description")
                                         .build()
                         )
                 )
         );
-        testActivityTypeIds.get(testWorkTypeIds.get(1)).add(
+        testActivityTypeIds.add(
                 assertDoesNotThrow(
                         () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
-                                        .title("Activity 2 work type 2")
+                                        .title("Activity 2")
                                         .description("Activity 2 description")
+                                        .build()
+                        )
+                )
+        );
+
+
+        // create activity type for work 2
+        testActivityTypeIds.add(
+                assertDoesNotThrow(
+                        () -> workService.ensureActivityType(
+                                NewActivityTypeDTO
+                                        .builder()
+                                        .title("Activity 3")
+                                        .description("Activity 3 description")
+                                        .build()
+                        )
+                )
+        );
+        testActivityTypeIds.add(
+                assertDoesNotThrow(
+                        () -> workService.ensureActivityType(
+                                NewActivityTypeDTO
+                                        .builder()
+                                        .title("Activity 4")
+                                        .description("Activity 4 description")
                                         .build()
                         )
                 )
@@ -297,6 +290,7 @@ public class WorkControllerTest {
                                 NewWorkDTO.builder()
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -319,6 +313,7 @@ public class WorkControllerTest {
                                 NewWorkDTO.builder()
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -342,6 +337,7 @@ public class WorkControllerTest {
                                         // the group contains user1 and user2 and all of them should be reader
                                         .locationId(testLocationIds.get(1))
                                         .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.get(1))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -401,6 +397,7 @@ public class WorkControllerTest {
                                 NewWorkDTO.builder()
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -431,8 +428,9 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
-                                        .locationId(testLocationIds.get(0))
-                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .locationId(testLocationIds.getFirst())
+                                        .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.getFirst())
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -449,7 +447,7 @@ public class WorkControllerTest {
                                 Optional.of("user1@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.get(0)).get(0))
+                                        .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()
@@ -457,60 +455,6 @@ public class WorkControllerTest {
                 );
         assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newActivityIdResult.getPayload()).isNotNull();
-    }
-
-    @Test
-    public void testCreateActivityExceptionOnWrongActivityType() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                NewWorkDTO.builder()
-                                        .locationId(testLocationIds.get(0))
-                                        .workTypeId(testWorkTypeIds.get(0))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        var exceptionForWrongActivityType =
-                assertThrows(
-                        ControllerLogicException.class,
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().is5xxServerError(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.get(1)).get(0))
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(exceptionForWrongActivityType.getErrorCode()).isEqualTo(-3);
-
-        var exceptionForNotFoundActivityType =
-                assertThrows(
-                        ActivityTypeNotFound.class,
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().is4xxClientError(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId("not-found-activity-type-id")
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(exceptionForNotFoundActivityType.getErrorCode()).isEqualTo(-2);
     }
 
     @Test
@@ -527,6 +471,7 @@ public class WorkControllerTest {
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
                                         .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.get(1))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -543,7 +488,7 @@ public class WorkControllerTest {
                                 Optional.of("user3@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()
@@ -567,6 +512,7 @@ public class WorkControllerTest {
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
                                         .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.get(1))
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -583,7 +529,7 @@ public class WorkControllerTest {
                                 Optional.of("user2@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()
@@ -607,6 +553,7 @@ public class WorkControllerTest {
                                         // the group contains user2 and user3 and all of them should be admin
                                         .locationId(testLocationIds.get(2))
                                         .workTypeId(testWorkTypeIds.get(1))
+                                        .shopGroupId(testShopGroupIds.get(2))   // user2 and user3
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -623,7 +570,7 @@ public class WorkControllerTest {
                                 Optional.of("user3@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.get(1)).getFirst())
+                                        .activityTypeId(testActivityTypeIds.get(2))
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()
@@ -664,7 +611,7 @@ public class WorkControllerTest {
                                 Optional.of("user3@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()
@@ -895,7 +842,7 @@ public class WorkControllerTest {
                                 Optional.of("user3@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()
@@ -976,7 +923,7 @@ public class WorkControllerTest {
                                 Optional.of("user3@slac.stanford.edu"),
                                 newWorkIdResult.getPayload(),
                                 NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(testWorkTypeIds.getFirst()).getFirst())
+                                        .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
                                         .build()

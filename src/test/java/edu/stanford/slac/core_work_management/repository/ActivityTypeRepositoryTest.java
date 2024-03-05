@@ -42,7 +42,7 @@ public class ActivityTypeRepositoryTest {
     public void testEnsureActivity() {
         ActivityType activityType = ActivityType.builder().title("Test").build();
         String newId = assertDoesNotThrow(
-                ()-> activityTypeRepository.ensureActivityType("wId",activityType)
+                ()-> activityTypeRepository.ensureActivityType(activityType)
         );
         assertThat(newId).isNotNull();
     }
@@ -55,7 +55,7 @@ public class ActivityTypeRepositoryTest {
             ActivityType activityType = ActivityType.builder().title("Test").build();
 
             for (int i = 0; i < numberOfThreads*10; i++) {
-                tasks.add(() -> activityTypeRepository.ensureActivityType("wId", activityType));
+                tasks.add(() -> activityTypeRepository.ensureActivityType(activityType));
             }
 
             futures = executorService.invokeAll(tasks);
