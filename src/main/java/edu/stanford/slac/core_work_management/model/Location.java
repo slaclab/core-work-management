@@ -43,11 +43,6 @@ public class Location {
      * review to work done in that location
      */
     String locationManagerUserId;
-    /**
-     * The shop group id
-     * is the shop group that is authorized to make the works in that location
-     */
-    String locationShopGroupId;
     @CreatedDate
     private LocalDateTime createdDate;
     @CreatedBy

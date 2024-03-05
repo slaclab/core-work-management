@@ -36,6 +36,8 @@ public record WorkDTO(
         List<String> assignedTo,
         @Schema(description = "The location of the work, if any")
         WorkLocation location,
+        @Schema(description = "The shop group that perform the work in the location")
+        ShopGroupDTO shopGroup,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

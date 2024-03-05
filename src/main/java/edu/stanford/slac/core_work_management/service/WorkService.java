@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,8 @@ import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.W
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Service
 @Log4j2
@@ -63,24 +66,42 @@ public class WorkService {
     }
 
     /**
+     * Ensure work types
+     */
+    @Transactional
+    public List<String> ensureWorkTypes(List<NewWorkTypeDTO> newWorkTypeDTOs) {
+        List<String> listIds = new ArrayList<>();
+        newWorkTypeDTOs.forEach(
+                wt -> listIds.add(ensureWorkType(wt))
+        );
+        return listIds;
+    }
+
+    /**
      * Create a new activity type
      *
-     * @param workId             the id of the work
      * @param newActivityTypeDTO the DTO to create the activity type
      */
-    public String ensureActivityType(String workId, @Valid NewActivityTypeDTO newActivityTypeDTO) {
-        assertion(
-                () -> workTypeRepository.existsById(workId),
-                WorkNotFound.notFoundById().errorCode(-1).workId(workId).build()
-        );
+    public String ensureActivityType(@Valid NewActivityTypeDTO newActivityTypeDTO) {
         return wrapCatch(
                 () -> activityTypeRepository.ensureActivityType(
-                        workId,
                         workMapper.toModel(newActivityTypeDTO)
                 ),
                 -1
         );
     }
+
+    /**
+     * Ensure activity types
+     */
+    public List<String> ensureActivitiesTypes(List<NewActivityTypeDTO> newActivityTypeDTOS) {
+        List<String> listIds = new ArrayList<>();
+        newActivityTypeDTOS.forEach(
+                at -> listIds.add(ensureActivityType(at))
+        );
+        return listIds;
+    }
+
 
     /**
      * Return all the work types
@@ -90,19 +111,6 @@ public class WorkService {
     public List<WorkTypeDTO> findAllWorkTypes() {
         var workTypeList = wrapCatch(
                 () -> workTypeRepository.findAll(),
-                -1
-        );
-        return workTypeList.stream().map(workMapper::toDTO).toList();
-    }
-
-    /**
-     * Return all the work types
-     *
-     * @return the list of work types
-     */
-    public List<ActivityTypeDTO> findAllActivityTypesByWorkId(String workId) {
-        var workTypeList = wrapCatch(
-                () -> activityTypeRepository.findAll(),
                 -1
         );
         return workTypeList.stream().map(workMapper::toDTO).toList();
@@ -176,7 +184,7 @@ public class WorkService {
         // authorize location manager as admin
         adminUserList.add(locationDTO.locationManagerUserId());
         // add shop group as writer in the form of virtual user
-        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(locationDTO.locationShopGroupId()));
+        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroupId()));
         // add assigned to users
         if(work.getAssignedTo() != null) {
             writerUserList.addAll(work.getAssignedTo());
@@ -291,8 +299,8 @@ public class WorkService {
      * @return the shop group id
      */
     public String getShopGroupIdByWorkId(String workId) {
-        String locationId =  wrapCatch(
-                () -> workRepository.findById(workId).map(Work::getLocationId).orElseThrow(
+        return wrapCatch(
+                () -> workRepository.findById(workId).map(Work::getShopGroupId).orElseThrow(
                         () -> WorkNotFound
                                 .notFoundById()
                                 .errorCode(-1)
@@ -301,8 +309,6 @@ public class WorkService {
                 ),
                 -1
         );
-
-        return locationService.findById(locationId).locationShopGroupId();
     }
 
     /**
@@ -324,25 +330,6 @@ public class WorkService {
                                 .build()
                 ),
                 -1
-        );
-
-        // check activity type id is permitted for the type of the work
-        assertion(
-                // find the activity and check if the work type is the same
-                () -> activityTypeRepository.findById(newActivityDTO.activityTypeId())
-                        .orElseThrow(
-                                ()-> ActivityTypeNotFound
-                                        .notFoundById()
-                                        .errorCode(-2)
-                                        .activityTypeId(newActivityDTO.activityTypeId())
-                                        .build()
-                        ).getWorkTypeId().equals(work.getWorkTypeId()),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-3)
-                        .errorMessage("The activity type is not permitted by the work %s".formatted(work.getTitle()))
-                        .errorDomain("WorkService::createNew(String, NewActivityDTO)")
-                        .build()
         );
 
         var newActivity = workMapper.toModel(newActivityDTO, workId);

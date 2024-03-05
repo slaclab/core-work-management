@@ -75,6 +75,11 @@ public class Work {
     private String locationId;
 
     /**
+     * The shop group that perform the work in the location
+     */
+    private String shopGroupId;
+
+    /**
      * The identifier of the user assigned to the work.
      * This field links the work to a specific user, identified by its ID.
      */

@@ -17,6 +17,7 @@
 
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
@@ -96,24 +97,13 @@ public class LocationService {
         // check if are manager exists
         assertion(
                 () -> peopleGroupService.findPersonByEMail(newLocationDTO.locationManagerUserId()) != null,
-                ShopGroupNotFound.notFoundById()
+                PersonNotFound
+                        .personNotFoundBuilder()
                         .errorCode(-2)
-                        .shopGroupId(
-                                newLocationDTO.locationShopGroupId()
-                        )
+                        .email(newLocationDTO.locationManagerUserId())
                         .build()
         );
 
-        // check if shop group exists
-        assertion(
-                () -> shopGroupService.exists(newLocationDTO.locationShopGroupId()),
-                ShopGroupNotFound.notFoundById()
-                        .errorCode(-3)
-                        .shopGroupId(
-                                newLocationDTO.locationShopGroupId()
-                        )
-                        .build()
-        );
         var newSavedLocation = wrapCatch(
                 () -> locationRepository.save(
                         locationMapper.toModel(newLocationDTO, externalLocationDTO)

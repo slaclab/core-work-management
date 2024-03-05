@@ -51,10 +51,6 @@ public class InitWorkAndActivityTypeIndex {
                                 "title",
                                 Sort.Direction.ASC
                         )
-                        .on(
-                                "workTypeId",
-                                Sort.Direction.ASC
-                        )
                         .named("title")
                         .unique()
         );

@@ -95,7 +95,7 @@ public class WorkControllerSearchWorkTest {
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
-    private final Map<String, List<String>> testActivityTypeIds = new HashMap<>();
+    private final List<String> testActivityTypeIds = new ArrayList<>();
 
     @BeforeAll
     public void init() {
@@ -156,7 +156,6 @@ public class WorkControllerSearchWorkTest {
                                         .name("location1")
                                         .description("location1 description")
                                         .locationManagerUserId("user1@slac.stanford.edu")
-                                        .locationShopGroupId(testShopGroupIds.get(0))
                                         .build()
                         )
                 )
@@ -168,7 +167,6 @@ public class WorkControllerSearchWorkTest {
                                         .name("location2")
                                         .description("location2 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
-                                        .locationShopGroupId(testShopGroupIds.get(1))
                                         .build()
                         )
                 )
@@ -180,7 +178,6 @@ public class WorkControllerSearchWorkTest {
                                         .name("location3")
                                         .description("location3 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
-                                        .locationShopGroupId(testShopGroupIds.get(2))
                                         .build()
                         )
                 )
@@ -198,33 +195,6 @@ public class WorkControllerSearchWorkTest {
                         )
                 )
         );
-        // create activity type for work 1
-        testActivityTypeIds.put(testWorkTypeIds.get(0), new ArrayList<>());
-        testActivityTypeIds.get(testWorkTypeIds.get(0)).add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(0),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 1 work type 1")
-                                        .description("Activity 1 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.get(testWorkTypeIds.get(0)).add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(0),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 2 work type 1")
-                                        .description("Activity 2 description")
-                                        .build()
-                        )
-                )
-        );
-
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
@@ -237,28 +207,50 @@ public class WorkControllerSearchWorkTest {
                         )
                 )
         );
-        // create activity type for work 2
-        testActivityTypeIds.put(testWorkTypeIds.get(1), new ArrayList<>());
-        testActivityTypeIds.get(testWorkTypeIds.get(1)).add(
+
+        // create activity type for work 1
+        testActivityTypeIds.add(
                 assertDoesNotThrow(
                         () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
-                                        .title("Activity 1 work type 2")
+                                        .title("Activity 1")
                                         .description("Activity 1 description")
                                         .build()
                         )
                 )
         );
-        testActivityTypeIds.get(testWorkTypeIds.get(1)).add(
+        testActivityTypeIds.add(
                 assertDoesNotThrow(
                         () -> workService.ensureActivityType(
-                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
-                                        .title("Activity 2 work type 2")
+                                        .title("Activity 2")
                                         .description("Activity 2 description")
+                                        .build()
+                        )
+                )
+        );
+
+        // create activity type for work 2
+        testActivityTypeIds.add(
+                assertDoesNotThrow(
+                        () -> workService.ensureActivityType(
+                                NewActivityTypeDTO
+                                        .builder()
+                                        .title("Activity 3")
+                                        .description("Activity 3 description")
+                                        .build()
+                        )
+                )
+        );
+        testActivityTypeIds.add(
+                assertDoesNotThrow(
+                        () -> workService.ensureActivityType(
+                                NewActivityTypeDTO
+                                        .builder()
+                                        .title("Activity 3")
+                                        .description("Activity 3 description")
                                         .build()
                         )
                 )
@@ -292,6 +284,7 @@ public class WorkControllerSearchWorkTest {
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
+                                            .shopGroupId(testShopGroupIds.get(0))
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
                                             .build()
@@ -346,6 +339,7 @@ public class WorkControllerSearchWorkTest {
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
+                                            .shopGroupId(testShopGroupIds.get(0))
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
                                             .build()
@@ -398,6 +392,7 @@ public class WorkControllerSearchWorkTest {
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
+                                            .shopGroupId(testShopGroupIds.get(0))
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
                                             .build()

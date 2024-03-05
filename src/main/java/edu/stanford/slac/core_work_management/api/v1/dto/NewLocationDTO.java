@@ -29,8 +29,5 @@ public record NewLocationDTO (
         String externalLocationIdentifier,
         @NotEmpty
         @Schema(description = "The user id that represent the location manager")
-        String locationManagerUserId,
-        @NotEmpty
-        @Schema(description = "The shop group id that represent the location shop group")
-        String locationShopGroupId
+        String locationManagerUserId
 ){}

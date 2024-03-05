@@ -27,8 +27,6 @@ public record LocationDTO(
         String description,
         @Schema(description = "The user id that represent the location manager")
         String locationManagerUserId,
-        @Schema(description = "The shop group id that is authorized to make the works in that location")
-        String locationShopGroupId,
         @Schema(description = "The created date of the location")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
