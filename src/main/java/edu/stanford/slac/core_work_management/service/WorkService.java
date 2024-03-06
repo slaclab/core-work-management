@@ -117,6 +117,40 @@ public class WorkService {
     }
 
     /**
+     * Return all the activity types
+     *
+     * @return the list of activity types
+     */
+    public List<ActivityTypeDTO> findAllActivityTypes() {
+        var workTypeList = wrapCatch(
+                () -> activityTypeRepository.findAll(),
+                -1
+        );
+        return workTypeList.stream().map(workMapper::toDTO).toList();
+    }
+
+    /**
+     * Return all the activity subtypes
+     *
+     * @return the list of activity subtypes
+     */
+    public List<ActivityTypeSubtypeDTO> findAllActivitySubTypes() {
+        return List.of(
+                ActivityTypeSubtypeDTO.BugFix,
+                ActivityTypeSubtypeDTO.DeferredRepair,
+                ActivityTypeSubtypeDTO.Enhancement,
+                ActivityTypeSubtypeDTO.Fabrication,
+                ActivityTypeSubtypeDTO.Inspection,
+                ActivityTypeSubtypeDTO.Installation,
+                ActivityTypeSubtypeDTO.Maintenance,
+                ActivityTypeSubtypeDTO.NewApplication,
+                ActivityTypeSubtypeDTO.Safety,
+                ActivityTypeSubtypeDTO.SoftwareRelease,
+                ActivityTypeSubtypeDTO.Other
+        );
+    }
+
+    /**
      * Create a new work
      *
      * @param newWorkDTO the DTO to create the work
@@ -431,7 +465,7 @@ public class WorkService {
     /**
      * Return the activity type by his id
      *
-     * @param activityTypeId the id of the activity type
+     * @param activity the id of the activity type
      * @return the activity type
      */
     public List<ActivityStatusDTO> getPermittedStatus(ActivityStatusDTO activity) {

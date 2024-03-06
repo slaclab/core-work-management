@@ -233,6 +233,84 @@ public class TestControllerHelperService {
     }
 
     /**
+     * get all work type new work type
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created work type
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<WorkTypeDTO>> workControllerFindAllWorkTypes(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/work-type")
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * get all work type new work type
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created work type
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<ActivityTypeDTO>> workControllerFindAllActivityTypes(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/activity-type")
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * get all work type new work type
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created work type
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<ActivityTypeSubtypeDTO>> workControllerFindAllActivitySubTypes(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/activity-type-subtype")
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Create new work
      *
      * @param mockMvc       the mock mvc

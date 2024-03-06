@@ -17,7 +17,7 @@ public enum ActivityTypeSubtypeDTO {
     Installation,
     Maintenance,
     NewApplication,
-    Other,
     Safety,
-    SoftwareRelease
+    SoftwareRelease,
+    Other
 }
