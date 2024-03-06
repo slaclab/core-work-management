@@ -20,5 +20,5 @@ public interface ShopGroupRepository extends MongoRepository<ShopGroup, String>{
      * @param userIds the email of the user
      * @return true if the shop group exists
      */
-    boolean existsByIdAndUsers_User_uid_ContainingIgnoreCase(@NonNull String shopGroupId, @NonNull String userIds);
+    boolean existsByIdAndUsers_User_mail_ContainingIgnoreCase(@NonNull String shopGroupId, @NonNull String userIds);
 }

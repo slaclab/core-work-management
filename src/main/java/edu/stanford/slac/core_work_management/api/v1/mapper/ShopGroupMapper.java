@@ -3,10 +3,7 @@ package edu.stanford.slac.core_work_management.api.v1.mapper;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.model.ShopGroupUser;
 import org.mapstruct.*;
@@ -34,6 +31,8 @@ public abstract class ShopGroupMapper {
      * @return the DTO
      */
     public abstract ShopGroup toModel(NewShopGroupDTO newShopGroupDTO);
+
+    public abstract ShopGroup updateModel(UpdateShopGroupDTO updateShopGroupDTO, @MappingTarget ShopGroup shopGroup);
 
 //    @Mapping(target = "users", expression = "java(fillPersonDTOsByIdsList(shopGroup.getUsers()))")
     public abstract ShopGroupDTO toDTO(ShopGroup shopGroup);

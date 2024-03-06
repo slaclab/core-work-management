@@ -55,28 +55,43 @@ public class ShopGroupService {
     /**
      * Update a shop group
      *
-     * @param shopGroupId the id of the shop group
+     * @param shopGroupId        the id of the shop group
      * @param updateShopGroupDTO the DTO to update the shop group
      */
     public void update(String shopGroupId, UpdateShopGroupDTO updateShopGroupDTO) {
+        var storedShopGroup = wrapCatch(
+                () -> shopGroupRepository.findById(shopGroupId),
+                -1
+        ).orElseThrow(
+                () -> ShopGroupNotFound.notFoundById()
+                        .errorCode(-2)
+                        .shopGroupId(shopGroupId)
+                        .build()
+        );
+        wrapCatch(
+                () -> shopGroupRepository.save(shopGroupMapper.updateModel(updateShopGroupDTO, storedShopGroup)),
+                -3
+        );
 
+        // update authorization for the shop-group
+        updateShopGroupAuthorization(shopGroupId, updateShopGroupDTO.users());
     }
 
     /**
      * Delete a shop group
      *
-     * @param shopGroupId the id of the shop group
+     * @param shopGroupId            the id of the shop group
      * @param shopGroupUserInputDTOS the DTOs of the shop group users
      */
     private void updateShopGroupAuthorization(String shopGroupId, Set<ShopGroupUserInputDTO> shopGroupUserInputDTOS) {
-        if(shopGroupUserInputDTOS == null) return;
+        if (shopGroupUserInputDTOS == null) return;
         // remove all old authorizations
         authService.deleteAuthorizationForResourcePrefix(SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId));
 
         // create only the admin authorization for the leaders
         shopGroupUserInputDTOS.forEach(
-                (shopGroupUserDTO)->{
-                    if(shopGroupUserDTO.isLeader()) {
+                (shopGroupUserDTO) -> {
+                    if (shopGroupUserDTO.isLeader()) {
                         // check if the person exists
                         peopleGroupService.findPersonByEMail(shopGroupUserDTO.userId());
 
@@ -130,7 +145,7 @@ public class ShopGroupService {
                 () -> shopGroupRepository.findById(shopGroupId)
                         .map(shopGroupMapper::toDTO)
                         .orElseThrow(
-                                ()->ShopGroupNotFound.notFoundById()
+                                () -> ShopGroupNotFound.notFoundById()
                                         .errorCode(-2)
                                         .shopGroupId(shopGroupId)
                                         .build()
@@ -143,12 +158,12 @@ public class ShopGroupService {
      * Check if a specific shop group contains a user email
      *
      * @param shopGroupId the id of the shop group
-     * @param userEmail the email of the user
+     * @param userEmail   the email of the user
      * @return true if the shop group exists
      */
     public Boolean checkContainsAUserEmail(String shopGroupId, String userEmail) {
         return wrapCatch(
-                () -> shopGroupRepository.existsByIdAndUsers_User_uid_ContainingIgnoreCase(shopGroupId, userEmail),
+                () -> shopGroupRepository.existsByIdAndUsers_User_mail_ContainingIgnoreCase(shopGroupId, userEmail),
                 -1
         );
     }

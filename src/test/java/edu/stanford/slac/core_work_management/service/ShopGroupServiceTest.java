@@ -1,12 +1,11 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,9 +21,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import static com.google.common.collect.ImmutableSet.of;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
+import static java.util.Optional.empty;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * -----------------------------------------------------------------------------
@@ -54,6 +54,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ShopGroupServiceTest {
     @Autowired
     ShopGroupService shopGroupService;
+    @Autowired
+    AuthService authService;
     @Autowired
     MongoTemplate mongoTemplate;
 
@@ -119,6 +121,97 @@ public class ShopGroupServiceTest {
                 .extracting(ShopGroupUserDTO::user)
                 .extracting(PersonDTO::mail)
                 .contains("user2@slac.stanford.edu","user3@slac.stanford.edu");
+    }
+
+    @Test
+    public void checkLeaderCreation() {
+        var newShopGroupId = assertDoesNotThrow(
+                () -> shopGroupService.createNew(
+                        NewShopGroupDTO.builder()
+                                .name("shop1")
+                                .description("shop1 user[2-3]")
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .isLeader(true)
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user3@slac.stanford.edu")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        "user2@slac.stanford.edu",
+                        AuthorizationTypeDTO.Admin,
+                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(newShopGroupId),
+                        empty()
+                )
+        ).hasSize(1);
+    }
+
+    @Test
+    public void updateOk() {
+        var newShopGroupId = assertDoesNotThrow(
+                () -> shopGroupService.createNew(
+                        NewShopGroupDTO.builder()
+                                .name("shop1")
+                                .description("shop1 user[2-3]")
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .isLeader(true)
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user3@slac.stanford.edu")
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        // update the shop group
+        assertDoesNotThrow(
+                () -> shopGroupService.update(
+                        newShopGroupId,
+                        UpdateShopGroupDTO.builder()
+                                .name("shop1 updated")
+                                .description("shop1 user updated")
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user1@slac.stanford.edu")
+                                                        .isLeader(true)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        "user2@slac.stanford.edu",
+                        AuthorizationTypeDTO.Admin,
+                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(newShopGroupId),
+                        empty()
+                )
+        ).hasSize(0);
+        assertThat(
+                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                        "user1@slac.stanford.edu",
+                        AuthorizationTypeDTO.Admin,
+                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(newShopGroupId),
+                        empty()
+                )
+        ).hasSize(1);
     }
 
     @Test

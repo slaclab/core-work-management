@@ -12,6 +12,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.UpdateShopGroupDTO;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -73,19 +74,20 @@ public class ShopGroupController {
     }
 
     @PutMapping(
-            path = "/{shopGroupId}",
+            path = "/{id}",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Update a shop group")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@shopGroupAuthorizationService.checkUpdate(#authentication, #shopGroupId, #updateShopGroupDTO)")
+    @PreAuthorize("@shopGroupAuthorizationService.checkUpdate(#authentication, #id, #updateShopGroupDTO)")
     public ApiResultResponse<Boolean> update(
             Authentication authentication,
-            @PathVariable String shopGroupId,
+            @Parameter(description = "The id of the shop group to update")
+            @PathVariable String id,
             @Valid @RequestBody UpdateShopGroupDTO updateShopGroupDTO
     ) {
-        shopGroupService.update(shopGroupId, updateShopGroupDTO);
+        shopGroupService.update(id, updateShopGroupDTO);
         return ApiResultResponse.of(true);
     }
 
