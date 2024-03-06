@@ -309,6 +309,67 @@ public class WorkControllerTest {
     }
 
     @Test
+    public void testFetchAllWorkTypes() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerFindAllWorkTypes(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu")
+                        )
+                );
+
+        assertThat(newWorkIdResult.getPayload())
+                .hasSize(testWorkTypeIds.size())
+                .extracting(WorkTypeDTO::id)
+                .contains(testWorkTypeIds.toArray(new String[0]));
+    }
+
+    @Test
+    public void testFetchAllActivityTypes() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerFindAllActivityTypes(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu")
+                        )
+                );
+
+        assertThat(newWorkIdResult.getPayload())
+                .hasSize(testActivityTypeIds.size())
+                .extracting(ActivityTypeDTO::id)
+                .contains(testActivityTypeIds.toArray(new String[0]));
+    }
+
+    @Test
+    public void testFetchAllActivityTypeSubTypes() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerFindAllActivitySubTypes(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu")
+                        )
+                );
+
+        assertThat(newWorkIdResult.getPayload())
+                .contains(
+                        ActivityTypeSubtypeDTO.BugFix,
+                        ActivityTypeSubtypeDTO.DeferredRepair,
+                        ActivityTypeSubtypeDTO.Enhancement,
+                        ActivityTypeSubtypeDTO.Fabrication,
+                        ActivityTypeSubtypeDTO.Inspection,
+                        ActivityTypeSubtypeDTO.Installation,
+                        ActivityTypeSubtypeDTO.Maintenance,
+                        ActivityTypeSubtypeDTO.NewApplication,
+                        ActivityTypeSubtypeDTO.Safety,
+                        ActivityTypeSubtypeDTO.SoftwareRelease,
+                        ActivityTypeSubtypeDTO.Other
+                );
+    }
+
+    @Test
     public void testCreateNewWork() {
         // create new work
         var newWorkIdResult =
