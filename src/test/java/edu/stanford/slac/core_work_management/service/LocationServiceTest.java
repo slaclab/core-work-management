@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
@@ -56,7 +57,16 @@ public class LocationServiceTest {
                         NewShopGroupDTO.builder()
                                 .name("shop1")
                                 .description("shop1 user[2-3]")
-                                .userEmails(of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user3@slac.stanford.edu")
+                                                        .build()
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -65,7 +75,16 @@ public class LocationServiceTest {
                         NewShopGroupDTO.builder()
                                 .name("shop2")
                                 .description("shop1 user[1-2]")
-                                .userEmails(of("user1@slac.stanford.edu", "user2@slac.stanford.edu"))
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user1@slac.stanford.edu")
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .build()
+                                        )
+                                )
                                 .build()
                 )
         );

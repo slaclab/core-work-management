@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
@@ -23,12 +24,24 @@ public class InitShopGroup {
                 NewShopGroupDTO.builder()
                         .name("Accelerator Physics")
                         .description("Accelerator Physics")
-                        .userEmails(Set.of("user1@slac.stanford.edu"))
+                        .users(
+                                Set.of(
+                                        ShopGroupUserInputDTO.builder()
+                                                .userId("user1@slac.stanford.edu")
+                                                .build()
+                                )
+                        )
                         .build(),
                 NewShopGroupDTO.builder()
                         .name("Accelerator Controls Systems")
                         .description("Accelerator Controls Systems")
-                        .userEmails(Set.of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
+                        .users(Set.of(
+                                ShopGroupUserInputDTO.builder()
+                                        .userId("user2@slac.stanford.edu")
+                                        .build(),
+                                ShopGroupUserInputDTO.builder()
+                                        .userId("user3@slac.stanford.edu")
+                                        .build()))
                         .build()
         );
         for (NewShopGroupDTO shopGroupDTO : newShopGroupDTOList) {

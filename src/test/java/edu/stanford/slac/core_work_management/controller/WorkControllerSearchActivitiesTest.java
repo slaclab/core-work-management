@@ -109,7 +109,16 @@ public class WorkControllerSearchActivitiesTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
-                                        .userEmails(of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -120,7 +129,16 @@ public class WorkControllerSearchActivitiesTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
-                                        .userEmails(of("user1@slac.stanford.edu", "user2@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user1@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -131,7 +149,13 @@ public class WorkControllerSearchActivitiesTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop3")
                                         .description("shop3 user3")
-                                        .userEmails(of("user3@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -142,7 +166,13 @@ public class WorkControllerSearchActivitiesTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop4")
                                         .description("shop4 user[3]")
-                                        .userEmails(of("user3@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -277,7 +307,7 @@ public class WorkControllerSearchActivitiesTest {
         for (int i = 0; i < 100; i++) {
             // create new work
             int finalI = i;
-            if(i%10 == 0) {
+            if (i % 10 == 0) {
                 var currentWorkIdResult =
                         assertDoesNotThrow(
                                 () -> testControllerHelperService.workControllerCreateNew(
@@ -288,8 +318,8 @@ public class WorkControllerSearchActivitiesTest {
                                                 .locationId(testLocationIds.getFirst())
                                                 .workTypeId(testWorkTypeIds.getFirst())
                                                 .shopGroupId(testShopGroupIds.getFirst())
-                                                .title("work %s".formatted(finalI))
-                                                .description("work %s description".formatted(finalI))
+                                                .title("work %s" .formatted(finalI))
+                                                .description("work %s description" .formatted(finalI))
                                                 .build()
                                 )
                         );
@@ -307,8 +337,8 @@ public class WorkControllerSearchActivitiesTest {
                                     finalCurrentWorkId,
                                     NewActivityDTO.builder()
                                             .activityTypeId(testActivityTypeIds.getFirst())
-                                            .title("New activity %s".formatted(finalI))
-                                            .description("activity %s description".formatted(finalI))
+                                            .title("New activity %s" .formatted(finalI))
+                                            .description("activity %s description" .formatted(finalI))
                                             .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                             .build()
                             )
@@ -340,7 +370,7 @@ public class WorkControllerSearchActivitiesTest {
 
             assertThat(searchResult.getErrorCode()).isEqualTo(0);
             assertThat(searchResult.getPayload()).hasSize(10);
-            for(int i1 = 0; i1 < 10; i1++) {
+            for (int i1 = 0; i1 < 10; i1++) {
                 assertThat(searchResult.getPayload().get(i1).id()).isEqualTo(activityId.get(i1 + i * 10));
             }
             anchorIdOptional = Optional.of(searchResult.getPayload().get(9).id());
@@ -354,7 +384,7 @@ public class WorkControllerSearchActivitiesTest {
         for (int i = 0; i < 100; i++) {
             // create new work
             int finalI = i;
-            if(i%10 == 0) {
+            if (i % 10 == 0) {
                 var currentWorkIdResult =
                         assertDoesNotThrow(
                                 () -> testControllerHelperService.workControllerCreateNew(
@@ -365,8 +395,8 @@ public class WorkControllerSearchActivitiesTest {
                                                 .locationId(testLocationIds.getFirst())
                                                 .workTypeId(testWorkTypeIds.getFirst())
                                                 .shopGroupId(testShopGroupIds.getFirst())
-                                                .title("work %s".formatted(finalI))
-                                                .description("work %s description".formatted(finalI))
+                                                .title("work %s" .formatted(finalI))
+                                                .description("work %s description" .formatted(finalI))
                                                 .build()
                                 )
                         );
@@ -384,8 +414,8 @@ public class WorkControllerSearchActivitiesTest {
                                     finalCurrentWorkId,
                                     NewActivityDTO.builder()
                                             .activityTypeId(testActivityTypeIds.getFirst())
-                                            .title("New activity %s".formatted(finalI))
-                                            .description("activity %s description".formatted(finalI))
+                                            .title("New activity %s" .formatted(finalI))
+                                            .description("activity %s description" .formatted(finalI))
                                             .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                             .build()
                             )
@@ -416,8 +446,8 @@ public class WorkControllerSearchActivitiesTest {
 
             assertThat(searchResult.getErrorCode()).isEqualTo(0);
             assertThat(searchResult.getPayload()).hasSize(10);
-            for(int i1 = 0; i1 < 10; i1++) {
-                assertThat(searchResult.getPayload().get(9-i1).id()).isEqualTo(activityId.get(99 - i * 10 - i1));
+            for (int i1 = 0; i1 < 10; i1++) {
+                assertThat(searchResult.getPayload().get(9 - i1).id()).isEqualTo(activityId.get(99 - i * 10 - i1));
             }
         }
     }
@@ -429,7 +459,7 @@ public class WorkControllerSearchActivitiesTest {
         for (int i = 0; i < 100; i++) {
             // create new work
             int finalI = i;
-            if(i%10 == 0) {
+            if (i % 10 == 0) {
                 var currentWorkIdResult =
                         assertDoesNotThrow(
                                 () -> testControllerHelperService.workControllerCreateNew(
@@ -440,8 +470,8 @@ public class WorkControllerSearchActivitiesTest {
                                                 .locationId(testLocationIds.getFirst())
                                                 .workTypeId(testWorkTypeIds.getFirst())
                                                 .shopGroupId(testShopGroupIds.getFirst())
-                                                .title("work %s".formatted(finalI))
-                                                .description("work %s description".formatted(finalI))
+                                                .title("work %s" .formatted(finalI))
+                                                .description("work %s description" .formatted(finalI))
                                                 .build()
                                 )
                         );
@@ -459,8 +489,8 @@ public class WorkControllerSearchActivitiesTest {
                                     finalCurrentWorkId,
                                     NewActivityDTO.builder()
                                             .activityTypeId(testActivityTypeIds.getFirst())
-                                            .title("New activity %s".formatted(finalI))
-                                            .description("activity %s description".formatted(finalI))
+                                            .title("New activity %s" .formatted(finalI))
+                                            .description("activity %s description" .formatted(finalI))
                                             .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                             .build()
                             )

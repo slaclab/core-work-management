@@ -19,6 +19,7 @@ package edu.stanford.slac.core_work_management.controller;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,10 +73,14 @@ public class ShopGroupControllerTest {
                                 .builder()
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
-                                .userEmails(
-                                        Set.of(
-                                                "user1@slac.stanford.edu",
-                                                "user2@slac.stanford.edu"
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user1@slac.stanford.edu")
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .build()
                                         )
                                 )
                                 .build()
@@ -95,10 +101,14 @@ public class ShopGroupControllerTest {
                                 .builder()
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
-                                .userEmails(
-                                        Set.of(
-                                                "user1@slac.stanford.edu",
-                                                "user2@slac.stanford.edu"
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user1@slac.stanford.edu")
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .build()
                                         )
                                 )
                                 .build()
@@ -130,10 +140,14 @@ public class ShopGroupControllerTest {
                                 .builder()
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
-                                .userEmails(
-                                        Set.of(
-                                                "user1@slac.stanford.edu",
-                                                "user2@slac.stanford.edu"
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user1@slac.stanford.edu")
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user2@slac.stanford.edu")
+                                                        .build()
                                         )
                                 )
                                 .build()
@@ -151,10 +165,14 @@ public class ShopGroupControllerTest {
                                 .builder()
                                 .name("shopGroup2")
                                 .description("shopGroup2 description")
-                                .userEmails(
-                                        Set.of(
-                                                "user1@slac.stanford.edu",
-                                                "user3@slac.stanford.edu"
+                                .users(
+                                        of(
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user1@slac.stanford.edu")
+                                                        .build(),
+                                                ShopGroupUserInputDTO.builder()
+                                                        .userId("user3@slac.stanford.edu")
+                                                        .build()
                                         )
                                 )
                                 .build()

@@ -27,6 +27,12 @@ public class AuthorizationStringConfig {
      * The work authorization template
      */
     public static final String WORK_AUTHORIZATION_TEMPLATE = "/cwm/work/%s";
+
+    /**
+     * The shop group authorization template
+     */
+    public static final String SHOP_GROUP_AUTHORIZATION_TEMPLATE = "/cwm/shop-group/%s";
+
     /**
      * The fake user for the shop group id to be used in the authorization check
      * in this way we can use the shop group id as an user

@@ -1,24 +1,34 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.ShopGroupMapper;
 import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.repository.ShopGroupRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
+import java.util.Set;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
 
 @Service
 @Validated
 @AllArgsConstructor
 public class ShopGroupService {
+    AuthService authService;
     ShopGroupMapper shopGroupMapper;
     PeopleGroupService peopleGroupService;
     ShopGroupRepository shopGroupRepository;
@@ -29,16 +39,59 @@ public class ShopGroupService {
      * @param newShopGroupDTO the DTO to create the shop group
      * @return the id of the created shop group
      */
+    @Transactional
     public String createNew(@Validated NewShopGroupDTO newShopGroupDTO) {
         // validate user emails
-        newShopGroupDTO.userEmails().forEach(
-                (email)->peopleGroupService.findPersonByEMail(email)
-        );
         ShopGroup savedShopGroup = wrapCatch(
                 () -> shopGroupRepository.save(shopGroupMapper.toModel(newShopGroupDTO)),
                 -1
         );
+
+        // generate authorization for admin user
+        updateShopGroupAuthorization(savedShopGroup.getId(), newShopGroupDTO.users());
         return savedShopGroup.getId();
+    }
+
+    /**
+     * Update a shop group
+     *
+     * @param shopGroupId the id of the shop group
+     * @param updateShopGroupDTO the DTO to update the shop group
+     */
+    public void update(String shopGroupId, UpdateShopGroupDTO updateShopGroupDTO) {
+
+    }
+
+    /**
+     * Delete a shop group
+     *
+     * @param shopGroupId the id of the shop group
+     * @param shopGroupUserInputDTOS the DTOs of the shop group users
+     */
+    private void updateShopGroupAuthorization(String shopGroupId, Set<ShopGroupUserInputDTO> shopGroupUserInputDTOS) {
+        if(shopGroupUserInputDTOS == null) return;
+        // remove all old authorizations
+        authService.deleteAuthorizationForResourcePrefix(SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId));
+
+        // create only the admin authorization for the leaders
+        shopGroupUserInputDTOS.forEach(
+                (shopGroupUserDTO)->{
+                    if(shopGroupUserDTO.isLeader()) {
+                        // check if the person exists
+                        peopleGroupService.findPersonByEMail(shopGroupUserDTO.userId());
+
+                        authService.addNewAuthorization(
+                                NewAuthorizationDTO.builder()
+                                        .owner(shopGroupUserDTO.userId())
+                                        // authorize on specific shop group
+                                        .resource(SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId))
+                                        .authorizationType(AuthorizationTypeDTO.Admin)
+                                        .ownerType(AuthorizationOwnerTypeDTO.User)
+                                        .build()
+                        );
+                    }
+                }
+        );
     }
 
     /**
@@ -95,8 +148,9 @@ public class ShopGroupService {
      */
     public Boolean checkContainsAUserEmail(String shopGroupId, String userEmail) {
         return wrapCatch(
-                () -> shopGroupRepository.existsByIdAndUserEmailsContainingIgnoreCase(shopGroupId, userEmail),
+                () -> shopGroupRepository.existsByIdAndUsers_User_uid_ContainingIgnoreCase(shopGroupId, userEmail),
                 -1
         );
     }
+
 }

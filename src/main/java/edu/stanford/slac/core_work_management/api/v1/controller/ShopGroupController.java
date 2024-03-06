@@ -8,6 +8,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateShopGroupDTO;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,6 +70,23 @@ public class ShopGroupController {
         return ApiResultResponse.of(
                 shopGroupService.createNew(newShopGroupDTO)
         );
+    }
+
+    @PutMapping(
+            path = "/{shopGroupId}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @Operation(summary = "Update a shop group")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@shopGroupAuthorizationService.checkUpdate(#authentication, #shopGroupId, #updateShopGroupDTO)")
+    public ApiResultResponse<Boolean> update(
+            Authentication authentication,
+            @PathVariable String shopGroupId,
+            @Valid @RequestBody UpdateShopGroupDTO updateShopGroupDTO
+    ) {
+        shopGroupService.update(shopGroupId, updateShopGroupDTO);
+        return ApiResultResponse.of(true);
     }
 
     @GetMapping(

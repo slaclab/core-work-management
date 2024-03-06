@@ -2,8 +2,9 @@ package edu.stanford.slac.core_work_management.model;
 
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
@@ -18,5 +19,15 @@ public class ShopGroup {
     String id;
     String name;
     String description;
-    Set<String> userEmails;
+    Set<ShopGroupUser> users;
+    @CreatedDate
+    private LocalDateTime createdDate;
+    @CreatedBy
+    private String createdBy;
+    @LastModifiedDate
+    private LocalDateTime lastModifiedDate;
+    @LastModifiedBy
+    private String lastModifiedBy;
+    @Version
+    private Long version;
 }

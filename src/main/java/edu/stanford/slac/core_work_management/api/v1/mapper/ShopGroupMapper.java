@@ -5,7 +5,10 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.mapper.AuthMapper;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
+import edu.stanford.slac.core_work_management.model.ShopGroupUser;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,6 +26,7 @@ public abstract class ShopGroupMapper {
     private AuthMapper authMapper;
     @Autowired
     PeopleGroupService peopleGroupService;
+
     /**
      * Map a shop group to a DTO
      *
@@ -31,21 +35,29 @@ public abstract class ShopGroupMapper {
      */
     public abstract ShopGroup toModel(NewShopGroupDTO newShopGroupDTO);
 
-    @Mapping(target = "userEmails", expression = "java(fillPersonByMailList(shopGroup.getUserEmails()))")
+//    @Mapping(target = "users", expression = "java(fillPersonDTOsByIdsList(shopGroup.getUsers()))")
     public abstract ShopGroupDTO toDTO(ShopGroup shopGroup);
+
+    @Mapping(target = "user", expression = "java(fillPersonDTOById(shopGroupUserInputDTO.userId()))")
+    public abstract ShopGroupUser toModel(ShopGroupUserInputDTO shopGroupUserInputDTO);
+
+    public PersonDTO fillPersonDTOById(String userId){
+        return peopleGroupService.findPersonByEMail(userId);
+    }
 
     /**
      * Fill the person by mail list
-     * @param userEmails the user emails
+     * @param users the user information
      * @return the list of person
      */
-    public Set<PersonDTO> fillPersonByMailList(Set<String> userEmails){
-        if (userEmails == null || userEmails.isEmpty()){
-            return emptySet();
-        }
-        return userEmails
-                .stream()
-                .map((email)-> peopleGroupService.findPersonByEMail(email))
-                .collect(Collectors.toSet());
-    }
+//    public Set<ShopGroupUserDTO> fillPersonDTOsByIdsList(Set<ShopGroupUser> users){
+//        if (users == null || users.isEmpty()){
+//            return emptySet();
+//        }
+//        return users
+//                .stream()
+//                // the uid is the email
+//                .map((user)-> )
+//                .collect(Collectors.toSet());
+//    }
 }

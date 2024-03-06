@@ -109,7 +109,16 @@ public class WorkControllerSearchWorkTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
-                                        .userEmails(of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -120,7 +129,16 @@ public class WorkControllerSearchWorkTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
-                                        .userEmails(of("user1@slac.stanford.edu", "user2@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user1@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -131,7 +149,13 @@ public class WorkControllerSearchWorkTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop3")
                                         .description("shop3 user3")
-                                        .userEmails(of("user3@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
@@ -142,7 +166,13 @@ public class WorkControllerSearchWorkTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop4")
                                         .description("shop4 user[3]")
-                                        .userEmails(of("user3@slac.stanford.edu"))
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 )
