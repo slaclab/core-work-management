@@ -231,9 +231,21 @@ public class WorkServiceTest {
                                 .title("Activity 1")
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                 .build()
                 )
         );
         assertThat(newActivityId).isNotEmpty();
+
+        // fetch activity and check field
+        var newlyCreatedActivity = assertDoesNotThrow(
+                () -> workService.findActivityById(newActivityId)
+        );
+        assertThat(newlyCreatedActivity).isNotNull();
+        assertThat(newlyCreatedActivity.id()).isNotNull();
+        assertThat(newlyCreatedActivity.title()).isEqualTo("Activity 1");
+        assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
+        assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
+        assertThat(newlyCreatedActivity.activityTypeSubtype()).isEqualTo(ActivityTypeSubtypeDTO.Other);
     }
 }

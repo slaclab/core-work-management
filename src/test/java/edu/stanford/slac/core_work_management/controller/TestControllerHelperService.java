@@ -389,6 +389,34 @@ public class TestControllerHelperService {
     }
 
     /**
+     * Get the permitted status list for a specific status
+     *
+     * @param mockMvc           the mock mvc
+     * @param resultMatcher     the result matcher
+     * @param userInfo          the user info
+     * @param status            the status
+     * @return the list of activity type subtypes
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<ActivityStatusDTO>> workControllerGetPermittedStatus(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            ActivityStatusDTO status
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/activity/status/{status}/permitted",status)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Review a work
      *
      * @param mockMvc           the mock mvc

@@ -429,6 +429,20 @@ public class WorkService {
     }
 
     /**
+     * Return the activity type by his id
+     *
+     * @param activityTypeId the id of the activity type
+     * @return the activity type
+     */
+    public List<ActivityStatusDTO> getPermittedStatus(ActivityStatusDTO activity) {
+        ActivityStatusStateMachine activityStatusStateMachine = new ActivityStatusStateMachine();
+        return activityStatusStateMachine.getAvailableState(workMapper.toModel(activity))
+                .stream()
+                .map(workMapper::toDTO)
+                .toList();
+    }
+
+    /**
      * Change the status of an activity
      *
      * @param workId the id of the work

@@ -42,6 +42,8 @@ public record ActivityDTO(
         String dependenciesDescription,
         @Schema(description = "The type of the activity")
         ActivityTypeDTO activityType,
+        @Schema(description = "The subtype of the activity")
+        ActivityTypeSubtypeDTO activityTypeSubtype,
         @Schema(description = "The current status of the activity")
         ActivityStatusLogDTO currentStatus,
         @Schema(description = "The full activity status history")

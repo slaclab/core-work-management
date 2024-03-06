@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.migration;
 
+import edu.stanford.slac.core_work_management.model.ActivityType;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -17,9 +18,19 @@ import java.util.List;
 @ChangeUnit(id = "init-work-activity-type", order = "1001", author = "bisegni")
 public class InitWorkAndActivityType {
     private final WorkTypeRepository workTypeRepository;
-
+    private final ActivityTypeRepository activityTypeRepository;
     @Execution
     public void changeSet() {
+
+        createWorkTypes();
+        createActivityTypes();
+    }
+
+    @RollbackExecution
+    public void rollback() {
+
+    }
+    private void createWorkTypes() {
         List<WorkType> workTypes = List.of(
                 WorkType.builder()
                         .title("HW Maintenance")
@@ -52,10 +63,10 @@ public class InitWorkAndActivityType {
                 WorkType.builder()
                         .title("Administrative Activity")
                         .description(
-                            """
-                            Used for documenting precautions/issues that may impact planned work; also scheduling other
-                            impactful work in accelerator areas like surveys, inspections and tours
-                            """
+                                """
+                                Used for documenting precautions/issues that may impact planned work; also scheduling other
+                                impactful work in accelerator areas like surveys, inspections and tours
+                                """
                         )
                         .build()
         );
@@ -63,9 +74,27 @@ public class InitWorkAndActivityType {
             workTypeRepository.ensureWorkType(workType);
         }
     }
-
-    @RollbackExecution
-    public void rollback() {
-
+    private void createActivityTypes() {
+        List<ActivityType> activityTypes = List.of(
+                ActivityType.builder()
+                        .title("HW Job")
+                        .description("An issue with currently installed accelerator hardware")
+                        .build(),
+                ActivityType.builder()
+                        .title("SW Job")
+                        .description("An issue with currently installed accelerator software")
+                        .build(),
+                ActivityType.builder()
+                        .title("Radiation Safety Work")
+                        .description("Used for scheduling PM on accelerator hardware and infrastructure")
+                        .build(),
+                ActivityType.builder()
+                        .title("Task")
+                        .description("An issue with currently installed accelerator software")
+                        .build()
+        );
+        for (ActivityType activityType : activityTypes) {
+            activityTypeRepository.ensureActivityType(activityType);
+        }
     }
 }

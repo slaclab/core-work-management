@@ -145,6 +145,7 @@ public class WorkWorkflowTest {
                                 .title("Activity 1")
                                 .description("Activity 1 description")
                                 .activityTypeId(atId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                 .build()
                 )
         );
@@ -207,6 +208,7 @@ public class WorkWorkflowTest {
                                 .title("Activity 1")
                                 .description("Activity 1 description")
                                 .activityTypeId(listIds.get(1))
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                 .build()
                 )
         );
@@ -287,6 +289,7 @@ public class WorkWorkflowTest {
                                 .title("Activity 1")
                                 .description("Activity 1 description")
                                 .activityTypeId(listIds.get(1))
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                 .build()
                 )
         );
@@ -300,6 +303,7 @@ public class WorkWorkflowTest {
                                 .title("Activity 1")
                                 .description("Activity 1 description")
                                 .activityTypeId(listIds.get(1))
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                 .build()
                 )
         );
@@ -454,6 +458,7 @@ public class WorkWorkflowTest {
                                 .title("Activity 1")
                                 .description("Activity 1 description")
                                 .activityTypeId(listIds.get(1))
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                 .build()
                 )
         );

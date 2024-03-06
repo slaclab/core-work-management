@@ -63,16 +63,24 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     abstract public ActivityTypeDTO toDTO(ActivityType activityType);
+
+    /**
+     * Convert the {@link ActivityStatus} to a {@link ActivityStatusDTO}
+     * @param activityStatus the entity to convert
+     * @return the converted DTO
+     */
+    abstract public ActivityStatusDTO toDTO(ActivityStatus activityStatus);
+
     /**
      * Convert the {@link NewActivityDTO} to a {@link Activity}
      * @param newActivityDTO the DTO to convert
      * @param workId the id of the work
      * @return the converted entity
      */
-    @Mapping(target = "currentStatus", expression =
-            """
-            java(mapWorkStatusToLogModel(newActivityDTO.activityStatus()))
-            """)
+//    @Mapping(target = "currentStatus", expression =
+//            """
+//            java(ActivityStatus.New)
+//            """)
     abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
     /**
      * Update the {@link Activity} with the data from the {@link UpdateActivityDTO}

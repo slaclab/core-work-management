@@ -450,6 +450,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -491,6 +492,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -532,6 +534,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -573,6 +576,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.get(2))
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -615,6 +619,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -852,6 +857,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -934,6 +940,7 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
@@ -1023,5 +1030,23 @@ public class WorkControllerTest {
                         )
                 )
         ).isTrue();
+    }
+
+    @Test
+    public void getPermittedStatusFromASpecificOne() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerGetPermittedStatus(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user2@slac.stanford.edu"),
+                                ActivityStatusDTO.New
+                        )
+                );
+
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload())
+                .isNotEmpty()
+                .contains(ActivityStatusDTO.Completed, ActivityStatusDTO.Approved, ActivityStatusDTO.Drop, ActivityStatusDTO.Roll);
     }
 }

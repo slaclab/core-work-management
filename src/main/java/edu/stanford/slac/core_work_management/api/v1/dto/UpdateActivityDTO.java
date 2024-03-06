@@ -27,6 +27,9 @@ public record UpdateActivityDTO(
         String riskBenefitDescription,
         @Schema(description = "The description of the dependencies for the activity. This field provides a detailed description of the dependencies associated with the activity.")
         String dependenciesDescription,
-        @Schema(description = "The status of the activity")
-        ActivityStatusDTO activityStatus) {
+        @Schema(description = "The type of the activity")
+        ActivityTypeDTO activityType,
+        @Schema(description = "The subtype of the activity")
+        ActivityTypeSubtypeDTO activityTypeSubtype
+) {
 }

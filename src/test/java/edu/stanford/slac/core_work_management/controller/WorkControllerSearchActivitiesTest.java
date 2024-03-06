@@ -309,6 +309,7 @@ public class WorkControllerSearchActivitiesTest {
                                             .activityTypeId(testActivityTypeIds.getFirst())
                                             .title("New activity %s".formatted(finalI))
                                             .description("activity %s description".formatted(finalI))
+                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                             .build()
                             )
                     );
@@ -385,6 +386,7 @@ public class WorkControllerSearchActivitiesTest {
                                             .activityTypeId(testActivityTypeIds.getFirst())
                                             .title("New activity %s".formatted(finalI))
                                             .description("activity %s description".formatted(finalI))
+                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                             .build()
                             )
                     );
@@ -459,6 +461,7 @@ public class WorkControllerSearchActivitiesTest {
                                             .activityTypeId(testActivityTypeIds.getFirst())
                                             .title("New activity %s".formatted(finalI))
                                             .description("activity %s description".formatted(finalI))
+                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                             .build()
                             )
                     );
