@@ -19,6 +19,7 @@ package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -95,7 +96,7 @@ public class WorkController {
             @PathVariable() String workId,
             @Valid @RequestBody UpdateWorkDTO updateWorkDTO
     ) {
-        workService.update(workId, updateWorkDTO);
+         workService.update(workId, updateWorkDTO);
         return ApiResultResponse.of(true);
     }
 
@@ -201,6 +202,24 @@ public class WorkController {
     ) {
         workService.setActivityStatus(workId, activityId, updateActivityStatusDTO);
         return ApiResultResponse.of(true);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/activity/status/{status}/permitted",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @Operation(summary = "Return the list of possible status for the activity")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Activity updated")
+    })
+    @PreAuthorize("@workAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<ActivityStatusDTO>> getPermittedStatus(
+            Authentication authentication,
+            @Parameter(description = "Is the activity status to test", required = true)
+            @PathVariable ActivityStatusDTO status
+    ) {
+        return ApiResultResponse.of(workService.getPermittedStatus(status));
     }
 
     @Operation(summary = "Get work by id")

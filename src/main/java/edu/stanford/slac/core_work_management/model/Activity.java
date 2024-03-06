@@ -91,6 +91,12 @@ public class Activity {
     private String activityTypeId;
 
     /**
+     * The subtype of the activity.
+     * This field further categorizes the activity into a specific subtype, defined by the ActivityTypeSubtype enum.
+     */
+    private ActivityTypeSubtype activityTypeSubtype;
+
+    /**
      * Is the actual status of the activity.
      */
     @Builder.Default

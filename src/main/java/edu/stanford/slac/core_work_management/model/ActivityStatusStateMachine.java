@@ -10,8 +10,9 @@ import java.util.Set;
  */
 public class ActivityStatusStateMachine {
     // This map defines the valid transitions for each state
-    Map<ActivityStatus, Set<ActivityStatus>> validTransitions = Map.of(
-            ActivityStatus.New, Set.of(ActivityStatus.Completed, ActivityStatus.Drop, ActivityStatus.Roll),
+    static public Map<ActivityStatus, Set<ActivityStatus>> validTransitions = Map.of(
+            ActivityStatus.New, Set.of(ActivityStatus.Completed, ActivityStatus.Approved, ActivityStatus.Drop, ActivityStatus.Roll),
+            ActivityStatus.Approved, Set.of(ActivityStatus.Completed, ActivityStatus.Drop, ActivityStatus.Roll),
             ActivityStatus.Roll, Set.of(ActivityStatus.Drop, ActivityStatus.Completed),
             ActivityStatus.Completed, Set.of(),
             ActivityStatus.Drop, Set.of()
