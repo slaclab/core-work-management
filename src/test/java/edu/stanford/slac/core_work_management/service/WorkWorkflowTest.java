@@ -57,7 +57,16 @@ public class WorkWorkflowTest {
                                 NewShopGroupDTO.builder()
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
-                                        .userEmails(ImmutableSet.of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
+                                        .users(
+                                                ImmutableSet.of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
                                         .build()
                         )
                 );

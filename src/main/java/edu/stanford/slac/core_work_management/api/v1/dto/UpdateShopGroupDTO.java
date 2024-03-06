@@ -12,7 +12,7 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "New Shop Group DTO, a group of people that is in charge of fixing a problem")
-public record NewShopGroupDTO (
+public record UpdateShopGroupDTO(
     @Schema(description = "The name of the shop group")
     @NotEmpty(message = "The name of the shop group cannot be empty")
     String name,

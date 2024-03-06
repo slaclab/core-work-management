@@ -60,6 +60,38 @@ public class TestControllerHelperService {
     }
 
     /**
+     * Update a shop group
+     *
+     * @param mockMvc           the mock mvc
+     * @param resultMatcher     the result matcher
+     * @param userInfo          the user info
+     * @param id                the id of the shop group to update
+     * @param updateShopGroupDTO the update shop group dto
+     * @return the id of the newly created shop group
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> shopGroupControllerUpdate(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id,
+            UpdateShopGroupDTO updateShopGroupDTO
+    ) throws Exception {
+        var requestBuilder = put("/v1/shop-group/{id}", id)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(updateShopGroupDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Get all shop groups
      *
      * @param mockMvc       the mock mvc
