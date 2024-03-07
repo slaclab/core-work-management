@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.getAllMethodInCall;
 
-@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Activity type has not been found")
+@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "ShopGroup type has not been found")
 public class ShopGroupNotFound extends ControllerLogicException {
     @Builder(builderMethodName = "notFoundById")
     public ShopGroupNotFound(Integer errorCode, String shopGroupId) {

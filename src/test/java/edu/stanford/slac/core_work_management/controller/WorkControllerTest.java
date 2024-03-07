@@ -111,8 +111,6 @@ public class WorkControllerTest {
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
-
-
         // create location for test
         testLocationIds.add(
                 assertDoesNotThrow(
@@ -234,7 +232,8 @@ public class WorkControllerTest {
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
 
-        //shoup group creation need to be moved here because the manage the authorization for the leader
+        // shop group creation need to be moved here because the manage the authorization for the leader
+        testShopGroupIds.clear();
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(

@@ -169,6 +169,7 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     public ShopGroupDTO toShopGroupDTOById(String shopGroupId) {
+        if(shopGroupId == null) return null;
         return shopGroupService.findById(shopGroupId);
     }
 
@@ -179,6 +180,7 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     public LocationDTO toLocationDTOById(String locationId) {
+        if(locationId == null) return null;
         return locationService.findById(locationId);
     }
 
