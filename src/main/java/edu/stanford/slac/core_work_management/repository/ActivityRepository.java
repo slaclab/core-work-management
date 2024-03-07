@@ -15,4 +15,6 @@ public interface ActivityRepository extends MongoRepository<Activity, String>, A
             "{ $replaceRoot: { newRoot: '$currentStatus' } }",
     })
     List<ActivityStatusLog> findAllActivityStatusByWorkId(String workId);
+
+    List<Activity> findAllByWorkId(String workId);
 }

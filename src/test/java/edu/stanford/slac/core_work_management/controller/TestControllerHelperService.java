@@ -417,9 +417,37 @@ public class TestControllerHelperService {
             NewActivityDTO newActivityDTO
     ) throws Exception {
         var requestBuilder = post("/v1/work/{workId}/activity", workId)
-                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(newActivityDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find all activities by work id
+     *
+     * @param mockMvc           the mock mvc
+     * @param resultMatcher     the result matcher
+     * @param userInfo          the user info
+     * @param workId            the work id
+     * @return the work dto
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<ActivitySummaryDTO>> workControllerFindAllActivitiesByWorkId(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/{workId}/activity", workId)
+                .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

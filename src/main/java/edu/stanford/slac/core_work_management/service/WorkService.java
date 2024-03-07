@@ -463,6 +463,22 @@ public class WorkService {
     }
 
     /**
+     * Return all the activities by the work id
+     *
+     * @param workId the id of the work
+     * @return the list of activities
+     */
+    public List<ActivitySummaryDTO> findAllActivitiesByWorkId(String workId) {
+        return wrapCatch(
+                () -> activityRepository.findAllByWorkId(workId)
+                        .stream()
+                        .map(workMapper::toSummaryDTO)
+                        .toList(),
+                -1
+        );
+    }
+
+    /**
      * Return the activity type by his id
      *
      * @param activity the id of the activity type

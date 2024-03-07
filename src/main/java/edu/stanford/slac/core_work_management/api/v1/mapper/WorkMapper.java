@@ -110,6 +110,9 @@ public abstract class WorkMapper {
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
+    @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
+    abstract public ActivitySummaryDTO toSummaryDTO(Activity activity);
+
     /**
      * Convert the {@link WorkQueryParameterDTO} to a {@link WorkQueryParameter}
      * @param workQueryParameterDTO the DTO to convert

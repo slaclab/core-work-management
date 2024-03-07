@@ -196,6 +196,20 @@ public class WorkController {
         return ApiResultResponse.of(workService.createNew(workId, newActivityDTO));
     }
 
+    @Operation(summary = "Return all the activity that belongs to a work")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/{workId}/activity",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@workAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<ActivitySummaryDTO>> findAllActivityByWorkId(
+            Authentication authentication,
+            @Parameter(description = "Is the work id", required = true)
+            @PathVariable("workId") String workId) {
+        return ApiResultResponse.of(workService.findAllActivitiesByWorkId(workId));
+    }
+
     @Operation(summary = "Update an activity")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Activity updated")
