@@ -24,14 +24,15 @@ import edu.stanford.slac.core_work_management.api.v1.dto.ReviewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityStatusDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
+import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.any;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 @Service
@@ -101,6 +102,12 @@ public class WorkAuthorizationService {
      * @return true if the user can update the work, false otherwise
      */
     public boolean checkUpdate(Authentication authentication, String workId, UpdateWorkDTO updateWorkDTO) {
+        // get stored work for check authorization on all fields
+        var currentStoredWork = wrapCatch(
+                ()->workService.findWorkById(workId),
+        -1
+        );
+
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
@@ -128,7 +135,7 @@ public class WorkAuthorizationService {
                 )
         );
 
-        // check for only admin update
+        // only admin can update the location
         if(updateWorkDTO.locationId() != null) {
             assertion(
                     NotAuthorized.notAuthorizedBuilder()
@@ -144,6 +151,26 @@ public class WorkAuthorizationService {
                                     authentication,
                                     AuthorizationTypeDTO.Admin,
                                     WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
+                            )
+                    )
+            );
+        }
+        // only group leader can update the assigned to
+        if(updateWorkDTO.assignedTo() != null && !updateWorkDTO.assignedTo().isEmpty()) {
+            assertion(
+                    NotAuthorized.notAuthorizedBuilder()
+                            .errorCode(-1)
+                            .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, updateWorkDTO)")
+                            .build(),
+                    // should be one of these
+                    () -> any(
+                            // a root users
+                            () -> authService.checkForRoot(authentication),
+                            // or a user that is the leader of the group
+                            () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                    authentication,
+                                    AuthorizationTypeDTO.Admin,
+                                    SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(currentStoredWork.shopGroup().id())
                             )
                     )
             );

@@ -36,11 +36,5 @@ public record NewWorkDTO (
         String locationId,
         @NotEmpty(message = "Shop group is mandatory is required")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
-        String shopGroupId,
-        @Schema(description =
-                """
-                The list of the user that are assigned to the work plan
-                """
-        )
-        List<String> assignedTo
+        String shopGroupId
 ){}
