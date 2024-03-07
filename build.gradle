@@ -175,6 +175,19 @@ jacocoTestReport {
         csv.required = true
         html.required = true
     }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['**/dto/*', '**/cis_api/**']) // Adjust the pattern to match your DTOs
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['**/dto/*','**/cis_api/**']) // Adjust the pattern to match your DTOs
+        }))
+    }
 }
 
 testlogger {
