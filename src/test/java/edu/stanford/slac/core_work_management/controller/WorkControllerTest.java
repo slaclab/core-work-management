@@ -31,6 +31,7 @@ import edu.stanford.slac.core_work_management.service.HelperService;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -547,6 +548,64 @@ public class WorkControllerTest {
                 );
         assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newActivityIdResult.getPayload()).isNotNull();
+    }
+
+    @Test
+    public void testFindAllActivityForWorkId() {
+        String[] activityIds = new String[10];
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.getFirst())
+                                        .workTypeId(testWorkTypeIds.getFirst())
+                                        .shopGroupId(testShopGroupIds.getFirst())
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+        for (int i = 0; i < 10; i++) {
+            var newActivityIdResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.workControllerCreateNew(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of("user1@slac.stanford.edu"),
+                                    newWorkIdResult.getPayload(),
+                                    NewActivityDTO.builder()
+                                            .activityTypeId(testActivityTypeIds.getFirst())
+                                            .title("New activity 1")
+                                            .description("activity 1 description")
+                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                            .build()
+                            )
+                    );
+            assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+            assertThat(newActivityIdResult.getPayload()).isNotNull();
+            activityIds[i] = newActivityIdResult.getPayload();
+        }
+
+        // find all activity for work if
+        var allActivityFound =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerFindAllActivitiesByWorkId(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                newWorkIdResult.getPayload()
+                        )
+                );
+        assertThat(allActivityFound.getErrorCode()).isEqualTo(0);
+        assertThat(allActivityFound.getPayload())
+                .hasSize(activityIds.length)
+                .extracting(ActivitySummaryDTO::id)
+                .contains(activityIds);
     }
 
     @Test
