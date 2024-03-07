@@ -35,7 +35,7 @@ public record WorkDTO(
         @Schema(description = "The list of the user that are assigned to the work")
         List<String> assignedTo,
         @Schema(description = "The location of the work, if any")
-        WorkLocation location,
+        LocationDTO location,
         @Schema(description = "The shop group that perform the work in the location")
         ShopGroupDTO shopGroup,
         @Schema(description = "The created date of the work")

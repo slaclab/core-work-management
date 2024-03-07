@@ -108,84 +108,10 @@ public class WorkControllerTest {
 
     @BeforeAll
     public void init() {
-        mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
-        testShopGroupIds.add(
-                assertDoesNotThrow(
-                        () -> shopGroupService.createNew(
-                                NewShopGroupDTO.builder()
-                                        .name("shop1")
-                                        .description("shop1 user[2-3]")
-                                        .users(
-                                                of(
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user2@slac.stanford.edu")
-                                                                .build(),
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user3@slac.stanford.edu")
-                                                                .build()
-                                                )
-                                        )
-                                        .build()
-                        )
-                )
-        );
-        testShopGroupIds.add(
-                assertDoesNotThrow(
-                        () -> shopGroupService.createNew(
-                                NewShopGroupDTO.builder()
-                                        .name("shop2")
-                                        .description("shop1 user[1-2]")
-                                        .users(
-                                                of(
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user1@slac.stanford.edu")
-                                                                .build(),
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user2@slac.stanford.edu")
-                                                                .build()
-                                                )
-                                        )
-                                        .build()
-                        )
-                )
-        );
-        testShopGroupIds.add(
-                assertDoesNotThrow(
-                        () -> shopGroupService.createNew(
-                                NewShopGroupDTO.builder()
-                                        .name("shop3")
-                                        .description("shop3 user3")
-                                        .users(
-                                                of(
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user3@slac.stanford.edu")
-                                                                .build()
-                                                )
-                                        )
-                                        .build()
-                        )
-                )
-        );
-        testShopGroupIds.add(
-                assertDoesNotThrow(
-                        () -> shopGroupService.createNew(
-                                NewShopGroupDTO.builder()
-                                        .name("shop4")
-                                        .description("shop4 user[3]")
-                                        .users(
-                                                of(
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user3@slac.stanford.edu")
-                                                                .build()
-                                                )
-                                        )
-                                        .build()
-                        )
-                )
-        );
+
 
         // create location for test
         testLocationIds.add(
@@ -302,10 +228,88 @@ public class WorkControllerTest {
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), ShopGroup.class);
 
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
+
+        //shoup group creation need to be moved here because the manage the authorization for the leader
+        testShopGroupIds.add(
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                NewShopGroupDTO.builder()
+                                        .name("shop1")
+                                        .description("shop1 user[2-3]")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .isLeader(true)
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                )
+        );
+        testShopGroupIds.add(
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                NewShopGroupDTO.builder()
+                                        .name("shop2")
+                                        .description("shop1 user[1-2]")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user1@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                )
+        );
+        testShopGroupIds.add(
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                NewShopGroupDTO.builder()
+                                        .name("shop3")
+                                        .description("shop3 user3")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                )
+        );
+        testShopGroupIds.add(
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                NewShopGroupDTO.builder()
+                                        .name("shop4")
+                                        .description("shop4 user[3]")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                )
+        );
 
     }
 
@@ -751,7 +755,6 @@ public class WorkControllerTest {
                                         .shopGroupId(testShopGroupIds.getFirst())
                                         .title("work 1")
                                         .description("work 1 description")
-                                        .assignedTo(List.of("user3@slac.stanford.edu"))
                                         .build()
                         )
                 );
@@ -971,6 +974,85 @@ public class WorkControllerTest {
                         Optional.empty()
                 )
         ).hasSize(1);
+    }
+
+    @Test
+    public void testUpdateWorkOnAssignedToOkByRootAndShopGroupLeader() {
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // user2@slac.stanford.edu si the are manager
+                                        // user[2-3(l)]@slac.stanford.edu are in the shop group
+                                        .locationId(testLocationIds.get(2))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+
+        // try to update by root
+        assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        // this is the admin fo the location 2
+                        Optional.of("user1@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                .locationId(testLocationIds.getFirst())
+                                .shopGroupId(testShopGroupIds.getFirst())
+                                // assign to user 2
+                                .assignedTo(List.of("user2@slac.stanford.edu"))
+                                .build()
+                )
+        );
+
+        // try to update by group leader
+        assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        // this is the admin fo the location 2
+                        Optional.of("user3@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                // group leader cannot update the location
+                                //.locationId(testLocationIds.getFirst())
+                                .shopGroupId(testShopGroupIds.getFirst())
+                                // assign to user 2
+                                .assignedTo(List.of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
+                                .build()
+                )
+        );
+
+        // failed to be updated by are manager
+        assertThrows(
+                NotAuthorized.class,
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isUnauthorized(),
+                        // this is the admin fo the location 2
+                        Optional.of("user2@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                // group leader cannot update the location
+                                //.locationId(testLocationIds.getFirst())
+                                .shopGroupId(testShopGroupIds.getFirst())
+                                // assign to user 2
+                                .assignedTo(List.of("user3@slac.stanford.edu"))
+                                .build()
+                )
+        );
     }
 
     @Test

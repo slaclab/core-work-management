@@ -22,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
@@ -42,13 +39,14 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @Validated
 @AllArgsConstructor
 public class WorkService {
-    AuthService authService;
-    WorkMapper workMapper;
-    WorkRepository workRepository;
-    WorkTypeRepository workTypeRepository;
-    ActivityTypeRepository activityTypeRepository;
-    ActivityRepository activityRepository;
-    LocationService locationService;
+    private final AuthService authService;
+    private final WorkMapper workMapper;
+    private final WorkRepository workRepository;
+    private final WorkTypeRepository workTypeRepository;
+    private final ActivityTypeRepository activityTypeRepository;
+    private final ActivityRepository activityRepository;
+    private final LocationService locationService;
+    private final ShopGroupService shopGroupService;
 
     /**
      * Create a new work type
@@ -189,9 +187,27 @@ public class WorkService {
                 -2
         );
 
+        // check that all the user in the assigned to are listed into the shop group
+        if(updateWorkDTO.assignedTo()!=null) {
+            updateWorkDTO.assignedTo().forEach(
+                    (user)->{
+                        assertion(
+                                ()->shopGroupService.checkContainsAUserEmail(storedWork.getShopGroupId(), user),
+                                ControllerLogicException
+                                        .builder()
+                                        .errorCode(-3)
+                                        .errorMessage("The user is not part of the shop group")
+                                        .errorDomain("WorkService::update")
+                                        .build()
+                        );
+                    }
+            );
+        }
 
         // update the model
         workMapper.updateModel(updateWorkDTO, storedWork);
+
+        // update all authorization
         updateWorkAuthorization(storedWork);
     }
 
