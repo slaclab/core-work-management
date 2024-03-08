@@ -19,7 +19,6 @@ package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -278,8 +277,8 @@ public class WorkController {
 
     @Operation(summary = "Get work by id")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Work found"),
-            @ApiResponse(responseCode = "404", description = "Work not found")
+            @ApiResponse(responseCode = "200", description = "Activity found"),
+            @ApiResponse(responseCode = "404", description = "Activity not found")
     })
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}/activity/{activityId}", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -17,19 +17,21 @@
 
 package edu.stanford.slac.core_work_management.service.authorization;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.core_work_management.api.v1.dto.ReviewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityStatusDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
-import edu.stanford.slac.core_work_management.exception.WorkNotFound;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
@@ -104,8 +106,8 @@ public class WorkAuthorizationService {
     public boolean checkUpdate(Authentication authentication, String workId, UpdateWorkDTO updateWorkDTO) {
         // get stored work for check authorization on all fields
         var currentStoredWork = wrapCatch(
-                ()->workService.findWorkById(workId),
-        -1
+                () -> workService.findWorkById(workId),
+                -1
         );
 
         // check for auth
@@ -136,7 +138,7 @@ public class WorkAuthorizationService {
         );
 
         // only admin can update the location
-        if(updateWorkDTO.locationId() != null) {
+        if (updateWorkDTO.locationId() != null) {
             assertion(
                     NotAuthorized.notAuthorizedBuilder()
                             .errorCode(-1)
@@ -156,7 +158,7 @@ public class WorkAuthorizationService {
             );
         }
         // only group leader can update the assigned to
-        if(updateWorkDTO.assignedTo() != null && !updateWorkDTO.assignedTo().isEmpty()) {
+        if (updateWorkDTO.assignedTo() != null && !updateWorkDTO.assignedTo().isEmpty()) {
             assertion(
                     NotAuthorized.notAuthorizedBuilder()
                             .errorCode(-1)
@@ -183,7 +185,7 @@ public class WorkAuthorizationService {
      *
      * @param authentication the authentication object
      * @param workId         the work id
-     * @param reviewWorkDTO   the close work dto
+     * @param reviewWorkDTO  the close work dto
      * @return true if the user can close the work, false otherwise
      */
     public boolean checkReviewWork(Authentication authentication, String workId, ReviewWorkDTO reviewWorkDTO) {
@@ -252,10 +254,10 @@ public class WorkAuthorizationService {
     /**
      * Check if the user can update the status of an activity
      *
-     * @param authentication            the authentication object
-     * @param workId                    the work id
-     * @param activityId                the activity id
-     * @param updateActivityStatusDTO   the update activity status dto
+     * @param authentication          the authentication object
+     * @param workId                  the work id
+     * @param activityId              the activity id
+     * @param updateActivityStatusDTO the update activity status dto
      * @return true if the user can update the status of the activity, false otherwise
      */
     public boolean checkUpdateStatus(Authentication authentication, String workId, String activityId, UpdateActivityStatusDTO updateActivityStatusDTO) {
