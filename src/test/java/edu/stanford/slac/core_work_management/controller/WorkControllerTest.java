@@ -17,6 +17,8 @@
 
 package edu.stanford.slac.core_work_management.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
@@ -509,6 +511,7 @@ public class WorkControllerTest {
                         newWorkIdResult.getPayload()
                 )
         );
+
         assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
         assertThat(fullWorkDTO.getPayload()).isNotNull();
         assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());

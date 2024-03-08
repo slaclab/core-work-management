@@ -30,6 +30,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -168,6 +169,7 @@ public class WorkController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PostAuthorize("@workAuthorizationService.fillAuthorizationOnPayload(#authentication, returnObject)")
     public ApiResultResponse<WorkDTO> findById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)

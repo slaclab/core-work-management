@@ -17,19 +17,22 @@
 
 package edu.stanford.slac.core_work_management.service.authorization;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PayloadAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.core_work_management.api.v1.dto.ReviewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityStatusDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
@@ -285,6 +288,29 @@ public class WorkAuthorizationService {
                         )
                 )
         );
+        return true;
+    }
+
+    public boolean fillAuthorizationOnPayload(Authentication authentication, ApiResultResponse<WorkDTO> workDTO) {
+        List<PayloadAuthorizationDTO> payloadAuthList = new java.util.ArrayList<>();
+        List<AuthorizationDTO> authList = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                authentication.getCredentials().toString(),
+                AuthorizationTypeDTO.Read,
+                WORK_AUTHORIZATION_TEMPLATE.formatted(workDTO.getPayload().id()),
+                Optional.of(true)
+        );
+        authList.stream().filter(
+                auth -> auth.resource().equals(WORK_AUTHORIZATION_TEMPLATE.formatted(workDTO.getPayload().id()))
+        ).findFirst().ifPresent(
+                auth -> payloadAuthList.add(
+                        PayloadAuthorizationDTO
+                                .builder()
+                                .field("*")
+                                .authorizationType(auth.authorizationType())
+                                .build()
+                )
+        );
+        workDTO.setAuthorizations(payloadAuthList);
         return true;
     }
 }
