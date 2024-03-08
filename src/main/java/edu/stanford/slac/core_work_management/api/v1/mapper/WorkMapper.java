@@ -1,6 +1,9 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
@@ -12,8 +15,15 @@ import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.List;
+import java.util.Optional;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 
 /**
@@ -25,6 +35,8 @@ import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
         nullValuePropertyMappingStrategy = IGNORE
 )
 public abstract class WorkMapper {
+    @Autowired
+    AuthService authService;
     @Autowired
     ShopGroupService shopGroupService;
     @Autowired
@@ -128,6 +140,7 @@ public abstract class WorkMapper {
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getWorkTypeId()))")
     @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getShopGroupId()))")
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
+    @Mapping(target = "access", expression = "java(getAuthorizationByWorkId(work.getId()))")
     abstract public WorkDTO toDTO(Work work);
 
     /**
@@ -137,9 +150,11 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
+    @Mapping(target = "access", expression = "java(getAuthorizationByWorkId(activity.getWorkId()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
+    @Mapping(target = "access", expression = "java(getAuthorizationByWorkId(activity.getWorkId()))")
     abstract public ActivitySummaryDTO toSummaryDTO(Activity activity);
 
     /**
@@ -151,6 +166,27 @@ public abstract class WorkMapper {
     abstract public WorkQueryParameter toModel(WorkQueryParameterDTO workQueryParameterDTO);
 
     abstract public ActivityQueryParameter toModel(ActivityQueryParameterDTO activityQueryParameterDTO);
+
+    /**
+     * Get the authorization level on work
+     */
+    public AuthorizationTypeDTO getAuthorizationByWorkId(String workId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            // if the DTO has been requested by an anonymous user, then the access level is Read
+            // in other case will should have been blocked by the security layer
+            return AuthorizationTypeDTO.Read;
+        }
+        List<AuthorizationDTO> authList = authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
+                authentication.getCredentials().toString(),
+                AuthorizationTypeDTO.Read,
+                WORK_AUTHORIZATION_TEMPLATE.formatted(workId),
+                Optional.of(true)
+        );
+        return authList.stream().filter(
+                auth -> auth.resource().equals(WORK_AUTHORIZATION_TEMPLATE.formatted(workId))
+        ).findFirst().map(AuthorizationDTO::authorizationType).orElse(AuthorizationTypeDTO.Read);
+    }
 
     /**
      * Convert the {@link ActivityStatusDTO} to a {@link ActivityStatusLog}

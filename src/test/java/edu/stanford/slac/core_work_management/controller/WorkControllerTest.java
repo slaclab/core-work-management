@@ -17,23 +17,18 @@
 
 package edu.stanford.slac.core_work_management.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.HelperService;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +36,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -50,7 +46,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
@@ -515,6 +513,22 @@ public class WorkControllerTest {
         assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
         assertThat(fullWorkDTO.getPayload()).isNotNull();
         assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+        assertThat(fullWorkDTO.getPayload().access()).isEqualTo(AuthorizationTypeDTO.Admin);
+
+        // read with different user is a reader
+        fullWorkDTO = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        newWorkIdResult.getPayload()
+                )
+        );
+
+        assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
+        assertThat(fullWorkDTO.getPayload()).isNotNull();
+        assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+        assertThat(fullWorkDTO.getPayload().access()).isEqualTo(AuthorizationTypeDTO.Read);
     }
 
     @Test
@@ -597,7 +611,7 @@ public class WorkControllerTest {
             activityIds[i] = newActivityIdResult.getPayload();
         }
 
-        // find all activity for work if
+        // find all activity for work by the admin
         var allActivityFound =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerFindAllActivitiesByWorkId(
@@ -612,6 +626,27 @@ public class WorkControllerTest {
                 .hasSize(activityIds.length)
                 .extracting(ActivitySummaryDTO::id)
                 .contains(activityIds);
+
+                                                                assertThat(allActivityFound.getPayload())
+                .hasSize(activityIds.length)
+                .extracting(ActivitySummaryDTO::access)
+                .containsOnly(AuthorizationTypeDTO.Admin);
+
+        // get all by a normal user (all user should be enabled to read all the activities)
+        allActivityFound =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerFindAllActivitiesByWorkId(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user2@slac.stanford.edu"),
+                                newWorkIdResult.getPayload()
+                        )
+                );
+        assertThat(allActivityFound.getErrorCode()).isEqualTo(0);
+        assertThat(allActivityFound.getPayload())
+                .hasSize(activityIds.length)
+                .extracting(ActivitySummaryDTO::access)
+                .containsOnly(AuthorizationTypeDTO.Read);
     }
 
     @Test

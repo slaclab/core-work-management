@@ -19,7 +19,6 @@ package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,7 +29,6 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -169,7 +167,6 @@ public class WorkController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    @PostAuthorize("@workAuthorizationService.fillAuthorizationOnPayload(#authentication, returnObject)")
     public ApiResultResponse<WorkDTO> findById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
@@ -280,8 +277,8 @@ public class WorkController {
 
     @Operation(summary = "Get work by id")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Work found"),
-            @ApiResponse(responseCode = "404", description = "Work not found")
+            @ApiResponse(responseCode = "200", description = "Activity found"),
+            @ApiResponse(responseCode = "404", description = "Activity not found")
     })
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}/activity/{activityId}", produces = MediaType.APPLICATION_JSON_VALUE)
