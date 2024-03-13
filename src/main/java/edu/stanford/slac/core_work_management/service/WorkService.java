@@ -206,9 +206,10 @@ public class WorkService {
 
         // update the model
         workMapper.updateModel(updateWorkDTO, storedWork);
-
+        // save the work
+        var updatedWork = workRepository.save(storedWork);
         // update all authorization
-        updateWorkAuthorization(storedWork);
+        updateWorkAuthorization(updatedWork);
     }
 
     /**
