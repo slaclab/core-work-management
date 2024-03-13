@@ -170,15 +170,15 @@ public class WorkService {
     /**
      * Update a work
      *
-     * @param workId         the id of the work
+     * @param workId        the id of the work
      * @param updateWorkDTO the DTO to update the work
      */
     @Transactional
     public void update(String workId, @Valid UpdateWorkDTO updateWorkDTO) {
         // fetch stored work to check if the work exists
         Work storedWork = wrapCatch(
-                ()->workRepository.findById(workId).orElseThrow(
-                        ()-> WorkNotFound
+                () -> workRepository.findById(workId).orElseThrow(
+                        () -> WorkNotFound
                                 .notFoundById()
                                 .errorCode(-1)
                                 .workId(workId)
@@ -188,11 +188,11 @@ public class WorkService {
         );
 
         // check that all the user in the assigned to are listed into the shop group
-        if(updateWorkDTO.assignedTo()!=null) {
+        if (updateWorkDTO.assignedTo() != null) {
             updateWorkDTO.assignedTo().forEach(
-                    (user)->{
+                    (user) -> {
                         assertion(
-                                ()->shopGroupService.checkContainsAUserEmail(storedWork.getShopGroupId(), user),
+                                () -> shopGroupService.checkContainsAUserEmail(storedWork.getShopGroupId(), user),
                                 ControllerLogicException
                                         .builder()
                                         .errorCode(-3)
@@ -207,7 +207,10 @@ public class WorkService {
         // update the model
         workMapper.updateModel(updateWorkDTO, storedWork);
         // save the work
-        var updatedWork = workRepository.save(storedWork);
+        var updatedWork = wrapCatch(
+                () -> workRepository.save(storedWork),
+                -3
+        );
         // update all authorization
         updateWorkAuthorization(updatedWork);
     }
@@ -227,7 +230,7 @@ public class WorkService {
 
         // this will fire exception in case the location has not been found
         LocationDTO locationDTO = locationService.findById(work.getLocationId());
-        if(authentication!=null) {
+        if (authentication != null) {
             // the creator is a writer
             writerUserList.add(work.getCreatedBy());
         }
@@ -237,7 +240,7 @@ public class WorkService {
         // add shop group as writer in the form of virtual user
         writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroupId()));
         // add assigned to users
-        if(work.getAssignedTo() != null) {
+        if (work.getAssignedTo() != null) {
             writerUserList.addAll(work.getAssignedTo());
         }
 
@@ -248,7 +251,7 @@ public class WorkService {
         writerUserList.removeAll(adminUserList);
 
         adminUserList.forEach(
-                (user)->{
+                (user) -> {
                     authService.addNewAuthorization(
                             NewAuthorizationDTO.builder()
                                     .authorizationType(Admin)
@@ -260,7 +263,7 @@ public class WorkService {
                 }
         );
         writerUserList.forEach(
-                (user)->{
+                (user) -> {
                     authService.addNewAuthorization(
                             NewAuthorizationDTO.builder()
                                     .authorizationType(Write)
@@ -282,7 +285,7 @@ public class WorkService {
     /**
      * Close a work
      *
-     * @param workId     the id of the work
+     * @param workId        the id of the work
      * @param reviewWorkDTO the DTO to close the work
      */
     public void reviewWork(String workId, ReviewWorkDTO reviewWorkDTO) {
@@ -299,7 +302,7 @@ public class WorkService {
         );
         // check for work status
         assertion(
-                () -> work.getCurrentStatus().getStatus()== WorkStatus.Review,
+                () -> work.getCurrentStatus().getStatus() == WorkStatus.Review,
                 ControllerLogicException
                         .builder()
                         .errorCode(-2)
@@ -415,8 +418,8 @@ public class WorkService {
     /**
      * Update an activity
      *
-     * @param workId the id of the work
-     * @param activityId the id of the activity
+     * @param workId            the id of the work
+     * @param activityId        the id of the activity
      * @param updateActivityDTO the DTO to update the activity
      */
     public void update(String workId, String activityId, UpdateActivityDTO updateActivityDTO) {
@@ -512,12 +515,12 @@ public class WorkService {
     /**
      * Change the status of an activity
      *
-     * @param workId the id of the work
-     * @param activityID the id of the activity
+     * @param workId                  the id of the work
+     * @param activityID              the id of the activity
      * @param updateActivityStatusDTO the DTO to update the activity status
      */
     @Transactional
-    public void setActivityStatus(String workId, String activityID,  UpdateActivityStatusDTO updateActivityStatusDTO) {
+    public void setActivityStatus(String workId, String activityID, UpdateActivityStatusDTO updateActivityStatusDTO) {
         // check for work existence
         var workFound = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -598,6 +601,7 @@ public class WorkService {
 
     /**
      * Search on all the activities
+     *
      * @return the found activities
      */
     public List<ActivityDTO> searchAllActivities(ActivityQueryParameterDTO activityQueryParameterDTO) {
