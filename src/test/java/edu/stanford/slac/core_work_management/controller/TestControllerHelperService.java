@@ -705,7 +705,7 @@ public class TestControllerHelperService {
         MvcResult result = mockMvc.perform(requestBuilder)
                 .andExpect(resultMatcher)
                 .andReturn();
-        //Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+
         if (result.getResolvedException() != null) {
             throw result.getResolvedException();
         }

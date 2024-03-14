@@ -396,6 +396,68 @@ public class WorkControllerTest {
     }
 
     @Test
+    public void testUpdateWorkOk() {
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        // user1@slac.stanford.edu si the are manager
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        // user[2-3]@slac.stanford.edu are in the shop group
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        // try to update but
+        assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        // this is the admin fo the location 2
+                        Optional.of("user1@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                .title("work 1 updated")
+                                .description("work 1 description updated")
+                                .locationId(testLocationIds.get(1))
+                                .shopGroupId(testShopGroupIds.get(1))
+                                .assignedTo(
+                                        List.of("user2@slac.stanford.edu")
+                                )
+                                .build()
+                )
+        );
+
+        var updatedWork = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindById(
+                        mockMvc,
+                        status().isOk(),
+                        // this is the admin fo the location 2
+                        Optional.of("user1@slac.stanford.edu"),
+                        newWorkIdResult.getPayload()
+                )
+        );
+
+        assertThat(updatedWork).isNotNull();
+        assertThat(updatedWork.getPayload()).isNotNull();
+        assertThat(updatedWork.getPayload().title()).isEqualTo("work 1 updated");
+        assertThat(updatedWork.getPayload().description()).isEqualTo("work 1 description updated");
+        assertThat(updatedWork.getPayload().assignedTo()).contains("user2@slac.stanford.edu");
+        assertThat(updatedWork.getPayload().location().id()).isEqualTo(testLocationIds.get(1));
+        assertThat(updatedWork.getPayload().shopGroup().id()).isEqualTo(testShopGroupIds.get(1));
+    }
+
+    @Test
     public void testCreateNewWorkFailNoAuthentication() {
         // create new work
         var notAuthorizedException =
