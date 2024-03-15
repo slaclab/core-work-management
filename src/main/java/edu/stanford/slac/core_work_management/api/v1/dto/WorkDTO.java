@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.core_work_management.model.WorkLocation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -52,7 +53,7 @@ public record WorkDTO(
         @Schema(description = "The user that last modified the work")
         String lastModifiedBy,
         Long version,
-        @Schema(description = "The authorization access for the work")
-        AuthorizationTypeDTO access
+        @Schema(description = "The authorization access for the work specific resources")
+        List<AuthorizationResourceDTO> accessList
 ) {
 }

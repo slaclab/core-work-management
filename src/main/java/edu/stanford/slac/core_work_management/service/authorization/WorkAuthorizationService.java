@@ -109,7 +109,7 @@ public class WorkAuthorizationService {
                 () -> workService.findWorkById(workId),
                 -1
         );
-
+        boolean isRoot = authService.checkForRoot(authentication);
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
@@ -121,7 +121,7 @@ public class WorkAuthorizationService {
                 // should be one of these
                 () -> any(
                         // a root users
-                        () -> authService.checkForRoot(authentication),
+                        () -> isRoot,
                         // or a user that has the right as writer on the work
                         () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                 authentication,
@@ -147,7 +147,7 @@ public class WorkAuthorizationService {
                     // should be one of these
                     () -> any(
                             // a root users
-                            () -> authService.checkForRoot(authentication),
+                            () -> isRoot,
                             // or a user that has the right as admin on the work
                             () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                     authentication,
@@ -167,7 +167,7 @@ public class WorkAuthorizationService {
                     // should be one of these
                     () -> any(
                             // a root users
-                            () -> authService.checkForRoot(authentication),
+                            () -> isRoot,
                             // or a user that is the leader of the group
                             () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                     authentication,
