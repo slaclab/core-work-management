@@ -1195,12 +1195,38 @@ public class WorkControllerTest {
                                         .activityTypeId(testActivityTypeIds.getFirst())
                                         .title("New activity 1")
                                         .description("activity 1 description")
+                                        .testPlanDescription("test plan description")
+                                        .backoutPlanDescription("backout plan description")
+                                        .dependenciesDescription("dependencies description")
+                                        .riskBenefitDescription("risk benefit description")
+                                        .systemEffectedDescription("system effected description")
+                                        .systemRequiredDescription("system required description")
                                         .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
                                         .build()
                         )
                 );
         assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newActivityIdResult.getPayload()).isNotNull();
+        // check saved data
+        var fulActivityResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        newActivityIdResult.getPayload()
+                )
+        );
+        assertThat(fulActivityResult.getErrorCode()).isEqualTo(0);
+        assertThat(fulActivityResult.getPayload()).isNotNull();
+        assertThat(fulActivityResult.getPayload().title()).isEqualTo("New activity 1");
+        assertThat(fulActivityResult.getPayload().description()).isEqualTo("activity 1 description");
+        assertThat(fulActivityResult.getPayload().testPlanDescription()).isEqualTo("test plan description");
+        assertThat(fulActivityResult.getPayload().backoutPlanDescription()).isEqualTo("backout plan description");
+        assertThat(fulActivityResult.getPayload().dependenciesDescription()).isEqualTo("dependencies description");
+        assertThat(fulActivityResult.getPayload().riskBenefitDescription()).isEqualTo("risk benefit description");
+        assertThat(fulActivityResult.getPayload().systemEffectedDescription()).isEqualTo("system effected description");
+        assertThat(fulActivityResult.getPayload().systemRequiredDescription()).isEqualTo("system required description");
 
         // try to update
         assertDoesNotThrow(
@@ -1213,17 +1239,17 @@ public class WorkControllerTest {
                         UpdateActivityDTO.builder()
                                 .title("New activity 1 updated")
                                 .description("activity 1 description updated")
-                                .testPlanDescription("test plan description")
-                                .backoutPlanDescription("backout plan description")
-                                .dependenciesDescription("dependencies description")
-                                .riskBenefitDescription("risk benefit description")
-                                .systemEffectedDescription("system effected description")
-                                .systemRequiredDescription("system required description")
+                                .testPlanDescription("test plan description updated")
+                                .backoutPlanDescription("backout plan description updated")
+                                .dependenciesDescription("dependencies description updated")
+                                .riskBenefitDescription("risk benefit description updated")
+                                .systemEffectedDescription("system effected description updated")
+                                .systemRequiredDescription("system required description updated")
                                 .build()
                 )
         );
 
-        var fulActivityResult = assertDoesNotThrow(
+        var fulActivityUpdateResult = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerFindById(
                         mockMvc,
                         status().isOk(),
@@ -1232,16 +1258,16 @@ public class WorkControllerTest {
                         newActivityIdResult.getPayload()
                 )
         );
-        assertThat(fulActivityResult.getErrorCode()).isEqualTo(0);
-        assertThat(fulActivityResult.getPayload()).isNotNull();
-        assertThat(fulActivityResult.getPayload().title()).isEqualTo("New activity 1 updated");
-        assertThat(fulActivityResult.getPayload().description()).isEqualTo("activity 1 description updated");
-        assertThat(fulActivityResult.getPayload().testPlanDescription()).isEqualTo("test plan description");
-        assertThat(fulActivityResult.getPayload().backoutPlanDescription()).isEqualTo("backout plan description");
-        assertThat(fulActivityResult.getPayload().dependenciesDescription()).isEqualTo("dependencies description");
-        assertThat(fulActivityResult.getPayload().riskBenefitDescription()).isEqualTo("risk benefit description");
-        assertThat(fulActivityResult.getPayload().systemEffectedDescription()).isEqualTo("system effected description");
-        assertThat(fulActivityResult.getPayload().systemRequiredDescription()).isEqualTo("system required description");
+        assertThat(fulActivityUpdateResult.getErrorCode()).isEqualTo(0);
+        assertThat(fulActivityUpdateResult.getPayload()).isNotNull();
+        assertThat(fulActivityUpdateResult.getPayload().title()).isEqualTo("New activity 1 updated");
+        assertThat(fulActivityUpdateResult.getPayload().description()).isEqualTo("activity 1 description updated");
+        assertThat(fulActivityUpdateResult.getPayload().testPlanDescription()).isEqualTo("test plan description updated");
+        assertThat(fulActivityUpdateResult.getPayload().backoutPlanDescription()).isEqualTo("backout plan description updated");
+        assertThat(fulActivityUpdateResult.getPayload().dependenciesDescription()).isEqualTo("dependencies description updated");
+        assertThat(fulActivityUpdateResult.getPayload().riskBenefitDescription()).isEqualTo("risk benefit description updated");
+        assertThat(fulActivityUpdateResult.getPayload().systemEffectedDescription()).isEqualTo("system effected description updated");
+        assertThat(fulActivityUpdateResult.getPayload().systemRequiredDescription()).isEqualTo("system required description updated");
     }
 
     @Test
