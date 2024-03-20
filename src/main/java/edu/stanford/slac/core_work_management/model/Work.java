@@ -30,6 +30,12 @@ public class Work {
     private String id;
 
     /**
+     * The total number of activities present in the work.
+     */
+    @Builder.Default
+    private Integer activitiesNumber = 0;
+
+    /**
      * The type of the work.
      * This field identify the work which this is related to. This creates dependency between works
      */

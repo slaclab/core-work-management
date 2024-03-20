@@ -23,17 +23,16 @@ import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.TextCriteria;
-import org.springframework.data.mongodb.core.query.TextQuery;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
@@ -67,6 +66,15 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
         List<Work> elementsAfterAnchor =  limitSearch(queryParameter, anchorCreatedDate, allCriteria);
         elementsBeforeAnchor.addAll(elementsAfterAnchor);
         return elementsBeforeAnchor;
+    }
+
+    @Override
+    public Integer getNextActivityNumber(String id) {
+        Query query = new Query(Criteria.where("id").is(id));
+        Update update = new Update().inc("activitiesNumber", 1);
+        FindAndModifyOptions options = FindAndModifyOptions.options().returnNew(true);
+        var res =  mongoTemplate.findAndModify(query, update, options, Work.class);
+        return Objects.requireNonNull(res).getActivitiesNumber();
     }
 
     /**
