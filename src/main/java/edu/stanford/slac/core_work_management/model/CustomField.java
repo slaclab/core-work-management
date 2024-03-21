@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : ActivityCustomAttribute
+ * Title      : CustomAttributeDTO
  * ----------------------------------------------------------------------------
- * File       : ActivityCustomAttribute.java
+ * File       : CustomAttributeDTO.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,23 +15,26 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.api.v1.dto;
+package edu.stanford.slac.core_work_management.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.media.Schema;
+import edu.stanford.slac.core_work_management.model.value.AbstractValue;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Builder(toBuilder = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Define the custom attribute for the activity")
-public record CustomAttributeDTO(
-        @Schema(description = "The unique identifier of the custom attribute")
-        String id,
-        @Schema(description = "The name of the custom attribute")
-        String name,
-        @Schema(description = "The value of the custom attribute")
-        ValueDTO value
-) {
+@Data
+@Builder
+@AllArgsConstructor
+@EqualsAndHashCode
+public class CustomField {
+    /**
+     * The identifier of the custom attribute.
+     * This field is used to uniquely identify the custom attribute.
+     */
+    String id;
+    /**
+     * The value of the attribute
+     */
+    AbstractValue value;
 }

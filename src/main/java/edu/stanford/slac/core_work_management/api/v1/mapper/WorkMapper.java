@@ -117,7 +117,7 @@ public abstract class WorkMapper {
      * @param workId         the id of the work
      * @return the converted entity
      */
-    @Mapping(target = "customAttributes", expression = "java(toCustomAttributeValues(newActivityDTO.customAttributeValues()))")
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValues(newActivityDTO.customFieldValues()))")
     abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
 
     /**
@@ -165,7 +165,7 @@ public abstract class WorkMapper {
      */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
-    @Mapping(target = "customAttributes", expression = "java(toCustomAttributeValuesDTO(activity.getActivityTypeId(), activity.getCustomAttributes()))")
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTO(activity.getActivityTypeId(), activity.getCustomFields()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
@@ -187,14 +187,14 @@ public abstract class WorkMapper {
     abstract public ActivityTypeCustomField toModel(String id, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
     /**
-     * Convert the {@link WriteCustomAttributeDTO} to a {@link CustomAttribute}
+     * Convert the {@link WriteCustomFieldDTO} to a {@link CustomField}
      *
      * @param customAttributeValues the list of the custom attributes
      * @return the converted entity
      */
-    public List<CustomAttribute> toCustomAttributeValues(List<WriteCustomAttributeDTO> customAttributeValues) {
-        return customAttributeValues.stream().map(
-                customAttributeDTO -> CustomAttribute.builder()
+    public List<CustomField> toCustomFieldValues(List<WriteCustomFieldDTO> customFieldValues) {
+        return customFieldValues.stream().map(
+                customAttributeDTO -> CustomField.builder()
                         .id(customAttributeDTO.id())
                         .value(toAbstractValue(customAttributeDTO.value()))
                         .build()
@@ -202,14 +202,14 @@ public abstract class WorkMapper {
     }
 
     /**
-     * Convert the {@link CustomAttribute} to a {@link CustomAttributeDTO}
+     * Convert the {@link CustomField} to a {@link CustomFieldDTO}
      * @param activityTypeId the activity id
      * @param customAttributesValues the list of custom attribute
-     * @return the list of the {@link CustomAttributeDTO}
+     * @return the list of the {@link CustomFieldDTO}
      */
-    public List<CustomAttributeDTO> toCustomAttributeValuesDTO(String activityTypeId, List<CustomAttribute> customAttributesValues) {
+    public List<CustomFieldDTO> toCustomFieldValuesDTO(String activityTypeId, List<CustomField> customAttributesValues) {
         return customAttributesValues.stream().map(
-                customAttribute -> CustomAttributeDTO.builder()
+                customAttribute -> CustomFieldDTO.builder()
                         .id(customAttribute.getId())
                         .name(
                                 activityTypeRepository

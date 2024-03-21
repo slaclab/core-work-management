@@ -1,6 +1,5 @@
 package edu.stanford.slac.core_work_management.service;
 
-import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
@@ -504,9 +503,9 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customAttributeValues(
+                                .customFieldValues(
                                         List.of(
-                                                WriteCustomAttributeDTO
+                                                WriteCustomFieldDTO
                                                         .builder()
                                                         .id(fullActivityType.customFields().get(0).id())
                                                         .value(
@@ -534,12 +533,12 @@ public class WorkServiceTest {
         assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
         assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
         assertThat(newlyCreatedActivity.activityTypeSubtype()).isEqualTo(ActivityTypeSubtypeDTO.Other);
-        assertThat(newlyCreatedActivity.customAttributes()).isNotNull();
-        assertThat(newlyCreatedActivity.customAttributes().size()).isEqualTo(1);
-        assertThat(newlyCreatedActivity.customAttributes().get(0).id()).isEqualTo(fullActivityType.customFields().get(0).id());
-        assertThat(newlyCreatedActivity.customAttributes().get(0).name()).isEqualTo("custom field1");
-        assertThat(newlyCreatedActivity.customAttributes().get(0).value().type()).isEqualTo(ValueTypeDTO.String);
-        assertThat(newlyCreatedActivity.customAttributes().get(0).value().value()).isEqualTo("custom field1 value");
+        assertThat(newlyCreatedActivity.customFields()).isNotNull();
+        assertThat(newlyCreatedActivity.customFields().size()).isEqualTo(1);
+        assertThat(newlyCreatedActivity.customFields().get(0).id()).isEqualTo(fullActivityType.customFields().get(0).id());
+        assertThat(newlyCreatedActivity.customFields().get(0).name()).isEqualTo("custom field1");
+        assertThat(newlyCreatedActivity.customFields().get(0).value().type()).isEqualTo(ValueTypeDTO.String);
+        assertThat(newlyCreatedActivity.customFields().get(0).value().value()).isEqualTo("custom field1 value");
     }
 
     @Test
@@ -615,9 +614,9 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customAttributeValues(
+                                .customFieldValues(
                                         List.of(
-                                                WriteCustomAttributeDTO
+                                                WriteCustomFieldDTO
                                                         .builder()
                                                         .id(fullActivityType.customFields().getFirst().id())
                                                         .value(
@@ -628,7 +627,7 @@ public class WorkServiceTest {
                                                                         .build()
                                                         )
                                                         .build(),
-                                                WriteCustomAttributeDTO
+                                                WriteCustomFieldDTO
                                                         .builder()
                                                         .id(fullActivityType.customFields().getFirst().id())
                                                         .value(
@@ -658,9 +657,9 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customAttributeValues(
+                                .customFieldValues(
                                         List.of(
-                                                WriteCustomAttributeDTO
+                                                WriteCustomFieldDTO
                                                         .builder()
                                                         .id("bad id")
                                                         .value(
@@ -690,9 +689,9 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customAttributeValues(
+                                .customFieldValues(
                                         List.of(
-                                                WriteCustomAttributeDTO
+                                                WriteCustomFieldDTO
                                                         .builder()
                                                         .id(fullActivityType.customFields().get(1).id())
                                                         .value(
@@ -722,9 +721,9 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customAttributeValues(
+                                .customFieldValues(
                                         List.of(
-                                                WriteCustomAttributeDTO
+                                                WriteCustomFieldDTO
                                                         .builder()
                                                         .id(fullActivityType.customFields().get(1).id())
                                                         .value(

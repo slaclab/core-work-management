@@ -71,7 +71,7 @@ public class Activity {
      * The list of the custom fields associated with the activity.
      * The custom fields are used to store additional information about the activity.
      */
-    private List<CustomAttribute> customAttributes;
+    private List<CustomField> customFields;
 
     /**
      * Is the actual status of the activity.

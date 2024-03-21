@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
+import java.util.Collections;
 import java.util.List;
 
 @Builder(toBuilder = true)
@@ -27,4 +28,10 @@ public record NewActivityDTO (
         @Schema(description = "The subtype of the activity expressed by it's identifier")
         ActivityTypeSubtypeDTO activityTypeSubtype,
         @Schema(description = "The values of the custom attributes for the activity")
-        List<WriteCustomAttributeDTO> customAttributeValues){}
+        List<WriteCustomFieldDTO> customFieldValues){
+        public NewActivityDTO {
+                if (customFieldValues == null) {
+                        customFieldValues = Collections.emptyList();
+                }
+        }
+}

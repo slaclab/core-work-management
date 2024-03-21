@@ -31,6 +31,7 @@ import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.W
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -95,6 +96,7 @@ public class WorkService {
 
     /**
      * create a new activity type
+     *
      * @param newActivityTypeDTO the new activity to create
      * @return the activity id
      */
@@ -464,7 +466,16 @@ public class WorkService {
         );
 
         //validate custom attribute
-        validateCustomField(activityType.getCustomFields(), newActivityDTO.customAttributeValues());
+        validateCustomField(
+                Objects.requireNonNullElse(
+                        activityType.getCustomFields(),
+                        emptyList()
+                ),
+                Objects.requireNonNullElse(
+                        newActivityDTO.customFieldValues(),
+                        emptyList()
+                )
+        );
 
         var newActivity = workMapper.toModel(newActivityDTO, workId);
         var savedActivity = wrapCatch(
@@ -538,7 +549,16 @@ public class WorkService {
         );
 
         //validate custom attribute
-        validateCustomField(activityType.getCustomFields(), updateActivityDTO.customAttributeValues());
+        validateCustomField(
+                Objects.requireNonNullElse(
+                        activityType.getCustomFields(),
+                        emptyList()
+                ),
+                Objects.requireNonNullElse(
+                        updateActivityDTO.customAttributeValues(),
+                        emptyList()
+                )
+        );
 
         // assert that activity need to be related to the work
         assertion(
@@ -562,10 +582,11 @@ public class WorkService {
 
     /**
      * Validate all custom fields
-     * @param customFields the custom field available by the ActivityType
+     *
+     * @param customFields      the custom field available by the ActivityType
      * @param customFieldValues the custom field value submitted to save the activity
      */
-    private void validateCustomField(List<ActivityTypeCustomField> customFields, List<WriteCustomAttributeDTO> customFieldValues) {
+    private void validateCustomField(List<ActivityTypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
         // check duplicated id
         assertion(
                 ControllerLogicException.builder()
@@ -573,9 +594,9 @@ public class WorkService {
                         .errorMessage("There are duplicated custom field id")
                         .errorDomain("WorkService::validateCustomField")
                         .build(),
-                ()-> customFieldValues.stream()
+                () -> customFieldValues.stream()
                         // Group by the id
-                        .collect(Collectors.groupingBy(WriteCustomAttributeDTO::id))
+                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
                         .values().stream()
                         // Filter groups having more than one element, indicating duplicates
                         .filter(duplicates -> duplicates.size() > 1)
@@ -585,8 +606,8 @@ public class WorkService {
 
         // check that all the id are valid
         customFieldValues.forEach(
-                cv->{
-                    var foundField = customFields.stream().filter(cf->cf.getId().compareTo(cv.id())==0).findFirst();
+                cv -> {
+                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
                     // check if id is valid
                     assertion(
                             ControllerLogicException.builder()
@@ -604,7 +625,7 @@ public class WorkService {
                                     .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
                                     .errorDomain("WorkService::validateCustomField")
                                     .build(),
-                            ()->  cv.value().type().name().compareTo(foundField.get().getValueType().name())==0
+                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
                     );
                 }
 
@@ -618,12 +639,12 @@ public class WorkService {
                         .errorMessage("Not all mandatory attribute has been submitted")
                         .errorDomain("WorkService::validateCustomField")
                         .build(),
-                ()->customFields
+                () -> customFields
                         .stream()
                         .filter(ActivityTypeCustomField::getIsMandatory)
                         .map(ActivityTypeCustomField::getId)
                         .allMatch(
-                                s -> customFieldValues.stream().anyMatch(av->av.id().compareTo(s)==0)
+                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
                         )
         );
     }

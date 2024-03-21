@@ -26,7 +26,7 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the custom attribute for the activity")
-public record WriteCustomAttributeDTO(
+public record WriteCustomFieldDTO(
         @Schema(description = "The id that identify the custom attribute")
         String id,
         @Schema(description = "The value of the custom attribute")

@@ -33,7 +33,7 @@ public record ActivityDTO(
         @Schema(description = "The subtype of the activity")
         ActivityTypeSubtypeDTO activityTypeSubtype,
         @Schema(description="The list of the custom fields associated with the activity. The custom fields are used to store additional information about the activity.")
-        List<CustomAttributeDTO> customAttributes,
+        List<CustomFieldDTO> customFields,
         @Schema(description = "The current status of the activity")
         ActivityStatusLogDTO currentStatus,
         @Schema(description = "The full activity status history")
