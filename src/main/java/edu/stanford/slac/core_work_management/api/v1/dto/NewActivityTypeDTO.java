@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Define the information for create new work plan
  */
@@ -17,5 +20,13 @@ public record NewActivityTypeDTO(
         String title,
 
         @Schema(description = "The description of the activity type")
-        String description
-){}
+        String description,
+        @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
+        List<ActivityTypeCustomFieldDTO> customFields
+){
+        public NewActivityTypeDTO {
+                if(customFields == null){
+                        customFields = new ArrayList<>();
+                }
+        }
+}

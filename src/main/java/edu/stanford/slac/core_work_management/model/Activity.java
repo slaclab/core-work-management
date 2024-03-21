@@ -56,41 +56,6 @@ public class Activity {
     private String description;
 
     /**
-     * The description of the test plan for the activity.
-     * This field provides a detailed description of the test plan associated with the activity.
-     */
-    private String testPlanDescription;
-
-    /**
-     * The description of the backout plan for the activity.
-     * This field provides a detailed description of the backout plan associated with the activity.
-     */
-    private String backoutPlanDescription;
-
-    /**
-     * The description of the system requirements for the activity.
-     * This field provides a detailed description of the system requirements associated with the activity.
-     */
-    private String systemRequiredDescription;
-
-    /**
-     * The description of the system effects for the activity.
-     * This field provides a detailed description of the system effects associated with the activity.
-     */
-    private String systemEffectedDescription;
-
-    /**
-     * The description of the risk and benefits for the activity.
-     * This field provides a detailed description of the risk and benefits associated with the activity.
-     */
-    private String riskBenefitDescription;
-
-    /**
-     * The description of the dependencies for the activity.
-     * This field provides a detailed description of the dependencies associated with the activity.
-     */
-    private String dependenciesDescription;
-    /**
      * The type of the activity.
      * This field categorizes the activity into a specific type, defined by the ActivityType enum.
      */
@@ -101,6 +66,12 @@ public class Activity {
      * This field further categorizes the activity into a specific subtype, defined by the ActivityTypeSubtype enum.
      */
     private ActivityTypeSubtype activityTypeSubtype;
+
+    /**
+     * The list of the custom fields associated with the activity.
+     * The custom fields are used to store additional information about the activity.
+     */
+    private List<CustomAttribute> customAttributes;
 
     /**
      * Is the actual status of the activity.

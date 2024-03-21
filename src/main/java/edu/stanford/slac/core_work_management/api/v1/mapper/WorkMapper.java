@@ -1,34 +1,37 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.ActivityTypeCustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
-import edu.stanford.slac.core_work_management.repository.ShopGroupRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.any;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import static java.util.Collections.emptyList;
 import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 
 /**
@@ -114,10 +117,7 @@ public abstract class WorkMapper {
      * @param workId         the id of the work
      * @return the converted entity
      */
-//    @Mapping(target = "currentStatus", expression =
-//            """
-//            java(ActivityStatus.New)
-//            """)
+    @Mapping(target = "customAttributes", expression = "java(toCustomAttributeValues(newActivityDTO.customAttributeValues()))")
     abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
 
     /**
@@ -135,6 +135,15 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     abstract public ActivityStatus toModel(ActivityStatusDTO activityStatusDTO);
+
+    /**
+     * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
+     *
+     * @param dto the DTO to convert
+     * @return the converted entity
+     */
+    @Mapping(target = "customFields", expression = "java(updateModelCustomActivityTypeField(dto.customFields(), activityType.getCustomFields()))")
+    abstract public ActivityType updateModel(UpdateActivityTypeDTO dto, @MappingTarget ActivityType activityType);
 
     /**
      * Convert the {@link Work} to a {@link WorkDTO}
@@ -156,6 +165,7 @@ public abstract class WorkMapper {
      */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
+    @Mapping(target = "customAttributes", expression = "java(toCustomAttributeValuesDTO(activity.getActivityTypeId(), activity.getCustomAttributes()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
@@ -172,6 +182,79 @@ public abstract class WorkMapper {
 
     abstract public ActivityQueryParameter toModel(ActivityQueryParameterDTO activityQueryParameterDTO);
 
+    abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    @Mapping(target = "id", source = "id")
+    abstract public ActivityTypeCustomField toModel(String id, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+
+    /**
+     * Convert the {@link WriteCustomAttributeDTO} to a {@link CustomAttribute}
+     *
+     * @param customAttributeValues the list of the custom attributes
+     * @return the converted entity
+     */
+    public List<CustomAttribute> toCustomAttributeValues(List<WriteCustomAttributeDTO> customAttributeValues) {
+        return customAttributeValues.stream().map(
+                customAttributeDTO -> CustomAttribute.builder()
+                        .id(customAttributeDTO.id())
+                        .value(toAbstractValue(customAttributeDTO.value()))
+                        .build()
+        ).toList();
+    }
+
+    /**
+     * Convert the {@link CustomAttribute} to a {@link CustomAttributeDTO}
+     * @param activityTypeId the activity id
+     * @param customAttributesValues the list of custom attribute
+     * @return the list of the {@link CustomAttributeDTO}
+     */
+    public List<CustomAttributeDTO> toCustomAttributeValuesDTO(String activityTypeId, List<CustomAttribute> customAttributesValues) {
+        return customAttributesValues.stream().map(
+                customAttribute -> CustomAttributeDTO.builder()
+                        .id(customAttribute.getId())
+                        .name(
+                                activityTypeRepository
+                                        .findCustomFiledById(activityTypeId, customAttribute.getId())
+                                        .map(ActivityTypeCustomField::getName)
+                                        .orElseThrow(
+                                                ()->ActivityTypeCustomAttributeNotFound.notFoundById()
+                                                        .id(customAttribute.getId())
+                                                        .build()
+                                        )
+                        )
+                        .value(toValueDTO(customAttribute.getValue()))
+                        .build()
+        ).toList();
+    }
+
+    /**
+     * Convert the {@link ActivityTypeCustomFieldDTO} to a {@link ActivityTypeCustomField}
+     *
+     * @param customFieldsDTO the lists of the new custom fields
+     * @param customFields    the list of the old custom fields
+     * @return the converted entity
+     */
+    public List<ActivityTypeCustomField> updateModelCustomActivityTypeField(List<ActivityTypeCustomFieldDTO> customFieldsDTO, List<ActivityTypeCustomField> customFields) {
+        List<ActivityTypeCustomField> updatedCustomAttributesList = new ArrayList<>();
+        customFieldsDTO.forEach(
+                customFieldDTO -> {
+                    // try to find the custom field in the old list
+                    Optional<ActivityTypeCustomField> customField =  Objects.requireNonNullElse(customFields, Collections.<ActivityTypeCustomField>emptyList()).stream()
+                            .filter(
+                                    customField1 -> customField1.getId().equals(customFieldDTO.id())
+                            ).findFirst();
+
+                    if (customField.isPresent()) {
+                        updatedCustomAttributesList.add(toModel(customFieldDTO));
+                    } else {
+                        updatedCustomAttributesList.add(
+                               toModel(UUID.randomUUID().toString(),customFieldDTO)
+                        );
+                    }
+                }
+        );
+        return updatedCustomAttributesList;
+    }
+
     /**
      * Get the authorization level on work
      */
@@ -180,7 +263,7 @@ public abstract class WorkMapper {
         if (authentication == null) {
             // if the DTO has been requested by an anonymous user, then the access level is Read
             // in other case will should have been blocked by the security layer
-            return Collections.emptyList();
+            return emptyList();
         }
 
         List<AuthorizationResourceDTO> accessList = new ArrayList<>();
@@ -333,4 +416,110 @@ public abstract class WorkMapper {
         );
     }
 
+    /**
+     * Convert the {@link ValueDTO} to a {@link AbstractValue}
+     *
+     * @param value the DTO to convert
+     * @return the converted entity
+     */
+    public AbstractValue toAbstractValue(ValueDTO value) {
+        switch(value.type()){
+            case String -> {
+                return StringValue
+                        .builder()
+                        .value(value.value())
+                        .build();
+            }
+            case Number -> {
+                return NumberValue
+                        .builder()
+                        .value(Long.valueOf(value.value()))
+                        .build();
+            }
+            case Double -> {
+                return DoubleValue
+                        .builder()
+                        .value(Double.valueOf(value.value()))
+                        .build();
+            }
+            case Boolean -> {
+                return BooleanValue
+                        .builder()
+                        .value(Boolean.valueOf(value.value()))
+                        .build();
+            }
+            case Date -> {
+                return DateValue
+                        .builder()
+                        .value(LocalDate.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE))
+                        .build();
+            }
+            case DateTime -> {
+                return DateTimeValue
+                        .builder()
+                        .value(LocalDateTime.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                        .build();
+            }
+            default -> throw ControllerLogicException.builder()
+                    .errorCode(-4)
+                    .errorMessage("Invalid attribute type")
+                    .errorDomain("InventoryElementMapper::toElementAttributeWithClass")
+                    .build();
+        }
+    }
+
+    /**
+     * Convert the {@link AbstractValue} to a {@link ValueDTO}
+     *
+     * @param abstractValue the entity to convert
+     * @return the converted DTO
+     */
+    protected ValueDTO toValueDTO(AbstractValue abstractValue) {
+        ValueDTO newAttributeValue = null;
+        Class<? extends AbstractValue> valueType = abstractValue.getClass();
+        if (valueType.isAssignableFrom(StringValue.class)) {
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.String)
+                    .value(((StringValue) abstractValue).getValue())
+                    .build();
+        } else if (valueType.isAssignableFrom(BooleanValue.class)) {
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Boolean)
+                    .value(((BooleanValue) abstractValue).getValue().toString())
+                    .build();
+        } else if (valueType.isAssignableFrom(NumberValue.class)) {
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Number)
+                    .value(((NumberValue) abstractValue).getValue().toString())
+                    .build();
+        } else if (valueType.isAssignableFrom(DoubleValue.class)) {
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Double)
+                    .value(((DoubleValue) abstractValue).getValue().toString())
+                    .build();
+        } else if (valueType.isAssignableFrom(DateValue.class)) {
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Date)
+                    .value(((DateValue) abstractValue).getValue().format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    .build();
+        } else if (valueType.isAssignableFrom(DateTimeValue.class)) {
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.DateTime)
+                    .value(((DateTimeValue) abstractValue).getValue().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                    .build();
+        } else {
+            throw ControllerLogicException.builder()
+                    .errorCode(-4)
+                    .errorMessage("Invalid attribute type")
+                    .errorDomain("InventoryElementMapper::toElementAttributeWithClass")
+                    .build();
+        }
+        return newAttributeValue;
+    }
 }
