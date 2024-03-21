@@ -496,6 +496,71 @@ public class WorkService {
     }
 
     /**
+     * Update an activity
+     *
+     * @param workId            the id of the work
+     * @param activityId        the id of the activity
+     * @param updateActivityDTO the DTO to update the activity
+     */
+    public void update(String workId, String activityId, UpdateActivityDTO updateActivityDTO) {
+        // check for work existence
+        assertion(
+                () -> workRepository.existsById(workId),
+                WorkNotFound
+                        .notFoundById()
+                        .errorCode(-1)
+                        .workId(workId)
+                        .build()
+        );
+        // check for activity
+        var activityStored = wrapCatch(
+                () -> activityRepository.findById(activityId).orElseThrow(
+                        () -> ActivityNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .activityId(activityId)
+                                .build()
+                ),
+                -2
+        );
+
+
+        //fetch the whole activity type
+        var activityType = wrapCatch(
+                () -> activityTypeRepository.findById(activityStored.getActivityTypeId()).orElseThrow(
+                        () -> ActivityTypeNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .activityTypeId(activityStored.getActivityTypeId())
+                                .build()
+                ),
+                -3
+        );
+
+        //validate custom attribute
+        validateCustomField(activityType.getCustomFields(), updateActivityDTO.customAttributeValues());
+
+        // assert that activity need to be related to the work
+        assertion(
+                () -> workId.equals(activityStored.getWorkId()),
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("The activity does not belong to the work")
+                        .errorDomain("WorkService::update(String,String,UpdateActivityDTO)")
+                        .build()
+        );
+        // update the model
+        workMapper.updateModel(updateActivityDTO, activityStored);
+        // save the activity
+        var savedActivity = wrapCatch(
+                () -> activityRepository.save(activityStored),
+                -2
+        );
+        log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
+    }
+
+    /**
      * Validate all custom fields
      * @param customFields the custom field available by the ActivityType
      * @param customFieldValues the custom field value submitted to save the activity
@@ -561,54 +626,6 @@ public class WorkService {
                                 s -> customFieldValues.stream().anyMatch(av->av.id().compareTo(s)==0)
                         )
         );
-    }
-
-    /**
-     * Update an activity
-     *
-     * @param workId            the id of the work
-     * @param activityId        the id of the activity
-     * @param updateActivityDTO the DTO to update the activity
-     */
-    public void update(String workId, String activityId, UpdateActivityDTO updateActivityDTO) {
-        // check for work existence
-        assertion(
-                () -> workRepository.existsById(workId),
-                WorkNotFound
-                        .notFoundById()
-                        .errorCode(-1)
-                        .workId(workId)
-                        .build()
-        );
-        // check for activity
-        var activityStored = wrapCatch(
-                () -> activityRepository.findById(activityId).orElseThrow(
-                        () -> ActivityNotFound
-                                .notFoundById()
-                                .errorCode(-2)
-                                .activityId(activityId)
-                                .build()
-                ),
-                -2
-        );
-        // assert that activity need to be related to the work
-        assertion(
-                () -> workId.equals(activityStored.getWorkId()),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-3)
-                        .errorMessage("The activity does not belong to the work")
-                        .errorDomain("WorkService::update(String,String,UpdateActivityDTO)")
-                        .build()
-        );
-        // update the model
-        workMapper.updateModel(updateActivityDTO, activityStored);
-        // save the activity
-        var savedActivity = wrapCatch(
-                () -> activityRepository.save(activityStored),
-                -2
-        );
-        log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
     }
 
     /**
