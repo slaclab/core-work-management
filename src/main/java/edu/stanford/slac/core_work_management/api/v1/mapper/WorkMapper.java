@@ -240,16 +240,13 @@ public abstract class WorkMapper {
      * @return the value from lov if found
      */
     private AbstractValue tryToLOV(AbstractValue value) {
-        AbstractValue result = null;
         if(value.getClass().isAssignableFrom(StringValue.class)) {
             var lovElementFound =  lovService.findLovValueByIdNoException(((StringValue) value).getValue());
             if(lovElementFound.isPresent()) {
-                result =  StringValue.builder().value(lovElementFound.get().getValue()).build();
+                return StringValue.builder().value(lovElementFound.get().getValue()).build();
             }
-        } else {
-            result =  value;
         }
-        return result;
+        return value;
     }
 
     /**
@@ -570,6 +567,7 @@ public abstract class WorkMapper {
                                 field2 -> {
                                     try {
                                         field2.setAccessible(true);
+                                        if(field2.get(source) == null) return;
                                         String idValue = field2.get(source).toString();
                                         field1.setAccessible(true);
                                         field1.set(target, lovService.findLovValueById(idValue));

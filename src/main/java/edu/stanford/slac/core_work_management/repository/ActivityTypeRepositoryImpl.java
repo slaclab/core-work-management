@@ -29,11 +29,21 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
     @Override
     public String ensureActivityType(ActivityType activityType) {
         ActivityType activityTypeCreated = null;
+        //create custom field id
+
         String normalizedTitle = normalizeStringWithReplace(
                 activityType.getTitle(),
                 "",
                 ""
         );
+        if(activityType.getCustomFields()!= null) {
+            activityType.getCustomFields().forEach(customField -> {
+                if (customField.getId() == null) {
+                    customField.setId(UUID.randomUUID().toString());
+                }
+            });
+        }
+
         Query query = new Query(
                 Criteria.where("title").is(normalizedTitle)
         );
@@ -43,7 +53,8 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
                 .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())
-                .setOnInsert("lastModifiedDate", LocalDateTime.now());
+                .setOnInsert("lastModifiedDate", LocalDateTime.now())
+                .setOnInsert("customFields", activityType.getCustomFields());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
         try {
             activityTypeCreated = mongoTemplate.findAndModify(
