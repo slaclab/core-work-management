@@ -18,7 +18,9 @@
 package edu.stanford.slac.core_work_management.service;
 
 import com.google.common.collect.ImmutableSet;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,6 +42,7 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -172,6 +175,23 @@ public class LOVServiceTest {
         );
         assertThat(listOfAllLOV).hasSize(2);
         assertThat(listOfAllLOV).extracting(LOVElementDTO::value).contains("field1 value1", "field1 value2");
+    }
+
+    @Test
+    public void createNewLOVElementForDomainFailOnWrongFieldName() {
+        // add lov for dynamic field
+        var fieldNotFound = assertThrows(
+                LOVFieldReferenceNotFound.class,
+                () -> lovService.createNew(
+                        LOVDomainTypeDTO.Activity,
+                        "wrong field",
+                        of(
+                                NewLOVElementDTO.builder().value("field1 value1").description("field1 value1 description").build(),
+                                NewLOVElementDTO.builder().value("field1 value2").description("field1 value2 description").build()
+                        )
+                )
+        );
+       assertThat(fieldNotFound.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
