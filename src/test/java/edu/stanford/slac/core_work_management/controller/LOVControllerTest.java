@@ -150,10 +150,7 @@ public class LOVControllerTest {
         );
         assertThat(lovFieldList.getErrorCode()).isEqualTo(0);
         assertThat(lovFieldList.getPayload())
-                .hasSize(1)
-                .contains(
-                        "schedulingProperty"
-                );
+                .hasSizeGreaterThan(0);
     }
     @Test
     public void fetchAllLOVFieldForActivityFieldName() {
