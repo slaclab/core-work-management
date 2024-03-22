@@ -21,7 +21,6 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.LOVMapper;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
 import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.model.value.AbstractValue;
 import edu.stanford.slac.core_work_management.model.value.LOVField;
 import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
 import edu.stanford.slac.core_work_management.model.Activity;
@@ -83,7 +82,7 @@ public class LOVService {
      * @param fieldName    the field name
      * @return the list of LOV elements
      */
-    public List<LOVElementDTO> findAllByDomainAndFieldReference(LOVDomainTypeDTO lovDomainDTO, String fieldName) {
+    public List<LOVElementDTO> findAllByDomainAndFieldName(LOVDomainTypeDTO lovDomainDTO, String fieldName) {
         var fieldReferences = getLOVFieldReference(lovDomainDTO);
         assertion(
                 LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
@@ -131,6 +130,16 @@ public class LOVService {
                         findById(id),
                 -1
         );
+    }
+
+    /**
+     * Find all the field that are LOV for a specific domain
+     *
+     * @param lovDomainTypeDTO the domain for which the field reference is needed
+     * @return the field reference of the LOV element
+     */
+    public List<String> findAllLOVField(LOVDomainTypeDTO lovDomainTypeDTO) {
+        return getLOVFieldReference(lovDomainTypeDTO).keySet().stream().toList();
     }
 
     /**

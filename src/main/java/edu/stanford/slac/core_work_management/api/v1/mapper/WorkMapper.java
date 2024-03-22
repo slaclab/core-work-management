@@ -167,6 +167,7 @@ public abstract class WorkMapper {
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTO(activity.getActivityTypeId(), activity.getCustomFields()))")
+//    @Mapping(target = "schedulingProperty", expression = "java(toLOVValueDTO(activity.getSchedulingProperty()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
@@ -235,14 +236,35 @@ public abstract class WorkMapper {
     }
 
     /**
+     * Convert static string field to {@link }LOVValueDTO}
+     *
+     * @param value the id of the lov value
+     * @return the value from lov if found
+     */
+    public LOVValueDTO toLOVValueDTO(String value) {
+        if (value == null) return null;
+        var valueFound = lovService.findLovValueById(value);
+        return LOVValueDTO
+                .builder()
+                .id(
+                        value
+                )
+                .value(
+                        valueFound
+                )
+                .build();
+    }
+
+    /**
      * Try to find form lov otherwise return the default value
+     *
      * @param value the default value
      * @return the value from lov if found
      */
     private AbstractValue tryToLOV(AbstractValue value) {
-        if(value.getClass().isAssignableFrom(StringValue.class)) {
-            var lovElementFound =  lovService.findLovValueByIdNoException(((StringValue) value).getValue());
-            if(lovElementFound.isPresent()) {
+        if (value.getClass().isAssignableFrom(StringValue.class)) {
+            var lovElementFound = lovService.findLovValueByIdNoException(((StringValue) value).getValue());
+            if (lovElementFound.isPresent()) {
                 return StringValue.builder().value(lovElementFound.get().getValue()).build();
             }
         }
@@ -554,9 +576,9 @@ public abstract class WorkMapper {
         listOfReferenced.forEach(
                 field -> {
                     var staticTargetField = Arrays.stream(targetFields).filter(
-                            field1 -> field1.getName().equals(field)
+                            tField -> tField.getName().equals(field)
                     ).findFirst();
-                    if(staticTargetField.isPresent()) {
+                    if (staticTargetField.isPresent()) {
                         var field1 = staticTargetField.get();
                         // the model contains the id of the lov not the real value
                         var staticDynamicField = Arrays.stream(sourceFields).filter(
@@ -567,10 +589,15 @@ public abstract class WorkMapper {
                                 field2 -> {
                                     try {
                                         field2.setAccessible(true);
-                                        if(field2.get(source) == null) return;
+                                        if (field2.get(source) == null) return;
                                         String idValue = field2.get(source).toString();
                                         field1.setAccessible(true);
-                                        field1.set(target, lovService.findLovValueById(idValue));
+                                        field1.set(target,
+                                                LOVValueDTO.builder()
+                                                        .id(idValue)
+                                                        .value(lovService.findLovValueById(idValue))
+                                                        .build()
+                                        );
                                     } catch (IllegalAccessException e) {
                                         throw new RuntimeException(e);
                                     }
