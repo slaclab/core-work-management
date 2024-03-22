@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : ValueDTO
+ * Title      : LOVElementDTO
  * ----------------------------------------------------------------------------
- * File       : ValueDTO.java
+ * File       : LOVElementDTO.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -20,17 +20,16 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Describe a value for a specific type")
-public record ValueDTO (
-    @NotEmpty(message = "Type is mandatory field")
-    @Schema(description = "The type of the attribute")
-    ValueTypeDTO type,
-    @NotEmpty(message = "The value is mandatory field")
-    @Schema(description = "The string representation of the value")
-    String value
-){}
+@Schema(description = "Define a lov element for a specific domain and field reference.")
+public record LOVElementDTO (
+    @Schema(description = "The id of the LOV element")
+    String id,
+    @Schema(description = "The field reference of the LOV element")
+    String value,
+    @Schema(description = "The description of the LOV element")
+    String description){}

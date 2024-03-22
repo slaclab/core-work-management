@@ -27,6 +27,8 @@ public record NewActivityDTO (
         @NotNull
         @Schema(description = "The subtype of the activity expressed by it's identifier")
         ActivityTypeSubtypeDTO activityTypeSubtype,
+        @Schema(description = "The priority of the activity")
+        String schedulingProperty,
         @Schema(description = "The values of the custom attributes for the activity")
         List<WriteCustomFieldDTO> customFieldValues){
         public NewActivityDTO {

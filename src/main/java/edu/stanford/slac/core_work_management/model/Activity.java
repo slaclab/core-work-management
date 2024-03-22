@@ -1,6 +1,9 @@
 package edu.stanford.slac.core_work_management.model;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.LOVDomainTypeDTO;
+import edu.stanford.slac.core_work_management.model.value.LOVDomain;
+import edu.stanford.slac.core_work_management.model.value.LOVField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +22,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
  */
 @Data
 @Builder
+@LOVDomain(LOVDomainType.Activity)
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Activity {
@@ -66,6 +70,13 @@ public class Activity {
      * This field further categorizes the activity into a specific subtype, defined by the ActivityTypeSubtype enum.
      */
     private ActivityTypeSubtype activityTypeSubtype;
+
+    /**
+     * The priority of the activity.
+     * This field stores the priority of the activity, which is defined by the SCHEDULING_PROPERTY LOV.
+     */
+    @LOVField(fieldReference = "SCHEDULING_PROPERTY")
+    private String schedulingProperty;
 
     /**
      * The list of the custom fields associated with the activity.

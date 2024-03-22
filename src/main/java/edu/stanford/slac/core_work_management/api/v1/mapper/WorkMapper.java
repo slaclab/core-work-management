@@ -12,16 +12,15 @@ import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +31,6 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 import static java.util.Collections.emptyList;
-import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 
 /**
  * Mapper for the entity {@link Work}
@@ -40,7 +38,8 @@ import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 @Mapper(
         componentModel = "spring",
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        nullValuePropertyMappingStrategy = IGNORE
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
 public abstract class WorkMapper {
     @Autowired
@@ -49,6 +48,8 @@ public abstract class WorkMapper {
     ShopGroupService shopGroupService;
     @Autowired
     LocationService locationService;
+    @Autowired
+    LOVService lovService;
     @Autowired
     WorkTypeRepository workTypeRepository;
     @Autowired
@@ -183,13 +184,15 @@ public abstract class WorkMapper {
     abstract public ActivityQueryParameter toModel(ActivityQueryParameterDTO activityQueryParameterDTO);
 
     abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+
     @Mapping(target = "id", source = "id")
     abstract public ActivityTypeCustomField toModel(String id, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+
 
     /**
      * Convert the {@link WriteCustomFieldDTO} to a {@link CustomField}
      *
-     * @param customAttributeValues the list of the custom attributes
+     * @param customFieldValues the list of the custom attributes
      * @return the converted entity
      */
     public List<CustomField> toCustomFieldValues(List<WriteCustomFieldDTO> customFieldValues) {
@@ -203,7 +206,8 @@ public abstract class WorkMapper {
 
     /**
      * Convert the {@link CustomField} to a {@link CustomFieldDTO}
-     * @param activityTypeId the activity id
+     *
+     * @param activityTypeId         the activity id
      * @param customAttributesValues the list of custom attribute
      * @return the list of the {@link CustomFieldDTO}
      */
@@ -216,14 +220,36 @@ public abstract class WorkMapper {
                                         .findCustomFiledById(activityTypeId, customAttribute.getId())
                                         .map(ActivityTypeCustomField::getName)
                                         .orElseThrow(
-                                                ()->ActivityTypeCustomAttributeNotFound.notFoundById()
+                                                () -> ActivityTypeCustomAttributeNotFound.notFoundById()
                                                         .id(customAttribute.getId())
                                                         .build()
                                         )
                         )
-                        .value(toValueDTO(customAttribute.getValue()))
+                        .value(
+                                toValueDTO(
+                                        tryToLOV(customAttribute.getValue())
+                                )
+                        )
                         .build()
         ).toList();
+    }
+
+    /**
+     * Try to find form lov otherwise return the default value
+     * @param value the default value
+     * @return the value from lov if found
+     */
+    private AbstractValue tryToLOV(AbstractValue value) {
+        AbstractValue result = null;
+        if(value.getClass().isAssignableFrom(StringValue.class)) {
+            var lovElementFound =  lovService.findLovValueByIdNoException(((StringValue) value).getValue());
+            if(lovElementFound.isPresent()) {
+                result =  StringValue.builder().value(lovElementFound.get().getValue()).build();
+            }
+        } else {
+            result =  value;
+        }
+        return result;
     }
 
     /**
@@ -238,7 +264,7 @@ public abstract class WorkMapper {
         customFieldsDTO.forEach(
                 customFieldDTO -> {
                     // try to find the custom field in the old list
-                    Optional<ActivityTypeCustomField> customField =  Objects.requireNonNullElse(customFields, Collections.<ActivityTypeCustomField>emptyList()).stream()
+                    Optional<ActivityTypeCustomField> customField = Objects.requireNonNullElse(customFields, Collections.<ActivityTypeCustomField>emptyList()).stream()
                             .filter(
                                     customField1 -> customField1.getId().equals(customFieldDTO.id())
                             ).findFirst();
@@ -247,7 +273,7 @@ public abstract class WorkMapper {
                         updatedCustomAttributesList.add(toModel(customFieldDTO));
                     } else {
                         updatedCustomAttributesList.add(
-                               toModel(UUID.randomUUID().toString(),customFieldDTO)
+                                toModel(UUID.randomUUID().toString(), customFieldDTO)
                         );
                     }
                 }
@@ -288,7 +314,7 @@ public abstract class WorkMapper {
                                         workId.getShopGroupId(),
                                         authentication.getCredentials().toString()
                                 )
-                        )? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
+                        ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
                 .build());
 
         // check if can modify location
@@ -304,7 +330,7 @@ public abstract class WorkMapper {
                                         AuthorizationTypeDTO.Admin,
                                         WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
                                 )
-                        )? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
+                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
                 .build());
 
         // check if can modify assignTo
@@ -320,7 +346,7 @@ public abstract class WorkMapper {
                                         AuthorizationTypeDTO.Admin,
                                         SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(workId.getShopGroupId())
                                 )
-                        )? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
+                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
                 .build());
 
         return accessList;
@@ -371,7 +397,7 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     public ShopGroupDTO toShopGroupDTOById(String shopGroupId) {
-        if(shopGroupId == null) return null;
+        if (shopGroupId == null) return null;
         return shopGroupService.findById(shopGroupId);
     }
 
@@ -382,7 +408,7 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     public LocationDTO toLocationDTOById(String locationId) {
-        if(locationId == null) return null;
+        if (locationId == null) return null;
         return locationService.findById(locationId);
     }
 
@@ -423,7 +449,7 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     public AbstractValue toAbstractValue(ValueDTO value) {
-        switch(value.type()){
+        switch (value.type()) {
             case String -> {
                 return StringValue
                         .builder()
@@ -521,5 +547,39 @@ public abstract class WorkMapper {
                     .build();
         }
         return newAttributeValue;
+    }
+
+    @AfterMapping
+    protected void afterMapping(@MappingTarget final ActivityDTO.ActivityDTOBuilder target, Activity source) {
+        var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Activity).keySet();
+        var targetFields = target.getClass().getDeclaredFields();
+        var sourceFields = source.getClass().getDeclaredFields();
+        listOfReferenced.forEach(
+                field -> {
+                    var staticTargetField = Arrays.stream(targetFields).filter(
+                            field1 -> field1.getName().equals(field)
+                    ).findFirst();
+                    if(staticTargetField.isPresent()) {
+                        var field1 = staticTargetField.get();
+                        // the model contains the id of the lov not the real value
+                        var staticDynamicField = Arrays.stream(sourceFields).filter(
+                                sourceField -> sourceField.getName().equals(field)
+                        ).findFirst();
+
+                        staticDynamicField.ifPresent(
+                                field2 -> {
+                                    try {
+                                        field2.setAccessible(true);
+                                        String idValue = field2.get(source).toString();
+                                        field1.setAccessible(true);
+                                        field1.set(target, lovService.findLovValueById(idValue));
+                                    } catch (IllegalAccessException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                        );
+                    }
+                }
+        );
     }
 }

@@ -27,7 +27,7 @@ public class HelperService {
         listIds.add(newWorkTypeId);
         for(NewActivityTypeDTO newActivityDTO : newActivityTypeDTOS) {
             String newActivityTypeId = assertDoesNotThrow(
-                    () -> workService.ensureActivityType(
+                    () -> workService.createNew(
                             newActivityDTO
                     )
             );

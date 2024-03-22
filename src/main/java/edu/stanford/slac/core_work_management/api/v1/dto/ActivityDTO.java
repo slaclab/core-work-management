@@ -13,6 +13,7 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,6 +33,8 @@ public record ActivityDTO(
         ActivityTypeDTO activityType,
         @Schema(description = "The subtype of the activity")
         ActivityTypeSubtypeDTO activityTypeSubtype,
+        @Schema(description = "The priority of the activity")
+        String schedulingProperty,
         @Schema(description="The list of the custom fields associated with the activity. The custom fields are used to store additional information about the activity.")
         List<CustomFieldDTO> customFields,
         @Schema(description = "The current status of the activity")
