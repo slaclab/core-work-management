@@ -145,7 +145,8 @@ public class LOVControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Activity
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1)
                 )
         );
         assertThat(lovFieldList.getErrorCode()).isEqualTo(0);
@@ -171,6 +172,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
                         "schedulingProperty"
                 )
         );

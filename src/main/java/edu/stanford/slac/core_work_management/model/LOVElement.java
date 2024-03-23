@@ -22,6 +22,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 /**
  * LOV model
  * represent an element of the list of value
@@ -44,7 +46,7 @@ public class LOVElement {
      * The field reference of the LOV element
      * identify the field where the LOV element is used
      */
-    private String fieldReference;
+    private List<String> fieldReference;
     /**
      * The value of the LOV element
      */

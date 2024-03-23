@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : LOVElementRepository
+ * Title      : LOVElementRepositoryCustom
  * ----------------------------------------------------------------------------
- * File       : LOVElementRepository.java
+ * File       : LOVElementRepositoryCustom.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -17,13 +17,7 @@
 
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.model.LOVDomainType;
-import edu.stanford.slac.core_work_management.model.LOVElement;
-import org.springframework.data.mongodb.repository.MongoRepository;
-
-import java.util.List;
-
-public interface LOVElementRepository extends MongoRepository<LOVElement, String>, LOVElementRepositoryCustom{
-    List<LOVElement> findByDomainAndFieldReferenceContains(LOVDomainType domain, String fieldReference);
-    boolean existsByIdAndDomainAndFieldReferenceContains(String id, LOVDomainType domain, String fieldReference);
+public interface LOVElementRepositoryCustom {
+    boolean addFieldReference(String id, String fieldReference);
+    boolean removeFieldReference(String id, String fieldReference);
 }

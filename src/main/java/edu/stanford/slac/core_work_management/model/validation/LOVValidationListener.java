@@ -68,7 +68,7 @@ public class LOVValidationListener implements ApplicationListener<BeforeConvertE
                     value != null
                             // check if the value can be accepted
                             && !wrapCatch(
-                            () -> lovElementRepository.existsByIdAndDomainAndFieldReference
+                            () -> lovElementRepository.existsByIdAndDomainAndFieldReferenceContains
                                     (
                                             value.toString(),
                                             domainConstraint.value(),

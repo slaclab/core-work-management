@@ -18,7 +18,6 @@
 package edu.stanford.slac.core_work_management.service;
 
 import com.google.common.collect.ImmutableSet;
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
 import edu.stanford.slac.core_work_management.model.*;
@@ -151,7 +150,7 @@ public class LOVServiceTest {
                 )
         );
         var listOfAllLOV = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, "schedulingProperty")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, workActivityIds.get(1), "schedulingProperty")
         );
         assertThat(listOfAllLOV).hasSize(2);
         assertThat(listOfAllLOV).extracting(LOVElementDTO::value).contains("schedulingProperty value1", "schedulingProperty value2");
@@ -171,7 +170,7 @@ public class LOVServiceTest {
                 )
         );
         var listOfAllLOV = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, "field1")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, workActivityIds.get(1), "field1")
         );
         assertThat(listOfAllLOV).hasSize(2);
         assertThat(listOfAllLOV).extracting(LOVElementDTO::value).contains("field1 value1", "field1 value2");
@@ -234,11 +233,11 @@ public class LOVServiceTest {
         AssertionsForClassTypes.assertThat(newWorkId).isNotEmpty();
 
         var listOfAllLOVSchedulingProperty = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, "schedulingProperty")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, workActivityIds.get(1), "schedulingProperty")
         );
 
         var listOfAllLOVField1 = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, "field1")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, workActivityIds.get(1), "field1")
         );
 
         // find the full activity type

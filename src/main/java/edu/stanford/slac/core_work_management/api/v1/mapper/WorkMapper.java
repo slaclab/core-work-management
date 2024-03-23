@@ -570,7 +570,7 @@ public abstract class WorkMapper {
 
     @AfterMapping
     protected void afterMapping(@MappingTarget final ActivityDTO.ActivityDTOBuilder target, Activity source) {
-        var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Activity).keySet();
+        var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Activity, source.getActivityTypeId()).keySet();
         var targetFields = target.getClass().getDeclaredFields();
         var sourceFields = source.getClass().getDeclaredFields();
         listOfReferenced.forEach(

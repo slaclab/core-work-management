@@ -707,9 +707,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            LOVDomainTypeDTO domainTypeDTO
+            LOVDomainTypeDTO domainTypeDTO,
+            String subtypeId
     ) throws Exception {
-        var requestBuilder = get("/v1/lov/{domainType}", domainTypeDTO)
+        var requestBuilder = get("/v1/lov/{domainType}/{subtypeId}", domainTypeDTO, subtypeId)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -736,9 +737,10 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             LOVDomainTypeDTO domainTypeDTO,
+            String subtypeId,
             String fieldName
     ) throws Exception {
-        var requestBuilder = get("/v1/lov/{domainType}/{fieldName}", domainTypeDTO, fieldName)
+        var requestBuilder = get("/v1/lov/{domainType}/{subtypeId}/{fieldName}", domainTypeDTO, subtypeId, fieldName)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
