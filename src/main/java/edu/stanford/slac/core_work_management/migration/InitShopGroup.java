@@ -14,7 +14,7 @@ import java.util.Set;
 
 @AllArgsConstructor
 @Profile({"init-shop-group"})
-@ChangeUnit(id = "init-shop-group", order = "1002", author = "bisegni")
+@ChangeUnit(id = "init-shop-group", order = "1003", author = "bisegni")
 public class InitShopGroup {
     private final ShopGroupService shopGroupService;
 

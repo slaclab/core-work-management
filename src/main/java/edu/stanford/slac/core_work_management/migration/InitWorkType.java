@@ -9,21 +9,19 @@ import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.util.List;
 
 @AllArgsConstructor
 @Profile({"init-work-activity-type"})
-@ChangeUnit(id = "init-work-activity-type", order = "1001", author = "bisegni")
-public class InitWorkAndActivityType {
+@ChangeUnit(id = "init-work-type", order = "1001", author = "bisegni")
+public class InitWorkType {
     private final WorkTypeRepository workTypeRepository;
     private final ActivityTypeRepository activityTypeRepository;
     @Execution
     public void changeSet() {
 
         createWorkTypes();
-        createActivityTypes();
     }
 
     @RollbackExecution
@@ -72,29 +70,6 @@ public class InitWorkAndActivityType {
         );
         for (WorkType workType : workTypes) {
             workTypeRepository.ensureWorkType(workType);
-        }
-    }
-    private void createActivityTypes() {
-        List<ActivityType> activityTypes = List.of(
-                ActivityType.builder()
-                        .title("HW Job")
-                        .description("An issue with currently installed accelerator hardware")
-                        .build(),
-                ActivityType.builder()
-                        .title("SW Job")
-                        .description("An issue with currently installed accelerator software")
-                        .build(),
-                ActivityType.builder()
-                        .title("Radiation Safety Work")
-                        .description("Used for scheduling PM on accelerator hardware and infrastructure")
-                        .build(),
-                ActivityType.builder()
-                        .title("Task")
-                        .description("An issue with currently installed accelerator software")
-                        .build()
-        );
-        for (ActivityType activityType : activityTypes) {
-            activityTypeRepository.ensureActivityType(activityType);
         }
     }
 }

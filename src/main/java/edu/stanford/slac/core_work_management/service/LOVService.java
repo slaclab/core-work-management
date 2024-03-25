@@ -298,7 +298,7 @@ public class LOVService {
                                 if (activityType.getCustomFields() != null) {
                                     activityType.getCustomFields().forEach(
                                             customField -> {
-                                                if (customField.getIsLov() && customField.getLovFieldReference() != null) {
+                                                if (customField.getLovFieldReference() != null) {
                                                     result.put(customField.getName(), customField.getLovFieldReference());
                                                 }
                                             }

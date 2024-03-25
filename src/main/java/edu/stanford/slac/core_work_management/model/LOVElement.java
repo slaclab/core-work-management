@@ -39,10 +39,13 @@ public class LOVElement {
      */
     private String id;
     /**
-     * The domain of the LOV element
-     * identify the model where the LOV element is used
+     * The value of the LOV element
      */
-    private LOVDomainType domain;
+    private String value;
+    /**
+     * The description of the LOV element
+     */
+    private String description;
     /**
      *
      */
@@ -53,12 +56,5 @@ public class LOVElement {
      */
     @Builder.Default
     private List<String> fieldReference = new ArrayList<>();
-    /**
-     * The value of the LOV element
-     */
-    private String value;
-    /**
-     * The description of the LOV element
-     */
-    private String description;
+
 }
