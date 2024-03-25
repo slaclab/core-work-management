@@ -81,10 +81,10 @@ public class WorkRepositoryTest {
         assertThat(savedWork.getActivitiesNumber()).isEqualTo(0);
 
         int numberOfThreads = 20; // Number of concurrent threads
-        List<Future<Integer>> futures;
-        List<Integer> generatedIds = new ArrayList<>();
+        List<Future<Long>> futures;
+        List<Long> generatedIds = new ArrayList<>();
         try (ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads)) {
-            List<Callable<Integer>> tasks = new ArrayList<>();
+            List<Callable<Long>> tasks = new ArrayList<>();
             for (int i = 0; i < numberOfThreads*10; i++) {
                 tasks.add(() -> workRepository.getNextActivityNumber(savedWork.getId()));
             }
@@ -96,7 +96,7 @@ public class WorkRepositoryTest {
         }
 
         // Assert that all threads received the same ID
-        for (Future<Integer> future : futures) {
+        for (Future<Long> future : futures) {
             generatedIds.add(future.get());
         }
         var array = generatedIds.toArray();

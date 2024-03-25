@@ -22,6 +22,8 @@ import java.util.List;
 public record WorkDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
+        @Schema(description = "The unique identifier of the work plan")
+        Long workNumber,
         @Schema(description = "The unique identifier of the work which his is related to")
         String relatedToWorkId,
         @Schema(description = "The type of the work")

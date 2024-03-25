@@ -22,9 +22,11 @@ public record ActivityDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
         @Schema(description = "The sequence number of the activity in the work plan")
-        Integer activityNumber,
+        Long activityNumber,
         @Schema(description = "The unique identifier of the work which this activity belongs to")
         String workId,
+        @Schema(description = "The sequence number of the work in the work plan")
+        Long workNumber,
         @Schema(description = "The title of the activity")
         String title,
         @Schema(description = "The description of the activity")

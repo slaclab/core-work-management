@@ -19,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -217,15 +218,33 @@ public class WorkService {
     }
 
     /**
+     * Create a new work automatically creating the sequence
+     *
+     * @param newWorkDTO the DTO to create the work
+     * @return the id of the created work
+     */
+    public String createNew(NewWorkDTO newWorkDTO) {
+        // contain the set of all user that will become admin for this new work
+        Long newWorkSequenceId = wrapCatch(
+                workRepository::getNextWorkId,
+                -1
+        );
+        return createNew(newWorkSequenceId, newWorkDTO);
+    }
+
+    /**
      * Create a new work
      *
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
     @Transactional
-    public String createNew(NewWorkDTO newWorkDTO) {
+    public String createNew(Long workSequence, NewWorkDTO newWorkDTO) {
         // contain the set of all user that will become admin for this new work
-        Work workToSave = workMapper.toModel(newWorkDTO);
+        Work workToSave = workMapper.toModel(
+                workSequence,
+                newWorkDTO
+        );
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
                 -1
@@ -434,14 +453,26 @@ public class WorkService {
     }
 
     /**
-     * Create a new activity
+     * Create a new activity automatically generating the next activity id
      *
      * @param workId         the id of the work
      * @param newActivityDTO the DTO to create the activity
      * @return the id of the created activity
      */
-    @Transactional
     public String createNew(String workId, @Valid NewActivityDTO newActivityDTO) {
+        return createNew(workId, workRepository.getNextActivityNumber(workId), newActivityDTO);
+    }
+
+    /**
+     * Create a new activity
+     *
+     * @param workId              the id of the work
+     * @param nextActivityNumbers the next activity number
+     * @param newActivityDTO      the DTO to create the activity
+     * @return the id of the created activity
+     */
+    @Transactional
+    public String createNew(String workId, Long nextActivityNumbers, @Valid NewActivityDTO newActivityDTO) {
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -477,7 +508,8 @@ public class WorkService {
                 )
         );
 
-        var newActivity = workMapper.toModel(newActivityDTO, workId);
+        var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), nextActivityNumbers);
+
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),
                 -4

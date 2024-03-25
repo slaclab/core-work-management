@@ -18,6 +18,15 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -111,6 +120,86 @@ public class WorkWorkflowTest {
         assertThat(newWorkId).isNotEmpty();
         // work should be in state new
         assertThat(helperService.checkStatusOnWork(newWorkId, WorkStatusDTO.New)).isTrue();
+    }
+
+    @Test
+    public void testWorkNumberSequences() {
+        List<String> workIds = new ArrayList<>();
+        Set<Long> workNumbers = new HashSet<>();
+        var wtId = workService.ensureWorkType(
+                NewWorkTypeDTO
+                        .builder()
+                        .title("Update the documentation")
+                        .description("Update the documentation description")
+                        .build()
+        );
+        assertThat(wtId).isNotNull();
+        for (int idx = 0; idx <= 99; idx++) {
+            var workId = assertDoesNotThrow(
+                    () -> workService.createNew(
+                            NewWorkDTO
+                                    .builder()
+                                    .title("Update the documentation")
+                                    .description("Update the documentation description")
+                                    .workTypeId(wtId)
+                                    .locationId(locationId)
+                                    .build()
+                    )
+            );
+            assertThat(workId).isNotNull();
+            workIds.add(workId);
+        }
+        for (int idx = 0; idx <= 99; idx++) {
+            var work = workService.findWorkById(workIds.get(idx));
+            workNumbers.add(work.workNumber());
+        }
+        assertThat(workNumbers).hasSize(100);
+    }
+
+    @Test
+    public void testWorkSequenceOnMultiThread() {
+        int numberOfThreads = 10; // Number of concurrent threads
+        List<Future<String>> futures;
+        List<String> workIds = new ArrayList<>();
+        Set<Long> workNumbers = new HashSet<>();
+        var wtId = workService.ensureWorkType(
+                NewWorkTypeDTO
+                        .builder()
+                        .title("Update the documentation")
+                        .description("Update the documentation description")
+                        .build()
+        );
+        assertThat(wtId).isNotNull();
+        try (ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads)) {
+            List<Callable<String>> tasks = new ArrayList<>();
+            WorkType workType = WorkType.builder().title("Test").build();
+
+            for (int i = 0; i < numberOfThreads*10; i++) {
+                tasks.add(() -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(wtId)
+                                .locationId(locationId)
+                                .build()
+                ));
+            }
+
+            futures = assertDoesNotThrow(()->executorService.invokeAll(tasks));
+
+            // Shut down the executor service
+            executorService.shutdown();
+        }
+
+        for (Future<String> future : futures) {
+            workIds.add(assertDoesNotThrow(()->future.get()));
+        }
+        for (int idx = 0; idx <= 99; idx++) {
+            var work = workService.findWorkById(workIds.get(idx));
+            workNumbers.add(work.workNumber());
+        }
+        assertThat(workNumbers).hasSize(100);
     }
 
     @Test

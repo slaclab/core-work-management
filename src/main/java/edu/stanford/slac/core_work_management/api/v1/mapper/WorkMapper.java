@@ -77,7 +77,7 @@ public abstract class WorkMapper {
      * @param newWorkDTO the DTO to convert
      * @return the converted entity
      */
-    abstract public Work toModel(NewWorkDTO newWorkDTO);
+    abstract public Work toModel(Long workNumber, NewWorkDTO newWorkDTO);
 
     /**
      * Update the {@link Work} with the data from the {@link UpdateWorkDTO}
@@ -119,7 +119,7 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     @Mapping(target = "customFields", expression = "java(toCustomFieldValues(newActivityDTO.customFieldValues()))")
-    abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId);
+    abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId, Long workNumber, Long activityNumber);
 
     /**
      * Update the {@link Activity} with the data from the {@link UpdateActivityDTO}
