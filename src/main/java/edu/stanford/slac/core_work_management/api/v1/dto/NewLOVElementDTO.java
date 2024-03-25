@@ -31,6 +31,5 @@ public record NewLOVElementDTO (
     @NotEmpty
     @Schema(description = "The field reference of the LOV element")
     String value,
-    @NotEmpty
     @Schema(description = "The description of the LOV element")
     String description){}

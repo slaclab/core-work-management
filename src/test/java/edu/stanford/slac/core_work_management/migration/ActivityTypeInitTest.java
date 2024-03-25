@@ -60,11 +60,12 @@ public class ActivityTypeInitTest {
                         "Software Task",
                         "General Task"
                 );
-
+        // check hardware activity custom fields
         assertThat(allActivityType.getFirst().getCustomFields())
                 .isNotEmpty()
                 .extracting(ActivityTypeCustomField::getName)
                 .containsExactlyInAnyOrder(
+                        "Scheduling Priority",
                         "Access Requirements",
                         "Other Issues",
                         "Rad Safety Work Ctl Form",
@@ -93,6 +94,44 @@ public class ActivityTypeInitTest {
                         "Primary",
                         "Micro Other",
                         "Visual Number"
+                );
+        // checks software activity custom fields
+        assertThat(allActivityType.get(1).getCustomFields())
+                .isNotEmpty()
+                .extracting(ActivityTypeCustomField::getName)
+                .containsExactlyInAnyOrder(
+                        "Scheduling Priority",
+                        "Time Comments",
+                        "Access Requirements",
+                        "Other Issues",
+                        "Beam Requirements",
+                        "Beam Comment",
+                        "Invasive",
+                        "Invasive Comment",
+                        "Test Plan",
+                        "Backout Plan",
+                        "Systems Required",
+                        "Systems Affected",
+                        "Risk/Benefit",
+                        "Dependencies",
+                        "CD Review Date"
+                );
+
+        // checks general activity custom fields
+        assertThat(allActivityType.get(2).getCustomFields())
+                .isNotEmpty()
+                .extracting(ActivityTypeCustomField::getName)
+                .containsExactlyInAnyOrder(
+                        "Task Priority",
+                        "Task Skill Set",
+                        "Percentage completed",
+                        "Module",
+                        "Old Serial Number",
+                        "New Serial Number",
+                        "Drawing",
+                        "Doc (Solution)",
+                        "Date RTC Checked",
+                        "Feedback Priority"
                 );
     }
 }
