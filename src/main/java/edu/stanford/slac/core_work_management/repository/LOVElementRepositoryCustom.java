@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : LOVElementRepositoryCustom
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : LOVElementRepositoryCustom.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -17,28 +17,7 @@
 
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
-
-import java.util.List;
-
-public interface WorkRepositoryCustom {
-
-    /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
-     */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
-    /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
-     */
-    Long getNextActivityNumber(String id);
-
-    Long getNextWorkId();
+public interface LOVElementRepositoryCustom {
+    boolean addFieldReference(String id, String fieldReference);
+    boolean removeFieldReference(String id, String fieldReference);
 }

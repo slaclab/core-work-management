@@ -7,6 +7,9 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * ActivityType model
@@ -19,8 +22,22 @@ import java.time.LocalDateTime;
 public class ActivityType {
     @Id
     private String id;
+    /**
+     * The title of the activity type.
+     * This field stores the title or name of the activity type.
+     */
     private String title;
+    /**
+     * The detailed description of the activity type.
+     * This field provides a comprehensive description of what the activity type entails.
+     */
     private String description;
+    /**
+     * The list of the custom fields associated with the activity type.
+     * The custom fields are used to store additional information about the activity.
+     */
+    @Builder.Default
+    private List<ActivityTypeCustomField> customFields = new ArrayList<>();
     @CreatedDate
     private LocalDateTime createdDate;
     @CreatedBy

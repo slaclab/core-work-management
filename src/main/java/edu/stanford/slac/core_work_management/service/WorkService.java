@@ -19,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -31,6 +32,7 @@ import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.W
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -81,11 +83,78 @@ public class WorkService {
      * @param newActivityTypeDTO the DTO to create the activity type
      */
     public String ensureActivityType(@Valid NewActivityTypeDTO newActivityTypeDTO) {
+        // set the id of the custom attributes
+        newActivityTypeDTO.customFields().forEach(
+                (customField) -> customField.toBuilder().id(UUID.randomUUID().toString()).build()
+        );
         return wrapCatch(
                 () -> activityTypeRepository.ensureActivityType(
                         workMapper.toModel(newActivityTypeDTO)
                 ),
                 -1
+        );
+    }
+
+    /**
+     * create a new activity type
+     *
+     * @param newActivityTypeDTO the new activity to create
+     * @return the activity id
+     */
+    public String createNew(@Valid NewActivityTypeDTO newActivityTypeDTO) {
+        // set the id of the custom attributes
+        var toSave = workMapper.toModel(newActivityTypeDTO);
+        toSave.getCustomFields().forEach(
+                (customField) -> customField.setId(UUID.randomUUID().toString())
+        );
+        return wrapCatch(
+                () -> activityTypeRepository.save(toSave),
+                -1
+        ).getId();
+    }
+
+    /**
+     * Return the activity type by his id
+     *
+     * @param id the id of the activity type
+     * @return the activity type
+     */
+    public ActivityTypeDTO findActivityTypeById(String id) {
+        return wrapCatch(
+                () -> activityTypeRepository.findById(
+                        id
+                ),
+                -1
+        ).map(workMapper::toDTO).orElseThrow(
+                () -> ActivityTypeNotFound
+                        .notFoundById()
+                        .errorCode(-2)
+                        .activityTypeId(id)
+                        .build()
+        );
+    }
+
+    /**
+     * Update an activity type
+     *
+     * @param activityId            the id of the activity type
+     * @param updateActivityTypeDTO the DTO to update the activity type
+     */
+    public void updateActivityType(String activityId, UpdateActivityTypeDTO updateActivityTypeDTO) {
+        var activityType = wrapCatch(
+                () -> activityTypeRepository.findById(activityId).orElseThrow(
+                        () -> ActivityTypeNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .activityTypeId(activityId)
+                                .build()
+                ),
+                -1
+        );
+        var updatedActivityTypeModel = workMapper.updateModel(updateActivityTypeDTO, activityType);
+        wrapCatch(
+                () -> activityTypeRepository.save(updatedActivityTypeModel),
+                -2
         );
     }
 
@@ -108,7 +177,7 @@ public class WorkService {
      */
     public List<WorkTypeDTO> findAllWorkTypes() {
         var workTypeList = wrapCatch(
-                () -> workTypeRepository.findAll(),
+                workTypeRepository::findAll,
                 -1
         );
         return workTypeList.stream().map(workMapper::toDTO).toList();
@@ -121,7 +190,7 @@ public class WorkService {
      */
     public List<ActivityTypeDTO> findAllActivityTypes() {
         var workTypeList = wrapCatch(
-                () -> activityTypeRepository.findAll(),
+                activityTypeRepository::findAll,
                 -1
         );
         return workTypeList.stream().map(workMapper::toDTO).toList();
@@ -149,15 +218,33 @@ public class WorkService {
     }
 
     /**
+     * Create a new work automatically creating the sequence
+     *
+     * @param newWorkDTO the DTO to create the work
+     * @return the id of the created work
+     */
+    public String createNew(NewWorkDTO newWorkDTO) {
+        // contain the set of all user that will become admin for this new work
+        Long newWorkSequenceId = wrapCatch(
+                workRepository::getNextWorkId,
+                -1
+        );
+        return createNew(newWorkSequenceId, newWorkDTO);
+    }
+
+    /**
      * Create a new work
      *
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
     @Transactional
-    public String createNew(NewWorkDTO newWorkDTO) {
+    public String createNew(Long workSequence, NewWorkDTO newWorkDTO) {
         // contain the set of all user that will become admin for this new work
-        Work workToSave = workMapper.toModel(newWorkDTO);
+        Work workToSave = workMapper.toModel(
+                workSequence,
+                newWorkDTO
+        );
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
                 -1
@@ -366,14 +453,26 @@ public class WorkService {
     }
 
     /**
-     * Create a new activity
+     * Create a new activity automatically generating the next activity id
      *
      * @param workId         the id of the work
      * @param newActivityDTO the DTO to create the activity
      * @return the id of the created activity
      */
-    @Transactional
     public String createNew(String workId, @Valid NewActivityDTO newActivityDTO) {
+        return createNew(workId, workRepository.getNextActivityNumber(workId), newActivityDTO);
+    }
+
+    /**
+     * Create a new activity
+     *
+     * @param workId              the id of the work
+     * @param nextActivityNumbers the next activity number
+     * @param newActivityDTO      the DTO to create the activity
+     * @return the id of the created activity
+     */
+    @Transactional
+    public String createNew(String workId, Long nextActivityNumbers, @Valid NewActivityDTO newActivityDTO) {
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -386,16 +485,40 @@ public class WorkService {
                 -1
         );
 
-        var newActivity = workMapper.toModel(newActivityDTO, workId);
+        var activityType = wrapCatch(
+                () -> activityTypeRepository.findById(newActivityDTO.activityTypeId()).orElseThrow(
+                        () -> ActivityTypeNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .activityTypeId(newActivityDTO.activityTypeId())
+                                .build()
+                ),
+                -3
+        );
+
+        //validate custom attribute
+        validateCustomField(
+                Objects.requireNonNullElse(
+                        activityType.getCustomFields(),
+                        emptyList()
+                ),
+                Objects.requireNonNullElse(
+                        newActivityDTO.customFieldValues(),
+                        emptyList()
+                )
+        );
+
+        var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), nextActivityNumbers);
+
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),
-                -2
+                -4
         );
 
         // fetch all activity status for work
         var activityStatusList = wrapCatch(
                 () -> activityRepository.findAllActivityStatusByWorkId(workId),
-                -3
+                -5
         );
 
         // update the work status
@@ -443,6 +566,32 @@ public class WorkService {
                 ),
                 -2
         );
+
+
+        //fetch the whole activity type
+        var activityType = wrapCatch(
+                () -> activityTypeRepository.findById(activityStored.getActivityTypeId()).orElseThrow(
+                        () -> ActivityTypeNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .activityTypeId(activityStored.getActivityTypeId())
+                                .build()
+                ),
+                -3
+        );
+
+        //validate custom attribute
+        validateCustomField(
+                Objects.requireNonNullElse(
+                        activityType.getCustomFields(),
+                        emptyList()
+                ),
+                Objects.requireNonNullElse(
+                        updateActivityDTO.customAttributeValues(),
+                        emptyList()
+                )
+        );
+
         // assert that activity need to be related to the work
         assertion(
                 () -> workId.equals(activityStored.getWorkId()),
@@ -461,6 +610,75 @@ public class WorkService {
                 -2
         );
         log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
+    }
+
+    /**
+     * Validate all custom fields
+     *
+     * @param customFields      the custom field available by the ActivityType
+     * @param customFieldValues the custom field value submitted to save the activity
+     */
+    private void validateCustomField(List<ActivityTypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
+        // check duplicated id
+        assertion(
+                ControllerLogicException.builder()
+                        .errorCode(-1)
+                        .errorMessage("There are duplicated custom field id")
+                        .errorDomain("WorkService::validateCustomField")
+                        .build(),
+                () -> customFieldValues.stream()
+                        // Group by the id
+                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
+                        .values().stream()
+                        // Filter groups having more than one element, indicating duplicates
+                        .filter(duplicates -> duplicates.size() > 1)
+                        .flatMap(Collection::stream)
+                        .toList().isEmpty()
+        );
+
+        // check that all the id are valid
+        customFieldValues.forEach(
+                cv -> {
+                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
+                    // check if id is valid
+                    assertion(
+                            ControllerLogicException.builder()
+                                    .errorCode(-2)
+                                    .errorMessage("The field id %s has not been found".formatted(cv.id()))
+                                    .errorDomain("WorkService::validateCustomField")
+                                    .build(),
+                            foundField::isPresent
+                    );
+
+                    // check the type
+                    assertion(
+                            ControllerLogicException.builder()
+                                    .errorCode(-3)
+                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
+                                    .errorDomain("WorkService::validateCustomField")
+                                    .build(),
+                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
+                    );
+                }
+
+        );
+
+
+        // collect all the mandatory field
+        assertion(
+                ControllerLogicException.builder()
+                        .errorCode(-4)
+                        .errorMessage("Not all mandatory attribute has been submitted")
+                        .errorDomain("WorkService::validateCustomField")
+                        .build(),
+                () -> customFields
+                        .stream()
+                        .filter(ActivityTypeCustomField::getIsMandatory)
+                        .map(ActivityTypeCustomField::getId)
+                        .allMatch(
+                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
+                        )
+        );
     }
 
     /**

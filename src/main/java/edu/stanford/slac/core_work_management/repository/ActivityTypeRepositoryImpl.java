@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.repository;
 import com.mongodb.DuplicateKeyException;
 import edu.stanford.slac.core_work_management.config.SecurityAuditorAware;
 import edu.stanford.slac.core_work_management.model.ActivityType;
+import edu.stanford.slac.core_work_management.model.ActivityTypeCustomField;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalizeStringWithReplace;
@@ -27,11 +29,21 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
     @Override
     public String ensureActivityType(ActivityType activityType) {
         ActivityType activityTypeCreated = null;
+        //create custom field id
+
         String normalizedTitle = normalizeStringWithReplace(
                 activityType.getTitle(),
                 "",
                 ""
         );
+        if(activityType.getCustomFields()!= null) {
+            activityType.getCustomFields().forEach(customField -> {
+                if (customField.getId() == null) {
+                    customField.setId(UUID.randomUUID().toString());
+                }
+            });
+        }
+
         Query query = new Query(
                 Criteria.where("title").is(normalizedTitle)
         );
@@ -41,7 +53,8 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
                 .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())
-                .setOnInsert("lastModifiedDate", LocalDateTime.now());
+                .setOnInsert("lastModifiedDate", LocalDateTime.now())
+                .setOnInsert("customFields", activityType.getCustomFields());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
         try {
             activityTypeCreated = mongoTemplate.findAndModify(
@@ -55,5 +68,22 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
             activityTypeCreated = mongoTemplate.findOne(query, ActivityType.class);
         }
         return Objects.requireNonNull(activityTypeCreated).getId();
+    }
+
+    @Override
+    public Optional<ActivityTypeCustomField> findCustomFiledById(String activityTypeId, String customFieldId) {
+        // Query to find the specific ActivityType
+        Query query = new Query(
+                Criteria.where("_id").is(activityTypeId).and("customFields.id").is(customFieldId)
+        );
+        // Execute the query
+        ActivityType activityType = mongoTemplate.findOne(query, ActivityType.class);
+        if (activityType != null && activityType.getCustomFields() != null) {
+            // Filter the custom fields to find the one with the matching ID
+            return activityType.getCustomFields().stream()
+                    .filter(field -> customFieldId.equals(field.getId()))
+                    .findFirst();
+        }
+        return Optional.empty();
     }
 }

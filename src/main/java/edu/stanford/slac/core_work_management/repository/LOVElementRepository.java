@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : LOVElementRepository
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : LOVElementRepository.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -17,28 +17,14 @@
 
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import edu.stanford.slac.core_work_management.model.LOVDomainType;
+import edu.stanford.slac.core_work_management.model.LOVElement;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface WorkRepositoryCustom {
-
-    /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
-     */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
-    /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
-     */
-    Long getNextActivityNumber(String id);
-
-    Long getNextWorkId();
+public interface LOVElementRepository extends MongoRepository<LOVElement, String>, LOVElementRepositoryCustom{
+    List<LOVElement> findByFieldReferenceContains(String fieldReference);
+    List<LOVElement> findByGroupNameIs(String groupName);
+    boolean existsByIdAndFieldReferenceContains(String id, String fieldReference);
 }

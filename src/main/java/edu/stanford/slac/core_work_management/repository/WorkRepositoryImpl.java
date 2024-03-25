@@ -19,21 +19,21 @@ package edu.stanford.slac.core_work_management.repository;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
+import edu.stanford.slac.core_work_management.model.Counter;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.TextCriteria;
-import org.springframework.data.mongodb.core.query.TextQuery;
+import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
@@ -67,6 +67,29 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
         List<Work> elementsAfterAnchor =  limitSearch(queryParameter, anchorCreatedDate, allCriteria);
         elementsBeforeAnchor.addAll(elementsAfterAnchor);
         return elementsBeforeAnchor;
+    }
+
+    @Override
+    public Long getNextActivityNumber(String id) {
+        Query query = new Query(Criteria.where("id").is(id));
+        Update update = new Update().inc("activitiesNumber", 1);
+        FindAndModifyOptions options = FindAndModifyOptions.options().returnNew(true);
+        var res =  mongoTemplate.findAndModify(query, update, options, Work.class);
+        return Objects.requireNonNull(res).getActivitiesNumber();
+    }
+
+    @Override
+    public Long getNextWorkId() {
+        // Define the query to find the counter document based on its id (sequenceName)
+        Query query = new Query(Criteria.where("_id").is(Work.class.getSimpleName()));
+        // Define the update operation to increment the counter
+        Update update = new Update().inc("sequence", 1);
+        // Ensure the option to return the new incremented value and to upsert
+        FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
+        // Execute the findAndModify operation, which will atomically increment the counter and create it if it doesn't exist
+        Counter counter = mongoTemplate.findAndModify(query, update, options, Counter.class, "counters");
+        // Return the next sequence number
+        return Objects.requireNonNull(counter).getSequence();
     }
 
     /**

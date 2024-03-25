@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : ActivityCustomAttribute
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : ActivityCustomAttribute.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,30 +15,21 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.repository;
+package edu.stanford.slac.core_work_management.api.v1.dto;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
-import java.util.List;
-
-public interface WorkRepositoryCustom {
-
-    /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
-     */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
-    /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
-     */
-    Long getNextActivityNumber(String id);
-
-    Long getNextWorkId();
+@Builder(toBuilder = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "Define the custom attribute for the activity")
+public record WriteCustomFieldDTO(
+        @Schema(description = "The id that identify the custom attribute")
+        String id,
+        @Schema(description = "The value of the custom attribute")
+        ValueDTO value
+) {
 }

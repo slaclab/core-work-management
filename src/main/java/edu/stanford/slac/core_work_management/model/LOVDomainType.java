@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : LOVDomain
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : LOVDomain.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,30 +15,13 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.repository;
+package edu.stanford.slac.core_work_management.model;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
-
-import java.util.List;
-
-public interface WorkRepositoryCustom {
-
-    /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
-     */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
-    /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
-     */
-    Long getNextActivityNumber(String id);
-
-    Long getNextWorkId();
+/**
+ * LOV domain
+ * represent the domain of the list of value
+ */
+public enum LOVDomainType {
+    Work,
+    Activity,
 }

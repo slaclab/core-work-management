@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : LOV
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : LOV.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,30 +15,46 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.repository;
+package edu.stanford.slac.core_work_management.model;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface WorkRepositoryCustom {
-
+/**
+ * LOV model
+ * represent an element of the list of value
+ */
+@Data
+@Builder
+@AllArgsConstructor
+@EqualsAndHashCode
+public class LOVElement {
     /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
+     * The id of the LOV element
      */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
+    private String id;
     /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
+     * The value of the LOV element
      */
-    Long getNextActivityNumber(String id);
+    private String value;
+    /**
+     * The description of the LOV element
+     */
+    private String description;
+    /**
+     *
+     */
+    private String groupName;
+    /**
+     * The field reference of the LOV element
+     * identify the field where the LOV element is used
+     */
+    @Builder.Default
+    private List<String> fieldReference = new ArrayList<>();
 
-    Long getNextWorkId();
 }

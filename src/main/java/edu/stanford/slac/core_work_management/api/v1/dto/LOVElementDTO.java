@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : LOVElementDTO
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : LOVElementDTO.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,30 +15,21 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.repository;
+package edu.stanford.slac.core_work_management.api.v1.dto;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
-import java.util.List;
-
-public interface WorkRepositoryCustom {
-
-    /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
-     */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
-    /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
-     */
-    Long getNextActivityNumber(String id);
-
-    Long getNextWorkId();
-}
+@Builder(toBuilder = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "Define a lov element for a specific domain and field reference.")
+public record LOVElementDTO (
+    @Schema(description = "The id of the LOV element")
+    String id,
+    @Schema(description = "The field reference of the LOV element")
+    String value,
+    @Schema(description = "The description of the LOV element")
+    String description){}

@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : WorkRepositoryCustom
+ * Title      : CustomAttributeDTO
  * ----------------------------------------------------------------------------
- * File       : WorkRepositoryCustom.java
+ * File       : CustomAttributeDTO.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,30 +15,26 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.repository;
+package edu.stanford.slac.core_work_management.model;
 
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import edu.stanford.slac.core_work_management.model.value.AbstractValue;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.List;
-
-public interface WorkRepositoryCustom {
-
+@Data
+@Builder
+@AllArgsConstructor
+@EqualsAndHashCode
+public class CustomField {
     /**
-     * Search all the work
-     *
-     * @param queryParameter the query parameter
-     * @return the list of work
+     * The identifier of the custom attribute.
+     * This field is used to uniquely identify the custom attribute.
      */
-    List<Work> searchAll(WorkQueryParameter queryParameter);
-
+    String id;
     /**
-     * Get the next activity number
-     *
-     * @param id the id
-     * @return the next activity number
+     * The value of the attribute
      */
-    Long getNextActivityNumber(String id);
-
-    Long getNextWorkId();
+    AbstractValue value;
 }

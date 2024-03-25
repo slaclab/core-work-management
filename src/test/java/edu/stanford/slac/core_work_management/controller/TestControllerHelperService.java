@@ -694,6 +694,64 @@ public class TestControllerHelperService {
         );
     }
 
+    /**
+     * Find all field that are LOV
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param domainTypeDTO the domain type dto
+     * @return the list of activity dto
+     */
+    public ApiResultResponse<List<String>> lovControllerFindAllFieldThatAreLOV(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            LOVDomainTypeDTO domainTypeDTO,
+            String subtypeId
+    ) throws Exception {
+        var requestBuilder = get("/v1/lov/{domainType}/{subtypeId}", domainTypeDTO, subtypeId)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find values by domain and field name
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param domainTypeDTO the domain type dto
+     * @param fieldName     the field name
+     * @return the list of activity dto
+     */
+    public ApiResultResponse<List<LOVElementDTO>> lovControllerFindValuesByDomainAndFieldName(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            LOVDomainTypeDTO domainTypeDTO,
+            String subtypeId,
+            String fieldName
+    ) throws Exception {
+        var requestBuilder = get("/v1/lov/{domainType}/{subtypeId}/{fieldName}", domainTypeDTO, subtypeId, fieldName)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
     public <T> ApiResultResponse<T> executeHttpRequest(
             TypeReference<ApiResultResponse<T>> typeRef,
             MockMvc mockMvc,
