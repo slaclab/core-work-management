@@ -21,7 +21,7 @@ import java.util.Optional;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @AllArgsConstructor
-@Profile({"nit-work-activity-type"})
+@Profile({"init-work-activity-type"})
 @ChangeUnit(id = "init-activity-type", order = "1002", author = "bisegni")
 public class InitActivityType {
     private final LOVService lovService;
