@@ -53,26 +53,13 @@ public class LOVService {
     private final ActivityTypeRepository activityTypeRepository;
     private final LOVElementRepository lovElementRepository;
 
-    /**
-     * Create a new LOV element
-     *
-     * @param lovDomainDTO   the domain of the LOV element
-     * @param fieldName      used to find the field reference where the LOV values will be associated
-     * @param lovElementDTOs the list new LOV element
-     * @return the id of the new LOV element
-     */
+
     public List<String> createNew(
-            @NotNull LOVDomainTypeDTO lovDomainDTO,
-            @NotEmpty String fieldName,
+            @NotEmpty String groupName,
             @Valid List<NewLOVElementDTO> lovElementDTOs
     ) {
-        var fieldReferences = getLOVFieldReference(lovDomainDTO, null);
-        assertion(
-                LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
-                () -> fieldReferences.containsKey(fieldName)
-        );
         return lovElementDTOs.stream()
-                .map(e -> lovMapper.toModel(lovDomainDTO, of(fieldReferences.get(fieldName)), e))
+                .map(e -> lovMapper.toModelByGroupName(groupName, e))
                 .map(newElement -> wrapCatch(
                         () -> lovElementRepository.save(newElement),
                         -1
@@ -83,30 +70,26 @@ public class LOVService {
     /**
      * Create a new LOV element
      *
-     * @param lovDomainDTO   the domain of the LOV element
-     * @param subtypeId      the subtype id
-     * @param fieldName      used to find the field reference where the LOV values will be associated
-     * @param lovElementDTOs the list new LOV element
-     * @return the id of the new LOV element
+     * @param lovDomainDTO the domain of the LOV element
+     * @param subtypeId    the subtype id
+     * @param fieldName    used to find the field reference where the LOV values will be associated
+     * @param groupName    the list new LOV element
      */
-    public List<String> createNew(
+    public void associateDomainFieldToGroupName(
             @NotNull LOVDomainTypeDTO lovDomainDTO,
             @NotEmpty String subtypeId,
             @NotEmpty String fieldName,
-            @Valid List<NewLOVElementDTO> lovElementDTOs
+            @NotEmpty String groupName
     ) {
         var fieldReferences = getLOVFieldReference(lovDomainDTO, subtypeId);
         assertion(
                 LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
                 () -> fieldReferences.containsKey(fieldName)
         );
-        return lovElementDTOs.stream()
-                .map(e -> lovMapper.toModel(lovDomainDTO, of(fieldReferences.get(fieldName)), e))
-                .map(newElement -> wrapCatch(
-                        () -> lovElementRepository.save(newElement),
-                        -1
-                ).getId())
-                .collect(Collectors.toList());
+        addFieldReferenceToGroupName(
+                groupName,
+                of(fieldReferences.get(fieldName))
+        );
     }
 
     /**
@@ -122,12 +105,67 @@ public class LOVService {
                 LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
                 () -> fieldReferences.containsKey(fieldName)
         );
-        return lovElementRepository.findByDomainAndFieldReferenceContains(
-                        lovMapper.toLOVDomainType(lovDomainDTO),
-                        fieldReferences.get(fieldName)
-                )
-                .stream()
-                .map(lovMapper::toDTO).toList();
+        return wrapCatch(
+                () -> lovElementRepository.findByFieldReferenceContains(
+                                fieldReferences.get(fieldName)
+                        )
+                        .stream()
+                        .map(lovMapper::toDTO).toList(),
+                -1
+        );
+    }
+
+    /**
+     * Find all the LOV elements by domain and field reference
+     *
+     * @param groupName the group name of the LOV elements
+     * @return the list of LOV elements
+     */
+    public List<LOVElementDTO> findAllByGroupName(String groupName) {
+        return wrapCatch(
+                () -> lovElementRepository.findByGroupNameIs(
+                                groupName
+                        )
+                        .stream()
+                        .map(lovMapper::toDTO).toList(),
+                -1
+        );
+    }
+
+    /**
+     * Add a field reference to all element of the same group name
+     *
+     * @param groupName the group name of the LOV elements
+     */
+    public void addFieldReferenceToGroupName(String groupName, List<String> fieldReference) {
+        lovElementRepository.findByGroupNameIs(groupName)
+                .forEach(
+                        lovElement -> {
+                            lovElement.getFieldReference().addAll(fieldReference);
+                            wrapCatch(
+                                    () -> lovElementRepository.save(lovElement),
+                                    -1
+                            );
+                        }
+                );
+    }
+
+    /**
+     * Remove a field reference to all element of the same group name
+     *
+     * @param groupName the group name of the LOV elements
+     */
+    public void removeFieldReferenceFromGroupName(String groupName, List<String> fieldReference) {
+        lovElementRepository.findByGroupNameIs(groupName)
+                .forEach(
+                        lovElement -> {
+                            lovElement.getFieldReference().removeAll(fieldReference);
+                            wrapCatch(
+                                    () -> lovElementRepository.save(lovElement),
+                                    -1
+                            );
+                        }
+                );
     }
 
     /**

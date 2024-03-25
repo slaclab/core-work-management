@@ -131,12 +131,19 @@ public class LOVControllerTest {
     public void fetchAllLOVFieldForActivity() {
         var lovIds = assertDoesNotThrow(
                 () -> lovService.createNew(
-                        LOVDomainTypeDTO.Activity,
-                        "schedulingProperty",
+                        "field1_group",
                         of(
-                                NewLOVElementDTO.builder().value("schedulingProperty value1").description("schedulingProperty value1 description").build(),
-                                NewLOVElementDTO.builder().value("schedulingProperty value2").description("schedulingProperty value2 description").build()
+                                NewLOVElementDTO.builder().value("field1 value1").description("field1 value1 description").build(),
+                                NewLOVElementDTO.builder().value("field1 value2").description("field1 value2 description").build()
                         )
+                )
+        );
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "field1",
+                        "field1_group"
                 )
         );
 
@@ -157,12 +164,19 @@ public class LOVControllerTest {
     public void fetchAllLOVFieldForActivityFieldName() {
         var lovIds = assertDoesNotThrow(
                 () -> lovService.createNew(
-                        LOVDomainTypeDTO.Activity,
-                        "schedulingProperty",
+                        "schedulingProperty_group",
                         of(
                                 NewLOVElementDTO.builder().value("schedulingProperty value1").description("schedulingProperty value1 description").build(),
                                 NewLOVElementDTO.builder().value("schedulingProperty value2").description("schedulingProperty value2 description").build()
                         )
+                )
+        );
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "schedulingProperty",
+                        "schedulingProperty_group"
                 )
         );
 

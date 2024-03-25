@@ -1,8 +1,6 @@
 package edu.stanford.slac.core_work_management.model;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.LOVDomainTypeDTO;
-import edu.stanford.slac.core_work_management.model.value.LOVDomain;
 import edu.stanford.slac.core_work_management.model.value.LOVField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +20,6 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
  */
 @Data
 @Builder
-@LOVDomain(LOVDomainType.Activity)
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Activity {

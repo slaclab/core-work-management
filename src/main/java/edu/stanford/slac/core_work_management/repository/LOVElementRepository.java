@@ -24,6 +24,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 
 public interface LOVElementRepository extends MongoRepository<LOVElement, String>, LOVElementRepositoryCustom{
-    List<LOVElement> findByDomainAndFieldReferenceContains(LOVDomainType domain, String fieldReference);
-    boolean existsByIdAndDomainAndFieldReferenceContains(String id, LOVDomainType domain, String fieldReference);
+    List<LOVElement> findByFieldReferenceContains(String fieldReference);
+    List<LOVElement> findByGroupNameIs(String groupName);
+    boolean existsByIdAndFieldReferenceContains(String id, String fieldReference);
 }

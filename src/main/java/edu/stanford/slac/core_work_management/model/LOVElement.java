@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,10 +44,15 @@ public class LOVElement {
      */
     private LOVDomainType domain;
     /**
+     *
+     */
+    private String groupName;
+    /**
      * The field reference of the LOV element
      * identify the field where the LOV element is used
      */
-    private List<String> fieldReference;
+    @Builder.Default
+    private List<String> fieldReference = new ArrayList<>();
     /**
      * The value of the LOV element
      */

@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.repository.LOVElementRepository;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +55,8 @@ public class LOVServiceTest {
     MongoTemplate mongoTemplate;
     @Autowired
     LOVService lovService;
+    @Autowired
+    LOVElementRepository lovElementRepository;
     @Autowired
     HelperService helperService;
     @Autowired
@@ -137,16 +140,96 @@ public class LOVServiceTest {
     }
 
     @Test
-    public void createNewLOVElementForDomainAndStaticField() {
+    public void testCreateWithOnlyGroupName() {
         // add lov for static field
         var lovIds = assertDoesNotThrow(
                 () -> lovService.createNew(
-                        LOVDomainTypeDTO.Activity,
-                        "schedulingProperty",
+                        "group-1",
+                        of(
+                                NewLOVElementDTO.builder().value("group-1 value1").description("group-1 value1 description").build(),
+                                NewLOVElementDTO.builder().value("group-1 value2").description("group-1 value2 description").build()
+                        )
+                )
+        );
+        var listOfAllLOVGroup1 = assertDoesNotThrow(
+                () -> lovService.findAllByGroupName("group-1")
+        );
+        assertThat(listOfAllLOVGroup1).hasSize(2);
+        assertThat(listOfAllLOVGroup1).extracting(LOVElementDTO::value).contains("group-1 value1", "group-1 value2");
+
+        lovIds = assertDoesNotThrow(
+                () -> lovService.createNew(
+                        "group-2",
+                        of(
+                                NewLOVElementDTO.builder().value("group-2 value1").description("group-2 value1 description").build(),
+                                NewLOVElementDTO.builder().value("group-2 value2").description("group-2 value2 description").build()
+                        )
+                )
+        );
+        var listOfAllLOVGroup2 = assertDoesNotThrow(
+                () -> lovService.findAllByGroupName("group-2")
+        );
+        assertThat(listOfAllLOVGroup2).hasSize(2);
+        assertThat(listOfAllLOVGroup2).extracting(LOVElementDTO::value).contains("group-2 value1", "group-2 value2");
+    }
+
+    @Test
+    public void testAddAndRemoveFieldReferenceToGroupName() {
+        var lovIds = assertDoesNotThrow(
+                () -> lovService.createNew(
+                        "group-1",
+                        of(
+                                NewLOVElementDTO.builder().value("group-1 value1").description("group-1 value1 description").build(),
+                                NewLOVElementDTO.builder().value("group-1 value2").description("group-1 value2 description").build()
+                        )
+                )
+        );
+        assertDoesNotThrow(
+                () -> lovService.addFieldReferenceToGroupName(
+                        "group-1",
+                        of("field1", "field2")
+                )
+        );
+        // check if the field reference has been added
+        var elementList = lovElementRepository.findByGroupNameIs("group-1");
+        elementList.forEach(
+                element -> {
+                    assertThat(element.getFieldReference()).contains("field1", "field2");
+                }
+        );
+
+        assertDoesNotThrow(
+                () -> lovService.removeFieldReferenceFromGroupName(
+                        "group-1",
+                        of("field2")
+                )
+        );
+        elementList.forEach(
+                element -> {
+                    assertThat(element.getFieldReference()).contains("field1");
+                }
+        );
+    }
+
+    @Test
+    public void createNewLOVElementForDomainAndStaticField() {
+        var lovIds = assertDoesNotThrow(
+                () -> lovService.createNew(
+                        "schedulingProperty_group",
                         of(
                                 NewLOVElementDTO.builder().value("schedulingProperty value1").description("schedulingProperty value1 description").build(),
                                 NewLOVElementDTO.builder().value("schedulingProperty value2").description("schedulingProperty value2 description").build()
                         )
+                )
+        );
+
+        // add lov for static field
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "schedulingProperty",
+                        "schedulingProperty_group"
                 )
         );
         var listOfAllLOV = assertDoesNotThrow(
@@ -158,15 +241,22 @@ public class LOVServiceTest {
 
     @Test
     public void createNewLOVElementForDomainAndDynamicField() {
-        // add lov for dynamic field
-        assertDoesNotThrow(
+        var lovIds = assertDoesNotThrow(
                 () -> lovService.createNew(
-                        LOVDomainTypeDTO.Activity,
-                        "field1",
+                        "field1_group",
                         of(
                                 NewLOVElementDTO.builder().value("field1 value1").description("field1 value1 description").build(),
                                 NewLOVElementDTO.builder().value("field1 value2").description("field1 value2 description").build()
                         )
+                )
+        );
+        // add lov for dynamic field
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "field1",
+                        "field1_group"
                 )
         );
         var listOfAllLOV = assertDoesNotThrow(
@@ -181,13 +271,11 @@ public class LOVServiceTest {
         // add lov for dynamic field
         var fieldNotFound = assertThrows(
                 LOVFieldReferenceNotFound.class,
-                () -> lovService.createNew(
+                () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
                         "wrong field",
-                        of(
-                                NewLOVElementDTO.builder().value("field1 value1").description("field1 value1 description").build(),
-                                NewLOVElementDTO.builder().value("field1 value2").description("field1 value2 description").build()
-                        )
+                       "field1_group"
                 )
         );
        assertThat(fieldNotFound.getErrorCode()).isEqualTo(-1);
@@ -197,27 +285,39 @@ public class LOVServiceTest {
     public void validateValueOnCreatedLOV() {
         assertDoesNotThrow(
                 () -> lovService.createNew(
-                        LOVDomainTypeDTO.Activity,
-                        "schedulingProperty",
+                        "schedulingProperty_group",
                         of(
                                 NewLOVElementDTO.builder().value("schedulingProperty value1").description("value1 description").build(),
                                 NewLOVElementDTO.builder().value("schedulingProperty value2").description("value2 description").build()
                         )
                 )
         );
-
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "schedulingProperty",
+                        "schedulingProperty_group"
+                )
+        );
         // add lov for dynamic field
         assertDoesNotThrow(
                 () -> lovService.createNew(
-                        LOVDomainTypeDTO.Activity,
-                        "field1",
+                        "field1_group",
                         of(
                                 NewLOVElementDTO.builder().value("field1 value1").description("field1 value1 description").build(),
                                 NewLOVElementDTO.builder().value("field1 value2").description("field1 value2 description").build()
                         )
                 )
         );
-
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "field1",
+                        "field1_group"
+                )
+        );
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
