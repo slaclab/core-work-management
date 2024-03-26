@@ -28,6 +28,10 @@ public class ActivityTypeCustomField {
      */
     private String name;
     /**
+     * The human readable label of the custom field. This field provides a human readable label for the custom field.
+     */
+    private String label;
+    /**
      * The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.
      */
     private String description;

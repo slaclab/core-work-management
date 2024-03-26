@@ -84,12 +84,19 @@ public class WorkService {
      */
     public String ensureActivityType(@Valid NewActivityTypeDTO newActivityTypeDTO) {
         // set the id of the custom attributes
+        List<ActivityTypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
         newActivityTypeDTO.customFields().forEach(
-                (customField) -> customField.toBuilder().id(UUID.randomUUID().toString()).build()
+                (customField) -> normalizedCustomField.add(
+                        customField.toBuilder()
+                        .id(UUID.randomUUID().toString())
+                        .label(StringUtility.toCamelCase(customField.name()))
+                        .build()
+                )
         );
+        var normalizedActivityDTO = newActivityTypeDTO.toBuilder().customFields(normalizedCustomField).build();
         return wrapCatch(
                 () -> activityTypeRepository.ensureActivityType(
-                        workMapper.toModel(newActivityTypeDTO)
+                        workMapper.toModel(normalizedActivityDTO)
                 ),
                 -1
         );
@@ -105,7 +112,10 @@ public class WorkService {
         // set the id of the custom attributes
         var toSave = workMapper.toModel(newActivityTypeDTO);
         toSave.getCustomFields().forEach(
-                (customField) -> customField.setId(UUID.randomUUID().toString())
+                (customField) -> {
+                    customField.setId(UUID.randomUUID().toString());
+                    customField.setLabel(StringUtility.toCamelCase(customField.getName()));
+                }
         );
         return wrapCatch(
                 () -> activityTypeRepository.save(toSave),

@@ -72,23 +72,23 @@ public class LOVService {
      *
      * @param lovDomainDTO the domain of the LOV element
      * @param subtypeId    the subtype id
-     * @param fieldName    used to find the field reference where the LOV values will be associated
+     * @param fieldLabel   the label of the field to associate
      * @param groupName    the list new LOV element
      */
     public void associateDomainFieldToGroupName(
             @NotNull LOVDomainTypeDTO lovDomainDTO,
             @NotEmpty String subtypeId,
-            @NotEmpty String fieldName,
+            @NotEmpty String fieldLabel,
             @NotEmpty String groupName
     ) {
         var fieldReferences = getLOVFieldReference(lovDomainDTO, subtypeId);
         assertion(
-                LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
-                () -> fieldReferences.containsKey(fieldName)
+                LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldLabel).build(),
+                () -> fieldReferences.containsKey(fieldLabel)
         );
         addFieldReferenceToGroupName(
                 groupName,
-                of(fieldReferences.get(fieldName))
+                of(fieldReferences.get(fieldLabel))
         );
     }
 
@@ -283,7 +283,7 @@ public class LOVService {
                             activityType.getCustomFields().forEach(
                                     customField -> {
                                         if (customField.getIsLov() && customField.getLovFieldReference() != null) {
-                                            result.put(customField.getName(), customField.getLovFieldReference());
+                                            result.put(customField.getLabel(), customField.getLovFieldReference());
                                         }
                                     }
                             );
@@ -299,7 +299,7 @@ public class LOVService {
                                     activityType.getCustomFields().forEach(
                                             customField -> {
                                                 if (customField.getLovFieldReference() != null) {
-                                                    result.put(customField.getName(), customField.getLovFieldReference());
+                                                    result.put(customField.getLabel(), customField.getLovFieldReference());
                                                 }
                                             }
                                     );

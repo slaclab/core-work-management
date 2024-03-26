@@ -20,6 +20,8 @@ public record ActivityTypeCustomFieldDTO(
         String id,
         @Schema(description = "The title of the custom field. This field stores the title or name of the custom field.")
         String name,
+        @Schema(description = "The user friendly label of the custom field. This field provides a user friendly label for the custom field.")
+        String label,
         @Schema(description = "The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.")
         String description,
         @Schema(description = "The type of the custom field.")

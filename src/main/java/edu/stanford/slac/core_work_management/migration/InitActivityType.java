@@ -45,9 +45,9 @@ public class InitActivityType {
      */
     private void createActivityTypes() {
         createLOVValues();
-        manageHardwareActivity();
-        manageSoftwareActivity();
         manageGeneralActivity();
+        manageSoftwareActivity();
+        manageHardwareActivity();
     }
 
     /**
@@ -284,7 +284,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             softwareActivityId,
-                            "Scheduling Priority",
+                            "schedulingPriority",
                             "SchedulingPriorityGroup"
                     );
                     return null;
@@ -297,7 +297,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             softwareActivityId,
-                            "Access Requirements",
+                            "accessRequirements",
                             "AccessRequirementsGroup"
                     );
                     return null;
@@ -310,7 +310,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             softwareActivityId,
-                            "Beam Requirements",
+                            "beamRequirements",
                             "BeamRequirementsGroup"
                     );
                     return null;
@@ -360,7 +360,7 @@ public class InitActivityType {
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
-                                        .name("Doc (Solution)")
+                                        .name("Doc Solution")
                                         .description("The document for the General job")
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
@@ -385,7 +385,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             generalActivityId,
-                            "Task Priority",
+                            "taskPriority",
                             "TaskPriorityGroup"
                     );
                     return null;
@@ -397,7 +397,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             generalActivityId,
-                            "Doc (Solution)",
+                            "docSolution",
                             "DocSolutionGroup"
                     );
                     return null;
@@ -571,7 +571,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             hardwareActivityId,
-                            "Scheduling Priority",
+                            "schedulingPriority",
                             "SchedulingPriorityGroup"
                     );
                     return null;
@@ -584,7 +584,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             hardwareActivityId,
-                            "Access Requirements",
+                            "accessRequirements",
                             "AccessRequirementsGroup"
                     );
                     return null;
@@ -597,7 +597,7 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             hardwareActivityId,
-                            "Beam Requirements",
+                            "beamRequirements",
                             "BeamRequirementsGroup"
                     );
                     return null;

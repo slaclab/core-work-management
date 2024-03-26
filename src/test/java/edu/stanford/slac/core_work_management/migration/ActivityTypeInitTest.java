@@ -50,18 +50,55 @@ public class ActivityTypeInitTest {
     public void initTest() {
         InitActivityType initWorkType = new InitActivityType(lovService, workService, activityTypeRepository);
         assertDoesNotThrow(initWorkType::changeSet);
-        var allActivityType =assertDoesNotThrow(
-                ()->activityTypeRepository.findAll()
+        var allActivityType = assertDoesNotThrow(
+                () -> activityTypeRepository.findAll()
         );
         assertThat(allActivityType)
                 .isNotEmpty()
-                .extracting(ActivityType::getTitle).containsExactlyInAnyOrder(
-                        "Hardware Task",
+                .extracting(ActivityType::getTitle).containsExactly(
+                        "General Task",
                         "Software Task",
-                        "General Task"
+                        "Hardware Task"
                 );
-        // check hardware activity custom fields
+        // checks general activity custom fields
         assertThat(allActivityType.getFirst().getCustomFields())
+                .isNotEmpty()
+                .extracting(ActivityTypeCustomField::getName)
+                .containsExactlyInAnyOrder(
+                        "Task Priority",
+                        "Task Skill Set",
+                        "Percentage completed",
+                        "Module",
+                        "Old Serial Number",
+                        "New Serial Number",
+                        "Drawing",
+                        "Doc Solution",
+                        "Date RTC Checked",
+                        "Feedback Priority"
+                );
+        // checks software activity custom fields
+        assertThat(allActivityType.get(1).getCustomFields())
+                .isNotEmpty()
+                .extracting(ActivityTypeCustomField::getName)
+                .containsExactlyInAnyOrder(
+                        "Scheduling Priority",
+                        "Time Comments",
+                        "Access Requirements",
+                        "Other Issues",
+                        "Beam Requirements",
+                        "Beam Comment",
+                        "Invasive",
+                        "Invasive Comment",
+                        "Test Plan",
+                        "Backout Plan",
+                        "Systems Required",
+                        "Systems Affected",
+                        "Risk/Benefit",
+                        "Dependencies",
+                        "CD Review Date"
+                );
+// check hardware activity custom fields
+        assertThat(allActivityType.get(2).getCustomFields())
                 .isNotEmpty()
                 .extracting(ActivityTypeCustomField::getName)
                 .containsExactlyInAnyOrder(
@@ -95,43 +132,6 @@ public class ActivityTypeInitTest {
                         "Micro Other",
                         "Visual Number"
                 );
-        // checks software activity custom fields
-        assertThat(allActivityType.get(1).getCustomFields())
-                .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getName)
-                .containsExactlyInAnyOrder(
-                        "Scheduling Priority",
-                        "Time Comments",
-                        "Access Requirements",
-                        "Other Issues",
-                        "Beam Requirements",
-                        "Beam Comment",
-                        "Invasive",
-                        "Invasive Comment",
-                        "Test Plan",
-                        "Backout Plan",
-                        "Systems Required",
-                        "Systems Affected",
-                        "Risk/Benefit",
-                        "Dependencies",
-                        "CD Review Date"
-                );
 
-        // checks general activity custom fields
-        assertThat(allActivityType.get(2).getCustomFields())
-                .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getName)
-                .containsExactlyInAnyOrder(
-                        "Task Priority",
-                        "Task Skill Set",
-                        "Percentage completed",
-                        "Module",
-                        "Old Serial Number",
-                        "New Serial Number",
-                        "Drawing",
-                        "Doc (Solution)",
-                        "Date RTC Checked",
-                        "Feedback Priority"
-                );
     }
 }

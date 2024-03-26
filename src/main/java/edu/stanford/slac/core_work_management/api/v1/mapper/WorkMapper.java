@@ -15,6 +15,7 @@ import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
+import edu.stanford.slac.core_work_management.service.StringUtility;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -187,7 +188,8 @@ public abstract class WorkMapper {
     abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
     @Mapping(target = "id", source = "id")
-    abstract public ActivityTypeCustomField toModel(String id, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    @Mapping(target = "label", source = "label")
+    abstract public ActivityTypeCustomField toModel(String id, String label, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
 
     /**
@@ -292,7 +294,11 @@ public abstract class WorkMapper {
                         updatedCustomAttributesList.add(toModel(customFieldDTO));
                     } else {
                         updatedCustomAttributesList.add(
-                                toModel(UUID.randomUUID().toString(), customFieldDTO)
+                                toModel(
+                                        UUID.randomUUID().toString(),
+                                        customFieldDTO.label()==null?StringUtility.toCamelCase(customFieldDTO.name()):customFieldDTO.label(),
+                                        customFieldDTO
+                                )
                         );
                     }
                 }

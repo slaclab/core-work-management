@@ -79,7 +79,8 @@ public class LOVControllerTest {
                                 .customFields(
                                         ImmutableList.of(
                                                 ActivityTypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                                ActivityTypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build()
+                                                ActivityTypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build(),
+                                                ActivityTypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).isLov(false).build()
                                         )
                                 )
                                 .build()
@@ -197,6 +198,47 @@ public class LOVControllerTest {
                 .contains(
                         "schedulingProperty value1",
                         "schedulingProperty value2"
+                );
+    }
+
+    @Test
+    public void fetchAllLOVFieldForActivityFieldNameWithSpace() {
+        var lovIds = assertDoesNotThrow(
+                () -> lovService.createNew(
+                        "field_with_space_group",
+                        of(
+                                NewLOVElementDTO.builder().value("field with space value1").description("field with space value1 description").build(),
+                                NewLOVElementDTO.builder().value("field with space value2").description("field with space value2 description").build()
+                        )
+                )
+        );
+
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "fieldWithSpace",
+                        "field_with_space_group"
+                )
+        );
+
+        var lovFieldList = assertDoesNotThrow(
+                () -> testControllerHelperService.lovControllerFindValuesByDomainAndFieldName(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "fieldWithSpace"
+                )
+        );
+        assertThat(lovFieldList.getErrorCode()).isEqualTo(0);
+        assertThat(lovFieldList.getPayload())
+                .hasSize(2)
+                .extracting(LOVElementDTO::value)
+                .contains(
+                        "field with space value1",
+                        "field with space value2"
                 );
     }
 }
