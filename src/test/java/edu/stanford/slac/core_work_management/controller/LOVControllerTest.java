@@ -222,6 +222,19 @@ public class LOVControllerTest {
                 )
         );
 
+        var fieldThatAreLovList = assertDoesNotThrow(
+                () -> testControllerHelperService.lovControllerFindAllFieldThatAreLOV(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1)
+                )
+        );
+        assertThat(fieldThatAreLovList.getErrorCode()).isEqualTo(0);
+        assertThat(fieldThatAreLovList.getPayload())
+                .hasSize(1);
+
         var lovFieldList = assertDoesNotThrow(
                 () -> testControllerHelperService.lovControllerFindValuesByDomainAndFieldName(
                         mockMvc,

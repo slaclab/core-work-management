@@ -27,4 +27,11 @@ public interface LOVElementRepository extends MongoRepository<LOVElement, String
     List<LOVElement> findByFieldReferenceContains(String fieldReference);
     List<LOVElement> findByGroupNameIs(String groupName);
     boolean existsByIdAndFieldReferenceContains(String id, String fieldReference);
+
+    /**
+     * Check if a fieldReference si in use
+     * @param fieldReference the fieldReference to check
+     * @return true if the fieldReference is in use, false otherwise
+     */
+    boolean existsByFieldReferenceContains(String fieldReference);
 }

@@ -35,15 +35,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.ImmutableList.of;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static java.util.Map.*;
 
 @Service
 @Validated
@@ -211,7 +209,13 @@ public class LOVService {
      * @return the field reference of the LOV element
      */
     public List<String> findAllLOVField(LOVDomainTypeDTO lovDomainTypeDTO, String subtypeId) {
-        return getLOVFieldReference(lovDomainTypeDTO, subtypeId).keySet().stream().toList();
+        var allFieldReference = getLOVFieldReference(lovDomainTypeDTO, subtypeId);
+        // check if field reference is attached to some lov
+        var onlyLOVMap = allFieldReference.entrySet().stream()
+                .filter(entry -> lovElementRepository.existsByFieldReferenceContains(entry.getValue()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        return onlyLOVMap.keySet().stream().toList();
     }
 
     /**
