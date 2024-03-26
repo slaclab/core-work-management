@@ -82,7 +82,7 @@ public class Activity {
      * The location of the activity.
      * This field stores the location of the activity.
      */
-    private LocationDTO location;
+    private String locationId;
     /**
      * The shop group that performs the work in the location.
      * This field stores the shop group that performs the work in the location.
