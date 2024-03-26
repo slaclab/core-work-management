@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,6 +36,22 @@ public record ActivityDTO(
         ActivityTypeDTO activityType,
         @Schema(description = "The subtype of the activity")
         ActivityTypeSubtypeDTO activityTypeSubtype,
+        @Schema(description = "The list of the user that are assigned to the activity")
+        List<String> assignedTo,
+        @Schema(description = "The location of the activity, if any")
+        LocationDTO location,
+        @Schema(description = "The shop group that perform the work in the location")
+        ShopGroupDTO shopGroup,
+        @Schema(description = "The alternative shop group that perform the work in the location")
+        ShopGroupDTO alternateShopGroup,
+        @Schema(description = "The planned start date of the activity")
+        LocalDateTime plannedStartDate,
+        @Schema(description = "The planned stop date of the activity")
+        LocalDateTime plannedEndDate,
+        @Schema(description = "The feedback comment for the activity")
+        String feedbackComment,
+        @Schema(description = "The subsystem where the activity is performed")
+        LOVValueDTO subsystem,
         @Schema(description = "The priority of the activity")
         LOVValueDTO schedulingProperty,
         @Schema(description="The list of the custom fields associated with the activity. The custom fields are used to store additional information about the activity.")

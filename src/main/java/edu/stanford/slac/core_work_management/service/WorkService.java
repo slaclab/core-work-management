@@ -292,7 +292,6 @@ public class WorkService {
                 ),
                 -2
         );
-
         // check that all the user in the assigned to are listed into the shop group
         if (updateWorkDTO.assignedTo() != null) {
             updateWorkDTO.assignedTo().forEach(
@@ -309,7 +308,6 @@ public class WorkService {
                     }
             );
         }
-
         // update the model
         workMapper.updateModel(updateWorkDTO, storedWork);
         // save the work
