@@ -1,7 +1,9 @@
 package edu.stanford.slac.core_work_management.model;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
 import edu.stanford.slac.core_work_management.model.value.LOVField;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -61,18 +63,52 @@ public class Activity {
      * This field provides a comprehensive description of what the activity entails.
      */
     private String description;
-
     /**
      * The type of the activity.
      * This field categorizes the activity into a specific type, defined by the ActivityType enum.
      */
     private String activityTypeId;
-
     /**
      * The subtype of the activity.
      * This field further categorizes the activity into a specific subtype, defined by the ActivityTypeSubtype enum.
      */
     private ActivityTypeSubtype activityTypeSubtype;
+    /**
+     * The list of the identifiers of the users who are assigned to the activity.
+     * This field stores the IDs of the users who are assigned to the activity.
+     */
+    private List<String> assignedTo;
+    /**
+     * The location of the activity.
+     * This field stores the location of the activity.
+     */
+    private LocationDTO location;
+    /**
+     * The shop group that performs the work in the location.
+     * This field stores the shop group that performs the work in the location.
+     */
+    private String shopGroupId;
+    /**
+     * The alternative shop group that performs the work in the location.
+     * This field stores the alternative shop group that performs the work in the location.
+     */
+    private String alternateShopGroupId;
+    /**
+     * The planned start date of the activity.
+     * This field stores the planned start date and time of the activity.
+     */
+    private LocalDateTime plannedStartDate;
+    /**
+     * The planned end date of the activity.
+     * This field stores the planned end date and time of the activity.
+     */
+    private LocalDateTime plannedEndDate;
+    /**
+     * The subsystem of the activity.
+     * This field stores the subsystem of the activity.
+     */
+    @LOVField(fieldReference = "ACTIVITY_SUBSYSTEM")
+    private String subsystem;
 
     /**
      * The priority of the activity.

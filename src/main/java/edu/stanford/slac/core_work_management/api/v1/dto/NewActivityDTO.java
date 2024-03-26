@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +28,22 @@ public record NewActivityDTO (
         @NotNull
         @Schema(description = "The subtype of the activity expressed by it's identifier")
         ActivityTypeSubtypeDTO activityTypeSubtype,
+        @Schema(description = "The list of the user that are assigned to the activity")
+        List<String> assignedTo,
+        @Schema(description = "The location of the activity, if any")
+        String locationId,
+        @Schema(description = "The shop group that perform the work in the location")
+        String shopGroupId,
+        @Schema(description = "The alternative shop group that perform the work in the location")
+        String alternateShopGroupId,
+        @Schema(description = "The planned start date of the activity")
+        LocalDateTime plannedStartDate,
+        @Schema(description = "The planned stop date of the activity")
+        LocalDateTime plannedEndDate,
+        @Schema(description = "The feedback comment for the activity")
+        String feedbackComment,
+        @Schema(description = "The subsystem where the activity is performed")
+        String subsystem,
         @Schema(description = "The priority of the activity")
         String schedulingProperty,
         @Schema(description = "The values of the custom attributes for the activity")

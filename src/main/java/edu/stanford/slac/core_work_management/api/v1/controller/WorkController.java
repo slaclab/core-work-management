@@ -138,7 +138,7 @@ public class WorkController {
         return ApiResultResponse.of(true);
     }
 
-    @Operation(summary = "Update an activity")
+    @Operation(summary = "Review a work")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Activity updated")
     })
@@ -159,7 +159,7 @@ public class WorkController {
         return ApiResultResponse.of(true);
     }
 
-    @Operation(summary = "Get work by id")
+    @Operation(summary = "Get full work by id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Work found"),
             @ApiResponse(responseCode = "404", description = "Work not found")
