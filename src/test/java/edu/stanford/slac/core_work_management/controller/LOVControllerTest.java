@@ -301,7 +301,7 @@ public class LOVControllerTest {
         assertThat(activityType.getPayload())
                 .hasSize(1);
         assertThat(activityType.getPayload().get(0).customFields())
-                .extracting(ActivityTypeCustomFieldDTO::label)
+                .extracting(ActivityTypeCustomFieldDTO::name)
                 .contains("field1","field2","fieldWithSpace");
         assertThat(activityType.getPayload().get(0).customFields())
                 .extracting(ActivityTypeCustomFieldDTO::isLov)

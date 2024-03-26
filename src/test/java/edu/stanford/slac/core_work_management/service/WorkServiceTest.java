@@ -140,14 +140,14 @@ public class WorkServiceTest {
                                         List.of(
                                                 ActivityTypeCustomFieldDTO
                                                         .builder()
-                                                        .name("custom field1")
+                                                        .label("custom field1")
                                                         .description("custom field1 description")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isMandatory(true)
                                                         .build(),
                                                 ActivityTypeCustomFieldDTO
                                                         .builder()
-                                                        .name("custom field2")
+                                                        .label("custom field2")
                                                         .description("custom field2 description")
                                                         .valueType(ValueTypeDTO.Boolean)
                                                         .isMandatory(false)
@@ -167,13 +167,13 @@ public class WorkServiceTest {
         assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description updated");
         assertThat(fullUpdatedActivityType.customFields()).isNotNull();
         assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(2);
-        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("custom field1");
-        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("customField1");
+        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1");
+        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1");
         assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description");
         assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
         assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isTrue();
-        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("custom field2");
-        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("customField2");
+        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field2");
+        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField2");
         assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field2 description");
         assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
         assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isFalse();
@@ -190,14 +190,14 @@ public class WorkServiceTest {
                                 .customFields(
                                         List.of(
                                                 finalFullUpdatedActivityType.customFields().get(0).toBuilder()
-                                                        .name("custom field1 updated")
+                                                        .label("custom field1 updated")
                                                         .description("custom field1 description updated")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isLov(false)
                                                         .isMandatory(false)
                                                         .build(),
                                                 finalFullUpdatedActivityType.customFields().get(1).toBuilder()
-                                                        .name("custom field2 updated")
+                                                        .label("custom field2 updated")
                                                         .description("custom field2 description updated")
                                                         .valueType(ValueTypeDTO.Number)
                                                         .isLov(true)
@@ -205,7 +205,7 @@ public class WorkServiceTest {
                                                         .build(),
                                                 ActivityTypeCustomFieldDTO
                                                         .builder()
-                                                        .name("custom field3")
+                                                        .label("custom field3")
                                                         .description("custom field3 description")
                                                         .valueType(ValueTypeDTO.Boolean)
                                                         .isLov(false)
@@ -225,18 +225,18 @@ public class WorkServiceTest {
         assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description re-updated");
         assertThat(fullUpdatedActivityType.customFields()).isNotNull();
         assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(3);
-        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("custom field1 updated");
-        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
+        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1 updated");
+        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
         assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description updated");
         assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
         assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isFalse();
-        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("custom field2 updated");
-        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("customField2"); // notice this is correct because if the label is found it is not updated
+        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field2 updated");
+        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField2"); // notice this is correct because if the label is found it is not updated
         assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field2 description updated");
         assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Number);
         assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isTrue();
-        assertThat(fullUpdatedActivityType.customFields().get(2).name()).isEqualTo("custom field3");
-        assertThat(fullUpdatedActivityType.customFields().get(2).label()).isEqualTo("customField3");
+        assertThat(fullUpdatedActivityType.customFields().get(2).label()).isEqualTo("custom field3");
+        assertThat(fullUpdatedActivityType.customFields().get(2).name()).isEqualTo("customField3");
         assertThat(fullUpdatedActivityType.customFields().get(2).description()).isEqualTo("custom field3 description");
         assertThat(fullUpdatedActivityType.customFields().get(2).valueType()).isEqualTo(ValueTypeDTO.Boolean);
         assertThat(fullUpdatedActivityType.customFields().get(2).isMandatory()).isFalse();
@@ -252,7 +252,7 @@ public class WorkServiceTest {
                                 .customFields(
                                         List.of(
                                                 finalFullUpdatedActivityType.customFields().get(0).toBuilder()
-                                                        .name("custom field1 updated")
+                                                        .label("custom field1 updated")
                                                         .description("custom field1 description updated")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isLov(false)
@@ -260,7 +260,7 @@ public class WorkServiceTest {
                                                         .build(),
                                                 ActivityTypeCustomFieldDTO
                                                         .builder()
-                                                        .name("custom field3")
+                                                        .label("custom field3")
                                                         .description("custom field3 description")
                                                         .valueType(ValueTypeDTO.Boolean)
                                                         .isLov(false)
@@ -280,13 +280,13 @@ public class WorkServiceTest {
         assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description re-updated");
         assertThat(fullUpdatedActivityType.customFields()).isNotNull();
         assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(2);
-        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("custom field1 updated");
-        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
+        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1 updated");
+        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
         assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description updated");
         assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
         assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isFalse();
-        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("custom field3");
-        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("customField3");
+        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field3");
+        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField3");
         assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field3 description");
         assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
         assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isFalse();
@@ -474,7 +474,7 @@ public class WorkServiceTest {
                                         List.of(
                                                 ActivityTypeCustomFieldDTO
                                                         .builder()
-                                                        .name("custom field1")
+                                                        .label("custom field1")
                                                         .description("custom field1 description")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isLov(true)
@@ -534,7 +534,7 @@ public class WorkServiceTest {
         assertThat(newlyCreatedActivity.customFields()).isNotNull();
         assertThat(newlyCreatedActivity.customFields().size()).isEqualTo(1);
         assertThat(newlyCreatedActivity.customFields().get(0).id()).isEqualTo(fullActivityType.customFields().get(0).id());
-        assertThat(newlyCreatedActivity.customFields().get(0).name()).isEqualTo("custom field1");
+        assertThat(newlyCreatedActivity.customFields().get(0).name()).isEqualTo("customField1");
         assertThat(newlyCreatedActivity.customFields().get(0).value().type()).isEqualTo(ValueTypeDTO.String);
         assertThat(newlyCreatedActivity.customFields().get(0).value().value()).isEqualTo("custom field1 value");
     }

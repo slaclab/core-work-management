@@ -63,7 +63,7 @@ public class ActivityTypeInitTest {
         // checks general activity custom fields
         assertThat(allActivityType.getFirst().getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getName)
+                .extracting(ActivityTypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
                         "Task Priority",
                         "Task Skill Set",
@@ -79,7 +79,7 @@ public class ActivityTypeInitTest {
         // checks software activity custom fields
         assertThat(allActivityType.get(1).getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getName)
+                .extracting(ActivityTypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
                         "Scheduling Priority",
                         "Time Comments",
@@ -100,7 +100,7 @@ public class ActivityTypeInitTest {
 // check hardware activity custom fields
         assertThat(allActivityType.get(2).getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getName)
+                .extracting(ActivityTypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
                         "Scheduling Priority",
                         "Access Requirements",

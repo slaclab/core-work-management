@@ -86,12 +86,16 @@ public class WorkService {
         // set the id of the custom attributes
         List<ActivityTypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
         newActivityTypeDTO.customFields().forEach(
-                (customField) -> normalizedCustomField.add(
-                        customField.toBuilder()
-                        .id(UUID.randomUUID().toString())
-                        .label(StringUtility.toCamelCase(customField.name()))
-                        .build()
-                )
+                (customField) -> {
+                    var tmpName = customField.name();
+                    normalizedCustomField.add(
+                            customField.toBuilder()
+                                    .id(UUID.randomUUID().toString())
+                                    .label(tmpName)
+                                    .name(StringUtility.toCamelCase(tmpName))
+                                    .build()
+                    );
+                }
         );
         var normalizedActivityDTO = newActivityTypeDTO.toBuilder().customFields(normalizedCustomField).build();
         return wrapCatch(
@@ -114,7 +118,12 @@ public class WorkService {
         toSave.getCustomFields().forEach(
                 (customField) -> {
                     customField.setId(UUID.randomUUID().toString());
-                    customField.setLabel(StringUtility.toCamelCase(customField.getName()));
+                    customField.setName(
+                            customField.getLabel()==null?
+                                    StringUtility.toCamelCase(customField.getName()):
+                                    StringUtility.toCamelCase(customField.getLabel())
+                    );
+                    customField.setLabel(customField.getLabel());
                 }
         );
         return wrapCatch(

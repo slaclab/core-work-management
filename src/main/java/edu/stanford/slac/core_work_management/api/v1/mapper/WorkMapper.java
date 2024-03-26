@@ -199,8 +199,8 @@ public abstract class WorkMapper {
     abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
     @Mapping(target = "id", source = "id")
-    @Mapping(target = "label", source = "label")
-    abstract public ActivityTypeCustomField toModel(String id, String label, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    @Mapping(target = "name", source = "name")
+    abstract public ActivityTypeCustomField toModel(String id, String name, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
 
     /**
@@ -307,7 +307,7 @@ public abstract class WorkMapper {
                         updatedCustomAttributesList.add(
                                 toModel(
                                         UUID.randomUUID().toString(),
-                                        customFieldDTO.label()==null?StringUtility.toCamelCase(customFieldDTO.name()):customFieldDTO.label(),
+                                        StringUtility.toCamelCase(customFieldDTO.label()),
                                         customFieldDTO
                                 )
                         );
