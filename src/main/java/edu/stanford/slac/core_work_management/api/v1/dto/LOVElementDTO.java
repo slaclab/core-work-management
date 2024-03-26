@@ -31,5 +31,8 @@ public record LOVElementDTO (
     String id,
     @Schema(description = "The field reference of the LOV element")
     String value,
+    @Schema(description = "The human-readable label of the LOV element")
+    String label,
     @Schema(description = "The description of the LOV element")
-    String description){}
+    String description
+){}

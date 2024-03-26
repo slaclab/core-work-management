@@ -254,4 +254,57 @@ public class LOVControllerTest {
                         "field with space value2"
                 );
     }
+
+    @Test
+    public void matchFromActivityTypeLOVFieldAndLOVFieldFromRestAPI() {
+        var lovIds = assertDoesNotThrow(
+                () -> lovService.createNew(
+                        "field_with_space_group",
+                        of(
+                                NewLOVElementDTO.builder().value("field with space value1").description("field with space value1 description").build(),
+                                NewLOVElementDTO.builder().value("field with space value2").description("field with space value2 description").build()
+                        )
+                )
+        );
+
+        assertDoesNotThrow(
+                () -> lovService.associateDomainFieldToGroupName(
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1),
+                        "fieldWithSpace",
+                        "field_with_space_group"
+                )
+        );
+
+        var fieldThatAreLovList = assertDoesNotThrow(
+                () -> testControllerHelperService.lovControllerFindAllFieldThatAreLOV(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        LOVDomainTypeDTO.Activity,
+                        workActivityIds.get(1)
+                )
+        );
+        assertThat(fieldThatAreLovList.getErrorCode()).isEqualTo(0);
+        assertThat(fieldThatAreLovList.getPayload())
+                .hasSize(1)
+                .contains("fieldWithSpace");
+
+        var activityType = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindAllActivityTypes(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(activityType.getErrorCode()).isEqualTo(0);
+        assertThat(activityType.getPayload())
+                .hasSize(1);
+        assertThat(activityType.getPayload().get(0).customFields())
+                .extracting(ActivityTypeCustomFieldDTO::label)
+                .contains("field1","field2","fieldWithSpace");
+        assertThat(activityType.getPayload().get(0).customFields())
+                .extracting(ActivityTypeCustomFieldDTO::isLov)
+                .contains(false, false, true);
+    }
 }

@@ -104,6 +104,17 @@ public abstract class WorkMapper {
      */
     abstract public ActivityTypeDTO toDTO(ActivityType activityType);
 
+    @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
+    abstract public ActivityTypeCustomFieldDTO toDTO(ActivityTypeCustomField customField);
+
+    public boolean checkIsLOV(ActivityTypeCustomField customField) {
+        if (customField.getLovFieldReference() == null) return false;
+        return wrapCatch(
+                ()->lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
+                -1
+        );
+    }
+
     /**
      * Convert the {@link ActivityStatus} to a {@link ActivityStatusDTO}
      *

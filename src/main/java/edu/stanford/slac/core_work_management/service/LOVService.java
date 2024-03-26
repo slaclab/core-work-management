@@ -219,6 +219,19 @@ public class LOVService {
     }
 
     /**
+     * Check if a field reference is in use
+     *
+     * @param fieldReference the field reference to check
+     * @return true if the field reference is in use, false otherwise
+     */
+    public boolean checkIfFieldReferenceIsInUse(String fieldReference) {
+        return wrapCatch(
+                () -> lovElementRepository.existsByFieldReferenceContains(fieldReference),
+                -1
+        );
+    }
+
+    /**
      * Return a full list of field/lov reference for each domain
      *
      * @param lovDomainDTO the domain for which the field reference is needed
@@ -249,30 +262,6 @@ public class LOVService {
         };
     }
 
-
-    /**
-     * Return a full list of field/lov reference for each domain
-     *
-     * @return the field reference of the LOV element
-     */
-    private HashMap<String, String> getLOVFieldReferenceFromActivityType() {
-        HashMap<String, String> result = new HashMap<>();
-        activityTypeRepository.findAll().forEach(
-                activityType -> {
-                    if (activityType.getCustomFields() != null) {
-                        activityType.getCustomFields().forEach(
-                                customField -> {
-                                    if (customField.getIsLov() && customField.getLovFieldReference() != null) {
-                                        result.put(customField.getName(), customField.getLovFieldReference());
-                                    }
-                                }
-                        );
-                    }
-                }
-        );
-        return result;
-    }
-
     /**
      * Return a full list of field/lov reference for each domain
      *
@@ -286,7 +275,7 @@ public class LOVService {
                         if (activityType.getCustomFields() != null) {
                             activityType.getCustomFields().forEach(
                                     customField -> {
-                                        if (customField.getIsLov() && customField.getLovFieldReference() != null) {
+                                        if (customField.getLovFieldReference() != null) {
                                             result.put(customField.getLabel(), customField.getLovFieldReference());
                                         }
                                     }
