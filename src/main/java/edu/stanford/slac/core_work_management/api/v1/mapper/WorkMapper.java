@@ -15,6 +15,7 @@ import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.LocationService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
+import edu.stanford.slac.core_work_management.service.StringUtility;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -103,6 +104,17 @@ public abstract class WorkMapper {
      */
     abstract public ActivityTypeDTO toDTO(ActivityType activityType);
 
+    @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
+    abstract public ActivityTypeCustomFieldDTO toDTO(ActivityTypeCustomField customField);
+
+    public boolean checkIsLOV(ActivityTypeCustomField customField) {
+        if (customField.getLovFieldReference() == null) return false;
+        return wrapCatch(
+                ()->lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
+                -1
+        );
+    }
+
     /**
      * Convert the {@link ActivityStatus} to a {@link ActivityStatusDTO}
      *
@@ -187,7 +199,8 @@ public abstract class WorkMapper {
     abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
     @Mapping(target = "id", source = "id")
-    abstract public ActivityTypeCustomField toModel(String id, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    @Mapping(target = "name", source = "name")
+    abstract public ActivityTypeCustomField toModel(String id, String name, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
 
 
     /**
@@ -292,7 +305,11 @@ public abstract class WorkMapper {
                         updatedCustomAttributesList.add(toModel(customFieldDTO));
                     } else {
                         updatedCustomAttributesList.add(
-                                toModel(UUID.randomUUID().toString(), customFieldDTO)
+                                toModel(
+                                        UUID.randomUUID().toString(),
+                                        StringUtility.toCamelCase(customFieldDTO.label()),
+                                        customFieldDTO
+                                )
                         );
                     }
                 }

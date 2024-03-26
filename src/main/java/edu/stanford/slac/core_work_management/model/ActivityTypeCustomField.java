@@ -28,6 +28,10 @@ public class ActivityTypeCustomField {
      */
     private String name;
     /**
+     * The human-readable label of the custom field. This field provides a human readable label for the custom field.
+     */
+    private String label;
+    /**
      * The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.
      */
     private String description;
@@ -35,11 +39,7 @@ public class ActivityTypeCustomField {
      * The type of the custom field.
      */
     private ValueType valueType;
-    /**
-     * Specify is the value of the custom field is a list of values.
-     */
-    @Builder.Default
-    private Boolean isLov = false;
+
     /**
      * Specify is the custom field is mandatory.
      */

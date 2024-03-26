@@ -50,21 +50,59 @@ public class ActivityTypeInitTest {
     public void initTest() {
         InitActivityType initWorkType = new InitActivityType(lovService, workService, activityTypeRepository);
         assertDoesNotThrow(initWorkType::changeSet);
-        var allActivityType =assertDoesNotThrow(
-                ()->activityTypeRepository.findAll()
+        var allActivityType = assertDoesNotThrow(
+                () -> activityTypeRepository.findAll()
         );
         assertThat(allActivityType)
                 .isNotEmpty()
-                .extracting(ActivityType::getTitle).containsExactlyInAnyOrder(
-                        "Hardware Task",
+                .extracting(ActivityType::getTitle).containsExactly(
+                        "General Task",
                         "Software Task",
-                        "General Task"
+                        "Hardware Task"
                 );
-
+        // checks general activity custom fields
         assertThat(allActivityType.getFirst().getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getName)
+                .extracting(ActivityTypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
+                        "Task Priority",
+                        "Task Skill Set",
+                        "Percentage completed",
+                        "Module",
+                        "Old Serial Number",
+                        "New Serial Number",
+                        "Drawing",
+                        "Doc Solution",
+                        "Date RTC Checked",
+                        "Feedback Priority"
+                );
+        // checks software activity custom fields
+        assertThat(allActivityType.get(1).getCustomFields())
+                .isNotEmpty()
+                .extracting(ActivityTypeCustomField::getLabel)
+                .containsExactlyInAnyOrder(
+                        "Scheduling Priority",
+                        "Time Comments",
+                        "Access Requirements",
+                        "Other Issues",
+                        "Beam Requirements",
+                        "Beam Comment",
+                        "Invasive",
+                        "Invasive Comment",
+                        "Test Plan",
+                        "Backout Plan",
+                        "Systems Required",
+                        "Systems Affected",
+                        "Risk/Benefit",
+                        "Dependencies",
+                        "CD Review Date"
+                );
+// check hardware activity custom fields
+        assertThat(allActivityType.get(2).getCustomFields())
+                .isNotEmpty()
+                .extracting(ActivityTypeCustomField::getLabel)
+                .containsExactlyInAnyOrder(
+                        "Scheduling Priority",
                         "Access Requirements",
                         "Other Issues",
                         "Rad Safety Work Ctl Form",
@@ -94,5 +132,6 @@ public class ActivityTypeInitTest {
                         "Micro Other",
                         "Visual Number"
                 );
+
     }
 }

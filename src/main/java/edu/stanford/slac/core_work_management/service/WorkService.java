@@ -84,12 +84,23 @@ public class WorkService {
      */
     public String ensureActivityType(@Valid NewActivityTypeDTO newActivityTypeDTO) {
         // set the id of the custom attributes
+        List<ActivityTypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
         newActivityTypeDTO.customFields().forEach(
-                (customField) -> customField.toBuilder().id(UUID.randomUUID().toString()).build()
+                (customField) -> {
+                    var tmpName = customField.name();
+                    normalizedCustomField.add(
+                            customField.toBuilder()
+                                    .id(UUID.randomUUID().toString())
+                                    .label(tmpName)
+                                    .name(StringUtility.toCamelCase(tmpName))
+                                    .build()
+                    );
+                }
         );
+        var normalizedActivityDTO = newActivityTypeDTO.toBuilder().customFields(normalizedCustomField).build();
         return wrapCatch(
                 () -> activityTypeRepository.ensureActivityType(
-                        workMapper.toModel(newActivityTypeDTO)
+                        workMapper.toModel(normalizedActivityDTO)
                 ),
                 -1
         );
@@ -105,7 +116,15 @@ public class WorkService {
         // set the id of the custom attributes
         var toSave = workMapper.toModel(newActivityTypeDTO);
         toSave.getCustomFields().forEach(
-                (customField) -> customField.setId(UUID.randomUUID().toString())
+                (customField) -> {
+                    customField.setId(UUID.randomUUID().toString());
+                    customField.setName(
+                            customField.getLabel()==null?
+                                    StringUtility.toCamelCase(customField.getName()):
+                                    StringUtility.toCamelCase(customField.getLabel())
+                    );
+                    customField.setLabel(customField.getLabel());
+                }
         );
         return wrapCatch(
                 () -> activityTypeRepository.save(toSave),

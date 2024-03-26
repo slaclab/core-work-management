@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import edu.stanford.slac.core_work_management.model.value.ValueType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,8 +19,11 @@ import org.springframework.data.annotation.Id;
 public record ActivityTypeCustomFieldDTO(
         @Schema(description = "The unique identifier for the custom field.")
         String id,
-        @Schema(description = "The title of the custom field. This field stores the title or name of the custom field.")
+        @Schema(description = "The user friendly label of the custom field. This field provides a user friendly naming for the custom field.")
         String name,
+        @NotNull
+        @Schema(description = "The title of the custom field. This field stores the title or name of the custom field.")
+        String label,
         @Schema(description = "The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.")
         String description,
         @Schema(description = "The type of the custom field.")

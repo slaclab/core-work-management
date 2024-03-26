@@ -35,15 +35,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.ImmutableList.of;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static java.util.Map.*;
 
 @Service
 @Validated
@@ -72,7 +70,7 @@ public class LOVService {
      *
      * @param lovDomainDTO the domain of the LOV element
      * @param subtypeId    the subtype id
-     * @param fieldName    used to find the field reference where the LOV values will be associated
+     * @param fieldName    the name of the field to associate
      * @param groupName    the list new LOV element
      */
     public void associateDomainFieldToGroupName(
@@ -211,7 +209,26 @@ public class LOVService {
      * @return the field reference of the LOV element
      */
     public List<String> findAllLOVField(LOVDomainTypeDTO lovDomainTypeDTO, String subtypeId) {
-        return getLOVFieldReference(lovDomainTypeDTO, subtypeId).keySet().stream().toList();
+        var allFieldReference = getLOVFieldReference(lovDomainTypeDTO, subtypeId);
+        // check if field reference is attached to some lov
+        var onlyLOVMap = allFieldReference.entrySet().stream()
+                .filter(entry -> lovElementRepository.existsByFieldReferenceContains(entry.getValue()))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+        return onlyLOVMap.keySet().stream().toList();
+    }
+
+    /**
+     * Check if a field reference is in use
+     *
+     * @param fieldReference the field reference to check
+     * @return true if the field reference is in use, false otherwise
+     */
+    public boolean checkIfFieldReferenceIsInUse(String fieldReference) {
+        return wrapCatch(
+                () -> lovElementRepository.existsByFieldReferenceContains(fieldReference),
+                -1
+        );
     }
 
     /**
@@ -245,30 +262,6 @@ public class LOVService {
         };
     }
 
-
-    /**
-     * Return a full list of field/lov reference for each domain
-     *
-     * @return the field reference of the LOV element
-     */
-    private HashMap<String, String> getLOVFieldReferenceFromActivityType() {
-        HashMap<String, String> result = new HashMap<>();
-        activityTypeRepository.findAll().forEach(
-                activityType -> {
-                    if (activityType.getCustomFields() != null) {
-                        activityType.getCustomFields().forEach(
-                                customField -> {
-                                    if (customField.getIsLov() && customField.getLovFieldReference() != null) {
-                                        result.put(customField.getName(), customField.getLovFieldReference());
-                                    }
-                                }
-                        );
-                    }
-                }
-        );
-        return result;
-    }
-
     /**
      * Return a full list of field/lov reference for each domain
      *
@@ -282,7 +275,7 @@ public class LOVService {
                         if (activityType.getCustomFields() != null) {
                             activityType.getCustomFields().forEach(
                                     customField -> {
-                                        if (customField.getIsLov() && customField.getLovFieldReference() != null) {
+                                        if (customField.getLovFieldReference() != null) {
                                             result.put(customField.getName(), customField.getLovFieldReference());
                                         }
                                     }
