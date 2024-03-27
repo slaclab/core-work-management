@@ -192,92 +192,7 @@ public class InitActivityType {
                                 .build()
                 )
         );
-    }
 
-    private void manageSoftwareActivity() {
-        var softwareActivityId = workService.createNew(
-                NewActivityTypeDTO.builder()
-                        .title("Software Task")
-                        .description("An issue with currently installed accelerator software")
-                        .customFields(
-                                List.of(
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Scheduling Priority")
-                                                .description("The scheduling priority for the hardware job")
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Time Comments")
-                                                .description("The time comments for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Access Requirements")
-                                                .description("The access requirements for the hardware job")
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Other Issues")
-                                                .description("Other issues related to the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Beam Requirements")
-                                                .description("The beam requirements for the hardware job")
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Beam Comment")
-                                                .description("The beam comment for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Invasive")
-                                                .description("The invasive status for the hardware job")
-                                                .valueType(ValueTypeDTO.Boolean)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Invasive Comment")
-                                                .description("The invasive comment for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Test Plan")
-                                                .description("The test plan for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Backout Plan")
-                                                .description("The backout plan for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Systems Required")
-                                                .description("The systems required for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Systems Affected")
-                                                .description("The systems affected for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Risk/Benefit")
-                                                .description("The risk/benefit for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("Dependencies")
-                                                .description("The dependencies for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        ActivityTypeCustomFieldDTO.builder()
-                                                .label("CD Review Date")
-                                                .description("The CD review date for the hardware job")
-                                                .valueType(ValueTypeDTO.Date)
-                                                .build()
-
-                                )
-                        )
-                        .build()
-        );
 
         lovService.createNew(
                 "SubSystemGroup",
@@ -366,7 +281,95 @@ public class InitActivityType {
                         NewLOVElementDTO.builder().value("WIRES").description("Wire scanners").build()
                 )
         );
+    }
 
+    private void manageSoftwareActivity() {
+        var softwareActivityId = workService.createNew(
+                NewActivityTypeDTO.builder()
+                        .title("Software Task")
+                        .description("An issue with currently installed accelerator software")
+                        .customFields(
+                                List.of(
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Scheduling Priority")
+                                                .description("The scheduling priority for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Time Comments")
+                                                .description("The time comments for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Access Requirements")
+                                                .description("The access requirements for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Other Issues")
+                                                .description("Other issues related to the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Beam Requirements")
+                                                .description("The beam requirements for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Beam Comment")
+                                                .description("The beam comment for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Invasive")
+                                                .description("The invasive status for the hardware job")
+                                                .valueType(ValueTypeDTO.Boolean)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Invasive Comment")
+                                                .description("The invasive comment for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Test Plan")
+                                                .description("The test plan for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Backout Plan")
+                                                .description("The backout plan for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Systems Required")
+                                                .description("The systems required for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Systems Affected")
+                                                .description("The systems affected for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Risk/Benefit")
+                                                .description("The risk/benefit for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("Dependencies")
+                                                .description("The dependencies for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        ActivityTypeCustomFieldDTO.builder()
+                                                .label("CD Review Date")
+                                                .description("The CD review date for the hardware job")
+                                                .valueType(ValueTypeDTO.Date)
+                                                .build()
+
+                                )
+                        )
+                        .build()
+        );
 
         wrapCatch(
                 () -> {
@@ -430,6 +433,7 @@ public class InitActivityType {
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Task Priority")
                                         .description("The task priority for the General job")
+                                        .valueType(ValueTypeDTO.String)
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Task Skill Set")
@@ -520,10 +524,12 @@ public class InitActivityType {
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Scheduling Priority")
                                         .description("The scheduling priority for the hardware job")
+                                        .valueType(ValueTypeDTO.String)
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Access Requirements")
                                         .description("The access requirements for the hardware job")
+                                        .valueType(ValueTypeDTO.String)
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Other Issues")
