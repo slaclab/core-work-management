@@ -21,7 +21,6 @@ import java.util.Set;
 @EqualsAndHashCode
 public class Work {
     private static WorkStatusStateMachine workStatusStateMachine = new WorkStatusStateMachine();
-
     /**
      * The unique identifier for the work.
      * This field is annotated with @Id to signify its use as a primary key in MongoDB.
@@ -38,18 +37,45 @@ public class Work {
      */
     @Builder.Default
     private Long activitiesNumber = 0L;
-
     /**
      * The type of the work.
      * This field identify the work which this is related to. This creates dependency between works
      */
     private String relatedToWorkId;
-
     /**
      * The type of the work.
      * This field categorizes the work into a specific type
      */
     private String workTypeId;
+    /**
+     * The name of the work.
+     * This field stores the name or title of the work.
+     */
+    private String title;
+    /**
+     * The description of the work.
+     * This field provides detailed information about the work.
+     */
+    private String description;
+    /**
+     * The identifier of the location associated with the work.
+     * This field links the work to a specific location, identified by its ID.
+     */
+    private String locationId;
+    /**
+     * The shop group that perform the work in the location
+     */
+    private String shopGroupId;
+    /**
+     * The identifier of the user assigned to the work.
+     * This field links the work to a specific user, identified by its ID.
+     */
+    private List<String> assignedTo;
+    /**
+     * The list of the custom fields associated with the activity.
+     * The custom fields are used to store additional information about the activity.
+     */
+    private List<CustomField> customFields;
     /**
      * Give a followup description when the work is closed
      */
@@ -65,35 +91,6 @@ public class Work {
      */
     @Builder.Default
     private List<WorkStatusLog> statusHistory = new ArrayList<>();
-
-    /**
-     * The name of the work.
-     * This field stores the name or title of the work.
-     */
-    private String title;
-
-    /**
-     * The description of the work.
-     * This field provides detailed information about the work.
-     */
-    private String description;
-
-    /**
-     * The identifier of the location associated with the work.
-     * This field links the work to a specific location, identified by its ID.
-     */
-    private String locationId;
-
-    /**
-     * The shop group that perform the work in the location
-     */
-    private String shopGroupId;
-
-    /**
-     * The identifier of the user assigned to the work.
-     * This field links the work to a specific user, identified by its ID.
-     */
-    private List<String> assignedTo;
 
     /**
      * The date and time when the work was created.
