@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -46,6 +47,7 @@ public record NewActivityDTO (
         String subsystem,
         @Schema(description = "The priority of the activity")
         String schedulingProperty,
+        @Valid
         @Schema(description = "The values of the custom attributes for the activity")
         List<WriteCustomFieldDTO> customFieldValues){
         public NewActivityDTO {
