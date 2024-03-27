@@ -468,6 +468,7 @@ public class InitActivityType {
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Doc Solution")
                                         .description("The document for the General job")
+                                        .valueType(ValueTypeDTO.String)
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Date RTC Checked")
@@ -614,6 +615,7 @@ public class InitActivityType {
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Beam Requirements")
                                         .description("The beam requirements for the hardware job")
+                                        .valueType(ValueTypeDTO.String)
                                         .build(),
                                 ActivityTypeCustomFieldDTO.builder()
                                         .label("Beam Comment")

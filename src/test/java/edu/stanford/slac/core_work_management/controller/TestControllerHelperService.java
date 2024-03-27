@@ -23,10 +23,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 public class TestControllerHelperService {
     private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
+    private final ObjectMapper objectMapper;
 
-    public TestControllerHelperService(JWTHelper jwtHelper, AppProperties appProperties) {
+    public TestControllerHelperService(ObjectMapper objectMapper, JWTHelper jwtHelper, AppProperties appProperties) {
         this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
+        this.objectMapper = objectMapper;
 
     }
 
@@ -48,7 +50,7 @@ public class TestControllerHelperService {
         var requestBuilder = post("/v1/shop-group")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(newShopGroupDTO));
+                .content(objectMapper.writeValueAsString(newShopGroupDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -62,10 +64,10 @@ public class TestControllerHelperService {
     /**
      * Update a shop group
      *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param id                the id of the shop group to update
+     * @param mockMvc            the mock mvc
+     * @param resultMatcher      the result matcher
+     * @param userInfo           the user info
+     * @param id                 the id of the shop group to update
      * @param updateShopGroupDTO the update shop group dto
      * @return the id of the newly created shop group
      * @throws Exception the exception
@@ -80,7 +82,7 @@ public class TestControllerHelperService {
         var requestBuilder = put("/v1/shop-group/{id}", id)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(updateShopGroupDTO));
+                .content(objectMapper.writeValueAsString(updateShopGroupDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -162,7 +164,7 @@ public class TestControllerHelperService {
         var requestBuilder = post("/v1/location")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(newLocationDTO));
+                .content(objectMapper.writeValueAsString(newLocationDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -328,7 +330,7 @@ public class TestControllerHelperService {
         var requestBuilder = post("/v1/work")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(newWorkDTO));
+                .content(objectMapper.writeValueAsString(newWorkDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -359,7 +361,7 @@ public class TestControllerHelperService {
         var requestBuilder = put("/v1/work/{workId}", workId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(updateWorkDTO));
+                .content(objectMapper.writeValueAsString(updateWorkDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -401,10 +403,10 @@ public class TestControllerHelperService {
     /**
      * Create new work activity
      *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param workId        the work id
+     * @param mockMvc        the mock mvc
+     * @param resultMatcher  the result matcher
+     * @param userInfo       the user info
+     * @param workId         the work id
      * @param newActivityDTO the new activity dto
      * @return the work dto
      * @throws Exception the exception
@@ -419,7 +421,7 @@ public class TestControllerHelperService {
         var requestBuilder = post("/v1/work/{workId}/activity", workId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(newActivityDTO));
+                .content(objectMapper.writeValueAsString(newActivityDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -433,10 +435,10 @@ public class TestControllerHelperService {
     /**
      * Find all activities by work id
      *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param workId            the work id
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the work id
      * @return the work dto
      * @throws Exception the exception
      */
@@ -481,7 +483,7 @@ public class TestControllerHelperService {
         var requestBuilder = put("/v1/work/{workId}/activity/{activityId}", workId, activityId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(updateActivityDTO));
+                .content(objectMapper.writeValueAsString(updateActivityDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -495,12 +497,12 @@ public class TestControllerHelperService {
     /**
      * Update an activity status
      *
-     * @param mockMvc                   the mock mvc
-     * @param resultMatcher             the result matcher
-     * @param userInfo                  the user info
-     * @param workId                    the work id
-     * @param activityId                the activity id
-     * @param updateActivityStatusDTO   the update activity status dto
+     * @param mockMvc                 the mock mvc
+     * @param resultMatcher           the result matcher
+     * @param userInfo                the user info
+     * @param workId                  the work id
+     * @param activityId              the activity id
+     * @param updateActivityStatusDTO the update activity status dto
      * @return the work dto
      * @throws Exception the exception
      */
@@ -515,7 +517,7 @@ public class TestControllerHelperService {
         var requestBuilder = put("/v1/work/{workId}/activity/{activityId}/status", workId, activityId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(updateActivityStatusDTO));
+                .content(objectMapper.writeValueAsString(updateActivityStatusDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -529,10 +531,10 @@ public class TestControllerHelperService {
     /**
      * Get the permitted status list for a specific status
      *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param status            the status
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param status        the status
      * @return the list of activity type subtypes
      * @throws Exception the exception
      */
@@ -542,7 +544,7 @@ public class TestControllerHelperService {
             Optional<String> userInfo,
             ActivityStatusDTO status
     ) throws Exception {
-        var requestBuilder = get("/v1/work/activity/status/{status}/permitted",status)
+        var requestBuilder = get("/v1/work/activity/status/{status}/permitted", status)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -557,12 +559,12 @@ public class TestControllerHelperService {
     /**
      * Review a work
      *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param workId            the work id
-     * @param activityId        the activity id
-     * @param reviewWorkDTO     the review work dto
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the work id
+     * @param activityId    the activity id
+     * @param reviewWorkDTO the review work dto
      * @return the work dto
      * @throws Exception the exception
      */
@@ -577,7 +579,7 @@ public class TestControllerHelperService {
         var requestBuilder = put("/v1/work/{workId}/review", workId, activityId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(reviewWorkDTO));
+                .content(objectMapper.writeValueAsString(reviewWorkDTO));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -621,13 +623,13 @@ public class TestControllerHelperService {
     /**
      * Search all the work
      *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param anchorID          the anchor id
-     * @param contextSize       the context size
-     * @param limit             the limit
-     * @param search            the search
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param anchorID      the anchor id
+     * @param contextSize   the context size
+     * @param limit         the limit
+     * @param search        the search
      * @return the list of work
      * @throws Exception the exception
      */
@@ -659,13 +661,13 @@ public class TestControllerHelperService {
     /**
      * Search all the activities
      *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param anchorID          the anchor id
-     * @param contextSize       the context size
-     * @param limit             the limit
-     * @param search            the search
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param anchorID      the anchor id
+     * @param contextSize   the context size
+     * @param limit         the limit
+     * @param search        the search
      * @return the list of activities
      * @throws Exception the exception
      */
@@ -767,7 +769,7 @@ public class TestControllerHelperService {
         if (result.getResolvedException() != null) {
             throw result.getResolvedException();
         }
-        return new ObjectMapper().readValue(result.getResponse().getContentAsString(), typeRef);
+        return objectMapper.readValue(result.getResponse().getContentAsString(), typeRef);
     }
 
 }
