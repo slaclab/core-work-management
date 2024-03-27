@@ -1,5 +1,7 @@
 package edu.stanford.slac.core_work_management.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.InitActivityType;
 import edu.stanford.slac.core_work_management.migration.InitWorkType;
@@ -21,6 +23,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -52,7 +55,8 @@ public class WorkServiceOnInitActivityTest {
     private String locationId;
     private List<ActivityType> allActivityTypes;
     private List<WorkType> allWorkType;
-
+    @Autowired
+    ObjectMapper objectMapper;
     @BeforeAll
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Location.class);
@@ -112,7 +116,7 @@ public class WorkServiceOnInitActivityTest {
     }
 
     @Test
-    public void testCreateSoftwareActivity() {
+    public void testCreateSoftwareActivity() throws JsonProcessingException {
         var testWorkTypeId = allWorkType.stream()
                 .filter(workType -> workType.getTitle().equals("sw maintenance"))
                 .findFirst()
@@ -145,6 +149,94 @@ public class WorkServiceOnInitActivityTest {
                         NewActivityDTO.builder()
                                 .title("Software")
                                 .description("Software")
+                                .activityTypeId(testActivityTypeId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
+                                .customFieldValues(customFieldValue)
+                                .build()
+                )
+        );
+
+        assertThat(testActivityId).isNotEmpty();
+    }
+
+    @Test
+    public void testCreateGeneralActivity() throws JsonProcessingException {
+        var testWorkTypeId = allWorkType.stream()
+                .filter(workType -> workType.getTitle().equals("sw maintenance"))
+                .findFirst()
+                .map(WorkType::getId)
+                .orElseThrow();
+        var testActivityTypeId = allActivityTypes.stream()
+                .filter(activityType -> activityType.getTitle().equals("General Task"))
+                .findFirst()
+                .map(ActivityType::getId)
+                .orElseThrow();
+        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
+
+        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
+
+        var testWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO.builder()
+                                .title("Software")
+                                .description("Software")
+                                .workTypeId(testWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+
+        var testActivityId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        testWorkId,
+                        NewActivityDTO.builder()
+                                .title("general task")
+                                .description("geenral task")
+                                .activityTypeId(testActivityTypeId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
+                                .customFieldValues(customFieldValue)
+                                .build()
+                )
+        );
+
+        assertThat(testActivityId).isNotEmpty();
+    }
+
+    @Test
+    public void testCreateHardwareActivity() throws JsonProcessingException {
+        var testWorkTypeId = allWorkType.stream()
+                .filter(workType -> workType.getTitle().equals("sw maintenance"))
+                .findFirst()
+                .map(WorkType::getId)
+                .orElseThrow();
+        var testActivityTypeId = allActivityTypes.stream()
+                .filter(activityType -> activityType.getTitle().equals("Hardware Task"))
+                .findFirst()
+                .map(ActivityType::getId)
+                .orElseThrow();
+        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
+
+        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
+
+        var testWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO.builder()
+                                .title("Software")
+                                .description("Software")
+                                .workTypeId(testWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+
+        var testActivityId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        testWorkId,
+                        NewActivityDTO.builder()
+                                .title("Hardware Task")
+                                .description("geenral task")
                                 .activityTypeId(testActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
                                 .customFieldValues(customFieldValue)
