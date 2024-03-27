@@ -327,6 +327,7 @@ public class LOVServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(workActivityIds.get(0))
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );

@@ -114,6 +114,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(wtId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -143,6 +144,7 @@ public class WorkWorkflowTest {
                                     .description("Update the documentation description")
                                     .workTypeId(wtId)
                                     .locationId(locationId)
+                                    .shopGroupId(shopGroupId)
                                     .build()
                     )
             );
@@ -182,6 +184,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(wtId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 ));
             }
@@ -229,6 +232,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(wtId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -292,6 +296,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -373,6 +378,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -499,6 +505,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -542,6 +549,7 @@ public class WorkWorkflowTest {
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
