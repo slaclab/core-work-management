@@ -242,7 +242,7 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
-    public String createNew(NewWorkDTO newWorkDTO) {
+    public String createNew(@Valid NewWorkDTO newWorkDTO) {
         // contain the set of all user that will become admin for this new work
         Long newWorkSequenceId = wrapCatch(
                 workRepository::getNextWorkId,
@@ -258,7 +258,7 @@ public class WorkService {
      * @return the id of the created work
      */
     @Transactional
-    public String createNew(Long workSequence, NewWorkDTO newWorkDTO) {
+    public String createNew(Long workSequence, @Valid NewWorkDTO newWorkDTO) {
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
                 workSequence,

@@ -26,6 +26,7 @@ public record ActivityTypeCustomFieldDTO(
         String label,
         @Schema(description = "The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.")
         String description,
+        @NotNull
         @Schema(description = "The type of the custom field.")
         ValueTypeDTO valueType,
         @Schema(description = "Specify is the value of the custom field is a list of values.")

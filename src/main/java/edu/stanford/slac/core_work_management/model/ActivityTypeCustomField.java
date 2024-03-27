@@ -28,7 +28,7 @@ public class ActivityTypeCustomField {
      */
     private String name;
     /**
-     * The human-readable label of the custom field. This field provides a human readable label for the custom field.
+     * The human-readable label of the custom field. This field provides a human-readable label for the custom field.
      */
     private String label;
     /**

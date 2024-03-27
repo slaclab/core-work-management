@@ -312,6 +312,7 @@ public class WorkServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -338,6 +339,7 @@ public class WorkServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -382,6 +384,7 @@ public class WorkServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -459,6 +462,7 @@ public class WorkServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -551,6 +555,7 @@ public class WorkServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
@@ -653,6 +658,7 @@ public class WorkServiceTest {
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
