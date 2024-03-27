@@ -21,7 +21,7 @@ public record WorkTypeDTO(
         @Schema(description = "The description of when can be used ths work type")
         @NotEmpty String description,
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
-        List<ActivityTypeCustomFieldDTO> customFields,
+        List<WATypeCustomFieldDTO> customFields,
         @Schema(description = "The date when the work type was created")
         LocalDateTime createdDate,
         @Schema(description = "The user that created the work type")

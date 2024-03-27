@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -106,9 +105,9 @@ public abstract class WorkMapper {
     abstract public ActivityTypeDTO toDTO(ActivityType activityType);
 
     @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
-    abstract public ActivityTypeCustomFieldDTO toDTO(ActivityTypeCustomField customField);
+    abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
 
-    public boolean checkIsLOV(ActivityTypeCustomField customField) {
+    public boolean checkIsLOV(WATypeCustomField customField) {
         if (customField.getLovFieldReference() == null) return false;
         return wrapCatch(
                 ()->lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
@@ -197,11 +196,11 @@ public abstract class WorkMapper {
 
     abstract public ActivityQueryParameter toModel(ActivityQueryParameterDTO activityQueryParameterDTO);
 
-    abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    abstract public WATypeCustomField toModel(WATypeCustomFieldDTO WATypeCustomFieldDTO);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "name", source = "name")
-    abstract public ActivityTypeCustomField toModel(String id, String name, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    abstract public WATypeCustomField toModel(String id, String name, WATypeCustomFieldDTO WATypeCustomFieldDTO);
 
 
     /**
@@ -233,7 +232,7 @@ public abstract class WorkMapper {
                         .name(
                                 activityTypeRepository
                                         .findCustomFiledById(activityTypeId, customAttribute.getId())
-                                        .map(ActivityTypeCustomField::getName)
+                                        .map(WATypeCustomField::getName)
                                         .orElseThrow(
                                                 () -> ActivityTypeCustomAttributeNotFound.notFoundById()
                                                         .id(customAttribute.getId())
@@ -286,18 +285,18 @@ public abstract class WorkMapper {
     }
 
     /**
-     * Convert the {@link ActivityTypeCustomFieldDTO} to a {@link ActivityTypeCustomField}
+     * Convert the {@link WATypeCustomFieldDTO} to a {@link WATypeCustomField}
      *
      * @param customFieldsDTO the lists of the new custom fields
      * @param customFields    the list of the old custom fields
      * @return the converted entity
      */
-    public List<ActivityTypeCustomField> updateModelCustomActivityTypeField(List<ActivityTypeCustomFieldDTO> customFieldsDTO, List<ActivityTypeCustomField> customFields) {
-        List<ActivityTypeCustomField> updatedCustomAttributesList = new ArrayList<>();
+    public List<WATypeCustomField> updateModelCustomActivityTypeField(List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
+        List<WATypeCustomField> updatedCustomAttributesList = new ArrayList<>();
         customFieldsDTO.forEach(
                 customFieldDTO -> {
                     // try to find the custom field in the old list
-                    Optional<ActivityTypeCustomField> customField = Objects.requireNonNullElse(customFields, Collections.<ActivityTypeCustomField>emptyList()).stream()
+                    Optional<WATypeCustomField> customField = Objects.requireNonNullElse(customFields, Collections.<WATypeCustomField>emptyList()).stream()
                             .filter(
                                     customField1 -> customField1.getId().equals(customFieldDTO.id())
                             ).findFirst();

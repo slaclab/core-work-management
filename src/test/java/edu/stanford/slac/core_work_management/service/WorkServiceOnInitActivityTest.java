@@ -23,7 +23,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -249,12 +248,12 @@ public class WorkServiceOnInitActivityTest {
 
     /**
      * Generate random custom field values
-     * @param activityTypeCustomFieldDTOS list of custom fields
+     * @param WATypeCustomFieldDTOS list of custom fields
      * @return custom field values
      */
-    private List<WriteCustomFieldDTO> generateRandomCustomFieldValues(List<ActivityTypeCustomFieldDTO> activityTypeCustomFieldDTOS) {
+    private List<WriteCustomFieldDTO> generateRandomCustomFieldValues(List<WATypeCustomFieldDTO> WATypeCustomFieldDTOS) {
         List<WriteCustomFieldDTO> results = new java.util.ArrayList<>();
-        activityTypeCustomFieldDTOS.forEach(
+        WATypeCustomFieldDTOS.forEach(
                 activityTypeCustomFieldDTO -> {
                     switch(activityTypeCustomFieldDTO.valueType()) {
                         case String -> results.add(

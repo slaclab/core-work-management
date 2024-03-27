@@ -19,7 +19,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -84,7 +83,7 @@ public class WorkService {
      */
     public String ensureActivityType(@Valid NewActivityTypeDTO newActivityTypeDTO) {
         // set the id of the custom attributes
-        List<ActivityTypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
+        List<WATypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
         newActivityTypeDTO.customFields().forEach(
                 (customField) -> {
                     var tmpName = customField.name();
@@ -635,7 +634,7 @@ public class WorkService {
      * @param customFields      the custom field available by the ActivityType
      * @param customFieldValues the custom field value submitted to save the activity
      */
-    private void validateCustomField(List<ActivityTypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
+    private void validateCustomField(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
         // check duplicated id
         assertion(
                 ControllerLogicException.builder()
@@ -690,8 +689,8 @@ public class WorkService {
                         .build(),
                 () -> customFields
                         .stream()
-                        .filter(ActivityTypeCustomField::getIsMandatory)
-                        .map(ActivityTypeCustomField::getId)
+                        .filter(WATypeCustomField::getIsMandatory)
+                        .map(WATypeCustomField::getId)
                         .allMatch(
                                 s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
                         )

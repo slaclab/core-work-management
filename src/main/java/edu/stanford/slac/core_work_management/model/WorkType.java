@@ -37,7 +37,7 @@ public class WorkType {
      * The custom fields are used to store additional information about the activity.
      */
     @Builder.Default
-    private List<ActivityTypeCustomField> customFields = new ArrayList<>();
+    private List<WATypeCustomField> customFields = new ArrayList<>();
     /**
      * The creation date of the activity type.
      */
