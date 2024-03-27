@@ -20,6 +20,9 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
@@ -27,8 +30,11 @@ import lombok.Builder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the custom attribute for the activity")
 public record WriteCustomFieldDTO(
+        @NotEmpty
         @Schema(description = "The id that identify the custom attribute")
         String id,
+        @Valid
+        @NotNull
         @Schema(description = "The value of the custom attribute")
         ValueDTO value
 ) {

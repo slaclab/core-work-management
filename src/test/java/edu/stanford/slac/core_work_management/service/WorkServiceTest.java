@@ -438,6 +438,98 @@ public class WorkServiceTest {
     }
 
     @Test
+    public void createNewActivityFailOnWorkCustomFieldInfo() {
+        //create work type
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        // create work plan
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotEmpty();
+        // create new activity type for work type
+        String newActivityTypeId = assertDoesNotThrow(
+                () -> workService.ensureActivityType(
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .customFields(
+                                        List.of(
+                                                ActivityTypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field1")
+                                                        .description("custom field1 description")
+                                                        .valueType(ValueTypeDTO.String)
+                                                        .isMandatory(true)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId).isNotEmpty();
+
+        var activityType = assertDoesNotThrow(
+                () -> workService.findActivityTypeById(newActivityTypeId)
+        );
+        assertThat(activityType).isNotNull();
+        assertThat(activityType.customFields()).isNotNull().hasSize(1);
+
+        // create new activity fails with not type defined
+        ConstraintViolationException newActivityFailNotCustomFieldType = assertThrows(
+                ConstraintViolationException.class,
+                () -> workService.createNew(
+                        newWorkId,
+                        NewActivityDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .activityTypeId(newActivityTypeId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .customFieldValues(
+                                        List.of(
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(activityType.customFields().getFirst().id())
+                                                        .value(
+                                                                ValueDTO
+                                                                        .builder()
+//                                                                        .type(ValueTypeDTO.String)
+//                                                                        .value("custom field1 value")
+                                                                        .build()
+                                                        )
+                                                        .build()
+
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newActivityFailNotCustomFieldType).isNotNull();
+        assertThat(newActivityFailNotCustomFieldType.getConstraintViolations())
+                .isNotNull()
+                .hasSize(2);
+
+    }
+
+    @Test
     public void createNewActivityWithCustomAttributesOK() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
