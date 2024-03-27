@@ -138,14 +138,14 @@ public class WorkServiceTest {
                                 .description("Activity 1 description updated")
                                 .customFields(
                                         List.of(
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field1")
                                                         .description("custom field1 description")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isMandatory(true)
                                                         .build(),
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field2")
                                                         .description("custom field2 description")
@@ -203,7 +203,7 @@ public class WorkServiceTest {
                                                         .isLov(true)
                                                         .isMandatory(true)
                                                         .build(),
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field3")
                                                         .description("custom field3 description")
@@ -258,7 +258,7 @@ public class WorkServiceTest {
                                                         .isLov(false)
                                                         .isMandatory(false)
                                                         .build(),
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field3")
                                                         .description("custom field3 description")
@@ -476,7 +476,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .customFields(
                                         List.of(
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field1")
                                                         .description("custom field1 description")
@@ -569,7 +569,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .customFields(
                                         List.of(
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field1")
                                                         .description("custom field1 description")
@@ -672,7 +672,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .customFields(
                                         List.of(
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .name("custom field1")
                                                         .description("custom field1 description")
@@ -680,7 +680,7 @@ public class WorkServiceTest {
                                                         .isLov(true)
                                                         .isMandatory(true)
                                                         .build(),
-                                                ActivityTypeCustomFieldDTO
+                                                WATypeCustomFieldDTO
                                                         .builder()
                                                         .name("custom field2")
                                                         .description("custom field2 description")

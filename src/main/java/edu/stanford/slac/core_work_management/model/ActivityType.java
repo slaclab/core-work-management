@@ -9,7 +9,6 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * ActivityType model
@@ -37,7 +36,7 @@ public class ActivityType {
      * The custom fields are used to store additional information about the activity.
      */
     @Builder.Default
-    private List<ActivityTypeCustomField> customFields = new ArrayList<>();
+    private List<WATypeCustomField> customFields = new ArrayList<>();
     @CreatedDate
     private LocalDateTime createdDate;
     @CreatedBy

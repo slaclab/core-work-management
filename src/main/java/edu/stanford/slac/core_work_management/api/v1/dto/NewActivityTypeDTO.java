@@ -22,7 +22,7 @@ public record NewActivityTypeDTO(
         @Schema(description = "The description of the activity type")
         String description,
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
-        List<ActivityTypeCustomFieldDTO> customFields
+        List<WATypeCustomFieldDTO> customFields
 ){
         public NewActivityTypeDTO {
                 if(customFields == null){

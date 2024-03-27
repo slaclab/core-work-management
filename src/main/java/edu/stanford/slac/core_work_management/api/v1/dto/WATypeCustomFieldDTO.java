@@ -2,21 +2,16 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import edu.stanford.slac.core_work_management.model.value.ValueType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.Id;
 
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Describe the custom field associated with the activity type. The custom fields are used to store additional information about the activity.")
-public record ActivityTypeCustomFieldDTO(
+public record WATypeCustomFieldDTO(
         @Schema(description = "The unique identifier for the custom field.")
         String id,
         @Schema(description = "The user friendly label of the custom field. This field provides a user friendly naming for the custom field.")

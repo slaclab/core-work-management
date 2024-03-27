@@ -78,9 +78,9 @@ public class LOVControllerTest {
                                 .description("Activity 1 description")
                                 .customFields(
                                         ImmutableList.of(
-                                                ActivityTypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                                ActivityTypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build(),
-                                                ActivityTypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).isLov(false).build()
+                                                WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
+                                                WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build(),
+                                                WATypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).isLov(false).build()
                                         )
                                 )
                                 .build()
@@ -301,10 +301,10 @@ public class LOVControllerTest {
         assertThat(activityType.getPayload())
                 .hasSize(1);
         assertThat(activityType.getPayload().get(0).customFields())
-                .extracting(ActivityTypeCustomFieldDTO::name)
+                .extracting(WATypeCustomFieldDTO::name)
                 .contains("field1","field2","fieldWithSpace");
         assertThat(activityType.getPayload().get(0).customFields())
-                .extracting(ActivityTypeCustomFieldDTO::isLov)
+                .extracting(WATypeCustomFieldDTO::isLov)
                 .contains(false, false, true);
     }
 }
