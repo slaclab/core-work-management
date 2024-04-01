@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface ActivityTypeRepositoryCustom {
     String ensureActivityType(ActivityType activityType);
 
-    Optional<WATypeCustomField> findCustomFiledById(String activityTypeId, String customFieldId);
+    Optional<WATypeCustomField> findCustomFieldById(String activityTypeId, String customFieldId);
 }

@@ -107,7 +107,7 @@ public class InitWorkType {
     public void manageGeneralIssue() {
         var newGeneralIssueId = workService.createNew(
                 NewWorkTypeDTO.builder()
-                        .title("Hardware Issues")
+                        .title("General Issues")
                         .description("An issue with currently installed accelerator hardware")
                         .customFields(
                                 List.of(
@@ -122,7 +122,7 @@ public class InitWorkType {
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
-                                                .label("Customer priority")
+                                                .label("Customer Priority")
                                                 .description("The customer priority of the issue")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
@@ -205,7 +205,7 @@ public class InitWorkType {
     public void manageHardwareIssues() {
         var newHardwareIssueId = workService.createNew(
                 NewWorkTypeDTO.builder()
-                        .title("General Issues")
+                        .title("Hardware Issues")
                         .description("An issue with currently installed accelerator hardware")
                         .customFields(
                                 List.of(
@@ -235,7 +235,7 @@ public class InitWorkType {
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
-                                                .label("Date Due Next:")
+                                                .label("Date Due Next")
                                                 .description("???")
                                                 .valueType(ValueTypeDTO.Date)
                                                 .build(),

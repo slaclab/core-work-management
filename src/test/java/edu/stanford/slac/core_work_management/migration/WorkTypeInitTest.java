@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.migration;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.WATypeCustomFieldDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
@@ -54,9 +55,43 @@ public class WorkTypeInitTest {
         assertThat(allWorkType)
                 .isNotEmpty()
                 .extracting(WorkTypeDTO::title).containsExactly(
-                        "General Issues",
+                        "Hardware Issues",
                         "Software Issues",
-                        "Hardware Issues"
+                        "General Issues"
                 );
+        assertThat(allWorkType.getFirst().customFields())
+                .isNotEmpty()
+                .extracting(WATypeCustomFieldDTO::label)
+                .containsExactlyInAnyOrder(
+                        "Urgency",
+                        "Micro",
+                        "Primary",
+                        "Unit",
+                        "Pv Name",
+                        "Date Due Next",
+                        "CEF Request Submitted",
+                        "CEF Tracking No",
+                        "Facility"
+                );
+        assertThat(allWorkType.get(1).customFields())
+                .isNotEmpty()
+                .extracting(WATypeCustomFieldDTO::label)
+                .containsExactlyInAnyOrder(
+                        "Urgency",
+                        "Facility",
+                        "Display",
+                        "Terminal Type",
+                        "Reproductible"
+                );
+        assertThat(allWorkType.get(2).customFields())
+                .isNotEmpty()
+                .extracting(WATypeCustomFieldDTO::label)
+                .containsExactlyInAnyOrder(
+                        "CEF Request Submitted",
+                        "CEF Tracking No",
+                        "Customer Priority",
+                        "Customer Need By Date"
+                );
+
     }
 }

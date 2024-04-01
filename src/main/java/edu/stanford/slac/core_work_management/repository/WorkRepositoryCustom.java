@@ -17,10 +17,12 @@
 
 package edu.stanford.slac.core_work_management.repository;
 
+import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WorkRepositoryCustom {
 
@@ -41,4 +43,5 @@ public interface WorkRepositoryCustom {
     Long getNextActivityNumber(String id);
 
     Long getNextWorkId();
+
 }

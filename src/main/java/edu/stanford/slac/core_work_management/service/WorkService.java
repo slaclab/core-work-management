@@ -8,6 +8,7 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
+import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
@@ -102,6 +103,27 @@ public class WorkService {
                 () -> workTypeRepository.save(toSave),
                 -1
         ).getId();
+    }
+
+    /**
+     * Return the work type  by his id
+     *
+     * @param id the id of the activity type
+     * @return the activity type
+     */
+    public WorkTypeDTO findWorkTypeById(String id) {
+        return wrapCatch(
+                () -> workTypeRepository.findById(
+                        id
+                ),
+                -1
+        ).map(workMapper::toDTO).orElseThrow(
+                () -> WorkTypeNotFound
+                        .notFoundById()
+                        .errorCode(-2)
+                        .workId(id)
+                        .build()
+        );
     }
 
     /**

@@ -70,7 +70,7 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
     }
 
     @Override
-    public Optional<WATypeCustomField> findCustomFiledById(String activityTypeId, String customFieldId) {
+    public Optional<WATypeCustomField> findCustomFieldById(String activityTypeId, String customFieldId) {
         // Query to find the specific ActivityType
         Query query = new Query(
                 Criteria.where("_id").is(activityTypeId).and("customFields.id").is(customFieldId)
