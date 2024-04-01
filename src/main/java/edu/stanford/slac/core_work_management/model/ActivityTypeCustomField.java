@@ -39,7 +39,6 @@ public class ActivityTypeCustomField {
      * The type of the custom field.
      */
     private ValueType valueType;
-
     /**
      * Specify is the custom field is mandatory.
      */

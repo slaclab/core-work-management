@@ -19,6 +19,8 @@ package edu.stanford.slac.core_work_management.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.ValueDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
+import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 
+import static com.google.common.collect.ImmutableList.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -43,10 +46,35 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 public class DateSerializationTest {
     @Autowired
     ObjectMapper  objectMapper;
+    @Autowired
+    WorkMapper workMapper;
     @Test
     public void dateDeserialization() {
-        ValueDTO test = assertDoesNotThrow(()-> objectMapper.readValue("{\"type\": \"Date\", \"value\": \"2024-03-28T14:00:00.000Z\"}", ValueDTO.class));
+        WriteCustomFieldDTO test = assertDoesNotThrow(()-> objectMapper.readValue("{\"id\":\"id-found\",\"value\":{\"type\": \"Date\", \"value\": \"2024-03-28T14:00:00.000Z\"}}", WriteCustomFieldDTO.class));
+        var modelList = assertDoesNotThrow(
+                ()-> workMapper.toCustomFieldValues(of(test))
+        );
+        assertThat(modelList).isNotEmpty();
     }
+
+    @Test
+    public void date2Deserialization() {
+        WriteCustomFieldDTO test = assertDoesNotThrow(()-> objectMapper.readValue("{\"id\":\"id-found\",\"value\":{\"type\": \"Date\", \"value\": \"2024-03-28\"}}", WriteCustomFieldDTO.class));
+        var modelList = assertDoesNotThrow(
+                ()-> workMapper.toCustomFieldValues(of(test))
+        );
+        assertThat(modelList).isNotEmpty();
+    }
+
+    @Test
+    public void dateTimeDeserialization() {
+        WriteCustomFieldDTO test = assertDoesNotThrow(()-> objectMapper.readValue("{\"id\":\"id-found\",\"value\":{\"type\": \"DateTime\", \"value\": \"2024-03-28T14:00:00.000Z\"}}", WriteCustomFieldDTO.class));
+        var modelList = assertDoesNotThrow(
+                ()-> workMapper.toCustomFieldValues(of(test))
+        );
+        assertThat(modelList).isNotEmpty();
+    }
+
     @Test
     public void dateSerialization() {
         var date = LocalDateTime.now();
