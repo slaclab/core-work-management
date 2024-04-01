@@ -5,20 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * ActivityType model
+ * MOdel for the custom field used by work and activity types.
  *
  */
 @Data
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ActivityTypeCustomField {
+public class WATypeCustomField {
     /**
      * The unique identifier for the custom field.
      */

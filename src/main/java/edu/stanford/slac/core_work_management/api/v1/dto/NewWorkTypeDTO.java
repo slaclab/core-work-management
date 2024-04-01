@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Define the information for create new work plan
  */
@@ -19,5 +22,13 @@ public record NewWorkTypeDTO (
         String title,
         @NotEmpty(message = "The description of the work type cannot be empty")
         @Schema(description = "The description of the work type")
-        String description
-){}
+        String description,
+        @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
+        List<WATypeCustomFieldDTO> customFields
+){
+        public NewWorkTypeDTO {
+                if(customFields == null){
+                        customFields = new ArrayList<>();
+                }
+        }
+}

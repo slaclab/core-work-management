@@ -3,8 +3,7 @@ package edu.stanford.slac.core_work_management.repository;
 import com.mongodb.DuplicateKeyException;
 import edu.stanford.slac.core_work_management.config.SecurityAuditorAware;
 import edu.stanford.slac.core_work_management.model.ActivityType;
-import edu.stanford.slac.core_work_management.model.ActivityTypeCustomField;
-import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -71,7 +70,7 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
     }
 
     @Override
-    public Optional<ActivityTypeCustomField> findCustomFiledById(String activityTypeId, String customFieldId) {
+    public Optional<WATypeCustomField> findCustomFieldById(String activityTypeId, String customFieldId) {
         // Query to find the specific ActivityType
         Query query = new Query(
                 Criteria.where("_id").is(activityTypeId).and("customFields.id").is(customFieldId)

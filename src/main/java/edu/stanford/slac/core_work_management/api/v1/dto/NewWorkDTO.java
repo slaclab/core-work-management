@@ -3,9 +3,11 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 
+import java.util.Collections;
 import java.util.List;
 
 @Builder(toBuilder = true)
@@ -36,5 +38,14 @@ public record NewWorkDTO (
         String locationId,
         @NotEmpty(message = "Shop group is mandatory is required")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
-        String shopGroupId
-){}
+        String shopGroupId,
+        @Valid
+        @Schema(description = "The values of the custom attributes for the work")
+        List<WriteCustomFieldDTO> customFieldValues
+){
+        public NewWorkDTO {
+                if (customFieldValues == null) {
+                        customFieldValues = Collections.emptyList();
+                }
+        }
+}

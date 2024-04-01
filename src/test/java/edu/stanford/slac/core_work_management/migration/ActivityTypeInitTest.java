@@ -1,11 +1,9 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.model.ActivityType;
-import edu.stanford.slac.core_work_management.model.ActivityTypeCustomField;
+import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
-import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,8 +46,8 @@ public class ActivityTypeInitTest {
 
     @Test
     public void initTest() {
-        InitActivityType initWorkType = new InitActivityType(lovService, workService, activityTypeRepository);
-        assertDoesNotThrow(initWorkType::changeSet);
+        InitActivityType initActivityType = new InitActivityType(lovService, workService, activityTypeRepository);
+        assertDoesNotThrow(initActivityType::changeSet);
         var allActivityType = assertDoesNotThrow(
                 () -> activityTypeRepository.findAll()
         );
@@ -63,7 +61,7 @@ public class ActivityTypeInitTest {
         // checks general activity custom fields
         assertThat(allActivityType.getFirst().getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getLabel)
+                .extracting(WATypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
                         "Task Priority",
                         "Task Skill Set",
@@ -79,7 +77,7 @@ public class ActivityTypeInitTest {
         // checks software activity custom fields
         assertThat(allActivityType.get(1).getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getLabel)
+                .extracting(WATypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
                         "Scheduling Priority",
                         "Time Comments",
@@ -100,7 +98,7 @@ public class ActivityTypeInitTest {
 // check hardware activity custom fields
         assertThat(allActivityType.get(2).getCustomFields())
                 .isNotEmpty()
-                .extracting(ActivityTypeCustomField::getLabel)
+                .extracting(WATypeCustomField::getLabel)
                 .containsExactlyInAnyOrder(
                         "Scheduling Priority",
                         "Access Requirements",

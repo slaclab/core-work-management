@@ -27,6 +27,7 @@ import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.LOVElementRepository;
+import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -48,6 +49,7 @@ import static java.util.Map.*;
 @AllArgsConstructor
 public class LOVService {
     private final LOVMapper lovMapper;
+    private final WorkTypeRepository workTypeRepository;
     private final ActivityTypeRepository activityTypeRepository;
     private final LOVElementRepository lovElementRepository;
 
@@ -239,14 +241,19 @@ public class LOVService {
      */
     public HashMap<String, String> getLOVFieldReference(LOVDomainTypeDTO lovDomainDTO, String subtypeId) {
         return switch (lovDomainDTO) {
-            case LOVDomainTypeDTO.Work -> Arrays.stream(Work.class.getDeclaredFields())
-                    .filter(field -> field.isAnnotationPresent(LOVField.class))
-                    .collect(Collectors.toMap(
-                            Field::getName,
-                            field -> field.getAnnotation(LOVField.class).fieldReference(),
-                            (existing, replacement) -> existing,
-                            HashMap::new
-                    ));
+            case LOVDomainTypeDTO.Work ->
+            {
+                var resultHash = Arrays.stream(Work.class.getDeclaredFields())
+                        .filter(field -> field.isAnnotationPresent(LOVField.class))
+                        .collect(Collectors.toMap(
+                                Field::getName,
+                                field -> field.getAnnotation(LOVField.class).fieldReference(),
+                                (existing, replacement) -> existing,
+                                HashMap::new
+                        ));
+                resultHash.putAll(getLOVFieldReferenceFromWorkType(subtypeId));
+                yield resultHash;
+            }
             case LOVDomainTypeDTO.Activity -> {
                 var resultHash = Arrays.stream(Activity.class.getDeclaredFields())
                         .filter(field -> field.isAnnotationPresent(LOVField.class))
@@ -260,6 +267,41 @@ public class LOVService {
                 yield resultHash;
             }
         };
+    }
+
+    private Map<String, String> getLOVFieldReferenceFromWorkType(String workTypeId) {
+        HashMap<String, String> result = new HashMap<>();
+        if (workTypeId == null)
+            workTypeRepository.findAll().forEach(
+                    activityType -> {
+                        if (activityType.getCustomFields() != null) {
+                            activityType.getCustomFields().forEach(
+                                    customField -> {
+                                        if (customField.getLovFieldReference() != null) {
+                                            result.put(customField.getName(), customField.getLovFieldReference());
+                                        }
+                                    }
+                            );
+                        }
+                    }
+            );
+        else
+            workTypeRepository
+                    .findById(workTypeId)
+                    .ifPresent(
+                            activityType -> {
+                                if (activityType.getCustomFields() != null) {
+                                    activityType.getCustomFields().forEach(
+                                            customField -> {
+                                                if (customField.getLovFieldReference() != null) {
+                                                    result.put(customField.getName(), customField.getLovFieldReference());
+                                                }
+                                            }
+                                    );
+                                }
+                            }
+                    );
+        return result;
     }
 
     /**

@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,5 +19,16 @@ public record WorkTypeDTO(
         @Schema(description = "The title of the work type")
         @NotEmpty String title,
         @Schema(description = "The description of when can be used ths work type")
-        @NotEmpty String description
-) {}
+        @NotEmpty String description,
+        @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
+        List<WATypeCustomFieldDTO> customFields,
+        @Schema(description = "The date when the work type was created")
+        LocalDateTime createdDate,
+        @Schema(description = "The user that created the work type")
+        String createdBy,
+        @Schema(description = "The date when the work type was last modified")
+        LocalDateTime lastModifiedDate,
+        @Schema(description = "The user that last modified the work type")
+        String lastModifiedBy
+) {
+}

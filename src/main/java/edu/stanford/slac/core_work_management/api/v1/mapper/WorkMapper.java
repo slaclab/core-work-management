@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeCustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
+import edu.stanford.slac.core_work_management.exception.WorkTypeCustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
@@ -21,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -79,6 +79,7 @@ public abstract class WorkMapper {
      * @param newWorkDTO the DTO to convert
      * @return the converted entity
      */
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValues(newWorkDTO.customFieldValues()))")
     abstract public Work toModel(Long workNumber, NewWorkDTO newWorkDTO);
 
     /**
@@ -106,9 +107,9 @@ public abstract class WorkMapper {
     abstract public ActivityTypeDTO toDTO(ActivityType activityType);
 
     @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
-    abstract public ActivityTypeCustomFieldDTO toDTO(ActivityTypeCustomField customField);
+    abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
 
-    public boolean checkIsLOV(ActivityTypeCustomField customField) {
+    public boolean checkIsLOV(WATypeCustomField customField) {
         if (customField.getLovFieldReference() == null) return false;
         return wrapCatch(
                 ()->lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
@@ -169,6 +170,7 @@ public abstract class WorkMapper {
     @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getShopGroupId()))")
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
     @Mapping(target = "accessList", expression = "java(getAuthorizationByWork(work))")
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
     abstract public WorkDTO toDTO(Work work);
 
     /**
@@ -179,7 +181,7 @@ public abstract class WorkMapper {
      */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
-    @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTO(activity.getActivityTypeId(), activity.getCustomFields()))")
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForActivity(activity.getActivityTypeId(), activity.getCustomFields()))")
 //    @Mapping(target = "schedulingProperty", expression = "java(toLOVValueDTO(activity.getSchedulingProperty()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
@@ -197,11 +199,11 @@ public abstract class WorkMapper {
 
     abstract public ActivityQueryParameter toModel(ActivityQueryParameterDTO activityQueryParameterDTO);
 
-    abstract public ActivityTypeCustomField toModel(ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    abstract public WATypeCustomField toModel(WATypeCustomFieldDTO WATypeCustomFieldDTO);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "name", source = "name")
-    abstract public ActivityTypeCustomField toModel(String id, String name, ActivityTypeCustomFieldDTO activityTypeCustomFieldDTO);
+    abstract public WATypeCustomField toModel(String id, String name, WATypeCustomFieldDTO WATypeCustomFieldDTO);
 
 
     /**
@@ -220,20 +222,49 @@ public abstract class WorkMapper {
     }
 
     /**
+     * Convert the {@link WriteCustomFieldDTO} to a {@link CustomField}
+     *
+     * @param customAttributesValues the list of the custom attributes
+     * @return the converted entity
+     */
+    public List<CustomFieldDTO> toCustomFieldValuesDTOForWork(String workTypeId, List<CustomField> customAttributesValues) {
+        return customAttributesValues.stream().map(
+                customAttribute -> CustomFieldDTO.builder()
+                        .id(customAttribute.getId())
+                        .name(
+                                workTypeRepository
+                                        .findCustomFieldById(workTypeId, customAttribute.getId())
+                                        .map(WATypeCustomField::getName)
+                                        .orElseThrow(
+                                                () -> WorkTypeCustomAttributeNotFound.notFoundById()
+                                                        .id(customAttribute.getId())
+                                                        .build()
+                                        )
+                        )
+                        .value(
+                                toValueDTO(
+                                        tryToLOV(customAttribute.getValue())
+                                )
+                        )
+                        .build()
+        ).toList();
+    }
+
+    /**
      * Convert the {@link CustomField} to a {@link CustomFieldDTO}
      *
      * @param activityTypeId         the activity id
      * @param customAttributesValues the list of custom attribute
      * @return the list of the {@link CustomFieldDTO}
      */
-    public List<CustomFieldDTO> toCustomFieldValuesDTO(String activityTypeId, List<CustomField> customAttributesValues) {
+    public List<CustomFieldDTO> toCustomFieldValuesDTOForActivity(String activityTypeId, List<CustomField> customAttributesValues) {
         return customAttributesValues.stream().map(
                 customAttribute -> CustomFieldDTO.builder()
                         .id(customAttribute.getId())
                         .name(
                                 activityTypeRepository
-                                        .findCustomFiledById(activityTypeId, customAttribute.getId())
-                                        .map(ActivityTypeCustomField::getName)
+                                        .findCustomFieldById(activityTypeId, customAttribute.getId())
+                                        .map(WATypeCustomField::getName)
                                         .orElseThrow(
                                                 () -> ActivityTypeCustomAttributeNotFound.notFoundById()
                                                         .id(customAttribute.getId())
@@ -286,18 +317,18 @@ public abstract class WorkMapper {
     }
 
     /**
-     * Convert the {@link ActivityTypeCustomFieldDTO} to a {@link ActivityTypeCustomField}
+     * Convert the {@link WATypeCustomFieldDTO} to a {@link WATypeCustomField}
      *
      * @param customFieldsDTO the lists of the new custom fields
      * @param customFields    the list of the old custom fields
      * @return the converted entity
      */
-    public List<ActivityTypeCustomField> updateModelCustomActivityTypeField(List<ActivityTypeCustomFieldDTO> customFieldsDTO, List<ActivityTypeCustomField> customFields) {
-        List<ActivityTypeCustomField> updatedCustomAttributesList = new ArrayList<>();
+    public List<WATypeCustomField> updateModelCustomActivityTypeField(List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
+        List<WATypeCustomField> updatedCustomAttributesList = new ArrayList<>();
         customFieldsDTO.forEach(
                 customFieldDTO -> {
                     // try to find the custom field in the old list
-                    Optional<ActivityTypeCustomField> customField = Objects.requireNonNullElse(customFields, Collections.<ActivityTypeCustomField>emptyList()).stream()
+                    Optional<WATypeCustomField> customField = Objects.requireNonNullElse(customFields, Collections.<WATypeCustomField>emptyList()).stream()
                             .filter(
                                     customField1 -> customField1.getId().equals(customFieldDTO.id())
                             ).findFirst();
@@ -607,6 +638,46 @@ public abstract class WorkMapper {
     @AfterMapping
     protected void afterMapping(@MappingTarget final ActivityDTO.ActivityDTOBuilder target, Activity source) {
         var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Activity, source.getActivityTypeId()).keySet();
+        var targetFields = target.getClass().getDeclaredFields();
+        var sourceFields = source.getClass().getDeclaredFields();
+        listOfReferenced.forEach(
+                field -> {
+                    var staticTargetField = Arrays.stream(targetFields).filter(
+                            tField -> tField.getName().equals(field)
+                    ).findFirst();
+                    if (staticTargetField.isPresent()) {
+                        var field1 = staticTargetField.get();
+                        // the model contains the id of the lov not the real value
+                        var staticDynamicField = Arrays.stream(sourceFields).filter(
+                                sourceField -> sourceField.getName().equals(field)
+                        ).findFirst();
+
+                        staticDynamicField.ifPresent(
+                                field2 -> {
+                                    try {
+                                        field2.setAccessible(true);
+                                        if (field2.get(source) == null) return;
+                                        String idValue = field2.get(source).toString();
+                                        field1.setAccessible(true);
+                                        field1.set(target,
+                                                LOVValueDTO.builder()
+                                                        .id(idValue)
+                                                        .value(lovService.findLovValueById(idValue))
+                                                        .build()
+                                        );
+                                    } catch (IllegalAccessException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                        );
+                    }
+                }
+        );
+    }
+
+    @AfterMapping
+    protected void afterMapping(@MappingTarget final WorkDTO.WorkDTOBuilder target, Work source) {
+        var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Work, source.getWorkTypeId()).keySet();
         var targetFields = target.getClass().getDeclaredFields();
         var sourceFields = source.getClass().getDeclaredFields();
         listOfReferenced.forEach(

@@ -10,6 +10,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.core_work_management.model.WorkLocation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -42,6 +43,8 @@ public record WorkDTO(
         LocationDTO location,
         @Schema(description = "The shop group that perform the work in the location")
         ShopGroupDTO shopGroup,
+        @Schema(description="The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
+        List<CustomFieldDTO> customFields,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

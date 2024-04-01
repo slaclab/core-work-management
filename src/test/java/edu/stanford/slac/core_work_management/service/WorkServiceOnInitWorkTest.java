@@ -24,6 +24,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -35,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class WorkServiceOnInitActivityTest {
+public class WorkServiceOnInitWorkTest {
     @Autowired
     WorkService workService;
     @Autowired
@@ -111,139 +112,69 @@ public class WorkServiceOnInitActivityTest {
     @BeforeEach
     public void clean() {
         mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
     }
 
     @Test
-    public void testCreateSoftwareActivity() throws JsonProcessingException {
+    public void testCreateSoftwareIssues() {
         var testWorkTypeId = allWorkType.stream()
                 .filter(workType -> workType.getTitle().equals("Software Issues"))
                 .findFirst()
                 .map(WorkType::getId)
                 .orElseThrow();
-        var testActivityTypeId = allActivityTypes.stream()
-                .filter(activityType -> activityType.getTitle().equals("Software Task"))
-                .findFirst()
-                .map(ActivityType::getId)
-                .orElseThrow();
-        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
-
-        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
-
-        var testWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .workTypeId(testWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .build()
-                )
-        );
-
-        var testActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        testWorkId,
-                        NewActivityDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .activityTypeId(testActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
-                                .customFieldValues(customFieldValue)
-                                .build()
-                )
-        );
-
-        assertThat(testActivityId).isNotEmpty();
+        testCreateWork(testWorkTypeId);
     }
 
     @Test
-    public void testCreateGeneralActivity() throws JsonProcessingException {
+    public void testCreateHardwareIssues() {
         var testWorkTypeId = allWorkType.stream()
-                .filter(workType -> workType.getTitle().equals("Software Issues"))
+                .filter(workType -> workType.getTitle().equals("Hardware Issues"))
                 .findFirst()
                 .map(WorkType::getId)
                 .orElseThrow();
-        var testActivityTypeId = allActivityTypes.stream()
-                .filter(activityType -> activityType.getTitle().equals("General Task"))
-                .findFirst()
-                .map(ActivityType::getId)
-                .orElseThrow();
-        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
-
-        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
-
-        var testWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .workTypeId(testWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .build()
-                )
-        );
-
-        var testActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        testWorkId,
-                        NewActivityDTO.builder()
-                                .title("general task")
-                                .description("geenral task")
-                                .activityTypeId(testActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
-                                .customFieldValues(customFieldValue)
-                                .build()
-                )
-        );
-
-        assertThat(testActivityId).isNotEmpty();
+        testCreateWork(testWorkTypeId);
     }
 
     @Test
-    public void testCreateHardwareActivity() throws JsonProcessingException {
+    public void testCreateGeneralIssues() {
         var testWorkTypeId = allWorkType.stream()
-                .filter(workType -> workType.getTitle().equals("Software Issues"))
+                .filter(workType -> workType.getTitle().equals("General Issues"))
                 .findFirst()
                 .map(WorkType::getId)
                 .orElseThrow();
-        var testActivityTypeId = allActivityTypes.stream()
-                .filter(activityType -> activityType.getTitle().equals("Hardware Task"))
-                .findFirst()
-                .map(ActivityType::getId)
-                .orElseThrow();
-        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
+        testCreateWork(testWorkTypeId);
+    }
 
-        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
+    private void testCreateWork(String workTypeId) {
+        var fullWorkType = assertDoesNotThrow(()->workService.findWorkTypeById(workTypeId));
 
+        var witeCustomFieldValue = generateRandomCustomFieldValues(fullWorkType.customFields());
         var testWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
                         NewWorkDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .workTypeId(testWorkTypeId)
+                                .title(UUID.randomUUID().toString())
+                                .description(UUID.randomUUID().toString())
+                                .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .customFieldValues(witeCustomFieldValue)
                                 .build()
                 )
         );
 
-        var testActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        testWorkId,
-                        NewActivityDTO.builder()
-                                .title("Hardware Task")
-                                .description("geenral task")
-                                .activityTypeId(testActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
-                                .customFieldValues(customFieldValue)
-                                .build()
-                )
+        var createdWork = workService.findWorkById(testWorkId);
+        assertThat(createdWork).isNotNull();
+        assertThat(createdWork.customFields()).isNotEmpty();
+        assertThat(createdWork.customFields().size()).isEqualTo(witeCustomFieldValue.size());
+        witeCustomFieldValue.forEach(
+                writeCustomFieldDTO -> {
+                    var found = createdWork.customFields().stream()
+                            .filter(customField -> customField.id().equals(writeCustomFieldDTO.id()))
+                            .findFirst();
+                    assertThat(found).isNotEmpty();
+                    assertThat(found.get().value().value()).isEqualTo(writeCustomFieldDTO.value().value());
+                    assertThat(found.get().value().type()).isEqualTo(writeCustomFieldDTO.value().type());
+                }
         );
-
-        assertThat(testActivityId).isNotEmpty();
     }
 
     /**

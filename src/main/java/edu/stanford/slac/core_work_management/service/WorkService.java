@@ -8,6 +8,7 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
+import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
@@ -19,7 +20,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -57,6 +57,20 @@ public class WorkService {
      * @return the id of the created work type
      */
     public String ensureWorkType(@Valid NewWorkTypeDTO newWorkTypeDTO) {
+        List<WATypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
+        newWorkTypeDTO.customFields().forEach(
+                (customField) -> {
+                    var tmpName = customField.name();
+                    normalizedCustomField.add(
+                            customField.toBuilder()
+                                    .id(UUID.randomUUID().toString())
+                                    .label(tmpName)
+                                    .name(StringUtility.toCamelCase(tmpName))
+                                    .build()
+                    );
+                }
+        );
+        var normalizedActivityDTO = newWorkTypeDTO.toBuilder().customFields(normalizedCustomField).build();
         return wrapCatch(
                 () -> workTypeRepository.ensureWorkType(
                         workMapper.toModel(newWorkTypeDTO)
@@ -66,15 +80,50 @@ public class WorkService {
     }
 
     /**
-     * Ensure work types
+     * create a new activity type
+     *
+     * @param newWorkTypeDTO the new work type to create
+     * @return the activity id
      */
-    @Transactional
-    public List<String> ensureWorkTypes(List<NewWorkTypeDTO> newWorkTypeDTOs) {
-        List<String> listIds = new ArrayList<>();
-        newWorkTypeDTOs.forEach(
-                wt -> listIds.add(ensureWorkType(wt))
+    public String createNew(@Valid NewWorkTypeDTO newWorkTypeDTO) {
+        // set the id of the custom attributes
+        var toSave = workMapper.toModel(newWorkTypeDTO);
+        toSave.getCustomFields().forEach(
+                (customField) -> {
+                    customField.setId(UUID.randomUUID().toString());
+                    customField.setName(
+                            customField.getLabel()==null?
+                                    StringUtility.toCamelCase(customField.getName()):
+                                    StringUtility.toCamelCase(customField.getLabel())
+                    );
+                    customField.setLabel(customField.getLabel());
+                }
         );
-        return listIds;
+        return wrapCatch(
+                () -> workTypeRepository.save(toSave),
+                -1
+        ).getId();
+    }
+
+    /**
+     * Return the work type  by his id
+     *
+     * @param id the id of the activity type
+     * @return the activity type
+     */
+    public WorkTypeDTO findWorkTypeById(String id) {
+        return wrapCatch(
+                () -> workTypeRepository.findById(
+                        id
+                ),
+                -1
+        ).map(workMapper::toDTO).orElseThrow(
+                () -> WorkTypeNotFound
+                        .notFoundById()
+                        .errorCode(-2)
+                        .workId(id)
+                        .build()
+        );
     }
 
     /**
@@ -84,7 +133,7 @@ public class WorkService {
      */
     public String ensureActivityType(@Valid NewActivityTypeDTO newActivityTypeDTO) {
         // set the id of the custom attributes
-        List<ActivityTypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
+        List<WATypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
         newActivityTypeDTO.customFields().forEach(
                 (customField) -> {
                     var tmpName = customField.name();
@@ -635,7 +684,7 @@ public class WorkService {
      * @param customFields      the custom field available by the ActivityType
      * @param customFieldValues the custom field value submitted to save the activity
      */
-    private void validateCustomField(List<ActivityTypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
+    private void validateCustomField(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
         // check duplicated id
         assertion(
                 ControllerLogicException.builder()
@@ -690,8 +739,8 @@ public class WorkService {
                         .build(),
                 () -> customFields
                         .stream()
-                        .filter(ActivityTypeCustomField::getIsMandatory)
-                        .map(ActivityTypeCustomField::getId)
+                        .filter(WATypeCustomField::getIsMandatory)
+                        .map(WATypeCustomField::getId)
                         .allMatch(
                                 s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
                         )

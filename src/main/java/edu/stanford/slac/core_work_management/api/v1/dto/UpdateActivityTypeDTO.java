@@ -38,6 +38,6 @@ public record UpdateActivityTypeDTO(
         String description,
         @Valid
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
-        List<ActivityTypeCustomFieldDTO> customFields
+        List<WATypeCustomFieldDTO> customFields
 ) {
 }
