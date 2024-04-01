@@ -24,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -511,16 +512,34 @@ public abstract class WorkMapper {
                         .build();
             }
             case Date -> {
-                return DateValue
-                        .builder()
-                        .value(LocalDate.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE))
-                        .build();
+                try {
+                    return DateValue
+                            .builder()
+                            .value(LocalDate.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE))
+                            .build();
+                } catch (Exception e) {
+                    // try to parse the date as OffsetDateTime
+                    var date = OffsetDateTime.parse(value.value());
+                    return DateValue
+                            .builder()
+                            .value(date.toLocalDate())
+                            .build();
+                }
             }
             case DateTime -> {
-                return DateTimeValue
-                        .builder()
-                        .value(LocalDateTime.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                        .build();
+                try {
+                    return DateTimeValue
+                            .builder()
+                            .value(LocalDateTime.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                            .build();
+                } catch (Exception e) {
+                    // try to parse the date as OffsetDateTime
+                    var date = OffsetDateTime.parse(value.value());
+                    return DateTimeValue
+                            .builder()
+                            .value(date.toLocalDateTime())
+                            .build();
+                }
             }
             default -> throw ControllerLogicException.builder()
                     .errorCode(-4)
