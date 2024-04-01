@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 import java.util.UUID;
 
 /**
- * ActivityType model
+ * MOdel for the custom field used by work and activity types.
  *
  */
 @Data

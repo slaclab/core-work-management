@@ -96,7 +96,7 @@ public class WorkServiceOnInitActivityTest {
                         )
                 );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
-        InitWorkType initWorkType = new InitWorkType(workTypeRepository, activityTypeRepository);
+        InitWorkType initWorkType = new InitWorkType(lovService, workService);
         assertDoesNotThrow(initWorkType::changeSet);
         allWorkType = assertDoesNotThrow(
                 () -> workTypeRepository.findAll()
