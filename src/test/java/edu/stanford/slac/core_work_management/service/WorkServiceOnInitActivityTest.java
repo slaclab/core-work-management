@@ -161,7 +161,7 @@ public class WorkServiceOnInitActivityTest {
     @Test
     public void testCreateGeneralActivity() throws JsonProcessingException {
         var testWorkTypeId = allWorkType.stream()
-                .filter(workType -> workType.getTitle().equals("sw maintenance"))
+                .filter(workType -> workType.getTitle().equals("Software Issues"))
                 .findFirst()
                 .map(WorkType::getId)
                 .orElseThrow();
@@ -205,7 +205,7 @@ public class WorkServiceOnInitActivityTest {
     @Test
     public void testCreateHardwareActivity() throws JsonProcessingException {
         var testWorkTypeId = allWorkType.stream()
-                .filter(workType -> workType.getTitle().equals("sw maintenance"))
+                .filter(workType -> workType.getTitle().equals("Software Issues"))
                 .findFirst()
                 .map(WorkType::getId)
                 .orElseThrow();
