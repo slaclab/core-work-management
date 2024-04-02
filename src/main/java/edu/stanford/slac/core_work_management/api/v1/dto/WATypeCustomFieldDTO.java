@@ -19,6 +19,8 @@ public record WATypeCustomFieldDTO(
         @NotNull
         @Schema(description = "The title of the custom field. This field stores the title or name of the custom field.")
         String label,
+        @Schema(description = "The group of the custom field. This field provides a group for the custom field. is needed only to help uis to group custom fields together.")
+        String group,
         @Schema(description = "The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.")
         String description,
         @NotNull

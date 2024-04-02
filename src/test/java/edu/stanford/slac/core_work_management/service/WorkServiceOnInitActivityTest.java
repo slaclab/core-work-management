@@ -126,36 +126,7 @@ public class WorkServiceOnInitActivityTest {
                 .findFirst()
                 .map(ActivityType::getId)
                 .orElseThrow();
-        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
-
-        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
-
-        var testWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .workTypeId(testWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .build()
-                )
-        );
-
-        var testActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        testWorkId,
-                        NewActivityDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .activityTypeId(testActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
-                                .customFieldValues(customFieldValue)
-                                .build()
-                )
-        );
-
-        assertThat(testActivityId).isNotEmpty();
+        testCreateActivity(testWorkTypeId, testActivityTypeId);
     }
 
     @Test
@@ -170,36 +141,7 @@ public class WorkServiceOnInitActivityTest {
                 .findFirst()
                 .map(ActivityType::getId)
                 .orElseThrow();
-        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
-
-        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
-
-        var testWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .workTypeId(testWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .build()
-                )
-        );
-
-        var testActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        testWorkId,
-                        NewActivityDTO.builder()
-                                .title("general task")
-                                .description("geenral task")
-                                .activityTypeId(testActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
-                                .customFieldValues(customFieldValue)
-                                .build()
-                )
-        );
-
-        assertThat(testActivityId).isNotEmpty();
+        testCreateActivity(testWorkTypeId, testActivityTypeId);
     }
 
     @Test
@@ -214,36 +156,64 @@ public class WorkServiceOnInitActivityTest {
                 .findFirst()
                 .map(ActivityType::getId)
                 .orElseThrow();
-        var fullActivityType = assertDoesNotThrow(()->workService.findActivityTypeById(testActivityTypeId));
+        testCreateActivity(testWorkTypeId, testActivityTypeId);
+    }
 
-        var customFieldValue = generateRandomCustomFieldValues(fullActivityType.customFields());
+    private void testCreateActivity(String workTypeId, String activityTypeId){
+
+        var fullActivityType = assertDoesNotThrow(()->activityTypeRepository.findById(activityTypeId));
+
+        var writeCustomFieldValue = LOVTestHelper.getInstance(lovService).generateRandomCustomFieldValues(fullActivityType.get().getCustomFields());
 
         var testWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
                         NewWorkDTO.builder()
-                                .title("Software")
-                                .description("Software")
-                                .workTypeId(testWorkTypeId)
+                                .title("work")
+                                .description("work")
+                                .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
 
-        var testActivityId = assertDoesNotThrow(
+        var newActivityId = assertDoesNotThrow(
                 () -> workService.createNew(
                         testWorkId,
                         NewActivityDTO.builder()
-                                .title("Hardware Task")
-                                .description("geenral task")
-                                .activityTypeId(testActivityTypeId)
+                                .title("activity")
+                                .description("activity")
+                                .activityTypeId(activityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
-                                .customFieldValues(customFieldValue)
+                                .customFieldValues(writeCustomFieldValue)
                                 .build()
                 )
         );
 
-        assertThat(testActivityId).isNotEmpty();
+        var createdActivity = workService.findActivityById(newActivityId);
+        assertThat(createdActivity).isNotNull();
+        assertThat(createdActivity.customFields()).isNotEmpty();
+        assertThat(createdActivity.customFields().size()).isEqualTo(writeCustomFieldValue.size());
+        createdActivity.customFields().forEach(
+                customFieldDTO -> {
+                    var found = createdActivity.customFields().stream()
+                            .filter(customField -> customField.id().equals(customFieldDTO.id()))
+                            .findFirst();
+                    assertThat(found).isNotEmpty();
+
+                    var foundCustomAttribute = fullActivityType.get().getCustomFields().stream()
+                            .filter(activityTypeCustomFieldDTO -> activityTypeCustomFieldDTO.getId().equals(customFieldDTO.id()))
+                            .findFirst();
+                    AssertionsForClassTypes.assertThat(foundCustomAttribute).isNotEmpty();
+                    assertThat(found.get().value().type()).isEqualTo(customFieldDTO.value().type());
+                    var possibleValue = lovService.findAllByFieldReference(foundCustomAttribute.get().getLovFieldReference());
+                    if (!possibleValue.isEmpty()) {
+                        assertThat(possibleValue.stream().anyMatch(lovElementDTO -> lovElementDTO.value() .equals(customFieldDTO.value().value()))).isTrue();
+                    } else {
+                        assertThat(found.get().value().value()).isEqualTo(customFieldDTO.value().value());
+                    }
+                }
+        );
     }
 
     /**

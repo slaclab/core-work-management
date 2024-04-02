@@ -5,9 +5,8 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.ActivityTypeCustomAttributeNotFound;
+import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
-import edu.stanford.slac.core_work_management.exception.WorkTypeCustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
@@ -236,7 +235,7 @@ public abstract class WorkMapper {
                                         .findCustomFieldById(workTypeId, customAttribute.getId())
                                         .map(WATypeCustomField::getName)
                                         .orElseThrow(
-                                                () -> WorkTypeCustomAttributeNotFound.notFoundById()
+                                                () -> CustomAttributeNotFound.notFoundById()
                                                         .id(customAttribute.getId())
                                                         .build()
                                         )
@@ -266,7 +265,7 @@ public abstract class WorkMapper {
                                         .findCustomFieldById(activityTypeId, customAttribute.getId())
                                         .map(WATypeCustomField::getName)
                                         .orElseThrow(
-                                                () -> ActivityTypeCustomAttributeNotFound.notFoundById()
+                                                () -> CustomAttributeNotFound.notFoundById()
                                                         .id(customAttribute.getId())
                                                         .build()
                                         )

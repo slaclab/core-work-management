@@ -1,6 +1,5 @@
 package edu.stanford.slac.core_work_management.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.InitActivityType;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.google.common.collect.ImmutableSet.of;
+import static java.lang.Math.abs;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -57,6 +57,7 @@ public class WorkServiceOnInitWorkTest {
     private List<WorkType> allWorkType;
     @Autowired
     ObjectMapper objectMapper;
+
     @BeforeAll
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Location.class);
@@ -145,9 +146,11 @@ public class WorkServiceOnInitWorkTest {
     }
 
     private void testCreateWork(String workTypeId) {
-        var fullWorkType = assertDoesNotThrow(()->workService.findWorkTypeById(workTypeId));
+        var fullWorkType = workTypeRepository.findById(workTypeId);
+        //var fullWorkType = assertDoesNotThrow(()->workService.findWorkTypeById(workTypeId));
 
-        var witeCustomFieldValue = generateRandomCustomFieldValues(fullWorkType.customFields());
+        var writeCustomFieldValue = LOVTestHelper.getInstance(lovService).generateRandomCustomFieldValues(fullWorkType.get().getCustomFields());
+
         var testWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
                         NewWorkDTO.builder()
@@ -156,7 +159,7 @@ public class WorkServiceOnInitWorkTest {
                                 .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .customFieldValues(witeCustomFieldValue)
+                                .customFieldValues(writeCustomFieldValue)
                                 .build()
                 )
         );
@@ -164,109 +167,27 @@ public class WorkServiceOnInitWorkTest {
         var createdWork = workService.findWorkById(testWorkId);
         assertThat(createdWork).isNotNull();
         assertThat(createdWork.customFields()).isNotEmpty();
-        assertThat(createdWork.customFields().size()).isEqualTo(witeCustomFieldValue.size());
-        witeCustomFieldValue.forEach(
-                writeCustomFieldDTO -> {
+        assertThat(createdWork.customFields().size()).isEqualTo(writeCustomFieldValue.size());
+        createdWork.customFields().forEach(
+                customFieldDTO -> {
                     var found = createdWork.customFields().stream()
-                            .filter(customField -> customField.id().equals(writeCustomFieldDTO.id()))
+                            .filter(customField -> customField.id().equals(customFieldDTO.id()))
                             .findFirst();
                     assertThat(found).isNotEmpty();
-                    assertThat(found.get().value().value()).isEqualTo(writeCustomFieldDTO.value().value());
-                    assertThat(found.get().value().type()).isEqualTo(writeCustomFieldDTO.value().type());
-                }
-        );
-    }
 
-    /**
-     * Generate random custom field values
-     * @param WATypeCustomFieldDTOS list of custom fields
-     * @return custom field values
-     */
-    private List<WriteCustomFieldDTO> generateRandomCustomFieldValues(List<WATypeCustomFieldDTO> WATypeCustomFieldDTOS) {
-        List<WriteCustomFieldDTO> results = new java.util.ArrayList<>();
-        WATypeCustomFieldDTOS.forEach(
-                activityTypeCustomFieldDTO -> {
-                    switch(activityTypeCustomFieldDTO.valueType()) {
-                        case String -> results.add(
-                                WriteCustomFieldDTO.builder()
-                                        .id(activityTypeCustomFieldDTO.id())
-                                        .value(
-                                                ValueDTO.builder()
-                                                        .value(generateRandomString(10))
-                                                        .type(ValueTypeDTO.String)
-                                                        .build()
-                                        )
-                                        .build()
-                        );
-                        case Number -> results.add(
-                                WriteCustomFieldDTO.builder()
-                                        .id(activityTypeCustomFieldDTO.id())
-                                        .value(
-                                                ValueDTO.builder()
-                                                        .value(generateRandomNumber())
-                                                        .type(ValueTypeDTO.Number)
-                                                        .build()
-                                        )
-                                        .build()
-                        );
-                        case Date -> results.add(
-                                WriteCustomFieldDTO.builder()
-                                        .id(activityTypeCustomFieldDTO.id())
-                                        .value(
-                                                ValueDTO.builder()
-                                                        .value(generateRandomDate())
-                                                        .type(ValueTypeDTO.Date)
-                                                        .build()
-                                        )
-                                        .build()
-                        );
-                        case DateTime -> results.add(
-                                WriteCustomFieldDTO.builder()
-                                        .id(activityTypeCustomFieldDTO.id())
-                                        .value(
-                                                ValueDTO.builder()
-                                                        .value(generateRandomDateTime())
-                                                        .type(ValueTypeDTO.DateTime)
-                                                        .build()
-                                        )
-                                        .build()
-                        );
-                        case Boolean -> results.add(
-                                WriteCustomFieldDTO.builder()
-                                        .id(activityTypeCustomFieldDTO.id())
-                                        .value(
-                                                ValueDTO.builder()
-                                                        .value(generateRandomBoolean())
-                                                        .type(ValueTypeDTO.Boolean)
-                                                        .build()
-                                        )
-                                        .build()
-                        );
-
+                    var foundCustomAttribute = fullWorkType.get().getCustomFields().stream()
+                            .filter(activityTypeCustomFieldDTO -> activityTypeCustomFieldDTO.getId().equals(customFieldDTO.id()))
+                            .findFirst();
+                    assertThat(foundCustomAttribute).isNotEmpty();
+                    assertThat(found.get().value().type()).isEqualTo(customFieldDTO.value().type());
+                    var possibleValue = lovService.findAllByFieldReference(foundCustomAttribute.get().getLovFieldReference());
+                    if (!possibleValue.isEmpty()) {
+                        assertThat(possibleValue.stream().anyMatch(lovElementDTO -> lovElementDTO.value() .equals(customFieldDTO.value().value()))).isTrue();
+                    } else {
+                        assertThat(found.get().value().value()).isEqualTo(customFieldDTO.value().value());
                     }
                 }
         );
-        return results;
-    }
-
-    private String generateRandomBoolean() {
-        return String.valueOf(java.util.UUID.randomUUID().toString().hashCode() % 2 == 0);
-    }
-
-    private String generateRandomDateTime() {
-        return java.time.LocalDateTime.now().toString();
-    }
-
-    private String generateRandomDate() {
-        return java.time.LocalDate.now().toString();
-    }
-
-    private String generateRandomNumber() {
-        return String.valueOf(java.util.UUID.randomUUID().toString().hashCode());
-    }
-
-    private String generateRandomString(int i) {
-        return java.util.UUID.randomUUID().toString().substring(0, i);
     }
 
 }

@@ -10,6 +10,7 @@ import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.validation.LOVModelValidation;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
@@ -49,6 +50,7 @@ public class WorkService {
     private final ActivityRepository activityRepository;
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
+    private final LOVModelValidation lovModelValidation;
 
     /**
      * Create a new work type
@@ -92,8 +94,8 @@ public class WorkService {
                 (customField) -> {
                     customField.setId(UUID.randomUUID().toString());
                     customField.setName(
-                            customField.getLabel()==null?
-                                    StringUtility.toCamelCase(customField.getName()):
+                            customField.getLabel() == null ?
+                                    StringUtility.toCamelCase(customField.getName()) :
                                     StringUtility.toCamelCase(customField.getLabel())
                     );
                     customField.setLabel(customField.getLabel());
@@ -168,8 +170,8 @@ public class WorkService {
                 (customField) -> {
                     customField.setId(UUID.randomUUID().toString());
                     customField.setName(
-                            customField.getLabel()==null?
-                                    StringUtility.toCamelCase(customField.getName()):
+                            customField.getLabel() == null ?
+                                    StringUtility.toCamelCase(customField.getName()) :
                                     StringUtility.toCamelCase(customField.getLabel())
                     );
                     customField.setLabel(customField.getLabel());
@@ -313,10 +315,29 @@ public class WorkService {
                 workSequence,
                 newWorkDTO
         );
+
+        WorkType workType = wrapCatch(
+                () -> workTypeRepository
+                        .findById(newWorkDTO.workTypeId())
+                        .orElseThrow(
+                                () -> WorkTypeNotFound
+                                        .notFoundById()
+                                        .errorCode(-1)
+                                        .workId(newWorkDTO.workTypeId())
+                                        .build()
+                        ),
+                -2
+        );
+
+        // validate lov
+        lovModelValidation.verifyModelLOVValue(workToSave, workType.getCustomFields());
+
+        // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
                 -1
         );
+
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
         return savedWork.getId();
@@ -341,6 +362,20 @@ public class WorkService {
                 ),
                 -2
         );
+
+        WorkType workType = wrapCatch(
+                () -> workTypeRepository
+                        .findById(storedWork.getWorkTypeId())
+                        .orElseThrow(
+                                () -> WorkTypeNotFound
+                                        .notFoundById()
+                                        .errorCode(-3)
+                                        .workId(storedWork.getWorkTypeId())
+                                        .build()
+                        ),
+                -4
+        );
+
         // check that all the user in the assigned to are listed into the shop group
         if (updateWorkDTO.assignedTo() != null) {
             updateWorkDTO.assignedTo().forEach(
@@ -359,6 +394,10 @@ public class WorkService {
         }
         // update the model
         workMapper.updateModel(updateWorkDTO, storedWork);
+
+        // validate lov
+        lovModelValidation.verifyModelLOVValue(storedWork, workType.getCustomFields());
+
         // save the work
         var updatedWork = wrapCatch(
                 () -> workRepository.save(storedWork),
@@ -563,18 +602,21 @@ public class WorkService {
         );
 
         //validate custom attribute
-        validateCustomField(
-                Objects.requireNonNullElse(
-                        activityType.getCustomFields(),
-                        emptyList()
-                ),
-                Objects.requireNonNullElse(
-                        newActivityDTO.customFieldValues(),
-                        emptyList()
-                )
-        );
+//        validateCustomField(
+//                Objects.requireNonNullElse(
+//                        activityType.getCustomFields(),
+//                        emptyList()
+//                ),
+//                Objects.requireNonNullElse(
+//                        newActivityDTO.customFieldValues(),
+//                        emptyList()
+//                )
+//        );
 
         var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), nextActivityNumbers);
+
+        // validate lov
+        lovModelValidation.verifyModelLOVValue(newActivity.getCustomFields(), activityType.getCustomFields());
 
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),
@@ -647,16 +689,16 @@ public class WorkService {
         );
 
         //validate custom attribute
-        validateCustomField(
-                Objects.requireNonNullElse(
-                        activityType.getCustomFields(),
-                        emptyList()
-                ),
-                Objects.requireNonNullElse(
-                        updateActivityDTO.customAttributeValues(),
-                        emptyList()
-                )
-        );
+//        validateCustomField(
+//                Objects.requireNonNullElse(
+//                        activityType.getCustomFields(),
+//                        emptyList()
+//                ),
+//                Objects.requireNonNullElse(
+//                        updateActivityDTO.customAttributeValues(),
+//                        emptyList()
+//                )
+//        );
 
         // assert that activity need to be related to the work
         assertion(
@@ -670,6 +712,10 @@ public class WorkService {
         );
         // update the model
         workMapper.updateModel(updateActivityDTO, activityStored);
+
+        // validate lov
+        lovModelValidation.verifyModelLOVValue(activityStored.getCustomFields(), activityType.getCustomFields());
+
         // save the activity
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(activityStored),

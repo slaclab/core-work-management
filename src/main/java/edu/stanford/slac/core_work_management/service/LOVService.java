@@ -116,6 +116,21 @@ public class LOVService {
     }
 
     /**
+     * Find all the LOV elements by field reference
+     * return all the possible value that a field identified by field reference can use
+     * @param fieldReference the field reference
+     * @return the list of LOV elements
+     */
+    public List<LOVElementDTO> findAllByFieldReference(String fieldReference) {
+        return wrapCatch(
+                () -> lovElementRepository.findByFieldReferenceContains(fieldReference)
+                        .stream()
+                        .map(lovMapper::toDTO).toList(),
+                -1
+        );
+    }
+
+    /**
      * Find all the LOV elements by domain and field reference
      *
      * @param groupName the group name of the LOV elements
