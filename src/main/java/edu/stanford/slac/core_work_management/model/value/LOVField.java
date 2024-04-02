@@ -80,6 +80,7 @@ import java.lang.annotation.Target;
 public @interface LOVField {
 
     String message() default "Invalid value, does not match LOV";
+    boolean isMandatory() default false;
 
     Class<?>[] groups() default {};
 

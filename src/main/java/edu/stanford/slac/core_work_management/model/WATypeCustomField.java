@@ -29,6 +29,13 @@ public class WATypeCustomField {
      * The human-readable label of the custom field. This field provides a human-readable label for the custom field.
      */
     private String label;
+
+    /**
+     * The group of the custom field. This field provides a group for the custom field.
+     * is needed only to help uis to group custom fields together.
+     */
+    private String group;
+
     /**
      * The detailed description of the custom field. This field provides a comprehensive description of what the custom field entails.
      */
