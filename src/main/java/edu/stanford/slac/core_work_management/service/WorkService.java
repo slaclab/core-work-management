@@ -10,12 +10,13 @@ import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.model.validation.LOVModelValidation;
+import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
@@ -50,7 +51,7 @@ public class WorkService {
     private final ActivityRepository activityRepository;
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
-    private final LOVModelValidation lovModelValidation;
+    private final ModelFieldValidationService modelFieldValidationService;
 
     /**
      * Create a new work type
@@ -330,7 +331,10 @@ public class WorkService {
         );
 
         // validate lov
-        lovModelValidation.verifyModelLOVValue(workToSave, workType.getCustomFields());
+        modelFieldValidationService.verify(
+                newWorkDTO,
+                Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
+        );
 
         // save work
         Work savedWork = wrapCatch(
@@ -376,6 +380,12 @@ public class WorkService {
                 -4
         );
 
+        // validate lov
+        modelFieldValidationService.verify(
+                updateWorkDTO,
+                Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
+        );
+
         // check that all the user in the assigned to are listed into the shop group
         if (updateWorkDTO.assignedTo() != null) {
             updateWorkDTO.assignedTo().forEach(
@@ -394,9 +404,6 @@ public class WorkService {
         }
         // update the model
         workMapper.updateModel(updateWorkDTO, storedWork);
-
-        // validate lov
-        lovModelValidation.verifyModelLOVValue(storedWork, workType.getCustomFields());
 
         // save the work
         var updatedWork = wrapCatch(
@@ -480,7 +487,7 @@ public class WorkService {
      * @param workId        the id of the work
      * @param reviewWorkDTO the DTO to close the work
      */
-    public void reviewWork(String workId, ReviewWorkDTO reviewWorkDTO) {
+    public void reviewWork(String workId, @Valid ReviewWorkDTO reviewWorkDTO) {
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -564,7 +571,7 @@ public class WorkService {
      * @param newActivityDTO the DTO to create the activity
      * @return the id of the created activity
      */
-    public String createNew(String workId, @Valid NewActivityDTO newActivityDTO) {
+    public String createNew(@NotNull String workId, @Valid NewActivityDTO newActivityDTO) {
         return createNew(workId, workRepository.getNextActivityNumber(workId), newActivityDTO);
     }
 
@@ -577,7 +584,7 @@ public class WorkService {
      * @return the id of the created activity
      */
     @Transactional
-    public String createNew(String workId, Long nextActivityNumbers, @Valid NewActivityDTO newActivityDTO) {
+    public String createNew(@NotNull String workId, @NotNull Long nextActivityNumbers, @Valid NewActivityDTO newActivityDTO) {
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -601,22 +608,15 @@ public class WorkService {
                 -3
         );
 
-        //validate custom attribute
-//        validateCustomField(
-//                Objects.requireNonNullElse(
-//                        activityType.getCustomFields(),
-//                        emptyList()
-//                ),
-//                Objects.requireNonNullElse(
-//                        newActivityDTO.customFieldValues(),
-//                        emptyList()
-//                )
-//        );
+        // validate model custom attributes
+        modelFieldValidationService.verify(
+                newActivityDTO,
+                Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
 
+        );
+
+        // convert to model
         var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), nextActivityNumbers);
-
-        // validate lov
-        lovModelValidation.verifyModelLOVValue(newActivity.getCustomFields(), activityType.getCustomFields());
 
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),
@@ -653,7 +653,7 @@ public class WorkService {
      * @param activityId        the id of the activity
      * @param updateActivityDTO the DTO to update the activity
      */
-    public void update(String workId, String activityId, UpdateActivityDTO updateActivityDTO) {
+    public void update(@NotNull String workId, @NotNull String activityId, @Valid UpdateActivityDTO updateActivityDTO) {
         // check for work existence
         assertion(
                 () -> workRepository.existsById(workId),
@@ -688,17 +688,11 @@ public class WorkService {
                 -3
         );
 
-        //validate custom attribute
-//        validateCustomField(
-//                Objects.requireNonNullElse(
-//                        activityType.getCustomFields(),
-//                        emptyList()
-//                ),
-//                Objects.requireNonNullElse(
-//                        updateActivityDTO.customAttributeValues(),
-//                        emptyList()
-//                )
-//        );
+        // validate model attribute
+        modelFieldValidationService.verify(
+                updateActivityDTO,
+                Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
+        );
 
         // assert that activity need to be related to the work
         assertion(
@@ -713,9 +707,6 @@ public class WorkService {
         // update the model
         workMapper.updateModel(updateActivityDTO, activityStored);
 
-        // validate lov
-        lovModelValidation.verifyModelLOVValue(activityStored.getCustomFields(), activityType.getCustomFields());
-
         // save the activity
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(activityStored),
@@ -724,74 +715,74 @@ public class WorkService {
         log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
     }
 
-    /**
-     * Validate all custom fields
-     *
-     * @param customFields      the custom field available by the ActivityType
-     * @param customFieldValues the custom field value submitted to save the activity
-     */
-    private void validateCustomField(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
-        // check duplicated id
-        assertion(
-                ControllerLogicException.builder()
-                        .errorCode(-1)
-                        .errorMessage("There are duplicated custom field id")
-                        .errorDomain("WorkService::validateCustomField")
-                        .build(),
-                () -> customFieldValues.stream()
-                        // Group by the id
-                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
-                        .values().stream()
-                        // Filter groups having more than one element, indicating duplicates
-                        .filter(duplicates -> duplicates.size() > 1)
-                        .flatMap(Collection::stream)
-                        .toList().isEmpty()
-        );
-
-        // check that all the id are valid
-        customFieldValues.forEach(
-                cv -> {
-                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
-                    // check if id is valid
-                    assertion(
-                            ControllerLogicException.builder()
-                                    .errorCode(-2)
-                                    .errorMessage("The field id %s has not been found".formatted(cv.id()))
-                                    .errorDomain("WorkService::validateCustomField")
-                                    .build(),
-                            foundField::isPresent
-                    );
-
-                    // check the type
-                    assertion(
-                            ControllerLogicException.builder()
-                                    .errorCode(-3)
-                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
-                                    .errorDomain("WorkService::validateCustomField")
-                                    .build(),
-                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
-                    );
-                }
-
-        );
-
-
-        // collect all the mandatory field
-        assertion(
-                ControllerLogicException.builder()
-                        .errorCode(-4)
-                        .errorMessage("Not all mandatory attribute has been submitted")
-                        .errorDomain("WorkService::validateCustomField")
-                        .build(),
-                () -> customFields
-                        .stream()
-                        .filter(WATypeCustomField::getIsMandatory)
-                        .map(WATypeCustomField::getId)
-                        .allMatch(
-                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
-                        )
-        );
-    }
+//    /**
+//     * Validate all custom fields
+//     *
+//     * @param customFields      the custom field available by the ActivityType
+//     * @param customFieldValues the custom field value submitted to save the activity
+//     */
+//    private void validateCustomField(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
+//        // check duplicated id
+//        assertion(
+//                ControllerLogicException.builder()
+//                        .errorCode(-1)
+//                        .errorMessage("There are duplicated custom field id")
+//                        .errorDomain("WorkService::validateCustomField")
+//                        .build(),
+//                () -> customFieldValues.stream()
+//                        // Group by the id
+//                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
+//                        .values().stream()
+//                        // Filter groups having more than one element, indicating duplicates
+//                        .filter(duplicates -> duplicates.size() > 1)
+//                        .flatMap(Collection::stream)
+//                        .toList().isEmpty()
+//        );
+//
+//        // check that all the id are valid
+//        customFieldValues.forEach(
+//                cv -> {
+//                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
+//                    // check if id is valid
+//                    assertion(
+//                            ControllerLogicException.builder()
+//                                    .errorCode(-2)
+//                                    .errorMessage("The field id %s has not been found".formatted(cv.id()))
+//                                    .errorDomain("WorkService::validateCustomField")
+//                                    .build(),
+//                            foundField::isPresent
+//                    );
+//
+//                    // check the type
+//                    assertion(
+//                            ControllerLogicException.builder()
+//                                    .errorCode(-3)
+//                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
+//                                    .errorDomain("WorkService::validateCustomField")
+//                                    .build(),
+//                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
+//                    );
+//                }
+//
+//        );
+//
+//
+//        // collect all the mandatory field
+//        assertion(
+//                ControllerLogicException.builder()
+//                        .errorCode(-4)
+//                        .errorMessage("Not all mandatory attribute has been submitted")
+//                        .errorDomain("WorkService::validateCustomField")
+//                        .build(),
+//                () -> customFields
+//                        .stream()
+//                        .filter(WATypeCustomField::getIsMandatory)
+//                        .map(WATypeCustomField::getId)
+//                        .allMatch(
+//                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
+//                        )
+//        );
+//    }
 
     /**
      * Return the activity by his id
