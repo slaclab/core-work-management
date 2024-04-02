@@ -284,18 +284,45 @@ public class InitActivityType {
                         .customFields(
                                 List.of(
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Scheduling")
                                                 .label("Scheduling Priority")
                                                 .description("The scheduling priority for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Scheduling")
                                                 .label("Time Comments")
                                                 .description("The time comments for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Requirements")
                                                 .label("Access Requirements")
                                                 .description("The access requirements for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        WATypeCustomFieldDTO.builder()
+                                                .group("Requirements")
+                                                .label("Beam Requirements")
+                                                .description("The beam requirements for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        WATypeCustomFieldDTO.builder()
+                                                .group("Requirements")
+                                                .label("Beam Comment")
+                                                .description("The beam comment for the hardware job")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        WATypeCustomFieldDTO.builder()
+                                                .group("Requirements")
+                                                .label("Invasive")
+                                                .description("The invasive status for the hardware job")
+                                                .valueType(ValueTypeDTO.Boolean)
+                                                .build(),
+                                        WATypeCustomFieldDTO.builder()
+                                                .group("Requirements")
+                                                .label("Invasive Comment")
+                                                .description("The invasive comment for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
@@ -304,56 +331,43 @@ public class InitActivityType {
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
-                                                .label("Beam Requirements")
-                                                .description("The beam requirements for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        WATypeCustomFieldDTO.builder()
-                                                .label("Beam Comment")
-                                                .description("The beam comment for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        WATypeCustomFieldDTO.builder()
-                                                .label("Invasive")
-                                                .description("The invasive status for the hardware job")
-                                                .valueType(ValueTypeDTO.Boolean)
-                                                .build(),
-                                        WATypeCustomFieldDTO.builder()
-                                                .label("Invasive Comment")
-                                                .description("The invasive comment for the hardware job")
-                                                .valueType(ValueTypeDTO.String)
-                                                .build(),
-                                        WATypeCustomFieldDTO.builder()
+                                                .group("Plan")
                                                 .label("Test Plan")
                                                 .description("The test plan for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Plan")
                                                 .label("Backout Plan")
                                                 .description("The backout plan for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Plan")
                                                 .label("Systems Required")
                                                 .description("The systems required for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Plan")
                                                 .label("Systems Affected")
                                                 .description("The systems affected for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Plan")
                                                 .label("Risk/Benefit")
                                                 .description("The risk/benefit for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Plan")
                                                 .label("Dependencies")
                                                 .description("The dependencies for the hardware job")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
+                                                .group("Status")
                                                 .label("CD Review Date")
                                                 .description("The CD review date for the hardware job")
                                                 .valueType(ValueTypeDTO.Date)
@@ -424,16 +438,19 @@ public class InitActivityType {
                 .customFields(
                         of(
                                 WATypeCustomFieldDTO.builder()
+                                        .group("General Information")
                                         .label("Task Priority")
                                         .description("The task priority for the General job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .label("General Information")
                                         .label("Task Skill Set")
                                         .description("The task skill set for the General job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .label("General Information")
                                         .label("Percentage completed")
                                         .description("The percentage completed for the General job")
                                         .valueType(ValueTypeDTO.String)
@@ -516,56 +533,67 @@ public class InitActivityType {
                 .customFields(
                         List.of(
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Scheduling")
                                         .label("Scheduling Priority")
                                         .description("The scheduling priority for the hardware job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
-                                        .label("Access Requirements")
-                                        .description("The access requirements for the hardware job")
-                                        .valueType(ValueTypeDTO.String)
-                                        .build(),
-                                WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("Other Issues")
                                         .description("Other issues related to the hardware job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("Rad Safety Work Ctl Form")
                                         .description("The radiation safety work control form for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("Lock and Tag")
                                         .description("The lock and tag for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("PPS Interlocked")
                                         .description("The PPS interlocked for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("Atmospheric Work Control Form")
                                         .description("The atmospheric work control form for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("Electric Sys Work Ctl Form")
                                         .description("The electrical work control form for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Safety")
                                         .label("Additional Safety Information")
                                         .description("Additional safety information for the hardware job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Requirements")
+                                        .label("Access Requirements")
+                                        .description("The access requirements for the hardware job")
+                                        .valueType(ValueTypeDTO.String)
+                                        .build(),
+                                WATypeCustomFieldDTO.builder()
+                                        .group("Requirements")
                                         .label("Specify Requirements")
                                         .description("Specify the requirements for the hardware job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Status")
                                         .label("Release Conditions Defined")
                                         .description("The safety plan for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
@@ -611,21 +639,25 @@ public class InitActivityType {
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Requirements")
                                         .label("Beam Comment")
                                         .description("The beam comment for the hardware job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Requirements")
                                         .label("Invasive")
                                         .description("The invasive status for the hardware job")
                                         .valueType(ValueTypeDTO.Boolean)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Requirements")
                                         .label("Invasive Comment")
                                         .description("The invasive comment for the hardware job")
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Comments")
                                         .label("Misc Job Comments")
                                         .description("The miscellaneous job comments for the hardware job")
                                         .valueType(ValueTypeDTO.String)
@@ -636,6 +668,7 @@ public class InitActivityType {
                                         .valueType(ValueTypeDTO.String)
                                         .build(),
                                 WATypeCustomFieldDTO.builder()
+                                        .group("Comments")
                                         .label("Feedback Priority Comment")
                                         .description("The feedback priority comment for the hardware job")
                                         .valueType(ValueTypeDTO.String)
