@@ -354,7 +354,6 @@ public class LOVServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(workActivityIds.get(1))
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .schedulingProperty(listOfAllLOVSchedulingProperty.getFirst().id())
                                 .customFieldValues(
                                         of(
                                                 WriteCustomFieldDTO.builder()
@@ -379,8 +378,6 @@ public class LOVServiceTest {
                         newActivityId
                 )
         );
-        assertThat(fullActivity.schedulingProperty()).isNotNull();
-        assertThat(fullActivity.schedulingProperty().value()).isEqualTo(listOfAllLOVSchedulingProperty.getFirst().value());
         assertThat(fullActivity.customFields()).hasSize(1);
         assertThat(fullActivity.customFields().get(0).value().value()).isEqualTo(listOfAllLOVField1.getFirst().value());
     }

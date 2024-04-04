@@ -371,6 +371,11 @@ public class InitActivityType {
                                                 .label("CD Review Date")
                                                 .description("The CD review date for the hardware job")
                                                 .valueType(ValueTypeDTO.Date)
+                                                .build(),
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Subsystem")
+                                                .description("The subsystem where the software job is located")
+                                                .valueType(ValueTypeDTO.Number)
                                                 .build()
 
                                 )
@@ -489,6 +494,11 @@ public class InitActivityType {
                                         .label("Feedback Priority")
                                         .description("The feedback priority for the General job")
                                         .valueType(ValueTypeDTO.String)
+                                        .build(),
+                                WATypeCustomFieldDTO.builder()
+                                        .label("Subsystem")
+                                        .description("The subsystem where the general job is located")
+                                        .valueType(ValueTypeDTO.Number)
                                         .build()
                         )
                 )
@@ -502,12 +512,24 @@ public class InitActivityType {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Activity,
                             generalActivityId,
+                            "subsystem",
+                            "SubSystemGroup"
+                    );
+                    return null;
+                },
+                -2
+        );
+        wrapCatch(
+                () -> {
+                    lovService.associateDomainFieldToGroupName(
+                            LOVDomainTypeDTO.Activity,
+                            generalActivityId,
                             "taskPriority",
                             "TaskPriorityGroup"
                     );
                     return null;
                 },
-                -2
+                -3
         );
         wrapCatch(
                 () -> {
@@ -519,7 +541,7 @@ public class InitActivityType {
                     );
                     return null;
                 },
-                -3
+                -4
         );
     }
 
@@ -692,6 +714,11 @@ public class InitActivityType {
                                         .label("Visual Number")
                                         .description("???")
                                         .valueType(ValueTypeDTO.Number)
+                                        .build(),
+                                WATypeCustomFieldDTO.builder()
+                                        .label("Subsystem")
+                                        .description("The subsystem where the hardware job is located")
+                                        .valueType(ValueTypeDTO.Number)
                                         .build()
                         )
                 )
@@ -701,7 +728,18 @@ public class InitActivityType {
                 () -> workService.createNew(hardwareActivity),
                 -1
         );
-
+        wrapCatch(
+                () -> {
+                    lovService.associateDomainFieldToGroupName(
+                            LOVDomainTypeDTO.Activity,
+                            hardwareActivityId,
+                            "subsystem",
+                            "SubSystemGroup"
+                    );
+                    return null;
+                },
+                -2
+        );
         wrapCatch(
                 () -> {
                     lovService.associateDomainFieldToGroupName(
@@ -712,7 +750,7 @@ public class InitActivityType {
                     );
                     return null;
                 },
-                -2
+                -3
         );
 
         wrapCatch(
@@ -725,7 +763,7 @@ public class InitActivityType {
                     );
                     return null;
                 },
-                -2
+                -4
         );
 
         wrapCatch(
@@ -738,7 +776,7 @@ public class InitActivityType {
                     );
                     return null;
                 },
-                -3
+                -5
         );
     }
 }

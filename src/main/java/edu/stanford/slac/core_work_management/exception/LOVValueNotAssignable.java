@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.getAllMethodInCall;
 
 @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Field reference not found")
-public class LOVValueNotFound extends ControllerLogicException {
-    @Builder(builderMethodName = "byId")
-    public LOVValueNotFound(Integer errorCode, String id) {
+public class LOVValueNotAssignable extends ControllerLogicException {
+    @Builder(builderMethodName = "byValueAndFName")
+    public LOVValueNotAssignable(Integer errorCode, String value, String fieldName) {
         super(errorCode,
-                String.format("The lov value id '%s' has not been found".formatted(id)),
+                String.format("The lov value '%s' cannot be assigned to %s".formatted(value, fieldName)),
                 getAllMethodInCall()
         );
     }

@@ -72,7 +72,8 @@ public class ActivityTypeInitTest {
                         "Drawing",
                         "Doc Solution",
                         "Date RTC Checked",
-                        "Feedback Priority"
+                        "Feedback Priority",
+                        "Subsystem"
                 );
         // checks software activity custom fields
         assertThat(allActivityType.get(1).getCustomFields())
@@ -93,7 +94,8 @@ public class ActivityTypeInitTest {
                         "Systems Affected",
                         "Risk/Benefit",
                         "Dependencies",
-                        "CD Review Date"
+                        "CD Review Date",
+                        "Subsystem"
                 );
 // check hardware activity custom fields
         assertThat(allActivityType.get(2).getCustomFields())
@@ -128,7 +130,8 @@ public class ActivityTypeInitTest {
                         "Micro",
                         "Primary",
                         "Micro Other",
-                        "Visual Number"
+                        "Visual Number",
+                        "Subsystem"
                 );
 
     }
