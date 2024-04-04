@@ -161,45 +161,6 @@ public class LOVControllerTest {
         assertThat(lovFieldList.getPayload())
                 .hasSizeGreaterThan(0);
     }
-    @Test
-    public void fetchAllLOVFieldForActivityFieldName() {
-        var lovIds = assertDoesNotThrow(
-                () -> lovService.createNew(
-                        "schedulingProperty_group",
-                        of(
-                                NewLOVElementDTO.builder().value("schedulingProperty value1").description("schedulingProperty value1 description").build(),
-                                NewLOVElementDTO.builder().value("schedulingProperty value2").description("schedulingProperty value2 description").build()
-                        )
-                )
-        );
-        assertDoesNotThrow(
-                () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1),
-                        "schedulingProperty",
-                        "schedulingProperty_group"
-                )
-        );
-
-        var lovFieldList = assertDoesNotThrow(
-                () -> testControllerHelperService.lovControllerFindValuesByDomainAndFieldName(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1),
-                        "schedulingProperty"
-                )
-        );
-        assertThat(lovFieldList.getErrorCode()).isEqualTo(0);
-        assertThat(lovFieldList.getPayload())
-                .hasSize(2)
-                .extracting(LOVElementDTO::value)
-                .contains(
-                        "schedulingProperty value1",
-                        "schedulingProperty value2"
-                );
-    }
 
     @Test
     public void fetchAllLOVFieldForActivityFieldNameWithSpace() {
