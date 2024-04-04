@@ -181,7 +181,6 @@ public abstract class WorkMapper {
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForActivity(activity.getActivityTypeId(), activity.getCustomFields()))")
-//    @Mapping(target = "schedulingProperty", expression = "java(toLOVValueDTO(activity.getSchedulingProperty()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")

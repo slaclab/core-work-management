@@ -43,10 +43,6 @@ public record NewActivityDTO (
         LocalDateTime plannedEndDate,
         @Schema(description = "The feedback comment for the activity")
         String feedbackComment,
-        @Schema(description = "The subsystem where the activity is performed")
-        String subsystem,
-        @Schema(description = "The priority of the activity")
-        String schedulingProperty,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
         List<WriteCustomFieldDTO> customFieldValues){

@@ -103,19 +103,6 @@ public class Activity {
      * This field stores the planned end date and time of the activity.
      */
     private LocalDateTime plannedEndDate;
-    /**
-     * The subsystem of the activity.
-     * This field stores the subsystem of the activity.
-     */
-    @LOVField(fieldReference = "ACTIVITY_SUBSYSTEM")
-    private String subsystem;
-
-    /**
-     * The priority of the activity.
-     * This field stores the priority of the activity, which is defined by the SCHEDULING_PROPERTY LOV.
-     */
-    @LOVField(fieldReference = "SCHEDULING_PROPERTY")
-    private String schedulingProperty;
 
     /**
      * The list of the custom fields associated with the activity.
