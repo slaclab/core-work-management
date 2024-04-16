@@ -30,6 +30,7 @@ edu:
     slac:
       core_work_management:
         cis_backend_url: ${CWM_CIS_URL:http://localhost:8081}
+        elog_backend_url: ${CWM_ELOG_URL:http://localhost:8082}
       ad:
         eed:
           baselib:

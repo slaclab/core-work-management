@@ -119,6 +119,30 @@ task buildCISAPI(type: GenerateTask){
     generateApiDocumentation = false
 }
 
+task buildElogAPI(type: GenerateTask){
+    generatorName = "java"
+    inputSpec = "$rootDir/external-service/elog.json".toString()
+    outputDir = "$rootDir/build/generated".toString()
+    apiPackage = "edu.stanford.slac.core_work_management.elog_api.api"
+    invokerPackage = "edu.stanford.slac.core_work_management.elog_api.invoker"
+    modelPackage = "edu.stanford.slac.core_work_management.elog_api.dto"
+    configOptions = [
+            dateLibrary: "java8-localdatetime",
+            generateClientAsBean: "true",
+            hideGenerationTimestamp:"true",
+            generateAliasAsModel:"false",
+            openApiNullable:"false",
+    ]
+    library = "resttemplate"
+    skipValidateSpec = true
+    logToStderr = true
+    generateAliasAsModel = false
+    enablePostProcessFile = false
+    generateModelDocumentation = false
+    generateApiTests = false
+    generateApiDocumentation = false
+}
+
 sourceSets {
     getByName("main") {
         java {
@@ -137,7 +161,7 @@ jacoco {
 
 test {
     finalizedBy jacocoTestReport // report is always generated after tests run
-    exclude '**/cis_api/**'
+    exclude '**/cis_api/**', '**/elog_api/**'
     // Configure test logging
     testLogging {
         // Show standard output and error streams only for failed tests
@@ -211,6 +235,7 @@ testlogger {
 }
 
 compileJava.dependsOn buildCISAPI
+compileJava.dependsOn buildElogAPI
 
 assemble.doLast {
     println "built app version: ${project.version}"
