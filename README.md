@@ -165,7 +165,7 @@ springdoc:
   swagger-ui:
     enabled: false
   api-docs:
-    path: /api-docs
+    path: /elog.json
 
 mongock:
   migration-scan-package:
