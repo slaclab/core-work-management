@@ -8,12 +8,16 @@ import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -751,6 +755,53 @@ public class TestControllerHelperService {
                 resultMatcher,
                 userInfo,
                 requestBuilder
+        );
+    }
+
+    /**
+     * Create a new log entry
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param workId        the work id
+     * @param newEntry      the new entry
+     * @param files         the files
+     * @return the boolean
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<Boolean> createLogEntry(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId,
+            NewLogEntry newEntry,
+            MockMultipartFile... files) throws Exception {
+        // create builder
+        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/log/{workId}", workId);
+
+        // add entry
+        MockPart p = new MockPart(
+                "entry",
+                new ObjectMapper().writeValueAsString(newEntry).getBytes(StandardCharsets.UTF_8)
+        );
+        p.getHeaders().add(
+                "Content-Type",
+                MediaType.APPLICATION_JSON_VALUE
+        );
+        multiPartBuilder.part(p);
+
+        // add file in case they are present
+        for (MockMultipartFile a :
+                files) {
+            multiPartBuilder.file(a);
+        }
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                multiPartBuilder
         );
     }
 

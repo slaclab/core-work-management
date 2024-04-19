@@ -31,8 +31,6 @@ services:
 
   elog-backend:
     image: ghcr.io/eed-web-application/elog-plus:latest
-    profiles:
-      - "elog"
     pull_policy: always
     restart: on-failure
     environment:

@@ -1,10 +1,8 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLogEntry;
 import edu.stanford.slac.core_work_management.service.LogService;
-import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController()
 @RequestMapping("/v1/log")
 @AllArgsConstructor
-@Profile("elog-support")
+//@Profile("elog-support")
 @Schema(description = "Set of api for the log entries management")
 public class LogController {
 
@@ -31,7 +29,7 @@ public class LogController {
 
     @PostMapping(
             path = "/{workId}",
-            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a log entry")
@@ -39,7 +37,7 @@ public class LogController {
     @PreAuthorize("@workAuthorizationService.checkLogging(#authentication, #workId)")
     public ApiResultResponse<Boolean> createLogEntry(
             Authentication authentication,
-            @PathVariable @NotNull @NotEmpty String workId,
+            @PathVariable("workId") String workId,
             @Parameter(schema = @Schema(type = "string", implementation = NewLogEntry.class))
             @RequestPart("entry") @Valid NewLogEntry entry,
             @RequestPart(value = "files", required = false)

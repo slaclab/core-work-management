@@ -11,9 +11,9 @@ plugins {
 
 group = 'edu.stanford.slac'
 version = '1.0.0'
-ext{
-    ad_eed_baselib_version="0.1.47"
-    ad_eed_base_mongodb_lib_version="0.1.20"
+ext {
+    ad_eed_baselib_version = "0.1.47"
+    ad_eed_base_mongodb_lib_version = "0.1.20"
     javaSourceCompatibility = JavaVersion.VERSION_21
     javaTargetCompatibility = JavaVersion.VERSION_21
 }
@@ -28,8 +28,8 @@ springBoot {
         {
             properties {
                 additional = [
-                        'ad-eed-baselib': "${project.ext.ad_eed_baselib_version}",
-                        'ad-eed-base-mongodb':"${project.ext.ad_eed_base_mongodb_lib_version}"
+                        'ad-eed-baselib'     : "${project.ext.ad_eed_baselib_version}",
+                        'ad-eed-base-mongodb': "${project.ext.ad_eed_base_mongodb_lib_version}"
                 ]
             }
         }
@@ -79,7 +79,7 @@ dependencies {
 
     //eed library
     implementation "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",
-                    "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
+            "edu.stanford.slac:slac-ad-eed-base-mongodb-lib:$project.ext.ad_eed_base_mongodb_lib_version"
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     // mongock
@@ -93,9 +93,11 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.awaitility:awaitility:4.0.3'
+    testImplementation 'org.apache.pdfbox:pdfbox:2.0.30'
+    testImplementation 'com.github.javafaker:javafaker:1.0.2'
 }
 
-task buildCISAPI(type: GenerateTask){
+task buildCISAPI(type: GenerateTask) {
     generatorName = "java"
     inputSpec = "$rootDir/external-service/cis-api.json".toString()
     outputDir = "$rootDir/build/generated".toString()
@@ -103,11 +105,11 @@ task buildCISAPI(type: GenerateTask){
     invokerPackage = "edu.stanford.slac.core_work_management.cis_api.invoker"
     modelPackage = "edu.stanford.slac.core_work_management.cis_api.dto"
     configOptions = [
-            dateLibrary: "java8-localdatetime",
-            generateClientAsBean: "true",
-            hideGenerationTimestamp:"true",
-            generateAliasAsModel:"false",
-            openApiNullable:"false",
+            dateLibrary            : "java8-localdatetime",
+            generateClientAsBean   : "true",
+            hideGenerationTimestamp: "true",
+            generateAliasAsModel   : "false",
+            openApiNullable        : "false",
     ]
     library = "resttemplate"
     skipValidateSpec = true
@@ -119,7 +121,7 @@ task buildCISAPI(type: GenerateTask){
     generateApiDocumentation = false
 }
 
-task buildElogAPI(type: GenerateTask){
+task buildElogAPI(type: GenerateTask) {
     generatorName = "java"
     inputSpec = "$rootDir/external-service/elog.json".toString()
     outputDir = "$rootDir/build/generated".toString()
@@ -127,11 +129,11 @@ task buildElogAPI(type: GenerateTask){
     invokerPackage = "edu.stanford.slac.core_work_management.elog_api.invoker"
     modelPackage = "edu.stanford.slac.core_work_management.elog_api.dto"
     configOptions = [
-            dateLibrary: "java8-localdatetime",
-            generateClientAsBean: "true",
-            hideGenerationTimestamp:"true",
-            generateAliasAsModel:"false",
-            openApiNullable:"false",
+            dateLibrary            : "java8-localdatetime",
+            generateClientAsBean   : "true",
+            hideGenerationTimestamp: "true",
+            generateAliasAsModel   : "false",
+            openApiNullable        : "false",
     ]
     library = "resttemplate"
     skipValidateSpec = true
@@ -209,7 +211,7 @@ jacocoTestReport {
 jacocoTestCoverageVerification {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: ['**/dto/*','**/cis_api/**']) // Adjust the pattern to match your DTOs
+            fileTree(dir: it, exclude: ['**/dto/*', '**/cis_api/**']) // Adjust the pattern to match your DTOs
         }))
     }
 }
