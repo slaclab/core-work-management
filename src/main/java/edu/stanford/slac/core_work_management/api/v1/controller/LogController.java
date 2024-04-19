@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController()
 @RequestMapping("/v1/log")
 @AllArgsConstructor
-//@Profile("elog-support")
+@Profile("elog-support")
 @Schema(description = "Set of api for the log entries management")
 public class LogController {
 
@@ -37,7 +37,7 @@ public class LogController {
     @PreAuthorize("@workAuthorizationService.checkLogging(#authentication, #workId)")
     public ApiResultResponse<Boolean> createLogEntry(
             Authentication authentication,
-            @PathVariable("workId") String workId,
+            @PathVariable("workId") @NotEmpty String workId,
             @Parameter(schema = @Schema(type = "string", implementation = NewLogEntry.class))
             @RequestPart("entry") @Valid NewLogEntry entry,
             @RequestPart(value = "files", required = false)
