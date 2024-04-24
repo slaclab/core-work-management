@@ -105,6 +105,7 @@ public class LogService {
                                 new EntryImportDTO()
                                         .title(entry.title())
                                         .text(entry.text())
+                                        .loggedAt(entry.eventAt())
                                         .logbooks(List.of("SWMLogbook"))
                                         .originId("cwm:work:%s".formatted(foundWorkDTO.workNumber()))
 

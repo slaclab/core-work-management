@@ -780,15 +780,15 @@ public class TestControllerHelperService {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/log/{workId}", workId);
 
         // add entry
-        MockPart p = new MockPart(
-                "entry",
-                new ObjectMapper().writeValueAsString(newEntry).getBytes(StandardCharsets.UTF_8)
-        );
-        p.getHeaders().add(
-                "Content-Type",
-                MediaType.APPLICATION_JSON_VALUE
-        );
-        multiPartBuilder.part(p);
+        if(newEntry.title() != null) {
+            multiPartBuilder.param("title", newEntry.title());
+        }
+        if(newEntry.text() != null) {
+            multiPartBuilder.param("text", newEntry.text());
+        }
+        if(newEntry.eventAt() != null) {
+            multiPartBuilder.param("eventAt", newEntry.eventAt().toString());
+        }
 
         // add file in case they are present
         for (MockMultipartFile a :

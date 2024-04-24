@@ -4,7 +4,6 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLogEntry;
 import edu.stanford.slac.core_work_management.service.LogService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -37,8 +36,7 @@ public class LogController {
     public ApiResultResponse<Boolean> createLogEntry(
             Authentication authentication,
             @PathVariable("workId") @NotEmpty String workId,
-            @Parameter(schema = @Schema(type = "string", implementation = NewLogEntry.class))
-            @RequestPart("entry") @Valid NewLogEntry entry,
+            @ModelAttribute @Valid NewLogEntry entry,
             @RequestPart(value = "files", required = false)
             MultipartFile[] files
     ) {
