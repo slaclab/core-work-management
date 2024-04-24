@@ -3,7 +3,11 @@ package edu.stanford.slac.core_work_management.controller;
 import com.github.javafaker.Faker;
 import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.model.Authorization;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.elog_api.api.EntriesControllerApi;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -29,7 +33,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -51,11 +58,18 @@ public class LogControllerTest {
     @Autowired
     LocationService locationService;
     @Autowired
+    AuthService authService;
+    @Autowired
     WorkService workService;
     @Autowired
     TestControllerHelperService testControllerHelperService;
     @Autowired
     DocumentGenerationService documentGenerationService;
+    @Autowired
+    EntriesControllerApi entriesControllerApi;
+    @Autowired
+    AppProperties appProperties;
+
     private List<String> workActivityIds;
     private String shopGroupId;
     private String locationId;
@@ -69,6 +83,10 @@ public class LogControllerTest {
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
+        mongoTemplate.remove(new Query(), Authorization.class);
+        appProperties.getRootUserList().clear();
+        appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        authService.updateRootUser();
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
                 NewWorkTypeDTO
@@ -192,6 +210,32 @@ public class LogControllerTest {
             // Process the uploadResult as needed
             assertThat(uploadResult).isNotNull();
             assertThat(uploadResult.getPayload()).isTrue();
+
+            //try to fetch the log entry using elog api
+            var fullWork =workService.findWorkById(newWorkId);
+            await()
+                    .atMost(30, HOURS)
+                    .pollDelay(2, SECONDS)
+                    .until(() -> {
+                        var result = entriesControllerApi.search(
+                                null,
+                                null,
+                                null,
+                                null,
+                                10,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                "cwm:work:%s".formatted(fullWork.workNumber())
+                        );
+                        return result!=null &&
+                                result.getErrorCode() == 0 &&
+                                result.getPayload() != null &&
+                                !result.getPayload().isEmpty();
+                    });
         } catch (Exception e) {
             // Handle possible exceptions here
         }

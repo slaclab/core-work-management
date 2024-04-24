@@ -68,6 +68,7 @@ dependencies {
             'org.springframework.boot:spring-boot-starter-actuator',
             'org.springframework.boot:spring-boot-starter-data-ldap',
             'org.springframework.boot:spring-boot-starter-validation',
+            'org.springframework.kafka:spring-kafka:3.1.1',
             'com.unboundid:unboundid-ldapsdk:6.0.8',
             'io.micrometer:micrometer-registry-prometheus',
             'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2',
@@ -95,6 +96,7 @@ dependencies {
     testImplementation 'org.awaitility:awaitility:4.0.3'
     testImplementation 'org.apache.pdfbox:pdfbox:2.0.30'
     testImplementation 'com.github.javafaker:javafaker:1.0.2'
+    testImplementation 'org.awaitility:awaitility:4.2.0'
 }
 
 task buildCISAPI(type: GenerateTask) {
