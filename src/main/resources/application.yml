@@ -18,6 +18,16 @@ spring:
   data:
     mongodb:
       uri: ${CWM_MONGODB_URI:mongodb://cwm:cwm@localhost:27017/cwm?authSource=cwm}
+  kafka:
+    bootstrap-servers: ${CWM_KAFKA_BOOTSTRAP:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${CWM_CONSUMER_GROUP_ID:${random.uuid}}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   servlet:
     multipart:
       enabled: true
@@ -28,9 +38,10 @@ spring:
 edu:
   stanford:
     slac:
-      core_work_management:
-        cis_backend_url: ${CWM_CIS_URL:http://localhost:8081}
-        elog_backend_url: ${CWM_ELOG_URL:http://localhost:8082}
+      core-work-management:
+        cis-backend-url: ${CWM_CIS_URL:http://localhost:8081}
+        elog-backend-url: ${CWM_ELOG_URL:http://localhost:8082}
+        elog-import-topic: ${CWM_ELOG_IMPORT_TOPIC:elog-plus-import-entry}
       ad:
         eed:
           baselib:

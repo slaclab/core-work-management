@@ -17,7 +17,7 @@ import java.util.List;
 @Log4j2
 @Configuration
 public class CisApiConfig {
-    @Value("${edu.stanford.slac.core_work_management.cis_backend_url}")
+    @Value("${edu.stanford.slac.core-work-management.cis-backend-url}")
     private String cisBackendUrl;
     private final ObjectMapper objectMapper;
 

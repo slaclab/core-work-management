@@ -15,7 +15,7 @@ import java.util.List;
 @Log4j2
 @Configuration
 public class ElogApiConfig {
-    @Value("${edu.stanford.slac.core_work_management.elog_backend_url}")
+    @Value("${edu.stanford.slac.core-work-management.elog-backend-url}")
     private String elogBackendUrl;
     private final ObjectMapper objectMapper;
 
