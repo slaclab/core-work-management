@@ -161,7 +161,7 @@ public class LogService {
      */
     public String createNewLogEntry(String workId, String activityId, NewLogEntry entry, MultipartFile[] files) {
         var foundActivityDTO = workService.findActivityById(activityId);
-        if(foundActivityDTO.workId() != workId){
+        if(foundActivityDTO.workId().compareTo(workId) != 0){
             throw ControllerLogicException
                     .builder()
                     .errorCode(-1)
