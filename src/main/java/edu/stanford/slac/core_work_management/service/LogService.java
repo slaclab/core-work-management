@@ -48,7 +48,7 @@ public class LogService {
     private String importEntryTopic;
 
     /**
-     * Create a new log entry
+     * Create a new log entry for a work plan or job execution
      *
      * @param workId The id of the work plan or job execution
      * @param entry  The log entry
