@@ -48,7 +48,7 @@ public class LogService {
     private String importEntryTopic;
 
     /**
-     * Create a new log entry
+     * Create a new log entry for a work plan or job execution
      *
      * @param workId The id of the work plan or job execution
      * @param entry  The log entry
@@ -57,10 +57,11 @@ public class LogService {
     @Transactional
     public String createNewLogEntry(String workId, NewLogEntry entry, MultipartFile[] files) {
         var foundWorkDTO = workService.findWorkById(workId);
-
+        log.info("Creating new log entry for work {}", foundWorkDTO.workNumber());
         List<String> attachmentIds = new ArrayList<>();
         //store attachments
         if (files != null) {
+            log.info("[logging work id {}] Storing {} attachments", workId, files.length);
             for (MultipartFile file : files) {
                 attachmentIds.add(
                         wrapCatch(
@@ -76,7 +77,7 @@ public class LogService {
                 );
             }
         }
-
+        log.info("[logging work id {}] Storing log entry",workId);
         // store log entry
         LogEntry savedLogEntry = logEntryRepository.save(
                 logEntryMapper.toModel(entry, workId, attachmentIds)
@@ -84,6 +85,7 @@ public class LogService {
 
         // create dto for submit entry to elog system
         // fetch all authorized on work
+        log.info("[logging work id {}] Fetching all authorization",workId);
         List<AuthorizationDTO> allWorkAuthorization = authService.findByResourceIs(WORK_AUTHORIZATION_TEMPLATE.formatted(workId));
 
         // check if within allWorkAuthorization there is some ower with the postfix 'shopgroup.cws.slac.stanford.edu'
@@ -97,8 +99,9 @@ public class LogService {
                     return List.of(auth.owner());
                 }
         ).flatMap(List::stream).toList();
-
+        log.info("[logging work id {}] Authorize elog reading to: {}", workId, userIdForAuthorization);
         // create DTO
+        log.info("[logging work id {}] Creating DTO for elog system", workId);
         ImportEntryDTO dto = new ImportEntryDTO()
                 .entry
                         (
@@ -106,12 +109,13 @@ public class LogService {
                                         .title(entry.title())
                                         .text(entry.text())
                                         .loggedAt(entry.eventAt())
-                                        .logbooks(List.of("SWMLogbook"))
+                                        .logbooks(List.of("cwm-logbook"))
                                         .originId("cwm:work:%s".formatted(foundWorkDTO.workNumber()))
 
                         )
-                .readerUserIds(allWorkAuthorization.stream().map(AuthorizationDTO::owner).toList());
+                .readerUserIds(userIdForAuthorization);
         //create kafka record
+        log.info("[logging work id {}] Sending log to elog system", workId);
         ProducerRecord<String, ImportEntryDTO> message = new ProducerRecord<>(
                 importEntryTopic,
                 dto
@@ -142,7 +146,7 @@ public class LogService {
             return result;
         });
 
-
+        log.info("[logging work id {}] Log entry stored and sent to elog system", workId);
         return savedLogEntry.getId();
     }
 }

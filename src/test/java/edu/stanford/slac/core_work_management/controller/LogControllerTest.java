@@ -191,8 +191,8 @@ public class LogControllerTest {
                             newWorkId,
                             NewLogEntry
                                     .builder()
-                                    .title("Test log entry title")
-                                    .text(faker.lorem().paragraph(10))
+                                    .title("second test entry from cwm")
+                                    .text("second test entry from cwm")
                                     .build(),
                             new MockMultipartFile(
                                     "files",
