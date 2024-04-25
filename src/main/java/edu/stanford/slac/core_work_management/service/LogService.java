@@ -61,7 +61,7 @@ public class LogService {
         List<String> attachmentIds = new ArrayList<>();
         //store attachments
         if (files != null) {
-            log.info("[logging work id {}] Storing {} attachments", workId, files.length);
+            log.info("[logging work number {}] Storing {} attachments", foundWorkDTO.workNumber(), files.length);
             for (MultipartFile file : files) {
                 attachmentIds.add(
                         wrapCatch(
@@ -77,7 +77,7 @@ public class LogService {
                 );
             }
         }
-        log.info("[logging work id {}] Storing log entry",workId);
+        log.info("[logging work number {}] Storing log entry", foundWorkDTO.workNumber());
         // store log entry
         LogEntry savedLogEntry = logEntryRepository.save(
                 logEntryMapper.toModel(entry, workId, attachmentIds)
@@ -85,7 +85,7 @@ public class LogService {
 
         // create dto for submit entry to elog system
         // fetch all authorized on work
-        log.info("[logging work id {}] Fetching all authorization",workId);
+        log.info("[logging work number {}] Fetching all authorization",foundWorkDTO.workNumber());
         List<AuthorizationDTO> allWorkAuthorization = authService.findByResourceIs(WORK_AUTHORIZATION_TEMPLATE.formatted(workId));
 
         // check if within allWorkAuthorization there is some ower with the postfix 'shopgroup.cws.slac.stanford.edu'
@@ -93,16 +93,16 @@ public class LogService {
         List<String> userIdForAuthorization = allWorkAuthorization.stream().map(
                 auth -> {
                     if (auth.owner().endsWith("@shopgroup.cws.slac.stanford.edu")) {
-                        log.info("[logging work id {}] Fetching all user for shop group: {}", workId, auth.owner());
+                        log.info("[logging work number {}] Fetching all user for shop group: {}", foundWorkDTO.workNumber(), auth.owner());
                         var shopGroup = shopGroupService.findById(auth.owner().split("@")[0]);
                         return shopGroup.users().stream().map(member -> member.user().mail()).toList();
                     }
                     return List.of(auth.owner());
                 }
         ).flatMap(List::stream).distinct().toList();
-        log.info("[logging work id {}] Authorize elog reading to: {}", workId, userIdForAuthorization);
+        log.info("[logging work number {}] Authorize elog reading to: {}", foundWorkDTO.workNumber(), userIdForAuthorization);
         // create DTO
-        log.info("[logging work id {}] Creating DTO for elog system", workId);
+        log.info("[logging work number {}] Creating DTO for elog system", foundWorkDTO.workNumber());
         ImportEntryDTO dto = new ImportEntryDTO()
                 .entry
                         (
@@ -116,7 +116,7 @@ public class LogService {
                         )
                 .readerUserIds(userIdForAuthorization);
         //create kafka record
-        log.info("[logging work id {}] Sending log to elog system", workId);
+        log.info("[logging work number {}] Sending log to elog system", foundWorkDTO.workNumber());
         ProducerRecord<String, ImportEntryDTO> message = new ProducerRecord<>(
                 importEntryTopic,
                 dto
@@ -147,7 +147,119 @@ public class LogService {
             return result;
         });
 
-        log.info("[logging work id {}] Log entry stored and sent to elog system", workId);
+        log.info("[logging work number {}] Log entry stored and sent to elog system", foundWorkDTO.workNumber());
+        return savedLogEntry.getId();
+    }
+
+    /**
+     * Create a new log entry for an activity
+     *
+     * @param workId The id of the work plan or job execution
+     * @param activityId The id of the activity
+     * @param entry  The log entry
+     * @param files  The files to be attached to the log entry
+     */
+    public String createNewLogEntry(String workId, String activityId, NewLogEntry entry, MultipartFile[] files) {
+        var foundActivityDTO = workService.findActivityById(activityId);
+        if(foundActivityDTO.workId() != workId){
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("Activity %s does not belong to work %s".formatted(activityId, workId))
+                    .errorDomain("LogService::createNewLogEntry")
+                    .build();
+        }
+        log.info("Creating new log entry for activity {}:{}", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber());
+        List<String> attachmentIds = new ArrayList<>();
+        //store attachments
+        if (files != null) {
+            log.info("[logging activity number {}:{}] Storing {} attachments", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber(), files.length);
+            for (MultipartFile file : files) {
+                attachmentIds.add(
+                        wrapCatch(
+                                () -> attachmentRepository.addAttachment(
+                                        workId,
+                                        entry.title(),
+                                        file.getInputStream(),
+                                        file.getOriginalFilename(),
+                                        file.getContentType()
+                                ),
+                                -1
+                        )
+                );
+            }
+        }
+        log.info("[logging activity number {}:{}] Storing log entry",foundActivityDTO.workNumber(), foundActivityDTO.activityNumber());
+        // store log entry
+        LogEntry savedLogEntry = logEntryRepository.save(
+                logEntryMapper.toModel(entry, workId, attachmentIds)
+        );
+
+        // create dto for submit entry to elog system
+        // fetch all authorized on work
+        log.info("[logging activity number {}:{}] Fetching all authorization", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber());
+        List<AuthorizationDTO> allWorkAuthorization = authService.findByResourceIs(WORK_AUTHORIZATION_TEMPLATE.formatted(workId));
+
+        // check if within allWorkAuthorization there is some ower with the postfix 'shopgroup.cws.slac.stanford.edu'
+        // in this case i need to fetch the shop gorup and return an array of user id
+        List<String> userIdForAuthorization = allWorkAuthorization.stream().map(
+                auth -> {
+                    if (auth.owner().endsWith("@shopgroup.cws.slac.stanford.edu")) {
+                        log.info("[logging activity number {}:{}}] Fetching all user for shop group: {}", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber(), auth.owner());
+                        var shopGroup = shopGroupService.findById(auth.owner().split("@")[0]);
+                        return shopGroup.users().stream().map(member -> member.user().mail()).toList();
+                    }
+                    return List.of(auth.owner());
+                }
+        ).flatMap(List::stream).distinct().toList();
+        log.info("[logging activity number {}:{}] Authorize elog reading to: {}", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber(), userIdForAuthorization);
+        // create DTO
+        log.info("[logging activity number {}:{}] Creating DTO for elog system", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber());
+        ImportEntryDTO dto = new ImportEntryDTO()
+                .entry
+                        (
+                                new EntryImportDTO()
+                                        .title(entry.title())
+                                        .text(entry.text())
+                                        .loggedAt(entry.eventAt())
+                                        .logbooks(List.of("cwm-logbook"))
+                                        .originId("cwm:work:%s:activity:%s".formatted(foundActivityDTO.workNumber(), foundActivityDTO.activityNumber()))
+
+                        )
+                .readerUserIds(userIdForAuthorization);
+        //create kafka record
+        log.info("[logging activity number {}:{}] Sending log to elog system", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber());
+        ProducerRecord<String, ImportEntryDTO> message = new ProducerRecord<>(
+                importEntryTopic,
+                dto
+        );
+        message.headers().add("Authorization", jwtHelper.generateServiceToken().getBytes());
+        // submit log to kafka topic to send to elog system
+        CompletableFuture<SendResult<String, ImportEntryDTO>> future = importEntryDTOKafkaTemplate.send(message);
+        future.thenAccept(result -> {
+            // Success handling
+            log.info(
+                    "Log sent to elog system using topic {} at partition {} with offset {}",
+                    result.getRecordMetadata().topic(),
+                    result.getRecordMetadata().partition(),
+                    result.getRecordMetadata().offset()
+            );
+        }).handle((result, throwable) -> {
+            if (throwable != null) {
+                final String errorMessage = "Failed to send message to topic %s : %s".formatted(importEntryTopic, throwable.getMessage());
+                // Log the exception
+                log.error(errorMessage);
+                throw ControllerLogicException
+                        .builder()
+                        .errorCode(-2)
+                        .errorMessage(errorMessage)
+                        .errorDomain("LogService::createNewLogEntry")
+                        .build();
+            }
+            return result;
+        });
+
+        log.info("[logging activity number {}:{}] Log entry stored and sent to elog system", foundActivityDTO.workNumber(), foundActivityDTO.activityNumber());
         return savedLogEntry.getId();
     }
 }

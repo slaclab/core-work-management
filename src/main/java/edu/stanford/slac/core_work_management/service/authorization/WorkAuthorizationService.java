@@ -181,12 +181,13 @@ public class WorkAuthorizationService {
     }
 
     /**
-     * Check if the user can create a new work
+     * Check if the user can create log on work
      *
      * @param authentication the authentication object
+     * @param workId the work id
      * @return true if the user can create a new work, false otherwise
      */
-    public boolean checkLogging(Authentication authentication, String workId) {
+    public boolean checkLoggingOnWork(Authentication authentication, String workId) {
         // get stored work for check authorization on all fields
         var currentStoredWork = wrapCatch(
                 () -> workService.findWorkById(workId),
@@ -264,6 +265,45 @@ public class WorkAuthorizationService {
      * @return true if the user can update the activity, false otherwise
      */
     public boolean checkUpdate(Authentication authentication, String workId, String activityId, UpdateActivityDTO updateWorkDTO) {
+        // check for auth
+        assertion(
+                NotAuthorized.notAuthorizedBuilder()
+                        .errorCode(-1)
+                        .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, activityId, updateWorkDTO)")
+                        .build(),
+                // should be authenticated
+                () -> authService.checkAuthentication(authentication),
+                // should be one of these
+                () -> any(
+                        // a root users
+                        () -> authService.checkForRoot(authentication),
+                        // or a user that has the right to write on the work
+                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                authentication,
+                                AuthorizationTypeDTO.Write,
+                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
+                        ),
+                        // user of the shop group are always treated as admin on the work
+                        () -> shopGroupService.checkContainsAUserEmail(
+                                // fire not found work exception
+                                workService.getShopGroupIdByWorkId(workId),
+                                authentication.getCredentials().toString()
+                        )
+                )
+        );
+        return true;
+    }
+
+    /**
+     * Check if the user can create log on activity
+     *
+     * @param authentication the authentication object
+     * @param workId the work id
+     * @param activityId the activity id
+     * @param updateWorkDTO the update work dto
+     * @return true if the user can create a new work, false otherwise
+     */
+    public boolean checkLoggingOnActivity(Authentication authentication,  String workId, String activityId) {
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
