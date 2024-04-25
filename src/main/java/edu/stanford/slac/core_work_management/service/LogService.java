@@ -93,12 +93,13 @@ public class LogService {
         List<String> userIdForAuthorization = allWorkAuthorization.stream().map(
                 auth -> {
                     if (auth.owner().endsWith("@shopgroup.cws.slac.stanford.edu")) {
+                        log.info("[logging work id {}] Fetching all user for shop group: {}", workId, auth.owner());
                         var shopGroup = shopGroupService.findById(auth.owner().split("@")[0]);
                         return shopGroup.users().stream().map(member -> member.user().mail()).toList();
                     }
                     return List.of(auth.owner());
                 }
-        ).flatMap(List::stream).toList();
+        ).flatMap(List::stream).distinct().toList();
         log.info("[logging work id {}] Authorize elog reading to: {}", workId, userIdForAuthorization);
         // create DTO
         log.info("[logging work id {}] Creating DTO for elog system", workId);
