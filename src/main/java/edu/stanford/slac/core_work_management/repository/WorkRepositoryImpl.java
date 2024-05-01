@@ -48,11 +48,12 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
                         queryParameter.getContextSize() >0 &&
                         queryParameter.getAnchorID() == null
         ) {
-            throw ControllerLogicException.of(
-                    -1,
-                    "The context count cannot be used without the anchor",
-                    "WorkRepositoryImpl::searchAll"
-            );
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("The context count cannot be used without the anchor")
+                    .errorDomain("WorkRepositoryImpl::searchAll")
+                    .build();
         }
 
         // all the criteria
