@@ -29,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,6 +76,8 @@ public class LogControllerTest {
     private String locationId;
     private String newWorkTypeId;
     private String newWorkId;
+    private List<String> testActivityTypeIds = new ArrayList<>();
+    private String newActivityId;
 
     @BeforeAll
     public void setUpWorkAndJob() {
@@ -169,6 +172,44 @@ public class LogControllerTest {
                         )
                 );
         assertThat(newWorkId).isNotEmpty();
+
+        // create activity type for work 2
+        testActivityTypeIds.add(
+                assertDoesNotThrow(
+                        () -> workService.ensureActivityType(
+                                NewActivityTypeDTO
+                                        .builder()
+                                        .title("Activity 3")
+                                        .description("Activity 3 description")
+                                        .build()
+                        )
+                )
+        );
+        testActivityTypeIds.add(
+                assertDoesNotThrow(
+                        () -> workService.ensureActivityType(
+                                NewActivityTypeDTO
+                                        .builder()
+                                        .title("Activity 4")
+                                        .description("Activity 4 description")
+                                        .build()
+                        )
+                )
+        );
+
+        newActivityId =
+                assertDoesNotThrow(
+                        () -> workService.createNew(
+                                newWorkId,
+                                NewActivityDTO.builder()
+                                        .activityTypeId(testActivityTypeIds.getFirst())
+                                        .title("New activity 1")
+                                        .description("activity 1 description")
+                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                        .build()
+                        )
+                );
+        assertThat(newActivityId).isNotNull();
     }
 
     @BeforeEach
@@ -177,7 +218,7 @@ public class LogControllerTest {
     }
 
     @Test
-    public void testCreateMewLogEntry() {
+    public void testCreateMewLogEntryOnWork() {
         Faker faker = new Faker();
         try (
                 InputStream isPng = assertDoesNotThrow(() -> documentGenerationService.getTestPng());
@@ -230,6 +271,72 @@ public class LogControllerTest {
                                 null,
                                 null,
                                 "cwm:work:%s".formatted(fullWork.workNumber())
+                        );
+                        return result!=null &&
+                                result.getErrorCode() == 0 &&
+                                result.getPayload() != null &&
+                                !result.getPayload().isEmpty();
+                    });
+        } catch (Exception e) {
+            // Handle possible exceptions here
+        }
+    }
+
+    @Test
+    public void testCreateMewLogEntryOnActivity() {
+        Faker faker = new Faker();
+        try (
+                InputStream isPng = assertDoesNotThrow(() -> documentGenerationService.getTestPng());
+                InputStream isJpg = assertDoesNotThrow(() -> documentGenerationService.getTestJpeg())
+        ) {
+            ApiResultResponse<Boolean> uploadResult = assertDoesNotThrow(
+                    () -> testControllerHelperService.createLogEntry(
+                            mockMvc,
+                            status().isCreated(),
+                            Optional.of("user1@slac.stanford.edu"),
+                            newWorkId,
+                            newActivityId,
+                            NewLogEntry
+                                    .builder()
+                                    .title("second test entry from cwm")
+                                    .text("second test entry from cwm")
+                                    .build(),
+                            new MockMultipartFile(
+                                    "files",
+                                    "test.png",
+                                    MediaType.IMAGE_PNG_VALUE,
+                                    isPng
+                            ),
+                            new MockMultipartFile(
+                                    "files",
+                                    "test.jpg",
+                                    MediaType.IMAGE_JPEG_VALUE,
+                                    isJpg
+                            ))
+            );
+            // Process the uploadResult as needed
+            assertThat(uploadResult).isNotNull();
+            assertThat(uploadResult.getPayload()).isTrue();
+
+            //try to fetch the log entry using elog api
+            var fulActivity =workService.findActivityById(newActivityId);
+            await()
+                    .atMost(30, HOURS)
+                    .pollDelay(2, SECONDS)
+                    .until(() -> {
+                        var result = entriesControllerApi.search(
+                                null,
+                                null,
+                                null,
+                                null,
+                                10,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                "cwm:work:%s:activity:%s".formatted(fulActivity.workNumber(), fulActivity.activityNumber())
                         );
                         return result!=null &&
                                 result.getErrorCode() == 0 &&
