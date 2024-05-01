@@ -932,4 +932,5 @@ public class WorkService {
         );
         return activittList.stream().map(workMapper::toDTO).toList();
     }
+
 }

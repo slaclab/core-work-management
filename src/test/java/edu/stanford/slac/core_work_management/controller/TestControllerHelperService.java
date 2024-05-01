@@ -36,6 +36,92 @@ public class TestControllerHelperService {
 
     }
 
+
+    /**
+     * Create new domain
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created domain
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> domainControllerCreateNewDomain(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewDomainDTO newDomainDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/domain")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newDomainDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find a domain by his id
+     *
+     * @param mockMvc            the mock mvc
+     * @param resultMatcher      the result matcher
+     * @param userInfo           the user info
+     * @param domainId           the id of the domain to update
+     * @return the domain found of the newly created domain
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<DomainDTO> domainControllerFindById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String domainId
+    ) throws Exception {
+        var requestBuilder = get("/v1/domain/{domainId}", domainId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find all domain
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the list of domain
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<DomainDTO>> domainControllerFindAll(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/domain")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
     /**
      * Create new shop group
      *
