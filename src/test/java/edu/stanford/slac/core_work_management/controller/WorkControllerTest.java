@@ -224,6 +224,7 @@ public class WorkControllerTest {
 
     @BeforeEach
     public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
@@ -376,6 +377,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateNewWork() {
+        var newDomainIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(newDomainIdResult).isNotNull();
+        assertThat(newDomainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newDomainIdResult.getPayload()).isNotNull().isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -384,6 +400,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(newDomainIdResult.getPayload())
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))
@@ -398,6 +415,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateWorkOk() {
+        var newDomainIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(newDomainIdResult).isNotNull();
+        assertThat(newDomainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newDomainIdResult.getPayload()).isNotNull().isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -406,6 +438,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(newDomainIdResult.getPayload())
                                         // user1@slac.stanford.edu si the are manager
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
@@ -460,6 +493,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateNewWorkFailNoAuthentication() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var notAuthorizedException =
                 assertThrows(
@@ -469,6 +517,7 @@ public class WorkControllerTest {
                                 status().isUnauthorized(),
                                 Optional.empty(),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))
@@ -482,6 +531,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCheckAuthorizationOnNewlyCreatedWork() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -491,6 +555,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user1 and user2 and all of them should be reader
                                         .locationId(testLocationIds.get(1))
@@ -545,6 +610,21 @@ public class WorkControllerTest {
 
     @Test
     public void testWorkFindById() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -553,6 +633,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))
@@ -602,6 +683,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateActivity() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -609,6 +705,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         .locationId(testLocationIds.getFirst())
                                         .workTypeId(testWorkTypeIds.getFirst())
                                         .shopGroupId(testShopGroupIds.getFirst())
@@ -642,6 +739,21 @@ public class WorkControllerTest {
     @Test
     public void testFindAllActivityForWorkId() {
         String[] activityIds = new String[10];
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -649,6 +761,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         .locationId(testLocationIds.getFirst())
                                         .workTypeId(testWorkTypeIds.getFirst())
                                         .shopGroupId(testShopGroupIds.getFirst())
@@ -720,6 +833,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateActivityByCreator() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -728,6 +856,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -762,6 +891,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateActivityByLocationAreaManager() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -770,6 +914,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -804,6 +949,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateActivityByShopGroupUsers() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -812,6 +972,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user2 and user3 and all of them should be admin
                                         .locationId(testLocationIds.get(2))
@@ -846,6 +1007,21 @@ public class WorkControllerTest {
 
     @Test
     public void testCreateActivityByAssignedToUsers() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -854,6 +1030,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user2 and user3 and all of them should be admin
                                         .locationId(testLocationIds.getFirst())
@@ -888,6 +1065,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateWorkFailOnLocationIdOnNonAdmin() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -896,6 +1088,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // user2@slac.stanford.edu si the are manager
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -926,6 +1119,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateWorkOkAndCheckForAdminAndGroupReader() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -934,6 +1142,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // user2@slac.stanford.edu si the are manager
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -1005,6 +1214,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateWorkOkAndCheckForAssignedToChanges() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -1013,6 +1237,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // user2@slac.stanford.edu si the are manager
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -1084,6 +1309,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateWorkOnAssignedToOkByRootAndShopGroupLeader() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         // create new work
         var newWorkIdResult =
                 assertDoesNotThrow(
@@ -1092,6 +1332,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // user2@slac.stanford.edu si the are manager
                                         // user[2-3(l)]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -1163,6 +1404,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateActivityByCreator() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -1171,6 +1427,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -1248,6 +1505,21 @@ public class WorkControllerTest {
 
     @Test
     public void testUpdateActivityStatusByCreator() {
+        var domainIdResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO.builder()
+                                .name("domain1")
+                                .description("domain1 description")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(domainIdResult.getPayload()).isNotNull();
+
         var newWorkIdResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerCreateNew(
@@ -1256,6 +1528,7 @@ public class WorkControllerTest {
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
                                 NewWorkDTO.builder()
+                                        .domainId(domainIdResult.getPayload())
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin

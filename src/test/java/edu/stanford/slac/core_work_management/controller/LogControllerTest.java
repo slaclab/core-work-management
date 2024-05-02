@@ -61,6 +61,8 @@ public class LogControllerTest {
     @Autowired
     AuthService authService;
     @Autowired
+    DomainService domainService;
+    @Autowired
     WorkService workService;
     @Autowired
     TestControllerHelperService testControllerHelperService;
@@ -71,6 +73,7 @@ public class LogControllerTest {
     @Autowired
     AppProperties appProperties;
 
+    private String domainId;
     private List<String> workActivityIds;
     private String shopGroupId;
     private String locationId;
@@ -81,6 +84,7 @@ public class LogControllerTest {
 
     @BeforeAll
     public void setUpWorkAndJob() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
@@ -90,6 +94,17 @@ public class LogControllerTest {
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
+
+        // create domain
+        domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO.builder()
+                                .name("SLAC")
+                                .description("SLAC National Accelerator Laboratory")
+                                .build()
+                )
+        );
+
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
                 NewWorkTypeDTO
@@ -163,6 +178,7 @@ public class LogControllerTest {
                 assertDoesNotThrow(
                         () -> workService.createNew(
                                 NewWorkDTO.builder()
+                                        .domainId(domainId)
                                         .locationId(locationId)
                                         .workTypeId(newWorkTypeId)
                                         .shopGroupId(shopGroupId)
@@ -253,7 +269,7 @@ public class LogControllerTest {
             assertThat(uploadResult.getPayload()).isTrue();
 
             //try to fetch the log entry using elog api
-            var fullWork =workService.findWorkById(newWorkId);
+            var fullWork = workService.findWorkById(newWorkId);
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)
@@ -272,7 +288,7 @@ public class LogControllerTest {
                                 null,
                                 "cwm:work:%s".formatted(fullWork.workNumber())
                         );
-                        return result!=null &&
+                        return result != null &&
                                 result.getErrorCode() == 0 &&
                                 result.getPayload() != null &&
                                 !result.getPayload().isEmpty();
@@ -319,7 +335,7 @@ public class LogControllerTest {
             assertThat(uploadResult.getPayload()).isTrue();
 
             //try to fetch the log entry using elog api
-            var fulActivity =workService.findActivityById(newActivityId);
+            var fulActivity = workService.findActivityById(newActivityId);
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)
@@ -338,7 +354,7 @@ public class LogControllerTest {
                                 null,
                                 "cwm:work:%s:activity:%s".formatted(fulActivity.workNumber(), fulActivity.activityNumber())
                         );
-                        return result!=null &&
+                        return result != null &&
                                 result.getErrorCode() == 0 &&
                                 result.getPayload() != null &&
                                 !result.getPayload().isEmpty();

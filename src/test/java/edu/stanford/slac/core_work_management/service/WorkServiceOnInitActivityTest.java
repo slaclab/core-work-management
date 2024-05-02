@@ -37,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorkServiceOnInitActivityTest {
     @Autowired
+    DomainService domainService;
+    @Autowired
     WorkService workService;
     @Autowired
     MongoTemplate mongoTemplate;
@@ -50,18 +52,31 @@ public class WorkServiceOnInitActivityTest {
     WorkTypeRepository workTypeRepository;
     @Autowired
     ActivityTypeRepository activityTypeRepository;
+    @Autowired
+    ObjectMapper objectMapper;
+
+    private String domainId;
     private String shopGroupId;
     private String locationId;
     private List<ActivityType> allActivityTypes;
     private List<WorkType> allWorkType;
-    @Autowired
-    ObjectMapper objectMapper;
+
     @BeforeAll
     public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
+
+        domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO.builder()
+                                .name("SLAC")
+                                .description("SLAC National Accelerator Laboratory")
+                                .build()
+                )
+        );
 
         shopGroupId =
                 assertDoesNotThrow(
@@ -168,6 +183,7 @@ public class WorkServiceOnInitActivityTest {
         var testWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
                         NewWorkDTO.builder()
+                                .domainId(domainId)
                                 .title("work")
                                 .description("work")
                                 .workTypeId(workTypeId)

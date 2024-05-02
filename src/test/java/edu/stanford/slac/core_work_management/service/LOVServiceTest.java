@@ -60,22 +60,38 @@ public class LOVServiceTest {
     @Autowired
     HelperService helperService;
     @Autowired
+    DomainService domainService;
+    @Autowired
     WorkService workService;
     @Autowired
     ShopGroupService shopGroupService;
     @Autowired
     LocationService locationService;
+
+    private String domainId;
     private List<String> workActivityIds;
     private String shopGroupId;
     private String locationId;
 
     @BeforeAll
     public void setup() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
+        // create domain
+        domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO
+                                .builder()
+                                .name("Domain 1")
+                                .description("Domain 1 description")
+                                .build()
+                )
+        );
+        assertThat(domainId).isNotEmpty();
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
                 NewWorkTypeDTO
@@ -247,10 +263,10 @@ public class LOVServiceTest {
                         LOVDomainTypeDTO.Activity,
                         workActivityIds.get(1),
                         "wrong field",
-                       "field1_group"
+                        "field1_group"
                 )
         );
-       assertThat(fieldNotFound.getErrorCode()).isEqualTo(-1);
+        assertThat(fieldNotFound.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
@@ -278,6 +294,7 @@ public class LOVServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(workActivityIds.get(0))

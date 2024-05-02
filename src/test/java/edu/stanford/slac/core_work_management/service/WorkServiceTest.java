@@ -6,6 +6,7 @@ import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import jakarta.validation.ConstraintViolationException;
 import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -34,6 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorkServiceTest {
     @Autowired
+    DomainService domainService;
+    @Autowired
     WorkService workService;
     @Autowired
     MongoTemplate mongoTemplate;
@@ -43,6 +46,21 @@ public class WorkServiceTest {
     ShopGroupService shopGroupService;
     private String shopGroupId;
     private String locationId;
+    private String testDomainId;
+
+    @BeforeAll
+    public void initDomain() {
+        testDomainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO
+                                .builder()
+                                .name("Test Domain")
+                                .description("Test Domain Description")
+                                .build()
+                )
+        );
+        assertThat(testDomainId).isNotNull();
+    }
 
     @BeforeEach
     public void cleanCollection() {
@@ -308,6 +326,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(testDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -335,6 +354,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(testDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -350,6 +370,7 @@ public class WorkServiceTest {
         );
         assertThat(foundWork).isNotNull();
         assertThat(foundWork.id()).isNotNull();
+        assertThat(foundWork.domain().id()).isEqualTo(testDomainId);
     }
 
     @Test
@@ -380,6 +401,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(testDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -434,6 +456,7 @@ public class WorkServiceTest {
         );
         assertThat(newlyCreatedActivity).isNotNull();
         assertThat(newlyCreatedActivity.id()).isNotNull();
+        assertThat(newlyCreatedActivity.domain().id()).isEqualTo(testDomainId);
         assertThat(newlyCreatedActivity.title()).isEqualTo("Activity 1");
         assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
         assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
@@ -458,6 +481,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(testDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -551,6 +575,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(testDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -654,6 +679,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(testDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)

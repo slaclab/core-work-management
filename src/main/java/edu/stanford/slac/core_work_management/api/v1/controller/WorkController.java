@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -112,6 +113,7 @@ public class WorkController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<String> createNewWork(
             Authentication authentication,
+            @Parameter(description = "The new work to create", required = true)
             @Valid @RequestBody NewWorkDTO newWorkDTO
     ) {
         return ApiResultResponse.of(workService.createNew(newWorkDTO));

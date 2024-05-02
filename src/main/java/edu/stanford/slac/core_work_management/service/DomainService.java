@@ -62,4 +62,16 @@ public class DomainService {
                 .toList();
     }
 
+    /**
+     * Check if a domain exists by its id
+     *
+     * @param domainId the id of the domain
+     * @return true if the domain exists, false otherwise
+     */
+    public Boolean existsById(String domainId) {
+        return wrapCatch(
+                () -> domainRepository.existsById(domainId),
+                -1
+        );
+    }
 }

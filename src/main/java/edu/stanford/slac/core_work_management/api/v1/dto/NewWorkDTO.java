@@ -15,18 +15,18 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the information for create new work plan")
 public record NewWorkDTO (
+        @Schema(description = "The domain where the work belongs to")
+        @NotEmpty(message = "The domain is required")
+        String domainId,
         @Schema(description = "The title of the work plan")
         @NotEmpty(message = "Title is required")
         String title,
-
         @Schema(description = "The description of the work plan")
         @NotEmpty(message = "Description is required")
         String description,
-
         @Schema(description = "Define the type of the work to do")
         @NotEmpty(message = "Work type is required")
         String workTypeId,
-
         @Schema(description =
                 """
                 Define the location of the work to do. Location is considered to

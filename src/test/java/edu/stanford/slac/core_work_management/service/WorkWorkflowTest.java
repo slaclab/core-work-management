@@ -40,6 +40,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorkWorkflowTest {
     @Autowired
+    DomainService domainService;
+    @Autowired
     WorkService workService;
     @Autowired
     LocationService locationService;
@@ -49,17 +51,27 @@ public class WorkWorkflowTest {
     HelperService helperService;
     @Autowired
     MongoTemplate mongoTemplate;
+    private String domainId = null;
     private String locationId = null;
     private String shopGroupId = null;
 
     @BeforeEach
     public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Activity.class);
-
+        domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO
+                                .builder()
+                                .name("SLAC")
+                                .description("SLAC National Accelerator Laboratory")
+                                .build()
+                )
+        );
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
@@ -110,6 +122,7 @@ public class WorkWorkflowTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(wtId)
@@ -140,6 +153,7 @@ public class WorkWorkflowTest {
                     () -> workService.createNew(
                             NewWorkDTO
                                     .builder()
+                                    .domainId(domainId)
                                     .title("Update the documentation")
                                     .description("Update the documentation description")
                                     .workTypeId(wtId)
@@ -180,6 +194,7 @@ public class WorkWorkflowTest {
                 tasks.add(() -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(wtId)
@@ -228,6 +243,7 @@ public class WorkWorkflowTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(wtId)
@@ -292,6 +308,7 @@ public class WorkWorkflowTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
@@ -374,6 +391,7 @@ public class WorkWorkflowTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
@@ -501,6 +519,7 @@ public class WorkWorkflowTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))
@@ -545,6 +564,7 @@ public class WorkWorkflowTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(listIds.get(0))

@@ -22,6 +22,8 @@ import java.util.List;
 public record ActivityDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
+        @Schema(description = "The domain where the activity belongs to")
+        DomainDTO domain,
         @Schema(description = "The sequence number of the activity in the work plan")
         Long activityNumber,
         @Schema(description = "The unique identifier of the work which this activity belongs to")

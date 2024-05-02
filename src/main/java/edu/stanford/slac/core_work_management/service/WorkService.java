@@ -5,10 +5,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
-import edu.stanford.slac.core_work_management.exception.ActivityNotFound;
-import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
-import edu.stanford.slac.core_work_management.exception.WorkNotFound;
-import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
+import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
@@ -43,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @Validated
 @AllArgsConstructor
 public class WorkService {
+    private final DomainService domainService;
     private final AuthService authService;
     private final WorkMapper workMapper;
     private final WorkRepository workRepository;
@@ -52,7 +50,6 @@ public class WorkService {
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
-
     /**
      * Create a new work type
      *
@@ -311,6 +308,16 @@ public class WorkService {
      */
     @Transactional
     public String createNew(Long workSequence, @Valid NewWorkDTO newWorkDTO) {
+        //check if the domain exists
+        assertion(
+                DomainNotFound
+                        .notFoundById()
+                        .errorCode(-1)
+                        .id(newWorkDTO.domainId())
+                        .build(),
+                () -> domainService.existsById(newWorkDTO.domainId())
+        );
+
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
                 workSequence,
@@ -616,7 +623,7 @@ public class WorkService {
         );
 
         // convert to model
-        var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), nextActivityNumbers);
+        var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), work.getDomainId(), nextActivityNumbers);
 
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),

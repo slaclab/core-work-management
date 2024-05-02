@@ -23,6 +23,8 @@ import java.util.List;
 public record WorkDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
+        @Schema(description = "The domain where the work belongs to")
+        DomainDTO domain,
         @Schema(description = "The unique identifier of the work plan")
         Long workNumber,
         @Schema(description = "The unique identifier of the work which his is related to")
@@ -43,7 +45,7 @@ public record WorkDTO(
         LocationDTO location,
         @Schema(description = "The shop group that perform the work in the location")
         ShopGroupDTO shopGroup,
-        @Schema(description="The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
+        @Schema(description = "The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
         List<CustomFieldDTO> customFields,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
