@@ -46,13 +46,13 @@ public class DomainController {
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Return a domain by his id")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<DomainDTO> findDomainById(
             Authentication authentication,
             @Parameter(description = "The id of the domain to find")
-            String domainId
+            @PathVariable String domainId
     ) {
         return ApiResultResponse.of(
                 domainService.findById(domainId)
@@ -63,7 +63,7 @@ public class DomainController {
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Return all the domain")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<List<DomainDTO>> findAllDomain(
