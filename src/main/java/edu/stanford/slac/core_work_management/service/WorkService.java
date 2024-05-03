@@ -336,15 +336,14 @@ public class WorkService {
                 Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
         );
 
-        // validate location and group shop against the domain
-        validateLocationForDomain(newWorkDTO.locationId(), newWorkDTO.domainId(), -3);
-
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
                 workSequence,
                 newWorkDTO
         );
 
+        // validate location and group shop against the domain
+        validateLocationForDomain(workToSave.getLocationId(), workToSave.getDomainId(), -3);
 
         // save work
         Work savedWork = wrapCatch(
@@ -435,11 +434,11 @@ public class WorkService {
             );
         }
 
-        // validate location and group shop against the domain
-        validateLocationForDomain(updateWorkDTO.locationId(), foundWork.getDomainId(), -4);
-
         // update the model
         workMapper.updateModel(updateWorkDTO, foundWork);
+
+        // validate location and group shop against the domain
+        validateLocationForDomain(foundWork.getLocationId(), foundWork.getDomainId(), -4);
 
         // save the work
         var updatedWork = wrapCatch(
