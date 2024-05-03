@@ -107,6 +107,12 @@ public abstract class WorkMapper {
     @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
     abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
 
+    /**
+     * Check if the custom field is a LOV
+     *
+     * @param customField the custom field to check
+     * @return true if the custom field is a LOV
+     */
     public boolean checkIsLOV(WATypeCustomField customField) {
         if (customField.getLovFieldReference() == null) return false;
         return wrapCatch(

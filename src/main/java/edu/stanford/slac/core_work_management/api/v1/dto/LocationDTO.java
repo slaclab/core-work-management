@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 public record LocationDTO(
         @Schema(description = "The unique identifier of the location")
         String id,
+        @Schema(description = "The domain where the location is belong to")
+        DomainDTO domain,
         @Schema(description = "The unique identifier of the parent location")
         String parentId,
         @Schema(description = "The name of the location")

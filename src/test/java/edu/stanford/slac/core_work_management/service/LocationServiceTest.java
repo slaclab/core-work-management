@@ -125,6 +125,7 @@ public class LocationServiceTest {
         );
         assertThat(newCreatedLocation).isNotNull();
         assertThat(newCreatedLocation.id()).isEqualTo(newLocationId);
+        assertThat(newCreatedLocation.domain().id()).isEqualTo(domainId);
     }
 
     @Test
