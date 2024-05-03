@@ -17,6 +17,9 @@ import java.time.LocalDateTime;
 public class Location {
     @Id
     String id;
+
+    @Field(targetType = FieldType.OBJECT_ID)
+    String domainId;
     /**
      * The parent location id
      */

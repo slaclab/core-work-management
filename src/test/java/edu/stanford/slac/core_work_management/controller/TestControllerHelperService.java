@@ -245,13 +245,43 @@ public class TestControllerHelperService {
      * @return the id of the newly created location
      * @throws Exception the exception
      */
-    public ApiResultResponse<String> locationControllerCreateNew(
+    public ApiResultResponse<String> locationControllerCreateNewRoot(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             NewLocationDTO newLocationDTO
     ) throws Exception {
         var requestBuilder = post("/v1/location")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newLocationDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Create new child location
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created location
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> locationControllerCreateNewChild(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String parentLocationId,
+            NewLocationDTO newLocationDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/location/{locationId}", parentLocationId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newLocationDTO));

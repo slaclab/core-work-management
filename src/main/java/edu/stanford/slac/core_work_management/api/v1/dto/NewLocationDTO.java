@@ -18,9 +18,9 @@ import lombok.Builder;
         againstFields = {"externalLocationIdentifier"},
         message = "Not all the fields (name, description and externalLocationIdentifier) should be not null")
 public record NewLocationDTO (
-        @Schema(description = "The unique identifier of the parent location")
-        @NullOrNotEmpty
-        String parentId,
+        @NotEmpty
+        @Schema(description = "The domain where the location belongs to")
+        String domainId,
         @Schema(description = "The name of the location")
         String name,
         @Schema(description = "The description of the location")

@@ -46,11 +46,11 @@ public class WorkServiceTest {
     ShopGroupService shopGroupService;
     private String shopGroupId;
     private String locationId;
-    private String testDomainId;
+    private String domainId;
 
     @BeforeAll
     public void initDomain() {
-        testDomainId = assertDoesNotThrow(
+        domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
                         NewDomainDTO
                                 .builder()
@@ -59,7 +59,7 @@ public class WorkServiceTest {
                                 .build()
                 )
         );
-        assertThat(testDomainId).isNotNull();
+        assertThat(domainId).isNotNull();
     }
 
     @BeforeEach
@@ -96,6 +96,7 @@ public class WorkServiceTest {
                         () -> locationService.createNew(
                                 NewLocationDTO
                                         .builder()
+                                        .domainId(domainId)
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -326,7 +327,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
-                                .domainId(testDomainId)
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -354,7 +355,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
-                                .domainId(testDomainId)
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -370,7 +371,7 @@ public class WorkServiceTest {
         );
         assertThat(foundWork).isNotNull();
         assertThat(foundWork.id()).isNotNull();
-        assertThat(foundWork.domain().id()).isEqualTo(testDomainId);
+        assertThat(foundWork.domain().id()).isEqualTo(domainId);
     }
 
     @Test
@@ -401,7 +402,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
-                                .domainId(testDomainId)
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -456,7 +457,7 @@ public class WorkServiceTest {
         );
         assertThat(newlyCreatedActivity).isNotNull();
         assertThat(newlyCreatedActivity.id()).isNotNull();
-        assertThat(newlyCreatedActivity.domain().id()).isEqualTo(testDomainId);
+        assertThat(newlyCreatedActivity.domain().id()).isEqualTo(domainId);
         assertThat(newlyCreatedActivity.title()).isEqualTo("Activity 1");
         assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
         assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
@@ -481,7 +482,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
-                                .domainId(testDomainId)
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -575,7 +576,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
-                                .domainId(testDomainId)
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -679,7 +680,7 @@ public class WorkServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
-                                .domainId(testDomainId)
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)

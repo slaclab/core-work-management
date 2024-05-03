@@ -19,10 +19,11 @@ public abstract class LocationMapper {
     public abstract LocationFilter toModel(LocationFilterDTO locationFilterDTO);
     public abstract LocationDTO toDTO(Location location);
 
-    @Mapping(target = "parentId", source = "newLocationDTO.parentId")
+
     @Mapping(target = "name", expression = "java(choiceName(newLocationDTO, externalLocationDTO))")
     @Mapping(target = "description", expression = "java(choiceDescription(newLocationDTO, externalLocationDTO))")
-    public abstract Location toModel(NewLocationDTO newLocationDTO, InventoryElementDTO externalLocationDTO);
+    @Mapping(target = "parentId", source = "parentId")
+    public abstract Location toModel(String parentId, NewLocationDTO newLocationDTO, InventoryElementDTO externalLocationDTO);
 
     public String choiceName(NewLocationDTO newLocationDTO, InventoryElementDTO inventoryElementDTO) {
         return inventoryElementDTO==null?newLocationDTO.name(): inventoryElementDTO.getName();

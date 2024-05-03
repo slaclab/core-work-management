@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -53,15 +54,35 @@ public class LocationController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a new location")
+    @Operation(summary = "Create a new root location")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
-    public ApiResultResponse<String> createNew(
+    public ApiResultResponse<String> createNewRootLocation(
             Authentication authentication,
             @Parameter(description = "The new location to create")
             @Valid @RequestBody NewLocationDTO newLocationDTO
     ) {
         return ApiResultResponse.of(
                 locationService.createNew(newLocationDTO)
+        );
+    }
+
+    @PostMapping(
+            path = "/{locationId}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new child location")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
+    public ApiResultResponse<String> createNewChildLocation(
+            Authentication authentication,
+            @Parameter(description = "The id of the parent location")
+            @PathVariable @NotEmpty String locationId,
+            @Parameter(description = "The new location to create")
+            @Valid @RequestBody NewLocationDTO newLocationDTO
+    ) {
+        return ApiResultResponse.of(
+                locationService.createNewChild(locationId, newLocationDTO)
         );
     }
 

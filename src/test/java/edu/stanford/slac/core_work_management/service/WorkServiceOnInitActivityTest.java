@@ -104,6 +104,7 @@ public class WorkServiceOnInitActivityTest {
                         () -> locationService.createNew(
                                 NewLocationDTO
                                         .builder()
+                                        .domainId(domainId)
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")

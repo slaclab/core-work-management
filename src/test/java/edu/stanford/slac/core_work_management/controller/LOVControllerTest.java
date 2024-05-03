@@ -4,10 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.service.HelperService;
-import edu.stanford.slac.core_work_management.service.LOVService;
-import edu.stanford.slac.core_work_management.service.LocationService;
-import edu.stanford.slac.core_work_management.service.ShopGroupService;
+import edu.stanford.slac.core_work_management.service.*;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,17 +50,29 @@ public class LOVControllerTest {
     private LOVService lovService;
     @Autowired
     private HelperService helperService;
+    @Autowired
+    private DomainService domainService;
+
+    private String domainId;
     private List<String> workActivityIds;
     private String shopGroupId;
     private String locationId;
 
     @BeforeAll
     public void setup() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
+
+        domainId = domainService.createNew(
+                NewDomainDTO.builder()
+                        .name("SLAC")
+                        .description("SLAC National Accelerator Laboratory")
+                        .build()
+        );
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
                 NewWorkTypeDTO
@@ -114,6 +123,7 @@ public class LOVControllerTest {
                         () -> locationService.createNew(
                                 NewLocationDTO
                                         .builder()
+                                        .domainId(domainId)
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")

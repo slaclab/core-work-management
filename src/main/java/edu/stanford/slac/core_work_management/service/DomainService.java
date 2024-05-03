@@ -69,6 +69,7 @@ public class DomainService {
      * @return true if the domain exists, false otherwise
      */
     public Boolean existsById(String domainId) {
+        if (domainId == null || domainId.isEmpty() || domainId.isBlank()) {return false;}
         return wrapCatch(
                 () -> domainRepository.existsById(domainId),
                 -1

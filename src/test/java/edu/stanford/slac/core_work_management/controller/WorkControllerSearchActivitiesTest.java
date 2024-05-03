@@ -192,6 +192,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> locationService.createNew(
                                 NewLocationDTO.builder()
+                                        .domainId(domainId)
                                         .name("location1")
                                         .description("location1 description")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -203,6 +204,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> locationService.createNew(
                                 NewLocationDTO.builder()
+                                        .domainId(domainId)
                                         .name("location2")
                                         .description("location2 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -214,6 +216,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> locationService.createNew(
                                 NewLocationDTO.builder()
+                                        .domainId(domainId)
                                         .name("location3")
                                         .description("location3 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
