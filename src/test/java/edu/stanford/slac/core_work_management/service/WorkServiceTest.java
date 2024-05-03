@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.InvalidLocation;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import jakarta.validation.ConstraintViolationException;
@@ -46,10 +47,13 @@ public class WorkServiceTest {
     ShopGroupService shopGroupService;
     private String shopGroupId;
     private String locationId;
+    private String locationIdOnAlternateDomain;
     private String domainId;
+    private String alternateDomainId;
 
     @BeforeAll
     public void initDomain() {
+        mongoTemplate.remove(new Query(), Domain.class);
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
                         NewDomainDTO
@@ -59,7 +63,18 @@ public class WorkServiceTest {
                                 .build()
                 )
         );
-        assertThat(domainId).isNotNull();
+        assertThat(domainId).isNotEmpty();
+
+        alternateDomainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO
+                                .builder()
+                                .name("Alternate Test Domain")
+                                .description("Alternate Test Domain Description")
+                                .build()
+                )
+        );
+        assertThat(alternateDomainId).isNotEmpty();
     }
 
     @BeforeEach
@@ -91,19 +106,31 @@ public class WorkServiceTest {
                 );
         AssertionsForClassTypes.assertThat(shopGroupId).isNotEmpty();
 
-        locationId =
-                assertDoesNotThrow(
-                        () -> locationService.createNew(
-                                NewLocationDTO
-                                        .builder()
-                                        .domainId(domainId)
-                                        .name("SLAC")
-                                        .description("SLAC National Accelerator Laboratory")
-                                        .locationManagerUserId("user1@slac.stanford.edu")
-                                        .build()
-                        )
-                );
+        locationId = assertDoesNotThrow(
+                () -> locationService.createNew(
+                        NewLocationDTO
+                                .builder()
+                                .domainId(domainId)
+                                .name("SLAC")
+                                .description("SLAC National Accelerator Laboratory")
+                                .locationManagerUserId("user1@slac.stanford.edu")
+                                .build()
+                )
+        );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
+
+        locationIdOnAlternateDomain = assertDoesNotThrow(
+                () -> locationService.createNew(
+                        NewLocationDTO
+                                .builder()
+                                .domainId(alternateDomainId)
+                                .name("Alternate location")
+                                .description("Alternate location description")
+                                .locationManagerUserId("user1@slac.stanford.edu")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(locationIdOnAlternateDomain).isNotEmpty();
     }
 
     @Test
@@ -178,7 +205,7 @@ public class WorkServiceTest {
         );
         // retrieve and check the full activity type
         var fullUpdatedActivityType = assertDoesNotThrow(
-                ()->workService.findActivityTypeById(newActivityTypeId)
+                () -> workService.findActivityTypeById(newActivityTypeId)
         );
         assertThat(fullUpdatedActivityType).isNotNull();
         assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
@@ -236,7 +263,7 @@ public class WorkServiceTest {
                 )
         );
         fullUpdatedActivityType = assertDoesNotThrow(
-                ()->workService.findActivityTypeById(newActivityTypeId)
+                () -> workService.findActivityTypeById(newActivityTypeId)
         );
         assertThat(fullUpdatedActivityType).isNotNull();
         assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
@@ -291,7 +318,7 @@ public class WorkServiceTest {
                 )
         );
         fullUpdatedActivityType = assertDoesNotThrow(
-                ()->workService.findActivityTypeById(newActivityTypeId)
+                () -> workService.findActivityTypeById(newActivityTypeId)
         );
         assertThat(fullUpdatedActivityType).isNotNull();
         assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
@@ -337,6 +364,123 @@ public class WorkServiceTest {
                 )
         );
         assertThat(newWorkId).isNotNull();
+    }
+
+    @Test
+    public void updateWorkOK() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(domainId)
+                                .title("Work 1")
+                                .description("Work 1 description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        assertDoesNotThrow(
+                () -> workService.update(
+                        newWorkId,
+                        UpdateWorkDTO
+                                .builder()
+                                .title("Update work 1")
+                                .description("Update work 1 description")
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+    }
+
+    @Test
+    public void updateWorkFailOnInvalidLocationForDomainId() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(domainId)
+                                .title("Work 1")
+                                .description("Work 1 description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        InvalidLocation invalidLocationForDomainException = assertThrows(
+                InvalidLocation.class,
+                () -> workService.update(
+                        newWorkId,
+                        UpdateWorkDTO
+                                .builder()
+                                .title("Update work 1")
+                                .description("Update work 1 description")
+                                .locationId(locationIdOnAlternateDomain)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(invalidLocationForDomainException).isNotNull();
+        assertThat(invalidLocationForDomainException.getErrorCode()).isEqualTo(-4);
+    }
+
+    @Test
+    public void createNewWorkFailWithLocationInvalidForDomain() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+
+        // create the work in the alternate domain with the location of the main domain
+        InvalidLocation invalidLocationException = assertThrows(
+                InvalidLocation.class,
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(alternateDomainId)
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(invalidLocationException).isNotNull();
+        assertThat(invalidLocationException.getErrorCode()).isEqualTo(-3);
     }
 
     @Test

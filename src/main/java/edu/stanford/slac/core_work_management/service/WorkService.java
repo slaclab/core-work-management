@@ -50,6 +50,7 @@ public class WorkService {
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
+
     /**
      * Create a new work type
      *
@@ -317,13 +318,6 @@ public class WorkService {
                         .build(),
                 () -> domainService.existsById(newWorkDTO.domainId())
         );
-
-        // contain the set of all user that will become admin for this new work
-        Work workToSave = workMapper.toModel(
-                workSequence,
-                newWorkDTO
-        );
-
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
                         .findById(newWorkDTO.workTypeId())
@@ -336,12 +330,21 @@ public class WorkService {
                         ),
                 -2
         );
-
         // validate lov
         modelFieldValidationService.verify(
                 newWorkDTO,
                 Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
         );
+
+        // validate location and group shop against the domain
+        validateLocationForDomain(newWorkDTO.locationId(), newWorkDTO.domainId(), -3);
+
+        // contain the set of all user that will become admin for this new work
+        Work workToSave = workMapper.toModel(
+                workSequence,
+                newWorkDTO
+        );
+
 
         // save work
         Work savedWork = wrapCatch(
@@ -355,6 +358,28 @@ public class WorkService {
     }
 
     /**
+     * Validate the location for the domain
+     * check if the location belong to the source domain
+     *
+     * @param locationId the id of the location
+     * @param srcDomain  the domain id
+     * @param errorCode  the error code
+     */
+    private void validateLocationForDomain(String locationId, String srcDomain, int errorCode) {
+        var location = wrapCatch(() -> locationService.findById(locationId), errorCode);
+        assertion(
+                InvalidLocation
+                        .byLocationNameDomainId()
+                        .errorCode(errorCode)
+                        .locationName(location.name())
+                        .domainId(srcDomain)
+                        .build(),
+                () -> (location.domain().id().compareTo(srcDomain) == 0)
+        );
+    }
+
+
+    /**
      * Update a work
      *
      * @param workId        the id of the work
@@ -363,7 +388,7 @@ public class WorkService {
     @Transactional
     public void update(String workId, @Valid UpdateWorkDTO updateWorkDTO) {
         // fetch stored work to check if the work exists
-        Work storedWork = wrapCatch(
+        Work foundWork = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
                         () -> WorkNotFound
                                 .notFoundById()
@@ -376,12 +401,12 @@ public class WorkService {
 
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
-                        .findById(storedWork.getWorkTypeId())
+                        .findById(foundWork.getWorkTypeId())
                         .orElseThrow(
                                 () -> WorkTypeNotFound
                                         .notFoundById()
                                         .errorCode(-3)
-                                        .workId(storedWork.getWorkTypeId())
+                                        .workId(foundWork.getWorkTypeId())
                                         .build()
                         ),
                 -4
@@ -398,7 +423,7 @@ public class WorkService {
             updateWorkDTO.assignedTo().forEach(
                     (user) -> {
                         assertion(
-                                () -> shopGroupService.checkContainsAUserEmail(storedWork.getShopGroupId(), user),
+                                () -> shopGroupService.checkContainsAUserEmail(foundWork.getShopGroupId(), user),
                                 ControllerLogicException
                                         .builder()
                                         .errorCode(-3)
@@ -409,12 +434,16 @@ public class WorkService {
                     }
             );
         }
+
+        // validate location and group shop against the domain
+        validateLocationForDomain(updateWorkDTO.locationId(), foundWork.getDomainId(), -4);
+
         // update the model
-        workMapper.updateModel(updateWorkDTO, storedWork);
+        workMapper.updateModel(updateWorkDTO, foundWork);
 
         // save the work
         var updatedWork = wrapCatch(
-                () -> workRepository.save(storedWork),
+                () -> workRepository.save(foundWork),
                 -3
         );
         // update all authorization
@@ -622,6 +651,8 @@ public class WorkService {
 
         );
 
+        //TODO validate location and shop group against domain
+
         // convert to model
         var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), work.getDomainId(), nextActivityNumbers);
 
@@ -711,6 +742,9 @@ public class WorkService {
                         .errorDomain("WorkService::update(String,String,UpdateActivityDTO)")
                         .build()
         );
+
+        //TODO validate location and shop group against domain
+
         // update the model
         workMapper.updateModel(updateActivityDTO, activityStored);
 
