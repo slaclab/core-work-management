@@ -63,7 +63,6 @@ public class LocationControllerTest {
     private InventoryElementControllerApi inventoryElementControllerApi;
 
     private String domainId;
-    private final List<String> shopGroupIds = new ArrayList<>();
     private InventoryDomainSummaryDTO inventoryDomainDTO;
     private List<InventoryElementSummaryDTO> inventoryElementSummaryDTOList;
 
@@ -79,42 +78,6 @@ public class LocationControllerTest {
         );
         assertThat(domainId).isNotEmpty();
 
-        shopGroupIds.add(
-                shopGroupService.createNew(
-                        NewShopGroupDTO.builder()
-                                .name("shop1")
-                                .description("shop1 user[2-3]")
-                                .users(
-                                        of(
-                                                ShopGroupUserInputDTO.builder()
-                                                        .userId("user2@slac.stanford.edu")
-                                                        .build(),
-                                                ShopGroupUserInputDTO.builder()
-                                                        .userId("user3@slac.stanford.edu")
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        shopGroupIds.add(
-                shopGroupService.createNew(
-                        NewShopGroupDTO.builder()
-                                .name("shop2")
-                                .description("shop1 user[1-2]")
-                                .users(
-                                        of(
-                                                ShopGroupUserInputDTO.builder()
-                                                        .userId("user1@slac.stanford.edu")
-                                                        .build(),
-                                                ShopGroupUserInputDTO.builder()
-                                                        .userId("user2@slac.stanford.edu")
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
         // fetch all inventory elements from demo
         var foundDomainsResult = inventoryElementControllerApi.findAllDomain();
         assertThat(foundDomainsResult.getErrorCode()).isEqualTo(0);

@@ -72,9 +72,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorkControllerSearchActivitiesTest {
     @Autowired
-    AppProperties appProperties;
+    private AppProperties appProperties;
     @Autowired
-    AuthService authService;
+    private AuthService authService;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -91,6 +91,7 @@ public class WorkControllerSearchActivitiesTest {
     private HelperService helperService;
     @Autowired
     private TestControllerHelperService testControllerHelperService;
+
     private String domainId;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
@@ -116,6 +117,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -136,6 +138,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -156,6 +159,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -173,6 +177,7 @@ public class WorkControllerSearchActivitiesTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(

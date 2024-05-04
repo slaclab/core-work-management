@@ -82,9 +82,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class WorkControllerTest {
     @Autowired
-    AppProperties appProperties;
+    private AppProperties appProperties;
     @Autowired
-    AuthService authService;
+    private AuthService authService;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -253,6 +253,7 @@ public class WorkControllerTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -274,6 +275,7 @@ public class WorkControllerTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -294,6 +296,7 @@ public class WorkControllerTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -311,6 +314,7 @@ public class WorkControllerTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(

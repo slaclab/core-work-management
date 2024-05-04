@@ -52,21 +52,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class LOVServiceTest {
     @Autowired
-    MongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
     @Autowired
-    LOVService lovService;
+    private LOVService lovService;
     @Autowired
-    LOVElementRepository lovElementRepository;
+    private LOVElementRepository lovElementRepository;
     @Autowired
-    HelperService helperService;
+    private HelperService helperService;
     @Autowired
-    DomainService domainService;
+    private DomainService domainService;
     @Autowired
-    WorkService workService;
+    private WorkService workService;
     @Autowired
-    ShopGroupService shopGroupService;
+    private ShopGroupService shopGroupService;
     @Autowired
-    LocationService locationService;
+    private LocationService locationService;
 
     private String domainId;
     private List<String> workActivityIds;
@@ -119,6 +119,7 @@ public class LOVServiceTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(

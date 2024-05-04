@@ -96,7 +96,6 @@ public class WorkControllerSearchWorkTest {
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
-    private final List<String> testActivityTypeIds = new ArrayList<>();
 
     @BeforeAll
     public void init() {
@@ -117,6 +116,7 @@ public class WorkControllerSearchWorkTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -137,6 +137,7 @@ public class WorkControllerSearchWorkTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -157,6 +158,7 @@ public class WorkControllerSearchWorkTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -174,6 +176,7 @@ public class WorkControllerSearchWorkTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(
@@ -246,54 +249,6 @@ public class WorkControllerSearchWorkTest {
                                         .builder()
                                         .title("Work type 2")
                                         .description("Work type 2 description")
-                                        .build()
-                        )
-                )
-        );
-
-        // create activity type for work 1
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 1")
-                                        .description("Activity 1 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 2")
-                                        .description("Activity 2 description")
-                                        .build()
-                        )
-                )
-        );
-
-        // create activity type for work 2
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
                                         .build()
                         )
                 )

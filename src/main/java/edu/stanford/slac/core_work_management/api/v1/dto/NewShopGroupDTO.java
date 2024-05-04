@@ -13,14 +13,18 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "New Shop Group DTO, a group of people that is in charge of fixing a problem")
-public record NewShopGroupDTO (
-    @Schema(description = "The name of the shop group")
-    @NotEmpty(message = "The name of the shop group cannot be empty")
-    String name,
-    @Schema(description = "The description of the shop group")
-    @NotEmpty(message = "The description of the shop group cannot be empty")
-    String description,
-    @Valid
-    @Schema(description = "The user ids that are part of the shop group")
-    @NotEmpty(message = "The user list annot be empty")
-    Set<ShopGroupUserInputDTO> users){}
+public record NewShopGroupDTO(
+        @Schema(description = "The domain where the shop group belongs to")
+        @NotEmpty(message = "The domain is required")
+        String domainId,
+        @Schema(description = "The name of the shop group")
+        @NotEmpty(message = "The name of the shop group cannot be empty")
+        String name,
+        @Schema(description = "The description of the shop group")
+        @NotEmpty(message = "The description of the shop group cannot be empty")
+        String description,
+        @Valid
+        @Schema(description = "The user ids that are part of the shop group")
+        @NotEmpty(message = "The user list annot be empty")
+        Set<ShopGroupUserInputDTO> users) {
+}

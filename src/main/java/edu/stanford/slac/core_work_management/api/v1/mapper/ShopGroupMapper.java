@@ -6,6 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.model.ShopGroupUser;
+import edu.stanford.slac.core_work_management.service.DomainService;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,6 +23,8 @@ public abstract class ShopGroupMapper {
     @Autowired
     private AuthMapper authMapper;
     @Autowired
+    private DomainService domainService;
+    @Autowired
     PeopleGroupService peopleGroupService;
 
     /**
@@ -34,7 +37,7 @@ public abstract class ShopGroupMapper {
 
     public abstract ShopGroup updateModel(UpdateShopGroupDTO updateShopGroupDTO, @MappingTarget ShopGroup shopGroup);
 
-//    @Mapping(target = "users", expression = "java(fillPersonDTOsByIdsList(shopGroup.getUsers()))")
+    @Mapping(target = "domain", expression = "java(toDomainDTO(shopGroup.getDomainId()))")
     public abstract ShopGroupDTO toDTO(ShopGroup shopGroup);
 
     @Mapping(target = "user", expression = "java(fillPersonDTOById(shopGroupUserInputDTO.userId()))")
@@ -44,19 +47,8 @@ public abstract class ShopGroupMapper {
         return peopleGroupService.findPersonByEMail(userId);
     }
 
-    /**
-     * Fill the person by mail list
-     * @param users the user information
-     * @return the list of person
-     */
-//    public Set<ShopGroupUserDTO> fillPersonDTOsByIdsList(Set<ShopGroupUser> users){
-//        if (users == null || users.isEmpty()){
-//            return emptySet();
-//        }
-//        return users
-//                .stream()
-//                // the uid is the email
-//                .map((user)-> )
-//                .collect(Collectors.toSet());
-//    }
+    public DomainDTO toDomainDTO(String domainId) {
+        if(domainId == null) return null;
+        return domainService.findById(domainId);
+    }
 }

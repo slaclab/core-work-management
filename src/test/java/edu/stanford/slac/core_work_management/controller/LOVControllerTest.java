@@ -55,8 +55,7 @@ public class LOVControllerTest {
 
     private String domainId;
     private List<String> workActivityIds;
-    private String shopGroupId;
-    private String locationId;
+
 
     @BeforeAll
     public void setup() {
@@ -96,41 +95,6 @@ public class LOVControllerTest {
                 )
         );
         assertThat(workActivityIds).hasSize(2);
-
-        shopGroupId =
-                assertDoesNotThrow(
-                        () -> shopGroupService.createNew(
-                                NewShopGroupDTO.builder()
-                                        .name("shop1")
-                                        .description("shop1 user[2-3]")
-                                        .users(
-                                                ImmutableSet.of(
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user2@slac.stanford.edu")
-                                                                .build(),
-                                                        ShopGroupUserInputDTO.builder()
-                                                                .userId("user3@slac.stanford.edu")
-                                                                .build()
-                                                )
-                                        )
-                                        .build()
-                        )
-                );
-        AssertionsForClassTypes.assertThat(shopGroupId).isNotEmpty();
-
-        locationId =
-                assertDoesNotThrow(
-                        () -> locationService.createNew(
-                                NewLocationDTO
-                                        .builder()
-                                        .domainId(domainId)
-                                        .name("SLAC")
-                                        .description("SLAC National Accelerator Laboratory")
-                                        .locationManagerUserId("user1@slac.stanford.edu")
-                                        .build()
-                        )
-                );
-        AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
     }
 
     @BeforeEach

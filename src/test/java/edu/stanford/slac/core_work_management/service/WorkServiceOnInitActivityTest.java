@@ -82,6 +82,7 @@ public class WorkServiceOnInitActivityTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -104,7 +105,8 @@ public class WorkServiceOnInitActivityTest {
                         () -> locationService.createNew(
                                 NewLocationDTO
                                         .builder()
-                                        .domainId(domainId)
+                                        .domainId(domainId
+                                        )
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")

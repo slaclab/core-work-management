@@ -17,8 +17,21 @@ import java.util.Set;
 public class ShopGroup {
     @Id
     String id;
+    /**
+     * The domain id where the shop group belong to
+     */
+    String domainId;
+    /**
+     * The name of the shop group
+     */
     String name;
+    /**
+     * The description of the shop group
+     */
     String description;
+    /**
+     * The user ids that are part of the shop group
+     */
     Set<ShopGroupUser> users;
     @CreatedDate
     private LocalDateTime createdDate;
