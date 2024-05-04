@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.getAllMethodInCall;
 
-@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Invalid location")
-public class InvalidLocation extends ControllerLogicException {
-    @Builder(builderMethodName = "byLocationNameDomainId")
-    public InvalidLocation(Integer errorCode, String locationName, String domainId) {
+@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Invalid shop group")
+public class InvalidShopGroup extends ControllerLogicException {
+    @Builder(builderMethodName = "byShopGroupNameDomainId")
+    public InvalidShopGroup(Integer errorCode, String shopGroupName, String domainId) {
         super(errorCode,
-                String.format("The location '%s' is invalid for the domain '%s'", locationName, domainId),
+                String.format("The shop group '%s' is invalid for the domain '%s'", shopGroupName, domainId),
                 getAllMethodInCall()
         );
     }

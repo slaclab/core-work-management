@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.InvalidLocation;
+import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import jakarta.validation.ConstraintViolationException;
@@ -46,6 +47,7 @@ public class WorkServiceTest {
     @Autowired
     ShopGroupService shopGroupService;
     private String shopGroupId;
+    private String alternateShopGroupId;
     private String locationId;
     private String locationIdOnAlternateDomain;
     private String domainId;
@@ -106,6 +108,28 @@ public class WorkServiceTest {
                         )
                 );
         AssertionsForClassTypes.assertThat(shopGroupId).isNotEmpty();
+
+        alternateShopGroupId =
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                NewShopGroupDTO.builder()
+                                        .domainId(alternateDomainId)
+                                        .name("shop2")
+                                        .description("shop1 user[2-3]")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                );
+        AssertionsForClassTypes.assertThat(alternateShopGroupId).isNotEmpty();
 
         locationId = assertDoesNotThrow(
                 () -> locationService.createNew(
@@ -453,6 +477,50 @@ public class WorkServiceTest {
     }
 
     @Test
+    public void updateWorkFailOnInvalidShopGroupForDomainId() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(domainId)
+                                .title("Work 1")
+                                .description("Work 1 description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        InvalidShopGroup invalidLocationForDomainException = assertThrows(
+                InvalidShopGroup.class,
+                () -> workService.update(
+                        newWorkId,
+                        UpdateWorkDTO
+                                .builder()
+                                .title("Update work 1")
+                                .description("Update work 1 description")
+                                .locationId(locationId)
+                                .shopGroupId(alternateShopGroupId)
+                                .build()
+                )
+        );
+        assertThat(invalidLocationForDomainException).isNotNull();
+        assertThat(invalidLocationForDomainException.getErrorCode()).isEqualTo(-5);
+    }
+
+    @Test
     public void createNewWorkFailWithLocationInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
                 () -> workService.ensureWorkType(
@@ -482,6 +550,38 @@ public class WorkServiceTest {
         );
         assertThat(invalidLocationException).isNotNull();
         assertThat(invalidLocationException.getErrorCode()).isEqualTo(-3);
+    }
+
+    @Test
+    public void createNewWorkFailWithShopGroupInvalidForDomain() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+
+        // create the work in the alternate domain with the location of the main domain
+        InvalidShopGroup invalidLocationException = assertThrows(
+                InvalidShopGroup.class,
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(domainId)
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(alternateShopGroupId)
+                                .build()
+                )
+        );
+        assertThat(invalidLocationException).isNotNull();
+        assertThat(invalidLocationException.getErrorCode()).isEqualTo(-4);
     }
 
     @Test

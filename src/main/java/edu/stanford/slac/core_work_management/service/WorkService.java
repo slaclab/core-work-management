@@ -344,11 +344,11 @@ public class WorkService {
 
         // validate location and group shop against the domain
         validateLocationForDomain(workToSave.getLocationId(), workToSave.getDomainId(), -3);
-
+        validateShopGroupForDomain(workToSave.getShopGroupId(), workToSave.getDomainId(), -4);
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
-                -1
+                -5
         );
 
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
@@ -377,6 +377,26 @@ public class WorkService {
         );
     }
 
+    /**
+     * Validate shop group for the domain
+     * check if the shop group belong to the source domain
+     *
+     * @param shopGroupId the id of the location
+     * @param srcDomain  the domain id
+     * @param errorCode  the error code
+     */
+    private void validateShopGroupForDomain(String shopGroupId, String srcDomain, int errorCode) {
+        var shopGroup = wrapCatch(() -> shopGroupService.findById(shopGroupId), errorCode);
+        assertion(
+                InvalidShopGroup
+                        .byShopGroupNameDomainId()
+                        .errorCode(errorCode)
+                        .shopGroupName(shopGroup.name())
+                        .domainId(srcDomain)
+                        .build(),
+                () -> (shopGroup.domain().id().compareTo(srcDomain) == 0)
+        );
+    }
 
     /**
      * Update a work
@@ -439,11 +459,12 @@ public class WorkService {
 
         // validate location and group shop against the domain
         validateLocationForDomain(foundWork.getLocationId(), foundWork.getDomainId(), -4);
+        validateShopGroupForDomain(foundWork.getShopGroupId(), foundWork.getDomainId(), -5);
 
         // save the work
         var updatedWork = wrapCatch(
                 () -> workRepository.save(foundWork),
-                -3
+                -6
         );
         // update all authorization
         updateWorkAuthorization(updatedWork);
