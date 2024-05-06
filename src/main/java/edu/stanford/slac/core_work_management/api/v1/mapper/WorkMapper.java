@@ -12,10 +12,7 @@ import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import edu.stanford.slac.core_work_management.service.LOVService;
-import edu.stanford.slac.core_work_management.service.LocationService;
-import edu.stanford.slac.core_work_management.service.ShopGroupService;
-import edu.stanford.slac.core_work_management.service.StringUtility;
+import edu.stanford.slac.core_work_management.service.*;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -51,6 +48,8 @@ public abstract class WorkMapper {
     LocationService locationService;
     @Autowired
     LOVService lovService;
+    @Autowired
+    DomainService domainService;
     @Autowired
     WorkTypeRepository workTypeRepository;
     @Autowired
@@ -108,6 +107,12 @@ public abstract class WorkMapper {
     @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
     abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
 
+    /**
+     * Check if the custom field is a LOV
+     *
+     * @param customField the custom field to check
+     * @return true if the custom field is a LOV
+     */
     public boolean checkIsLOV(WATypeCustomField customField) {
         if (customField.getLovFieldReference() == null) return false;
         return wrapCatch(
@@ -132,7 +137,7 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     @Mapping(target = "customFields", expression = "java(toCustomFieldValues(newActivityDTO.customFieldValues()))")
-    abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId, Long workNumber, Long activityNumber);
+    abstract public Activity toModel(NewActivityDTO newActivityDTO, String workId, Long workNumber, String domainId, Long activityNumber);
 
     /**
      * Update the {@link Activity} with the data from the {@link UpdateActivityDTO}
@@ -170,6 +175,7 @@ public abstract class WorkMapper {
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
     @Mapping(target = "accessList", expression = "java(getAuthorizationByWork(work))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
+    @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     abstract public WorkDTO toDTO(Work work);
 
     /**
@@ -181,10 +187,12 @@ public abstract class WorkMapper {
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForActivity(activity.getActivityTypeId(), activity.getCustomFields()))")
+    @Mapping(target = "domain", expression = "java(toDomainDTO(activity.getDomainId()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
+    @Mapping(target = "domain", expression = "java(toDomainDTO(activity.getDomainId()))")
     abstract public ActivitySummaryDTO toSummaryDTO(Activity activity);
 
     /**
@@ -217,6 +225,17 @@ public abstract class WorkMapper {
                         .value(toAbstractValue(customAttributeDTO.value()))
                         .build()
         ).toList();
+    }
+
+    /**
+     * Convert the {@link String} domain id to a {@link DomainDTO}
+     *
+     * @param domainId the id of the domain
+     * @return the converted DTO
+     */
+    public DomainDTO toDomainDTO(String domainId) {
+        if(domainId == null) return null;
+        return domainService.findById(domainId);
     }
 
     /**

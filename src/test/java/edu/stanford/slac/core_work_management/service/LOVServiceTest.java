@@ -52,30 +52,46 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class LOVServiceTest {
     @Autowired
-    MongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
     @Autowired
-    LOVService lovService;
+    private LOVService lovService;
     @Autowired
-    LOVElementRepository lovElementRepository;
+    private LOVElementRepository lovElementRepository;
     @Autowired
-    HelperService helperService;
+    private HelperService helperService;
     @Autowired
-    WorkService workService;
+    private DomainService domainService;
     @Autowired
-    ShopGroupService shopGroupService;
+    private WorkService workService;
     @Autowired
-    LocationService locationService;
+    private ShopGroupService shopGroupService;
+    @Autowired
+    private LocationService locationService;
+
+    private String domainId;
     private List<String> workActivityIds;
     private String shopGroupId;
     private String locationId;
 
     @BeforeAll
     public void setup() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
+        // create domain
+        domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO
+                                .builder()
+                                .name("Domain 1")
+                                .description("Domain 1 description")
+                                .build()
+                )
+        );
+        assertThat(domainId).isNotEmpty();
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
                 NewWorkTypeDTO
@@ -103,6 +119,7 @@ public class LOVServiceTest {
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 NewShopGroupDTO.builder()
+                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -125,6 +142,7 @@ public class LOVServiceTest {
                         () -> locationService.createNew(
                                 NewLocationDTO
                                         .builder()
+                                        .domainId(domainId)
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -247,10 +265,10 @@ public class LOVServiceTest {
                         LOVDomainTypeDTO.Activity,
                         workActivityIds.get(1),
                         "wrong field",
-                       "field1_group"
+                        "field1_group"
                 )
         );
-       assertThat(fieldNotFound.getErrorCode()).isEqualTo(-1);
+        assertThat(fieldNotFound.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
@@ -278,6 +296,7 @@ public class LOVServiceTest {
                 () -> workService.createNew(
                         NewWorkDTO
                                 .builder()
+                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(workActivityIds.get(0))

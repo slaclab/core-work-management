@@ -13,6 +13,8 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.ShopGroupMapper;
 import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.repository.ShopGroupRepository;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +42,7 @@ public class ShopGroupService {
      * @return the id of the created shop group
      */
     @Transactional
-    public String createNew(@Validated NewShopGroupDTO newShopGroupDTO) {
+    public String createNew(@Valid NewShopGroupDTO newShopGroupDTO) {
         // validate user emails
         ShopGroup savedShopGroup = wrapCatch(
                 () -> shopGroupRepository.save(shopGroupMapper.toModel(newShopGroupDTO)),
@@ -58,7 +60,7 @@ public class ShopGroupService {
      * @param shopGroupId        the id of the shop group
      * @param updateShopGroupDTO the DTO to update the shop group
      */
-    public void update(String shopGroupId, UpdateShopGroupDTO updateShopGroupDTO) {
+    public void update(@NotEmpty String shopGroupId, @Valid UpdateShopGroupDTO updateShopGroupDTO) {
         var storedShopGroup = wrapCatch(
                 () -> shopGroupRepository.findById(shopGroupId),
                 -1

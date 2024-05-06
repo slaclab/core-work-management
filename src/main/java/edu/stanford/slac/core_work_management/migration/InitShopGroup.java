@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor
-@Profile({"init-shop-group"})
+@Profile({"init-shop-group-demo"})
 @ChangeUnit(id = "init-shop-group", order = "1003", author = "bisegni")
 public class InitShopGroup {
     private final ShopGroupService shopGroupService;

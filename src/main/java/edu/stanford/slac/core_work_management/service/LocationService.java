@@ -26,6 +26,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.LocationMapper;
 import edu.stanford.slac.core_work_management.api.v1.mapper.ShopGroupMapper;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryElementDTO;
+import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
 import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.Location;
@@ -44,8 +45,7 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 
 /**
  * Service to manage locations
@@ -55,6 +55,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @Validated
 @AllArgsConstructor
 public class LocationService {
+    private final DomainService domainService;
     private final LocationMapper locationMapper;
     private final LocationRepository locationRepository;
     private final ShopGroupService shopGroupService;
@@ -70,19 +71,33 @@ public class LocationService {
     public String createNew(@Valid NewLocationDTO newLocationDTO) {
         InventoryElementDTO externalLocationDTO;
         if (
-            // check if parent location exists
-                newLocationDTO.parentId() != null &&
-                        !newLocationDTO.parentId().isBlank()
+                newLocationDTO.externalLocationIdentifier() != null &&
+                        !newLocationDTO.externalLocationIdentifier().isBlank()
         ) {
-            assertion(
-                    () -> locationRepository.existsById(newLocationDTO.parentId()),
-                    LocationNotFound
-                            .notFoundById()
-                            .errorCode(-1)
-                            .locationId(newLocationDTO.parentId())
-                            .build()
-            );
+            // acquire external location info
+            externalLocationDTO = externalLocationRepository.getLocationInfo(newLocationDTO.externalLocationIdentifier());
+        } else {
+            externalLocationDTO = null;
         }
+        return saveLocation(locationMapper.toModel(null, newLocationDTO, externalLocationDTO)).getId();
+    }
+
+    /**
+     * Create a new child location
+     *
+     * @param newLocationDTO the DTO to create the location
+     * @return the id of the created location
+     */
+    public String createNewChild(String parentId, NewLocationDTO newLocationDTO) {
+        InventoryElementDTO externalLocationDTO;
+        assertion(
+                () -> locationRepository.existsById(parentId),
+                LocationNotFound
+                        .notFoundById()
+                        .errorCode(-1)
+                        .locationId(parentId)
+                        .build()
+        );
 
         if (
                 newLocationDTO.externalLocationIdentifier() != null &&
@@ -93,25 +108,7 @@ public class LocationService {
         } else {
             externalLocationDTO = null;
         }
-
-        // check if are manager exists
-        assertion(
-                () -> peopleGroupService.findPersonByEMail(newLocationDTO.locationManagerUserId()) != null,
-                PersonNotFound
-                        .personNotFoundBuilder()
-                        .errorCode(-2)
-                        .email(newLocationDTO.locationManagerUserId())
-                        .build()
-        );
-
-        var newSavedLocation = wrapCatch(
-                () -> locationRepository.save(
-                        locationMapper.toModel(newLocationDTO, externalLocationDTO)
-                ),
-                -1
-        );
-        log.info("Created new location with id: {} by {}", newSavedLocation.getId(), newSavedLocation.getCreatedBy());
-        return newSavedLocation.getId();
+        return saveLocation(locationMapper.toModel(parentId, newLocationDTO, externalLocationDTO)).getId();
     }
 
     /**
@@ -150,5 +147,39 @@ public class LocationService {
                 .stream()
                 .map(locationMapper::toDTO)
                 .toList();
+    }
+
+    /**
+     * Create a new location
+     *
+     * @param location the DTO to create the shop group
+     * @return the id of the created shop group
+     */
+    private Location saveLocation(@Valid Location location) {
+        // check for domain if it is present
+        assertion(
+                DomainNotFound
+                        .notFoundById()
+                        .errorCode(-1)
+                        .id(location.getDomainId())
+                        .build(),
+                () -> all(
+                        () -> location.getDomainId() != null && !location.getDomainId().isBlank(),
+                        () -> domainService.existsById(location.getDomainId())
+                )
+        );
+
+        // check if are manager exists
+        assertion(
+                () -> peopleGroupService.findPersonByEMail(location.getLocationManagerUserId()) != null,
+                PersonNotFound
+                        .personNotFoundBuilder()
+                        .errorCode(-2)
+                        .email(location.getLocationManagerUserId())
+                        .build()
+        );
+
+        // save the location
+        return wrapCatch(() -> locationRepository.save(location), -3);
     }
 }

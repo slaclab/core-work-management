@@ -16,7 +16,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @AllArgsConstructor
-@Profile({"init-work-activity-type"})
+@Profile({"init-work-activity-type", "init-default-data"})
 @ChangeUnit(id = "init-activity-type", order = "1002", author = "bisegni")
 public class InitActivityType {
     private final LOVService lovService;

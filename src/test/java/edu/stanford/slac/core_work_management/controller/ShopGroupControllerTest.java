@@ -22,6 +22,7 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,14 +64,33 @@ public class ShopGroupControllerTest {
     @Autowired
     private TestControllerHelperService testControllerHelperService;
 
+    private String domainId = null;
+
     @BeforeEach
     public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
 
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
+
+        var domainIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.domainControllerCreateNewDomain(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewDomainDTO
+                                .builder()
+                                .name("test")
+                                .description("test")
+                                .build()
+                )
+        );
+        assertThat(domainIdResult).isNotNull();
+        assertThat(domainIdResult.getPayload()).isNotEmpty();
+        domainId = domainIdResult.getPayload();
     }
 
     @Test
@@ -82,6 +102,7 @@ public class ShopGroupControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         NewShopGroupDTO
                                 .builder()
+                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -110,6 +131,7 @@ public class ShopGroupControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         NewShopGroupDTO
                                 .builder()
+                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -149,6 +171,7 @@ public class ShopGroupControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         NewShopGroupDTO
                                 .builder()
+                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -259,6 +282,7 @@ public class ShopGroupControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         NewShopGroupDTO
                                 .builder()
+                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -284,6 +308,7 @@ public class ShopGroupControllerTest {
                         Optional.of("user1@slac.stanford.edu"),
                         NewShopGroupDTO
                                 .builder()
+                                .domainId(domainId)
                                 .name("shopGroup2")
                                 .description("shopGroup2 description")
                                 .users(

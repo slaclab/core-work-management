@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -110,8 +111,9 @@ public class WorkController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<String> createNew(
+    public ApiResultResponse<String> createNewWork(
             Authentication authentication,
+            @Parameter(description = "The new work to create", required = true)
             @Valid @RequestBody NewWorkDTO newWorkDTO
     ) {
         return ApiResultResponse.of(workService.createNew(newWorkDTO));
@@ -128,7 +130,7 @@ public class WorkController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("@workAuthorizationService.checkUpdate(#authentication, #workId, #updateWorkDTO)")
-    public ApiResultResponse<Boolean> update(
+    public ApiResultResponse<Boolean> updateWork(
             Authentication authentication,
             @Parameter(description = "Is the work id to update", required = true)
             @PathVariable() String workId,
@@ -167,7 +169,7 @@ public class WorkController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<WorkDTO> findById(
+    public ApiResultResponse<WorkDTO> findWorkById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
             @PathVariable String workId
@@ -186,7 +188,7 @@ public class WorkController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("@workAuthorizationService.checkCreateNewActivity(#authentication, #workId)")
-    public ApiResultResponse<String> createNew(
+    public ApiResultResponse<String> createNewActivity(
             Authentication authentication,
             @Parameter(description = "Is the work id for wich needs to be creates the activity", required = true)
             @PathVariable("workId") String workId,
@@ -220,7 +222,7 @@ public class WorkController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("@workAuthorizationService.checkUpdate(#authentication, #workId,#activityId, #updateActivityDTO)")
-    public ApiResultResponse<Boolean> update(
+    public ApiResultResponse<Boolean> updateActivity(
             Authentication authentication,
             @Parameter(description = "Is the work id that contains the activity", required = true)
             @PathVariable String workId,
@@ -283,7 +285,7 @@ public class WorkController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}/activity/{activityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<ActivityDTO> findById(
+    public ApiResultResponse<ActivityDTO> findActivityById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
             @PathVariable String workId,

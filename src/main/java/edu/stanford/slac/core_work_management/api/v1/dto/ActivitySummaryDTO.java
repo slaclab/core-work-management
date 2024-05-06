@@ -20,6 +20,8 @@ import java.util.List;
 public record ActivitySummaryDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
+        @Schema(description = "The domain where the activity belongs to")
+        DomainDTO domain,
         @Schema(description = "The sequence number of the activity in the work plan")
         Long activityNumber,
         @Schema(description = "The unique identifier of the work which this activity belongs to")
@@ -30,7 +32,6 @@ public record ActivitySummaryDTO(
         String title,
         @Schema(description = "The description of the activity")
         String description,
-
         @Schema(description = "The type of the activity")
         ActivityTypeDTO activityType,
         @Schema(description = "The subtype of the activity")

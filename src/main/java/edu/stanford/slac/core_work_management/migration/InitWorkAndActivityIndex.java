@@ -28,26 +28,6 @@ public class InitWorkAndActivityIndex {
      * This method creates the index for the work collection
      */
     private void initWorkIndex() {
-//        MongoDDLOps.createIndex(
-//                Work.class,
-//                mongoTemplate,
-//                new Index().on(
-//                                "title",
-//                                Sort.Direction.ASC
-//                        )
-//                        .named("title")
-//                        .sparse()
-//        );
-//        MongoDDLOps.createIndex(
-//                Work.class,
-//                mongoTemplate,
-//                new Index().on(
-//                                "description",
-//                                Sort.Direction.ASC
-//                        )
-//                        .named("description")
-//                        .sparse()
-//        );
         MongoDDLOps.createIndex(
                 Work.class,
                 mongoTemplate,
@@ -72,26 +52,6 @@ public class InitWorkAndActivityIndex {
      * This method creates the index for the activity collection
      */
     private void initActivityIndex() {
-//        MongoDDLOps.createIndex(
-//                Activity.class,
-//                mongoTemplate,
-//                new Index().on(
-//                                "title",
-//                                Sort.Direction.ASC
-//                        )
-//                        .named("title")
-//                        .sparse()
-//        );
-//        MongoDDLOps.createIndex(
-//                Activity.class,
-//                mongoTemplate,
-//                new Index().on(
-//                                "description",
-//                                Sort.Direction.ASC
-//                        )
-//                        .named("description")
-//                        .sparse()
-//        );
         MongoDDLOps.createIndex(
                 Activity.class,
                 mongoTemplate,
