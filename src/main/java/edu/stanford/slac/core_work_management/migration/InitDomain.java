@@ -20,7 +20,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @Log4j2
 @AllArgsConstructor
 @Profile({"init-domain", "init-default-data"})
-@ChangeUnit(id = "init-domain", order = "1004", author = "bisegni")
+@ChangeUnit(id = "init-domain", order = "1000", author = "bisegni")
 public class InitDomain {
     private final DomainService domainService;
 

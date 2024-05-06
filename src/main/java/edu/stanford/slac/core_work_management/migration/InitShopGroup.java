@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
+import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
@@ -14,14 +15,18 @@ import java.util.Set;
 
 @AllArgsConstructor
 @Profile({"init-shop-group-demo"})
-@ChangeUnit(id = "init-shop-group", order = "1003", author = "bisegni")
+@ChangeUnit(id = "init-shop-group", order = "2000", author = "bisegni")
 public class InitShopGroup {
+    private DomainService domainService;
     private final ShopGroupService shopGroupService;
 
     @Execution
     public void changeSet() {
+        var tecDomain = domainService.findByName("TEC");
+
         List<NewShopGroupDTO> newShopGroupDTOList = List.of(
                 NewShopGroupDTO.builder()
+                        .domainId(tecDomain.id())
                         .name("Accelerator Physics")
                         .description("Accelerator Physics")
                         .users(
@@ -33,6 +38,7 @@ public class InitShopGroup {
                         )
                         .build(),
                 NewShopGroupDTO.builder()
+                        .domainId(tecDomain.id())
                         .name("Accelerator Controls Systems")
                         .description("Accelerator Controls Systems")
                         .users(Set.of(

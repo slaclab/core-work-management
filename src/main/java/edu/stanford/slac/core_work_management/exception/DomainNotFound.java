@@ -16,4 +16,12 @@ public class DomainNotFound extends ControllerLogicException {
                 getAllMethodInCall()
         );
     }
+
+    @Builder(builderMethodName = "notFoundByName")
+    public DomainNotFound(Integer errorCode, String name, int fakeParam) {
+        super(errorCode,
+                String.format("The Domain '%s' has not been found", name),
+                getAllMethodInCall()
+        );
+    }
 }
