@@ -7,6 +7,7 @@ import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -69,10 +70,27 @@ public class DomainService {
      * @return true if the domain exists, false otherwise
      */
     public Boolean existsById(String domainId) {
-        if (domainId == null || domainId.isEmpty() || domainId.isBlank()) {return false;}
+        if (domainId == null || domainId.isEmpty() || domainId.isBlank()) {
+            return false;
+        }
         return wrapCatch(
                 () -> domainRepository.existsById(domainId),
                 -1
         );
+    }
+
+    /**
+     * Find a domain by its name
+     * @param name the name of the domain
+     * @return the domain
+     */
+    public DomainDTO findByName(@NotEmpty String name) {
+        return wrapCatch
+                (
+                        () -> domainRepository.findByName(name.toLowerCase()),
+                        -1
+                )
+                .map(domainMapper::toDTO)
+                .orElseThrow(() -> DomainNotFound.notFoundByName().errorCode(-2).name(name).build());
     }
 }
