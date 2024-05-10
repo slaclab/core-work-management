@@ -664,27 +664,32 @@ public class WorkService {
                 -3
         );
 
+        //validate location and shop group against domain
+        if(newActivityDTO.locationId() != null) {
+            validateLocationForDomain(newActivityDTO.locationId(), work.getDomainId(), -3);
+        }
+        if(newActivityDTO.shopGroupId() != null) {
+            validateShopGroupForDomain(newActivityDTO.shopGroupId(), work.getDomainId(), -4);
+        }
+
         // validate model custom attributes
         modelFieldValidationService.verify(
                 newActivityDTO,
                 Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
-
         );
-
-        //TODO validate location and shop group against domain
 
         // convert to model
         var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), work.getDomainId(), nextActivityNumbers);
 
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),
-                -4
+                -5
         );
 
         // fetch all activity status for work
         var activityStatusList = wrapCatch(
                 () -> activityRepository.findAllActivityStatusByWorkId(workId),
-                -5
+                -6
         );
 
         // update the work status
@@ -698,7 +703,7 @@ public class WorkService {
         // save work and unlock
         wrapCatch(
                 () -> workRepository.save(work),
-                -4
+                -7
         );
         log.info("New Activity '{}' has been added to work '{}'", savedActivity.getTitle(), work.getTitle());
         return savedActivity.getId();
@@ -746,6 +751,14 @@ public class WorkService {
                 -3
         );
 
+        //TODO validate location and shop group against domain
+        if(updateActivityDTO.locationId() != null) {
+            validateLocationForDomain(updateActivityDTO.locationId(), activityStored.getDomainId(), -3);
+        }
+        if(updateActivityDTO.shopGroupId() != null) {
+            validateShopGroupForDomain(updateActivityDTO.shopGroupId(), activityStored.getDomainId(), -4);
+        }
+
         // validate model attribute
         modelFieldValidationService.verify(
                 updateActivityDTO,
@@ -762,8 +775,6 @@ public class WorkService {
                         .errorDomain("WorkService::update(String,String,UpdateActivityDTO)")
                         .build()
         );
-
-        //TODO validate location and shop group against domain
 
         // update the model
         workMapper.updateModel(updateActivityDTO, activityStored);

@@ -82,7 +82,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -108,9 +107,9 @@ public class ModelFieldValidationService {
         }else if (source.getClass().isAssignableFrom(NewActivityDTO.class)) {
             NewActivityDTO activity = (NewActivityDTO) source;
             customFieldValues = Objects.requireNonNullElse(activity.customFieldValues(), emptyList());
-        } else if (source.getClass().isAssignableFrom(UpdateActivityTypeDTO.class)) {
+        } else if (source.getClass().isAssignableFrom(UpdateActivityDTO.class)) {
             UpdateActivityDTO activity = (UpdateActivityDTO) source;
-            customFieldValues = Objects.requireNonNullElse(activity.customAttributeValues(), emptyList());
+            customFieldValues = Objects.requireNonNullElse(activity.customFieldValues(), emptyList());
         } else {
             // no valuable class has been found
             customFieldValues = emptyList();
