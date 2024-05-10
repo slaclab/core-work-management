@@ -145,7 +145,8 @@ public abstract class WorkMapper {
      * @param dto  the DTO with the data to update
      * @param work the entity to update
      */
-    abstract public void updateModel(UpdateActivityDTO dto, @MappingTarget Activity work);
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValues(dto.customFieldValues()))")
+    abstract public void updateModel(UpdateActivityDTO dto, @MappingTarget Activity activity);
 
     /**
      * Convert the {@link ActivityStatusDTO} to a {@link ActivityStatus}

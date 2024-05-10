@@ -20,7 +20,7 @@ public record UpdateActivityDTO(
         @Schema(description = "The detailed description of the activity")
         String description,
         @Schema(description = "The type of the activity")
-        ActivityTypeDTO activityType,
+        String activityTypeId,
         @Schema(description = "The subtype of the activity")
         ActivityTypeSubtypeDTO activityTypeSubtype,
         @Schema(description = "The list of the user that are assigned to the activity")
@@ -39,14 +39,14 @@ public record UpdateActivityDTO(
         String feedbackComment,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
-        List<WriteCustomFieldDTO> customAttributeValues
+        List<WriteCustomFieldDTO> customFieldValues
 ) {
         public UpdateActivityDTO {
                 if (assignedTo == null) {
                         assignedTo = Collections.emptyList();
                 }
-                if (customAttributeValues == null) {
-                        customAttributeValues = Collections.emptyList();
+                if (customFieldValues == null) {
+                        customFieldValues = Collections.emptyList();
                 }
         }
 }

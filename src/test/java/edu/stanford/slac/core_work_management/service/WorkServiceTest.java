@@ -908,6 +908,144 @@ public class WorkServiceTest {
     }
 
     @Test
+    public void updateActivityWithCustomAttributesOK() {
+        //create work type
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        // create work plan
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(domainId)
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotEmpty();
+        // create new activity type for work type
+        String newActivityTypeId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .customFields(
+                                        List.of(
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field1")
+                                                        .description("custom field1 description")
+                                                        .valueType(ValueTypeDTO.String)
+                                                        .isLov(true)
+                                                        .isMandatory(true)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId).isNotEmpty();
+
+        var fullActivityType = assertDoesNotThrow(
+                () -> workService.findActivityTypeById(newActivityTypeId)
+        );
+
+        // create new activity OK
+        var newActivityId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        newWorkId,
+                        NewActivityDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .activityTypeId(newActivityTypeId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .customFieldValues(
+                                        List.of(
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(fullActivityType.customFields().get(0).id())
+                                                        .value(
+                                                                ValueDTO
+                                                                        .builder()
+                                                                        .type(ValueTypeDTO.String)
+                                                                        .value("custom field1 value")
+                                                                        .build()
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newActivityId).isNotEmpty();
+
+        // fetch activity and check field
+        var newlyCreatedActivity = assertDoesNotThrow(
+                () -> workService.findActivityById(newActivityId)
+        );
+        assertThat(newlyCreatedActivity).isNotNull();
+        assertThat(newlyCreatedActivity.id()).isNotNull().isEqualTo(newActivityId);
+
+        // update custom attributes
+        assertDoesNotThrow(
+                () -> workService.update(
+                        newWorkId,
+                        newActivityId,
+                        UpdateActivityDTO
+                                .builder()
+                                .title("Activity 1 updated")
+                                .description("Activity 1 description updated")
+                                .activityTypeId(newActivityTypeId)
+                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .customFieldValues(
+                                        List.of(
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(fullActivityType.customFields().get(0).id())
+                                                        .value(
+                                                                ValueDTO
+                                                                        .builder()
+                                                                        .type(ValueTypeDTO.String)
+                                                                        .value("custom field1 value updated")
+                                                                        .build()
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        var updatedActivity = assertDoesNotThrow(
+                () -> workService.findActivityById(newActivityId)
+        );
+        assertThat(updatedActivity).isNotNull();
+        assertThat(updatedActivity.id()).isNotNull().isEqualTo(newActivityId);
+        assertThat(updatedActivity.title()).isEqualTo("Activity 1 updated");
+        assertThat(updatedActivity.description()).isEqualTo("Activity 1 description updated");
+        assertThat(updatedActivity.customFields()).isNotNull();
+        assertThat(updatedActivity.customFields().size()).isEqualTo(1);
+        assertThat(updatedActivity.customFields().get(0).id()).isEqualTo(fullActivityType.customFields().get(0).id());
+        assertThat(updatedActivity.customFields().get(0).name()).isEqualTo("customField1");
+        assertThat(updatedActivity.customFields().get(0).value().type()).isEqualTo(ValueTypeDTO.String);
+        assertThat(updatedActivity.customFields().get(0).value().value()).isEqualTo("custom field1 value updated");
+    }
+
+    @Test
     public void createNewActivityCheckValidationError() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
