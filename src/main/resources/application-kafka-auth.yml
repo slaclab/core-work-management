@@ -1,0 +1,9 @@
+spring:
+  kafka:
+    properties:
+      security:
+        protocol: ${CWM_KAFKA_SECURITY_PROTOCOL}
+      sasl:
+        mechanism: ${CWM_KAFKA_SASL_MECHANISM}
+        jaas:
+          config: ${CWM_KAFKA_SASL_JAAS_CONFIG:}
