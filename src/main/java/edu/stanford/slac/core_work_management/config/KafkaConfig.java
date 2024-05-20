@@ -30,19 +30,23 @@ public class KafkaConfig {
         StringBuilder topicDescriptionLog = new StringBuilder();
         Map<String, Object> configs = kafkaProperties.buildAdminProperties();
         var kAdmin = new KafkaAdmin(configs);
-        var topicDescription = kAdmin.describeTopics(importEntryTopic);
-        if (topicDescription.containsKey(importEntryTopic)) {
-            if(topicDescription.get(importEntryTopic).authorizedOperations() != null) {
-                topicDescription.get(importEntryTopic).authorizedOperations().forEach(
-                        authorizedOperation -> topicDescriptionLog.append("Topic %s has authorized operation %s".formatted(importEntryTopic, authorizedOperation.toString()))
-                );
+        try {
+            var topicDescription = kAdmin.describeTopics(importEntryTopic);
+            if (topicDescription.containsKey(importEntryTopic)) {
+                if(topicDescription.get(importEntryTopic).authorizedOperations() != null) {
+                    topicDescription.get(importEntryTopic).authorizedOperations().forEach(
+                            authorizedOperation -> topicDescriptionLog.append("Topic %s has authorized operation %s".formatted(importEntryTopic, authorizedOperation.toString()))
+                    );
+                } else {
+                    topicDescriptionLog.append("Topic %s has no authorized operations".formatted(importEntryTopic));
+                }
             } else {
-                topicDescriptionLog.append("Topic %s has no authorized operations".formatted(importEntryTopic));
+                topicDescriptionLog.append("Topic %s is not in the broker".formatted(importEntryTopic));
             }
-        } else {
-            topicDescriptionLog.append("Topic %s is not in the broker".formatted(importEntryTopic));
+            log.info(topicDescriptionLog.toString());
+        }catch (Exception e) {
+            log.error("Error while describing topic %s: %s".formatted(importEntryTopic, e.getMessage()));
         }
-        log.info(topicDescriptionLog.toString());
         return kAdmin;
     }
 
