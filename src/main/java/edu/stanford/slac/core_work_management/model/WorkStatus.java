@@ -5,6 +5,5 @@ public enum WorkStatus {
     InProgress,
     ScheduledJob,
     Review,
-    Closed,
-
+    Closed
 }

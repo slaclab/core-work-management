@@ -9,6 +9,7 @@ import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
+@Log4j2
 @Service
 @Validated
 @AllArgsConstructor
@@ -34,6 +36,7 @@ public class DomainService {
                 () -> domainRepository.save(domainMapper.toModel(newDomainDTO)),
                 -1
         );
+        log.info("Domain created: {} by {}", savedDomain.getName(), savedDomain.getCreatedBy());
         return savedDomain.getId();
     }
 
