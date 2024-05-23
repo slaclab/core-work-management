@@ -719,6 +719,8 @@ public class WorkService {
                 -7
         );
         log.info("New Activity '{}' has been added to work '{}'", savedActivity.getTitle(), work.getTitle());
+        //update domain statistic
+        domainService.updateDomainStatistics(savedActivity.getDomainId());
         return savedActivity.getId();
     }
 
@@ -798,76 +800,9 @@ public class WorkService {
                 -2
         );
         log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
+        //update domain statistic
+        domainService.updateDomainStatistics(activityStored.getDomainId());
     }
-
-//    /**
-//     * Validate all custom fields
-//     *
-//     * @param customFields      the custom field available by the ActivityType
-//     * @param customFieldValues the custom field value submitted to save the activity
-//     */
-//    private void validateCustomField(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
-//        // check duplicated id
-//        assertion(
-//                ControllerLogicException.builder()
-//                        .errorCode(-1)
-//                        .errorMessage("There are duplicated custom field id")
-//                        .errorDomain("WorkService::validateCustomField")
-//                        .build(),
-//                () -> customFieldValues.stream()
-//                        // Group by the id
-//                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
-//                        .values().stream()
-//                        // Filter groups having more than one element, indicating duplicates
-//                        .filter(duplicates -> duplicates.size() > 1)
-//                        .flatMap(Collection::stream)
-//                        .toList().isEmpty()
-//        );
-//
-//        // check that all the id are valid
-//        customFieldValues.forEach(
-//                cv -> {
-//                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
-//                    // check if id is valid
-//                    assertion(
-//                            ControllerLogicException.builder()
-//                                    .errorCode(-2)
-//                                    .errorMessage("The field id %s has not been found".formatted(cv.id()))
-//                                    .errorDomain("WorkService::validateCustomField")
-//                                    .build(),
-//                            foundField::isPresent
-//                    );
-//
-//                    // check the type
-//                    assertion(
-//                            ControllerLogicException.builder()
-//                                    .errorCode(-3)
-//                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
-//                                    .errorDomain("WorkService::validateCustomField")
-//                                    .build(),
-//                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
-//                    );
-//                }
-//
-//        );
-//
-//
-//        // collect all the mandatory field
-//        assertion(
-//                ControllerLogicException.builder()
-//                        .errorCode(-4)
-//                        .errorMessage("Not all mandatory attribute has been submitted")
-//                        .errorDomain("WorkService::validateCustomField")
-//                        .build(),
-//                () -> customFields
-//                        .stream()
-//                        .filter(WATypeCustomField::getIsMandatory)
-//                        .map(WATypeCustomField::getId)
-//                        .allMatch(
-//                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
-//                        )
-//        );
-//    }
 
     /**
      * Return the activity by his id
@@ -990,6 +925,7 @@ public class WorkService {
                 -4
         );
         log.info("Work '{}' has change his status to status '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus());
+        domainService.updateDomainStatistics(activityFound.getDomainId());
     }
 
     /**
