@@ -13,9 +13,12 @@ import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
@@ -38,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @Service
 @Log4j2
 @Validated
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WorkService {
     private final DomainService domainService;
     private final AuthService authService;
@@ -50,7 +56,7 @@ public class WorkService {
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
-
+    private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     /**
      * Create a new work type
      *
@@ -353,6 +359,8 @@ public class WorkService {
 
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
+        log.info("Update domain statistic");
+        domainService.updateDomainStatistics(savedWork.getDomainId());
         return savedWork.getId();
     }
 
@@ -382,8 +390,8 @@ public class WorkService {
      * check if the shop group belong to the source domain
      *
      * @param shopGroupId the id of the location
-     * @param srcDomain  the domain id
-     * @param errorCode  the error code
+     * @param srcDomain   the domain id
+     * @param errorCode   the error code
      */
     private void validateShopGroupForDomain(String shopGroupId, String srcDomain, int errorCode) {
         var shopGroup = wrapCatch(() -> shopGroupService.findById(shopGroupId), errorCode);
@@ -468,6 +476,9 @@ public class WorkService {
         );
         // update all authorization
         updateWorkAuthorization(updatedWork);
+
+        //update domain statistic
+        domainService.updateDomainStatistics(updatedWork.getDomainId());
     }
 
     /**
@@ -580,6 +591,8 @@ public class WorkService {
                 -3
         );
         log.info("Work '{}' has change his status to status '{}' by '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus(), savedWork.getCurrentStatus().getChanged_by());
+        //update domain statistic
+        domainService.updateDomainStatistics(savedWork.getDomainId());
     }
 
     /**
@@ -665,10 +678,10 @@ public class WorkService {
         );
 
         //validate location and shop group against domain
-        if(newActivityDTO.locationId() != null) {
+        if (newActivityDTO.locationId() != null) {
             validateLocationForDomain(newActivityDTO.locationId(), work.getDomainId(), -3);
         }
-        if(newActivityDTO.shopGroupId() != null) {
+        if (newActivityDTO.shopGroupId() != null) {
             validateShopGroupForDomain(newActivityDTO.shopGroupId(), work.getDomainId(), -4);
         }
 
@@ -706,6 +719,8 @@ public class WorkService {
                 -7
         );
         log.info("New Activity '{}' has been added to work '{}'", savedActivity.getTitle(), work.getTitle());
+        //update domain statistic
+        domainService.updateDomainStatistics(savedActivity.getDomainId());
         return savedActivity.getId();
     }
 
@@ -752,10 +767,10 @@ public class WorkService {
         );
 
         //TODO validate location and shop group against domain
-        if(updateActivityDTO.locationId() != null) {
+        if (updateActivityDTO.locationId() != null) {
             validateLocationForDomain(updateActivityDTO.locationId(), activityStored.getDomainId(), -3);
         }
-        if(updateActivityDTO.shopGroupId() != null) {
+        if (updateActivityDTO.shopGroupId() != null) {
             validateShopGroupForDomain(updateActivityDTO.shopGroupId(), activityStored.getDomainId(), -4);
         }
 
@@ -785,76 +800,9 @@ public class WorkService {
                 -2
         );
         log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
+        //update domain statistic
+        domainService.updateDomainStatistics(activityStored.getDomainId());
     }
-
-//    /**
-//     * Validate all custom fields
-//     *
-//     * @param customFields      the custom field available by the ActivityType
-//     * @param customFieldValues the custom field value submitted to save the activity
-//     */
-//    private void validateCustomField(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> customFieldValues) {
-//        // check duplicated id
-//        assertion(
-//                ControllerLogicException.builder()
-//                        .errorCode(-1)
-//                        .errorMessage("There are duplicated custom field id")
-//                        .errorDomain("WorkService::validateCustomField")
-//                        .build(),
-//                () -> customFieldValues.stream()
-//                        // Group by the id
-//                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
-//                        .values().stream()
-//                        // Filter groups having more than one element, indicating duplicates
-//                        .filter(duplicates -> duplicates.size() > 1)
-//                        .flatMap(Collection::stream)
-//                        .toList().isEmpty()
-//        );
-//
-//        // check that all the id are valid
-//        customFieldValues.forEach(
-//                cv -> {
-//                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
-//                    // check if id is valid
-//                    assertion(
-//                            ControllerLogicException.builder()
-//                                    .errorCode(-2)
-//                                    .errorMessage("The field id %s has not been found".formatted(cv.id()))
-//                                    .errorDomain("WorkService::validateCustomField")
-//                                    .build(),
-//                            foundField::isPresent
-//                    );
-//
-//                    // check the type
-//                    assertion(
-//                            ControllerLogicException.builder()
-//                                    .errorCode(-3)
-//                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
-//                                    .errorDomain("WorkService::validateCustomField")
-//                                    .build(),
-//                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
-//                    );
-//                }
-//
-//        );
-//
-//
-//        // collect all the mandatory field
-//        assertion(
-//                ControllerLogicException.builder()
-//                        .errorCode(-4)
-//                        .errorMessage("Not all mandatory attribute has been submitted")
-//                        .errorDomain("WorkService::validateCustomField")
-//                        .build(),
-//                () -> customFields
-//                        .stream()
-//                        .filter(WATypeCustomField::getIsMandatory)
-//                        .map(WATypeCustomField::getId)
-//                        .allMatch(
-//                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
-//                        )
-//        );
-//    }
 
     /**
      * Return the activity by his id
@@ -977,6 +925,7 @@ public class WorkService {
                 -4
         );
         log.info("Work '{}' has change his status to status '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus());
+        domainService.updateDomainStatistics(activityFound.getDomainId());
     }
 
     /**
@@ -1004,5 +953,4 @@ public class WorkService {
         );
         return activittList.stream().map(workMapper::toDTO).toList();
     }
-
 }
