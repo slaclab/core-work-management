@@ -117,7 +117,7 @@ public class WorkRepositoryTest {
             int finalI = i;
             String workTypeId = "workType-" + ThreadLocalRandom.current().nextInt(1, 10);
             var savedWork = assertDoesNotThrow(
-                    () -> workRepository.save(Work.builder().title("w-new-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.New).build()).build())
+                    () -> workRepository.save(Work.builder().domainId("dom1").title("w-new-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.New).build()).build())
             );
             assertThat(savedWork).isNotNull();
         }
@@ -127,7 +127,7 @@ public class WorkRepositoryTest {
             int finalI = i;
             String workTypeId = "workType-" + ThreadLocalRandom.current().nextInt(1, 10);
             var savedWork = assertDoesNotThrow(
-                    () -> workRepository.save(Work.builder().title("w-closed-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.Closed).build()).build())
+                    () -> workRepository.save(Work.builder().domainId("dom1").title("w-closed-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.Closed).build()).build())
             );
             assertThat(savedWork).isNotNull();
         }
@@ -137,7 +137,7 @@ public class WorkRepositoryTest {
             int finalI = i;
             String workTypeId = "workType-" + ThreadLocalRandom.current().nextInt(1, 10);
             var savedWork = assertDoesNotThrow(
-                    () -> workRepository.save(Work.builder().title("w-review-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.Review).build()).build())
+                    () -> workRepository.save(Work.builder().domainId("dom1").title("w-review-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.Review).build()).build())
             );
             assertThat(savedWork).isNotNull();
         }
@@ -147,7 +147,7 @@ public class WorkRepositoryTest {
             int finalI = i;
             String workTypeId = "workType-" + ThreadLocalRandom.current().nextInt(1, 10);
             var savedWork = assertDoesNotThrow(
-                    () -> workRepository.save(Work.builder().title("w-progress-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.InProgress).build()).build())
+                    () -> workRepository.save(Work.builder().domainId("dom1").title("w-progress-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.InProgress).build()).build())
             );
             assertThat(savedWork).isNotNull();
         }
@@ -157,13 +157,18 @@ public class WorkRepositoryTest {
             int finalI = i;
             String workTypeId = "workType-" + ThreadLocalRandom.current().nextInt(1, 10);
             var savedWork = assertDoesNotThrow(
-                    () -> workRepository.save(Work.builder().title("w-scheduled-job-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.ScheduledJob).build()).build())
+                    () -> workRepository.save(Work.builder().domainId("dom1").title("w-scheduled-job-%d".formatted(finalI)).workTypeId(workTypeId).currentStatus(WorkStatusLog.builder().status(WorkStatus.ScheduledJob).build()).build())
             );
             assertThat(savedWork).isNotNull();
         }
 
+        var emptyListWrongDomainId = assertDoesNotThrow(
+                () -> workRepository.getWorkStatisticsByDomainId("dom2")
+        );
+        assertThat(emptyListWrongDomainId).isEmpty();
+
         var workStatistic = assertDoesNotThrow(
-                () -> workRepository.getWorkStatusStatistics()
+                () -> workRepository.getWorkStatisticsByDomainId("dom1")
         );
 
         // Check if the statistics are correct for each work type ID

@@ -13,9 +13,12 @@ import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
@@ -38,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @Service
 @Log4j2
 @Validated
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WorkService {
     private final DomainService domainService;
     private final AuthService authService;
@@ -50,7 +56,7 @@ public class WorkService {
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
-
+    private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     /**
      * Create a new work type
      *
@@ -382,8 +388,8 @@ public class WorkService {
      * check if the shop group belong to the source domain
      *
      * @param shopGroupId the id of the location
-     * @param srcDomain  the domain id
-     * @param errorCode  the error code
+     * @param srcDomain   the domain id
+     * @param errorCode   the error code
      */
     private void validateShopGroupForDomain(String shopGroupId, String srcDomain, int errorCode) {
         var shopGroup = wrapCatch(() -> shopGroupService.findById(shopGroupId), errorCode);
@@ -665,10 +671,10 @@ public class WorkService {
         );
 
         //validate location and shop group against domain
-        if(newActivityDTO.locationId() != null) {
+        if (newActivityDTO.locationId() != null) {
             validateLocationForDomain(newActivityDTO.locationId(), work.getDomainId(), -3);
         }
-        if(newActivityDTO.shopGroupId() != null) {
+        if (newActivityDTO.shopGroupId() != null) {
             validateShopGroupForDomain(newActivityDTO.shopGroupId(), work.getDomainId(), -4);
         }
 
@@ -752,10 +758,10 @@ public class WorkService {
         );
 
         //TODO validate location and shop group against domain
-        if(updateActivityDTO.locationId() != null) {
+        if (updateActivityDTO.locationId() != null) {
             validateLocationForDomain(updateActivityDTO.locationId(), activityStored.getDomainId(), -3);
         }
-        if(updateActivityDTO.shopGroupId() != null) {
+        if (updateActivityDTO.shopGroupId() != null) {
             validateShopGroupForDomain(updateActivityDTO.shopGroupId(), activityStored.getDomainId(), -4);
         }
 
@@ -1004,5 +1010,4 @@ public class WorkService {
         );
         return activittList.stream().map(workMapper::toDTO).toList();
     }
-
 }

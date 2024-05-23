@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -23,17 +25,24 @@ public class Domain {
      * This field is annotated with @Id to indicate that it's the primary key.
      */
     @Id
-    String id;
+    private String id;
     /**
      * The name of the domain.
      * This field stores the name of the domain, using @Schema annotation to provide a description for the field.
      */
-    String name;
+    private String name;
     /**
      * The description of the domain.
      * This field stores the description of the domain, using @Schema annotation to provide a description for the field.
      */
-    String description;
+    private String description;
+
+    /**
+     * The work type status statistics of the domain.
+     * this field contains the statistics of the work by work type id
+     * the key of the map is the work type id and the value is the list of the status statistics
+     */
+    private Map<String, List<WorkStatusCountStatistics>> workTypeStatusStatistics;
 
     /**
      * The date when the domain was created.

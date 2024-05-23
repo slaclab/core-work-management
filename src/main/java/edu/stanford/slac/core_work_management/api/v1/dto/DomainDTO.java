@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -22,6 +24,8 @@ public record DomainDTO(
         String name,
         @Schema(description = "The domain description")
         String description,
+        @Schema(description = "The work type status statistics of the domain")
+        Map<String, List<WorkStatusCountStatisticsDTO>> workTypeStatusStatistics,
         @Schema(description = "The created date")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
