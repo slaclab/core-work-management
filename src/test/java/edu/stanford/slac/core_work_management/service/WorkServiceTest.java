@@ -53,8 +53,8 @@ public class WorkServiceTest {
     private String domainId;
     private String alternateDomainId;
 
-    @BeforeAll
-    public void initDomain() {
+    @BeforeEach
+    public void cleanCollection() {
         mongoTemplate.remove(new Query(), Domain.class);
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -77,10 +77,7 @@ public class WorkServiceTest {
                 )
         );
         assertThat(alternateDomainId).isNotEmpty();
-    }
 
-    @BeforeEach
-    public void cleanCollection() {
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ActivityType.class);
