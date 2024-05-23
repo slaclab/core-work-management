@@ -259,13 +259,13 @@ public class DomainServiceTest {
         var statMap = domainUpdated.workTypeStatusStatistics();
         assertThat(statMap).isNotNull().isNotEmpty();
 
-        for (WorkTypeSummaryDTO workType: statMap.keySet()){
-            var statForWTypeId = statMap.get(workType);
-            statForWTypeId.stream().filter(stat->stat.status()==WorkStatusDTO.New).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.id(), WorkStatus.New)));
-            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.Closed)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.id(), WorkStatus.Closed)));
-            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.InProgress)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.id(), WorkStatus.InProgress)));
-            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.Review)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.id(), WorkStatus.Review)));
-            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.ScheduledJob)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.id(), WorkStatus.ScheduledJob)));
+        for (WorkTypeStatusStatisticsDTO workType: statMap){
+            var statForWTypeId = workType.status();
+            statForWTypeId.stream().filter(stat->stat.status()==WorkStatusDTO.New).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.New)));
+            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.Closed)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.Closed)));
+            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.InProgress)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.InProgress)));
+            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.Review)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.Review)));
+            statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.ScheduledJob)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.ScheduledJob)));
         }
     }
 }

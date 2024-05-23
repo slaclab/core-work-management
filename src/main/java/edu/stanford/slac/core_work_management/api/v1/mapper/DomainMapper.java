@@ -1,9 +1,6 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkStatusCountStatisticsDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeSummaryDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
@@ -14,6 +11,7 @@ import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.swing.text.Utilities;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,23 +77,21 @@ public abstract class DomainMapper {
      * @return the converted map
      */
     @Named("convertStatistic")
-    public Map<WorkTypeSummaryDTO, List<WorkStatusCountStatisticsDTO>> map(Map<String, List<WorkStatusCountStatistics>> value) {
-        if (value == null) return new HashMap<>();
+    public List<WorkTypeStatusStatisticsDTO> map(Map<String, List<WorkStatusCountStatistics>> value) {
+        List<WorkTypeStatusStatisticsDTO> result = new ArrayList<>();
+        if (value == null) return result;
         return value.entrySet().stream()
-                .collect(
-                        Collectors.toMap(
-                                k -> toSummaryDTO(
-                                        workTypeRepository.findById(k.getKey())
-                                                .orElseThrow(
-                                                        () -> WorkTypeNotFound
-                                                                .notFoundById()
-                                                                .errorCode(-1)
-                                                                .workId(k.getKey())
-                                                                .build()
-                                                )
-                                ),
-                                e -> e.getValue().stream().map(this::toDTO).toList()
-                        )
-                );
+                .map(
+                        entry -> {
+                            WorkType workType = workTypeRepository.findById(entry.getKey())
+                                    .orElseThrow(() -> WorkTypeNotFound.notFoundById().errorCode(-1).workId(entry.getKey()).build());
+                            return WorkTypeStatusStatisticsDTO
+                                    .builder()
+                                    .workType(toSummaryDTO(workType))
+                                    .status(entry.getValue().stream().map(this::toDTO).collect(Collectors.toList()))
+                                    .build();
+                        }
+                )
+                .toList();
     }
 }
