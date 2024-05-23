@@ -97,6 +97,14 @@ public abstract class WorkMapper {
     abstract public WorkTypeDTO toDTO(WorkType workType);
 
     /**
+     * Convert the {@link WorkType} to a {@link WorkTypeSummaryDTO}
+     *
+     * @param workType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public WorkTypeSummaryDTO toSummaryDTO(WorkType workType);
+
+    /**
      * Convert the {@link ActivityType} to a {@link ActivityTypeDTO}
      *
      * @param activityType the entity to convert

@@ -25,7 +25,7 @@ public record DomainDTO(
         @Schema(description = "The domain description")
         String description,
         @Schema(description = "The work type status statistics of the domain")
-        Map<String, List<WorkStatusCountStatisticsDTO>> workTypeStatusStatistics,
+        Map<WorkTypeSummaryDTO, List<WorkStatusCountStatisticsDTO>> workTypeStatusStatistics,
         @Schema(description = "The created date")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
