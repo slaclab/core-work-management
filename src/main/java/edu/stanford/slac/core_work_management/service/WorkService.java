@@ -359,6 +359,8 @@ public class WorkService {
 
         log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
+        log.info("Update domain statistic");
+        domainService.updateDomainStatistics(savedWork.getDomainId());
         return savedWork.getId();
     }
 
@@ -474,6 +476,9 @@ public class WorkService {
         );
         // update all authorization
         updateWorkAuthorization(updatedWork);
+
+        //update domain statistic
+        domainService.updateDomainStatistics(updatedWork.getDomainId());
     }
 
     /**
@@ -586,6 +591,8 @@ public class WorkService {
                 -3
         );
         log.info("Work '{}' has change his status to status '{}' by '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus(), savedWork.getCurrentStatus().getChanged_by());
+        //update domain statistic
+        domainService.updateDomainStatistics(savedWork.getDomainId());
     }
 
     /**

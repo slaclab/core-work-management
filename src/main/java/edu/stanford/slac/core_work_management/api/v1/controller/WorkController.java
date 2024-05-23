@@ -19,6 +19,7 @@ package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -60,6 +61,7 @@ import java.util.Optional;
 @RequestMapping("/v1/work")
 @Schema(description = "Set of api for the work management")
 public class WorkController {
+    private final DomainService domainService;
     private final WorkService workService;
 
     @Operation(summary = "Return all the work types")
@@ -136,7 +138,7 @@ public class WorkController {
             @PathVariable() String workId,
             @Valid @RequestBody UpdateWorkDTO updateWorkDTO
     ) {
-         workService.update(workId, updateWorkDTO);
+        workService.update(workId, updateWorkDTO);
         return ApiResultResponse.of(true);
     }
 

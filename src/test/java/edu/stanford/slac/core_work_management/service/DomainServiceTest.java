@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles({"test"})
+@ActiveProfiles({"test","async-ops"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class DomainServiceTest {
     @Autowired
