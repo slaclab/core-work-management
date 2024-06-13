@@ -194,6 +194,12 @@ public abstract class WorkMapper {
     @Mapping(target = "domain", expression = "java(toDomainDTO(activity.getDomainId()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
+    /**
+     * Convert the {@link Activity} to a {@link ActivitySummaryDTO}
+     *
+     * @param activity the entity to convert
+     * @return the converted DTO
+     */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(activity.getDomainId()))")
