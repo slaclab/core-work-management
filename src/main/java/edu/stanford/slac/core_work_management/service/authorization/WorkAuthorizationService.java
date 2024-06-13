@@ -382,10 +382,10 @@ public class WorkAuthorizationService {
     /**
      * Check if the user can update the status of an activity
      *
-     * @param authentication          the authentication object
+     * @param authentication the authentication object
      * @return true if the user can update the status of the activity, false otherwise
      */
-    public boolean applyCompletion(ApiResultResponse<List<WorkDTO>> workDTOS, Authentication authentication) {
+    public boolean applyCompletionDTOList(ApiResultResponse<List<WorkDTO>> workDTOS, Authentication authentication) {
         List<WorkDTO> filledDTOs = workDTOS.getPayload().stream().map(
                 workDTO -> {
                     // check for auth
@@ -397,4 +397,26 @@ public class WorkAuthorizationService {
         return true;
     }
 
+    /**
+     * Check if the user can update the status of an activity
+     *
+     * @param authentication the authentication object
+     * @return true if the user can update the status of the activity, false otherwise
+     */
+    public boolean applyCompletionDTO(ApiResultResponse<WorkDTO> workDTO, Authentication authentication) {
+        workDTO.setPayload(
+                workDTO.getPayload()
+                        .toBuilder()
+                        .accessList
+                                (
+                                        workService.getAuthorizationByWork
+                                                (
+                                                        workDTO.getPayload(),
+                                                        authentication
+                                                )
+                                )
+                        .build()
+        );
+        return true;
+    }
 }

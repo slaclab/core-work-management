@@ -172,6 +172,7 @@ public class WorkController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PostAuthorize("@workAuthorizationService.applyCompletionDTO(returnObject, authentication)")
     public ApiResultResponse<WorkDTO> findWorkById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
@@ -304,7 +305,7 @@ public class WorkController {
     })
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    @PostAuthorize("@workAuthorizationService.applyCompletion(returnObject, authentication)")
+    @PostAuthorize("@workAuthorizationService.applyCompletionDTOList(returnObject, authentication)")
     public ApiResultResponse<List<WorkDTO>> findAllWork(
             Authentication authentication,
             @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
