@@ -1,12 +1,11 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
+import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
@@ -24,11 +23,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.any;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
-import static java.util.Collections.emptyList;
 
 /**
  * Mapper for the entity {@link Work}
@@ -182,7 +178,6 @@ public abstract class WorkMapper {
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getWorkTypeId()))")
     @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getShopGroupId()))")
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
-    @Mapping(target = "accessList", expression = "java(getAuthorizationByWork(work))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     abstract public WorkDTO toDTO(Work work);
@@ -199,6 +194,12 @@ public abstract class WorkMapper {
     @Mapping(target = "domain", expression = "java(toDomainDTO(activity.getDomainId()))")
     abstract public ActivityDTO toDTO(Activity activity);
 
+    /**
+     * Convert the {@link Activity} to a {@link ActivitySummaryDTO}
+     *
+     * @param activity the entity to convert
+     * @return the converted DTO
+     */
     @Mapping(target = "activityType", expression = "java(toActivityTypeDTOFromActivityTypeId(activity.getActivityTypeId()))")
     @Mapping(target = "access", expression = "java(getActivityAuthorizationByWorkId(activity.getWorkId()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(activity.getDomainId()))")
@@ -373,77 +374,6 @@ public abstract class WorkMapper {
                 }
         );
         return updatedCustomAttributesList;
-    }
-
-    /**
-     * Get the authorization level on work
-     */
-    public List<AuthorizationResourceDTO> getAuthorizationByWork(Work workId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            // if the DTO has been requested by an anonymous user, then the access level is Read
-            // in other case will should have been blocked by the security layer
-            return emptyList();
-        }
-
-        List<AuthorizationResourceDTO> accessList = new ArrayList<>();
-        //check if it's a root
-        boolean isRoot = authService.checkForRoot(authentication);
-        // check if user can write normal field
-        accessList.add(AuthorizationResourceDTO.builder()
-                .field("*")
-                .authorizationType(
-                        any(
-                                // a root users
-                                () -> authService.checkForRoot(authentication),
-                                // or a user that has the right as writer on the work
-                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                        authentication,
-                                        AuthorizationTypeDTO.Write,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                                ),
-                                // user of the shop group are always treated as admin on the work
-                                () -> shopGroupService.checkContainsAUserEmail(
-                                        // fire not found work exception
-                                        workId.getShopGroupId(),
-                                        authentication.getCredentials().toString()
-                                )
-                        ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
-                .build());
-
-        // check if can modify location
-        accessList.add(AuthorizationResourceDTO.builder()
-                .field("location")
-                .authorizationType(
-                        any(
-                                // a root users
-                                () -> isRoot,
-                                // or a user that has the right as admin on the work
-                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                        authentication,
-                                        AuthorizationTypeDTO.Admin,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                                )
-                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
-                .build());
-
-        // check if can modify assignTo
-        accessList.add(AuthorizationResourceDTO.builder()
-                .field("assignTo")
-                .authorizationType(
-                        any(
-                                // a root users
-                                () -> isRoot,
-                                // or a user that is the leader of the group
-                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                        authentication,
-                                        AuthorizationTypeDTO.Admin,
-                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(workId.getShopGroupId())
-                                )
-                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
-                .build());
-
-        return accessList;
     }
 
     /**
