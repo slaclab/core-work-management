@@ -388,7 +388,6 @@ public class WorkAuthorizationService {
     public boolean applyCompletion(ApiResultResponse<List<WorkDTO>> workDTOS, Authentication authentication) {
         List<WorkDTO> filledDTOs = workDTOS.getPayload().stream().map(
                 workDTO -> {
-                    String value = workService.getCachedData();
                     // check for auth
                     var authList = workService.getAuthorizationByWork(workDTO, authentication);
                     return workDTO.toBuilder().accessList(authList).build();
