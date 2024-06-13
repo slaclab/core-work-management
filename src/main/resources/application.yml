@@ -1,16 +1,15 @@
 logging:
   level:
     edu.stanford.slac.code_inventory_system: ${CWM_LOG_LEVEL:DEBUG}
-
 server:
   tomcat:
     mbeanregistry:
       enabled: true
-
 spring:
   application:
     name: 'cwm'
   cache:
+    cache-names: user-root-authorization,work-authorization
     type: hazelcast
   ldap:
     urls: ${CWM_LDAP_URI:ldap://localhost:8389}
@@ -34,7 +33,6 @@ spring:
       file-size-threshold: 1MB
       max-file-size: ${CWM_MAX_POST_SIZE:100MB}
       max-request-size: ${CWM_MAX_POST_SIZE:100MB}
-
 edu:
   stanford:
     slac:

@@ -19,23 +19,30 @@ package edu.stanford.slac.core_work_management.service.authorization;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_AUTHORIZATION_TEMPLATE;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import static java.util.Collections.emptyList;
 
 @Service
 @AllArgsConstructor
@@ -184,7 +191,7 @@ public class WorkAuthorizationService {
      * Check if the user can create log on work
      *
      * @param authentication the authentication object
-     * @param workId the work id
+     * @param workId         the work id
      * @return true if the user can create a new work, false otherwise
      */
     public boolean checkLoggingOnWork(Authentication authentication, String workId) {
@@ -298,12 +305,12 @@ public class WorkAuthorizationService {
      * Check if the user can create log on activity
      *
      * @param authentication the authentication object
-     * @param workId the work id
-     * @param activityId the activity id
-     * @param updateWorkDTO the update work dto
+     * @param workId         the work id
+     * @param activityId     the activity id
+     * @param updateWorkDTO  the update work dto
      * @return true if the user can create a new work, false otherwise
      */
-    public boolean checkLoggingOnActivity(Authentication authentication,  String workId, String activityId) {
+    public boolean checkLoggingOnActivity(Authentication authentication, String workId, String activityId) {
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
@@ -372,5 +379,23 @@ public class WorkAuthorizationService {
         return true;
     }
 
+    /**
+     * Check if the user can update the status of an activity
+     *
+     * @param authentication          the authentication object
+     * @return true if the user can update the status of the activity, false otherwise
+     */
+    public boolean applyCompletion(ApiResultResponse<List<WorkDTO>> workDTOS, Authentication authentication) {
+        List<WorkDTO> filledDTOs = workDTOS.getPayload().stream().map(
+                workDTO -> {
+                    String value = workService.getCachedData();
+                    // check for auth
+                    var authList = workService.getAuthorizationByWork(workDTO, authentication);
+                    return workDTO.toBuilder().accessList(authList).build();
+                }
+        ).toList();
+        workDTOS.setPayload(filledDTOs);
+        return true;
+    }
 
 }

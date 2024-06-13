@@ -1,5 +1,7 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
@@ -18,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,8 +38,7 @@ import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerType
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Write;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.*;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -952,5 +954,85 @@ public class WorkService {
                 -1
         );
         return activittList.stream().map(workMapper::toDTO).toList();
+    }
+
+    @Cacheable("work-authorization")
+    public String getCachedData() {
+        return "cached";
+    }
+
+    /**
+     * Search on all the activities
+     *
+     * @return the found activities
+     */
+    @Cacheable(
+            value = {"work-authorization"},
+            key = "{#authentication.principal, #workDTO.shopGroup.id}")
+    public List<AuthorizationResourceDTO> getAuthorizationByWork(WorkDTO workDTO, Authentication authentication) {
+        if (authentication == null) {
+            // if the DTO has been requested by an anonymous user, then the access level is Read
+            // in other case will should have been blocked by the security layer
+            return emptyList();
+        }
+
+        List<AuthorizationResourceDTO> accessList = new ArrayList<>();
+        //check if it's a root
+        boolean isRoot = authService.checkForRoot(authentication);
+        // check if user can write normal field
+        accessList.add(AuthorizationResourceDTO.builder()
+                .field("*")
+                .authorizationType(
+                        any(
+                                // a root users
+                                () -> authService.checkForRoot(authentication),
+                                // or a user that has the right as writer on the work
+                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                        authentication,
+                                        AuthorizationTypeDTO.Write,
+                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workDTO.id())
+                                ),
+                                // user of the shop group are always treated as admin on the work
+                                () -> shopGroupService.checkContainsAUserEmail(
+                                        // fire not found work exception
+                                        workDTO.shopGroup().id(),
+                                        authentication.getCredentials().toString()
+                                )
+                        ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
+                .build());
+
+        // check if can modify location
+        accessList.add(AuthorizationResourceDTO.builder()
+                .field("location")
+                .authorizationType(
+                        any(
+                                // a root users
+                                () -> isRoot,
+                                // or a user that has the right as admin on the work
+                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                        authentication,
+                                        AuthorizationTypeDTO.Admin,
+                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workDTO.id())
+                                )
+                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
+                .build());
+
+        // check if can modify assignTo
+        accessList.add(AuthorizationResourceDTO.builder()
+                .field("assignTo")
+                .authorizationType(
+                        any(
+                                // a root users
+                                () -> isRoot,
+                                // or a user that is the leader of the group
+                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                        authentication,
+                                        AuthorizationTypeDTO.Admin,
+                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(workDTO.shopGroup().id())
+                                )
+                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
+                .build());
+
+        return accessList;
     }
 }
