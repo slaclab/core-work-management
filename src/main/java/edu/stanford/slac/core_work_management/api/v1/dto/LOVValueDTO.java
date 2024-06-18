@@ -29,5 +29,5 @@ import lombok.Builder;
 public record LOVValueDTO (
     @Schema(description = "The id of the LOV element")
     String id,
-    @Schema(description = "The field reference of the LOV element")
+    @Schema(description = "The value of lov element")
     String value){}

@@ -24,4 +24,5 @@ package edu.stanford.slac.core_work_management.model;
 public enum LOVDomainType {
     Work,
     Activity,
+    Bucket
 }
