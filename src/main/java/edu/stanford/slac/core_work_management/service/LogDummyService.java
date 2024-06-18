@@ -34,9 +34,7 @@ import static edu.stanford.slac.core_work_management.config.AuthorizationStringC
 @Service
 @Profile("!elog-support")
 @RequiredArgsConstructor
-public class LogDummyService {
-
-
+public class LogDummyService implements LogService{
     /**
      * Create a new log entry for a work plan or job execution
      *

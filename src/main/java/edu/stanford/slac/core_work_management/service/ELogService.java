@@ -38,7 +38,7 @@ import static edu.stanford.slac.core_work_management.config.AuthorizationStringC
 @Service
 @Profile("elog-support")
 @RequiredArgsConstructor
-public class ELogService {
+public class ELogService implements LogService{
     private final AuthService authService;
     private final WorkRepository workRepository;
     private final ActivityRepository activityRepository;

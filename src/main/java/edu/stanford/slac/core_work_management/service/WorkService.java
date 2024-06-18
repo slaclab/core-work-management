@@ -52,7 +52,7 @@ public class WorkService {
     private final WorkTypeRepository workTypeRepository;
     private final ActivityTypeRepository activityTypeRepository;
     private final ActivityRepository activityRepository;
-    private final ELogService logService;
+    private final LogService logService;
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
