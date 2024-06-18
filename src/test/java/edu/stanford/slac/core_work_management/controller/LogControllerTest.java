@@ -300,6 +300,56 @@ public class LogControllerTest {
         }
     }
 
+
+    @Test
+    public void testCreateMewLogOnWorkCreation() {
+        var newWorkLogIdResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        NewWorkDTO.builder()
+                                .domainId(domainId)
+                                .locationId(locationId)
+                                .workTypeId(newWorkTypeId)
+                                .shopGroupId(shopGroupId)
+                                .title("work contextually to log creation")
+                                .description("this is a work that will be used to test log creation during the work creation")
+                                .build(),
+                        Optional.of(true)
+                )
+        );
+
+
+        //try to fetch the log entry using elog api
+        var fullWork = workService.findWorkById(newWorkLogIdResult.getPayload());
+        await()
+                .atMost(30, SECONDS)
+                .pollDelay(2, SECONDS)
+                .pollInterval(2, SECONDS)
+                .until(() -> {
+                    var result = entriesControllerApi.search(
+                            null,
+                            null,
+                            null,
+                            null,
+                            10,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            "cwm:work:%s".formatted(fullWork.workNumber())
+                    );
+                    return result != null &&
+                            result.getErrorCode() == 0 &&
+                            result.getPayload() != null &&
+                            !result.getPayload().isEmpty();
+                });
+
+    }
+
     @Test
     public void testCreateMewLogEntryOnActivity() {
         Faker faker = new Faker();

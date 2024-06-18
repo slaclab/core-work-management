@@ -18,6 +18,7 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.ActivityTypeSubtypeDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.LOVDomainTypeDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.LOVElementDTO;
@@ -41,7 +42,7 @@ import java.util.List;
 public class LOVController {
     LOVService lovService;
 
-    @Operation(summary = "Return all the lov values for a work field.")
+    @Operation(summary = "Return all the lov values for a work field. for the Bucket domain uses 'bucket' as subtype")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(
             path = "/{domainType}/{subtypeId}",
@@ -53,6 +54,13 @@ public class LOVController {
             @NotEmpty @PathVariable LOVDomainTypeDTO domainType,
             @NotEmpty @PathVariable String subtypeId
     ) {
+        if(domainType==LOVDomainTypeDTO.Bucket && !subtypeId.equalsIgnoreCase("bucket")) {
+            throw ControllerLogicException.builder()
+                    .errorMessage("Invalid subtype for Bucket domain, it should be 'bucket'")
+                    .errorCode(-1)
+                    .errorDomain("LOVController::findAllFieldThatAreLOV")
+                    .build();
+        }
         return ApiResultResponse.of(lovService.findAllLOVField(domainType, subtypeId));
     }
 

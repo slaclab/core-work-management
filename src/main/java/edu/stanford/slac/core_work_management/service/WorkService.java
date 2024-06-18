@@ -15,23 +15,20 @@ import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
@@ -55,10 +52,12 @@ public class WorkService {
     private final WorkTypeRepository workTypeRepository;
     private final ActivityTypeRepository activityTypeRepository;
     private final ActivityRepository activityRepository;
+    private final ELogService logService;
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
+
     /**
      * Create a new work type
      *
@@ -306,7 +305,22 @@ public class WorkService {
                 workRepository::getNextWorkId,
                 -1
         );
-        return createNew(newWorkSequenceId, newWorkDTO);
+        return createNew(newWorkSequenceId, newWorkDTO, Optional.of(false));
+    }
+
+    /**
+     * Create a new work automatically creating the sequence
+     *
+     * @param newWorkDTO the DTO to create the work
+     * @return the id of the created work
+     */
+    public String createNew(@Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
+        // contain the set of all user that will become admin for this new work
+        Long newWorkSequenceId = wrapCatch(
+                workRepository::getNextWorkId,
+                -1
+        );
+        return createNew(newWorkSequenceId, newWorkDTO, logIf);
     }
 
     /**
@@ -316,7 +330,7 @@ public class WorkService {
      * @return the id of the created work
      */
     @Transactional
-    public String createNew(Long workSequence, @Valid NewWorkDTO newWorkDTO) {
+    public String createNew(Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
         //check if the domain exists
         assertion(
                 DomainNotFound
@@ -363,6 +377,19 @@ public class WorkService {
         updateWorkAuthorization(savedWork);
         log.info("Update domain statistic");
         domainService.updateDomainStatistics(savedWork.getDomainId());
+
+        // log the creation of the work
+        if (logIf.isPresent() && logIf.get()) {
+            logService.createNewLogEntry
+                    (
+                            savedWork.getId(),
+                            NewLogEntry.builder()
+                                    .title(savedWork.getTitle())
+                                    .text(savedWork.getDescription())
+                                    .build(),
+                            null
+                    );
+        }
         return savedWork.getId();
     }
 

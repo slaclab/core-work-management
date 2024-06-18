@@ -462,6 +462,38 @@ public class TestControllerHelperService {
     }
 
     /**
+     * Create new work
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param newWorkDTO    the new work dto
+     * @param logIf         the log if true
+     * @return the id of the newly created work
+     */
+    public ApiResultResponse<String> workControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewWorkDTO newWorkDTO,
+            Optional<Boolean> logIf
+    ) throws Exception {
+        var requestBuilder = post("/v1/work")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newWorkDTO));
+        logIf.ifPresent(aBoolean -> requestBuilder.param("logIf", aBoolean.toString()));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Update a work
      *
      * @param mockMvc       the mock mvc
