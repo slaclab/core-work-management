@@ -32,7 +32,7 @@ import java.util.List;
 
 @Repository
 @AllArgsConstructor
-public class BucketSlotRepositoryImpl implements BucketSlotRepositoryCustom {
+public class BucketRepositoryImpl implements BucketRepositoryCustom {
     private final MongoTemplate mongoTemplate;
     /**
      * Search all the work

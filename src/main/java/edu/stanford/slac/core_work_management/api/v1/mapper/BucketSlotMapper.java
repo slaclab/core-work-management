@@ -17,10 +17,10 @@
 
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotQueryParameterDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.LOVValueDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketSlotDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 import edu.stanford.slac.core_work_management.service.LOVService;
@@ -41,7 +41,7 @@ public abstract class BucketSlotMapper {
      * @param dto the new bucket slot DTO
      * @return the bucket slot model
      */
-    public abstract BucketSlot toModel(NewBucketSlotDTO dto);
+    public abstract BucketSlot toModel(NewBucketDTO dto);
 
     /**
      * Convert a bucket slot query parameter DTO to a bucket slot query parameter model
@@ -49,7 +49,7 @@ public abstract class BucketSlotMapper {
      * @param dto the bucket slot query parameter DTO
      * @return the bucket slot query parameter model
      */
-    public abstract BucketSlotQueryParameter toModel(BucketSlotQueryParameterDTO dto);
+    public abstract BucketSlotQueryParameter toModel(BucketQueryParameterDTO dto);
 
     /**
      * Convert a bucket slot model to a bucket slot DTO
@@ -59,7 +59,7 @@ public abstract class BucketSlotMapper {
      */
     @Mapping(target = "bucketType", qualifiedByName = "toLOVValueDTO")
     @Mapping(target = "bucketStatus", qualifiedByName = "toLOVValueDTO")
-    public abstract BucketSlotDTO toDTO(BucketSlot bucketSlot);
+    public abstract BucketDTO toDTO(BucketSlot bucketSlot);
 
     /**
      * Convert static string field to {@link }LOVValueDTO}

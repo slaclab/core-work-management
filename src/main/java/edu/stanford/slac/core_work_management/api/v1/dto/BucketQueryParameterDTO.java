@@ -27,7 +27,7 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "A DTO that represents the query parameter for the bucket slot.")
-public record BucketSlotQueryParameterDTO(
+public record BucketQueryParameterDTO(
         @Schema(description = "The id of the anchor")
         String anchorID,
         @Schema(description = "The context size")

@@ -1,17 +1,17 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotQueryParameterDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketSlotDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.BucketSlotMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityAlreadyAssociatedToSlot;
 import edu.stanford.slac.core_work_management.exception.BucketSlotNotFound;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotActivityStatus;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
-import edu.stanford.slac.core_work_management.repository.BucketSlotActivityRepository;
-import edu.stanford.slac.core_work_management.repository.BucketSlotRepository;
+import edu.stanford.slac.core_work_management.repository.BucketActivityRepository;
+import edu.stanford.slac.core_work_management.repository.BucketRepository;
 import edu.stanford.slac.core_work_management.service.validation.BucketValidationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -22,15 +22,14 @@ import java.util.List;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
-import static org.springframework.http.HttpStatus.ACCEPTED;
 
 @Validated
 @Service
 @AllArgsConstructor
-public class BucketSlotService {
+public class BucketService {
     private final ActivityRepository activityRepository;
-    private final BucketSlotRepository bucketSlotRepository;
-    private final BucketSlotActivityRepository bucketSlotActivityRepository;
+    private final BucketRepository bucketSlotRepository;
+    private final BucketActivityRepository bucketSlotActivityRepository;
     private final BucketSlotMapper bucketSlotMapper;
     private final BucketValidationService bucketValidationService;
 
@@ -40,7 +39,7 @@ public class BucketSlotService {
      * @param newBucketSlotDTO the new bucket slot DTO
      * @return the id of the new bucket slot
      */
-    public String createNew(@Valid NewBucketSlotDTO newBucketSlotDTO) {
+    public String createNew(@Valid NewBucketDTO newBucketSlotDTO) {
         BucketSlot bs = bucketSlotMapper.toModel(newBucketSlotDTO);
         BucketSlot finalBs = bs;
         assertion(
@@ -57,7 +56,7 @@ public class BucketSlotService {
      * @param id the id of the bucket slot
      * @return the bucket slot DTO
      */
-    public BucketSlotDTO findById(String id) {
+    public BucketDTO findById(String id) {
         return bucketSlotMapper.toDTO(
                 wrapCatch(
                         () -> bucketSlotRepository
@@ -76,7 +75,7 @@ public class BucketSlotService {
      * @param queryParameterDTO the query parameter DTO
      * @return the list of bucket slot DTOs
      */
-    public List<BucketSlotDTO> findAll(BucketSlotQueryParameterDTO queryParameterDTO) {
+    public List<BucketDTO> findAll(BucketQueryParameterDTO queryParameterDTO) {
         return bucketSlotRepository
                 .searchAll
                         (

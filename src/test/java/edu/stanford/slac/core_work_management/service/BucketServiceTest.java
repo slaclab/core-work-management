@@ -1,12 +1,10 @@
 package edu.stanford.slac.core_work_management.service;
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.LOVElement;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.UnexpectedTypeException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,11 +33,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test",  "async-ops"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class BucketSlotServiceTest {
+public class BucketServiceTest {
     @Autowired
     private LOVService lovService;
     @Autowired
-    private BucketSlotService bucketSlotService;
+    private BucketService bucketSlotService;
     @Autowired
     private MongoTemplate mongoTemplate;
     private List<String> bucketTypeLOVIds = null;
@@ -64,7 +62,7 @@ public class BucketSlotServiceTest {
     public void createNewBucketAndFindIt() {
         var newBucketId = assertDoesNotThrow(
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .description("bucket-1")
                                 .bucketType(bucketTypeLOVIds.get(0))
                                 .bucketStatus(bucketStatusLOVIds.get(0))
@@ -107,7 +105,7 @@ public class BucketSlotServiceTest {
         var failed1 = assertThrows(
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .build()
                 )
         );
@@ -116,7 +114,7 @@ public class BucketSlotServiceTest {
         var failed2 = assertThrows(
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .bucketType(bucketTypeLOVIds.get(0))
                                 .build()
                 )
@@ -127,7 +125,7 @@ public class BucketSlotServiceTest {
         var failed3 = assertThrows(
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .bucketType(bucketTypeLOVIds.get(0))
                                 .bucketStatus(bucketStatusLOVIds.get(0))
                                 .build()
@@ -139,7 +137,7 @@ public class BucketSlotServiceTest {
         var failed4 = assertThrows(
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .bucketType(bucketTypeLOVIds.get(0))
                                 .bucketStatus(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
@@ -152,7 +150,7 @@ public class BucketSlotServiceTest {
         var failed5 = assertThrows(
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .bucketType(bucketTypeLOVIds.get(0))
                                 .bucketStatus(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
@@ -166,7 +164,7 @@ public class BucketSlotServiceTest {
         var failed6 = assertThrows(
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
-                        NewBucketSlotDTO.builder()
+                        NewBucketDTO.builder()
                                 .description("bucket-1")
                                 .bucketStatus(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
@@ -184,7 +182,7 @@ public class BucketSlotServiceTest {
             int finalI = i;
             var newBucketId = assertDoesNotThrow(
                     ()->bucketSlotService.createNew(
-                            NewBucketSlotDTO.builder()
+                            NewBucketDTO.builder()
                                     .description("bucket-%d".formatted(finalI))
                                     .bucketType(bucketTypeLOVIds.get(0))
                                     .bucketStatus(bucketStatusLOVIds.get(0))
@@ -198,7 +196,7 @@ public class BucketSlotServiceTest {
 
         var first10Bucket = assertDoesNotThrow(
                 ()->bucketSlotService.findAll(
-                        BucketSlotQueryParameterDTO
+                        BucketQueryParameterDTO
                                 .builder()
                                 .limit(10)
                                 .build()
@@ -208,13 +206,13 @@ public class BucketSlotServiceTest {
         assertThat(first10Bucket).isNotNull();
         assertThat(first10Bucket).hasSize(10);
         for(int i = 0; i < 10; i++){
-            assertThat(first10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(99-i));
+            assertThat(first10Bucket.get(i)).extracting(BucketDTO::description).isEqualTo("bucket-%d".formatted(99-i));
         }
 
         // find next page
         var next10Bucket = assertDoesNotThrow(
                 ()->bucketSlotService.findAll(
-                        BucketSlotQueryParameterDTO
+                        BucketQueryParameterDTO
                                 .builder()
                                 .limit(10)
                                 .anchorID(first10Bucket.getLast().id())
@@ -225,13 +223,13 @@ public class BucketSlotServiceTest {
         assertThat(next10Bucket).isNotNull();
         assertThat(next10Bucket).hasSize(10);
         for(int i = 0; i < 10; i++){
-            assertThat(next10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(89-i));
+            assertThat(next10Bucket.get(i)).extracting(BucketDTO::description).isEqualTo("bucket-%d".formatted(89-i));
         }
 
         // check previous page
         var previous10Bucket = assertDoesNotThrow(
                 ()->bucketSlotService.findAll(
-                        BucketSlotQueryParameterDTO
+                        BucketQueryParameterDTO
                                 .builder()
                                 .contextSize(10)
                                 .anchorID(next10Bucket.getFirst().id())
@@ -241,7 +239,7 @@ public class BucketSlotServiceTest {
         assertThat(previous10Bucket).isNotNull();
         assertThat(previous10Bucket).hasSize(10);
         for(int i = 0; i < 10; i++){
-            assertThat(previous10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(98-i));
+            assertThat(previous10Bucket.get(i)).extracting(BucketDTO::description).isEqualTo("bucket-%d".formatted(98-i));
         }
     }
 }

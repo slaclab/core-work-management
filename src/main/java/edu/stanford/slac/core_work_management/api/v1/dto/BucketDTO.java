@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "A DTO that represents a new bucket slot. A bucket slot represent a preido of time where job can be submitted to be acceppted or rejected.")
-public record BucketSlotDTO(
+public record BucketDTO(
         @Schema(description = "The id of the bucket slot")
         String id,
         @Schema(description = "The description of the bucket slot")

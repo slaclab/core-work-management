@@ -22,7 +22,7 @@ import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 
 import java.util.List;
 
-public interface BucketSlotRepositoryCustom {
+public interface BucketRepositoryCustom {
 
     /**
      * Search all the work

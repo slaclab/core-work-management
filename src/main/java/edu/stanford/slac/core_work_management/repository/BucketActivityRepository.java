@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface BucketSlotActivityRepository extends MongoRepository<BucketSlotActivity, String> {
+public interface BucketActivityRepository extends MongoRepository<BucketSlotActivity, String> {
     boolean existsByBucketSlotIdAndActivityId(String bucketSlotId, String activityId);
     boolean existsByActivityIdAndStatusIn(String activityId, List<BucketSlotActivityStatus> status);
 }
