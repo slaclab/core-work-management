@@ -29,6 +29,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -38,24 +39,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-
-/**
- * -----------------------------------------------------------------------------
- * Title      : WorkController
- * ----------------------------------------------------------------------------
- * File       : WorkControllerController.java
- * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
- * Created    : 2/26/24
- * ----------------------------------------------------------------------------
- * This file is part of core-work-management. It is subject to
- * the license terms in the LICENSE.txt file found in the top-level directory
- * of this distribution and at:
- * <a href="https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html"/>.
- * No part of core-work-management, including this file, may be
- * copied, modified, propagated, or distributed except according to the terms
- * contained in the LICENSE.txt file.
- * ----------------------------------------------------------------------------
- **/
 
 @AllArgsConstructor
 @RestController
@@ -116,10 +99,13 @@ public class WorkController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<String> createNewWork(
             Authentication authentication,
+            @RequestParam(name = "logIf", required = false, defaultValue = "false")
+            @Parameter(description = "Log the operation if true")
+            Optional<Boolean> logIf,
             @Parameter(description = "The new work to create", required = true)
             @Valid @RequestBody NewWorkDTO newWorkDTO
     ) {
-        return ApiResultResponse.of(workService.createNew(newWorkDTO));
+        return ApiResultResponse.of(workService.createNew(newWorkDTO, logIf));
     }
 
     @Operation(summary = "Update a work")

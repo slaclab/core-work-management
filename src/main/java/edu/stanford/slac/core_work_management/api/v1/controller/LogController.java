@@ -2,7 +2,7 @@ package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLogEntry;
-import edu.stanford.slac.core_work_management.service.LogService;
+import edu.stanford.slac.core_work_management.service.ELogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Profile("elog-support")
 @Schema(description = "Set of api for the log entries management")
 public class LogController {
-    private final LogService logService;
+    private final ELogService logService;
 
     @PostMapping(
             path = "/work/{workId}",

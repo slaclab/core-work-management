@@ -20,6 +20,7 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.LOVMapper;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
+import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.LOVElement;
 import edu.stanford.slac.core_work_management.model.value.LOVField;
 import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
@@ -279,6 +280,17 @@ public class LOVService {
                                 HashMap::new
                         ));
                 resultHash.putAll(getLOVFieldReferenceFromActivityType(subtypeId));
+                yield resultHash;
+            }
+            case Bucket -> {
+                var resultHash = Arrays.stream(BucketSlot.class.getDeclaredFields())
+                        .filter(field -> field.isAnnotationPresent(LOVField.class))
+                        .collect(Collectors.toMap(
+                                Field::getName,
+                                field -> field.getAnnotation(LOVField.class).fieldReference(),
+                                (existing, replacement) -> existing,
+                                HashMap::new
+                        ));
                 yield resultHash;
             }
         };

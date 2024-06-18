@@ -69,10 +69,10 @@ public class TestControllerHelperService {
     /**
      * Find a domain by his id
      *
-     * @param mockMvc            the mock mvc
-     * @param resultMatcher      the result matcher
-     * @param userInfo           the user info
-     * @param domainId           the id of the domain to update
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param domainId      the id of the domain to update
      * @return the domain found of the newly created domain
      * @throws Exception the exception
      */
@@ -451,6 +451,38 @@ public class TestControllerHelperService {
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newWorkDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Create new work
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param newWorkDTO    the new work dto
+     * @param logIf         the log if true
+     * @return the id of the newly created work
+     */
+    public ApiResultResponse<String> workControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewWorkDTO newWorkDTO,
+            Optional<Boolean> logIf
+    ) throws Exception {
+        var requestBuilder = post("/v1/work")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newWorkDTO));
+        logIf.ifPresent(aBoolean -> requestBuilder.param("logIf", aBoolean.toString()));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -896,13 +928,13 @@ public class TestControllerHelperService {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/log/work/{workId}", workId);
 
         // add entry
-        if(newEntry.title() != null) {
+        if (newEntry.title() != null) {
             multiPartBuilder.param("title", newEntry.title());
         }
-        if(newEntry.text() != null) {
+        if (newEntry.text() != null) {
             multiPartBuilder.param("text", newEntry.text());
         }
-        if(newEntry.eventAt() != null) {
+        if (newEntry.eventAt() != null) {
             multiPartBuilder.param("eventAt", newEntry.eventAt().toString());
         }
 
@@ -945,13 +977,13 @@ public class TestControllerHelperService {
         MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/log/work/{workId}/activity/{ActivityId}", workId, activityId);
 
         // add entry
-        if(newEntry.title() != null) {
+        if (newEntry.title() != null) {
             multiPartBuilder.param("title", newEntry.title());
         }
-        if(newEntry.text() != null) {
+        if (newEntry.text() != null) {
             multiPartBuilder.param("text", newEntry.text());
         }
-        if(newEntry.eventAt() != null) {
+        if (newEntry.eventAt() != null) {
             multiPartBuilder.param("eventAt", newEntry.eventAt().toString());
         }
 
@@ -967,6 +999,101 @@ public class TestControllerHelperService {
                 resultMatcher,
                 userInfo,
                 multiPartBuilder
+        );
+    }
+
+    /**
+     * Create a new log entry
+     *
+     * @param mockMvc          the mock mvc
+     * @param resultMatcher    the result matcher
+     * @param userInfo         the user info
+     * @param newBucketSlotDTO the new bucket slot dto
+     * @return the id of the new bucket slot
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> maintenanceControllerCreateNewBucket(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            NewBucketDTO newBucketSlotDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/maintenance/bucket")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newBucketSlotDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find a bucket by id
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param id            the id of the bucket to find
+     * @return the bucket dto
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<BucketDTO> maintenanceControllerFindBucketById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String id
+    ) throws Exception {
+        var requestBuilder = get("/v1/maintenance/bucket/{id}", id)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find all buckets
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param limit         the limit
+     * @param contextSize   the context size
+     * @param anchorId      the anchor id
+     * @return the list of bucket dto
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<List<BucketDTO>> maintenanceControllerFindAllBuckets(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<Integer> limit,
+            Optional<Integer> contextSize,
+            Optional<String> anchorId
+    ) throws Exception {
+        var requestBuilder = get("/v1/maintenance/bucket")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        limit.ifPresent(s -> requestBuilder.param("limit", s.toString()));
+        contextSize.ifPresent(s -> requestBuilder.param("contextSize", s.toString()));
+        anchorId.ifPresent(s -> requestBuilder.param("anchorId", s));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
         );
     }
 

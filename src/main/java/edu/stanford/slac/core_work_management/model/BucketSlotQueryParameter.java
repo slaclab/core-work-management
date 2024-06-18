@@ -1,8 +1,8 @@
 /*
  * -----------------------------------------------------------------------------
- * Title      : LOVValueDTO
+ * Title      : WorkQueryParameter
  * ----------------------------------------------------------------------------
- * File       : LOVValueDTO.java
+ * File       : WorkQueryParameter.java
  * Author     : Claudio Bisegni, bisegni@slac.stanford.edu
  * ----------------------------------------------------------------------------
  * This file is part of core-work-management. It is subject to
@@ -15,19 +15,20 @@
  * ----------------------------------------------------------------------------
  */
 
-package edu.stanford.slac.core_work_management.api.v1.dto;
+package edu.stanford.slac.core_work_management.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Builder(toBuilder = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Define a lov value for a specific domain and field reference.")
-public record LOVValueDTO (
-    @Schema(description = "The id of the LOV element")
-    String id,
-    @Schema(description = "The value of lov element")
-    String value){}
+@Data
+@Builder
+@AllArgsConstructor
+@EqualsAndHashCode
+public class BucketSlotQueryParameter {
+    private String anchorID;
+    private Integer contextSize;
+    private Integer limit;
+    private String search;
+}
