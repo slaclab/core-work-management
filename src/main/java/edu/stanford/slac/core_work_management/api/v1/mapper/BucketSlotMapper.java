@@ -18,9 +18,11 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.LOVValueDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketSlotDTO;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
+import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +35,29 @@ public abstract class BucketSlotMapper {
     @Autowired
     private LOVService lovService;
 
+    /**
+     * Convert a new bucket slot DTO to a bucket slot model
+     *
+     * @param dto the new bucket slot DTO
+     * @return the bucket slot model
+     */
     public abstract BucketSlot toModel(NewBucketSlotDTO dto);
 
-    @Mapping(target = "bucketType",  qualifiedByName = "toLOVValueDTO")
+    /**
+     * Convert a bucket slot query parameter DTO to a bucket slot query parameter model
+     *
+     * @param dto the bucket slot query parameter DTO
+     * @return the bucket slot query parameter model
+     */
+    public abstract BucketSlotQueryParameter toModel(BucketSlotQueryParameterDTO dto);
+
+    /**
+     * Convert a bucket slot model to a bucket slot DTO
+     *
+     * @param bucketSlot the bucket slot model
+     * @return the bucket slot DTO
+     */
+    @Mapping(target = "bucketType", qualifiedByName = "toLOVValueDTO")
     @Mapping(target = "bucketStatus", qualifiedByName = "toLOVValueDTO")
     public abstract BucketSlotDTO toDTO(BucketSlot bucketSlot);
 

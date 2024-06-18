@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketSlotDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.BucketSlotMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityAlreadyAssociatedToSlot;
@@ -67,6 +68,23 @@ public class BucketSlotService {
                         -1
                 )
         );
+    }
+
+    /**
+     * This method is used to find all bucket slots
+     *
+     * @param queryParameterDTO the query parameter DTO
+     * @return the list of bucket slot DTOs
+     */
+    public List<BucketSlotDTO> findAll(BucketSlotQueryParameterDTO queryParameterDTO) {
+        return bucketSlotRepository
+                .searchAll
+                        (
+                                bucketSlotMapper.toModel(queryParameterDTO)
+                        )
+                .stream()
+                .map(bucketSlotMapper::toDTO)
+                .toList();
     }
 
     /**
