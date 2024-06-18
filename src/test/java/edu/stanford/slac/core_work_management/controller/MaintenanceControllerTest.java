@@ -76,8 +76,8 @@ public class MaintenanceControllerTest {
                         NewBucketDTO
                                 .builder()
                                 .description("test")
-                                .bucketType(bucketTypeLOVIds.get(0))
-                                .bucketStatus(bucketStatusLOVIds.get(0))
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .to(LocalDateTime.of(2021, 1, 2, 23, 0))
                                 .build()
@@ -99,8 +99,8 @@ public class MaintenanceControllerTest {
         assertThat(fullBucketResult.getPayload()).isNotNull();
         assertThat(fullBucketResult.getPayload().id()).isEqualTo(createNewBucketResult.getPayload());
         assertThat(fullBucketResult.getPayload().description()).isEqualTo("test");
-        assertThat(fullBucketResult.getPayload().bucketType().id()).isEqualTo(bucketTypeLOVIds.get(0));
-        assertThat(fullBucketResult.getPayload().bucketStatus().id()).isEqualTo(bucketStatusLOVIds.get(0));
+        assertThat(fullBucketResult.getPayload().type().id()).isEqualTo(bucketTypeLOVIds.get(0));
+        assertThat(fullBucketResult.getPayload().status().id()).isEqualTo(bucketStatusLOVIds.get(0));
         assertThat(fullBucketResult.getPayload().from()).isEqualTo(LocalDateTime.of(2021, 1, 1, 0, 0));
         assertThat(fullBucketResult.getPayload().to()).isEqualTo(LocalDateTime.of(2021, 1, 2, 23, 0));
     }
@@ -117,8 +117,8 @@ public class MaintenanceControllerTest {
                             NewBucketDTO
                                     .builder()
                                     .description("test-%d".formatted(finalI))
-                                    .bucketType(bucketTypeLOVIds.get(0))
-                                    .bucketStatus(bucketStatusLOVIds.get(0))
+                                    .type(bucketTypeLOVIds.get(0))
+                                    .status(bucketStatusLOVIds.get(0))
                                     .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
                                     .to(LocalDateTime.of(2021, 1, 2, 23, 0))
                                     .build()

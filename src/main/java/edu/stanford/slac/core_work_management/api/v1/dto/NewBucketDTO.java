@@ -19,10 +19,10 @@ public record NewBucketDTO(
         String description,
         @NotEmpty(message = "The id of the lov value that represent the type is required")
         @Schema(description = "The id of the lov value that represent the type")
-        String bucketType,
+        String type,
         @NotEmpty(message = "The id of the lov value that represent the status is required")
         @Schema(description = "The id of the lov value that represent the status")
-        String bucketStatus,
+        String status,
         @ValidDate(message = "The start date and time of the bucket slot is invalid")
         @Schema(description = "The start date and time of the bucket slot")
         LocalDateTime from,

@@ -57,8 +57,8 @@ public abstract class BucketSlotMapper {
      * @param bucketSlot the bucket slot model
      * @return the bucket slot DTO
      */
-    @Mapping(target = "bucketType", qualifiedByName = "toLOVValueDTO")
-    @Mapping(target = "bucketStatus", qualifiedByName = "toLOVValueDTO")
+    @Mapping(target = "type", qualifiedByName = "toLOVValueDTO")
+    @Mapping(target = "status", qualifiedByName = "toLOVValueDTO")
     public abstract BucketDTO toDTO(BucketSlot bucketSlot);
 
     /**

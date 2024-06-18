@@ -90,7 +90,7 @@ public class InitBucketTypeLOV {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Bucket,
                             "bucket",
-                            "bucketType",
+                            "type",
                             "BucketType"
                     );
                     return null;
@@ -102,7 +102,7 @@ public class InitBucketTypeLOV {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Bucket,
                             "bucket",
-                            "bucketStatus",
+                            "status",
                             "BucketStatus"
                     );
                     return null;

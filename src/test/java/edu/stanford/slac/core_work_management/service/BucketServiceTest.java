@@ -64,8 +64,8 @@ public class BucketServiceTest {
                 ()->bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .description("bucket-1")
-                                .bucketType(bucketTypeLOVIds.get(0))
-                                .bucketStatus(bucketStatusLOVIds.get(0))
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .to(LocalDateTime.of(2021, 1, 3, 23, 0))
                                 .build()
@@ -79,8 +79,8 @@ public class BucketServiceTest {
         assertThat(fullBucketFound).isNotNull();
         assertThat(fullBucketFound.id()).isEqualTo(newBucketId);
         assertThat(fullBucketFound.description()).isEqualTo("bucket-1");
-        assertThat(fullBucketFound.bucketType().id()).isEqualTo(bucketTypeLOVIds.get(0));
-        assertThat(fullBucketFound.bucketStatus().id()).isEqualTo(bucketStatusLOVIds.get(0));
+        assertThat(fullBucketFound.type().id()).isEqualTo(bucketTypeLOVIds.get(0));
+        assertThat(fullBucketFound.status().id()).isEqualTo(bucketStatusLOVIds.get(0));
         assertThat(fullBucketFound.from()).isEqualTo(LocalDateTime.of(2021, 1, 1, 0, 0));
         assertThat(fullBucketFound.to()).isEqualTo(LocalDateTime.of(2021, 1, 3, 23, 0));
     }
@@ -88,13 +88,13 @@ public class BucketServiceTest {
     @Test
     public void testFieldReferenceToFindLOV(){
         var allPossibleBucketType = assertDoesNotThrow(
-                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, "bucket", "bucketType")
+                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, "bucket", "type")
         );
         assertThat(allPossibleBucketType).isNotEmpty();
         assertThat(allPossibleBucketType).allMatch(lov->bucketTypeLOVIds.contains(lov.id()));
 
         var allPossibleBucketStatus = assertDoesNotThrow(
-                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, "bucket", "bucketStatus")
+                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, "bucket", "status")
         );
         assertThat(allPossibleBucketStatus).isNotEmpty();
         assertThat(allPossibleBucketStatus).allMatch(lov->bucketStatusLOVIds.contains(lov.id()));
@@ -115,7 +115,7 @@ public class BucketServiceTest {
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
                         NewBucketDTO.builder()
-                                .bucketType(bucketTypeLOVIds.get(0))
+                                .type(bucketTypeLOVIds.get(0))
                                 .build()
                 )
         );
@@ -126,8 +126,8 @@ public class BucketServiceTest {
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
                         NewBucketDTO.builder()
-                                .bucketType(bucketTypeLOVIds.get(0))
-                                .bucketStatus(bucketStatusLOVIds.get(0))
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
                                 .build()
                 )
         );
@@ -138,8 +138,8 @@ public class BucketServiceTest {
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
                         NewBucketDTO.builder()
-                                .bucketType(bucketTypeLOVIds.get(0))
-                                .bucketStatus(bucketStatusLOVIds.get(0))
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .build()
                 )
@@ -151,8 +151,8 @@ public class BucketServiceTest {
                 ConstraintViolationException.class,
                 ()->bucketSlotService.createNew(
                         NewBucketDTO.builder()
-                                .bucketType(bucketTypeLOVIds.get(0))
-                                .bucketStatus(bucketStatusLOVIds.get(0))
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .to(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .build()
@@ -166,7 +166,7 @@ public class BucketServiceTest {
                 ()->bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .description("bucket-1")
-                                .bucketStatus(bucketStatusLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .to(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .build()
@@ -184,8 +184,8 @@ public class BucketServiceTest {
                     ()->bucketSlotService.createNew(
                             NewBucketDTO.builder()
                                     .description("bucket-%d".formatted(finalI))
-                                    .bucketType(bucketTypeLOVIds.get(0))
-                                    .bucketStatus(bucketStatusLOVIds.get(0))
+                                    .type(bucketTypeLOVIds.get(0))
+                                    .status(bucketStatusLOVIds.get(0))
                                     .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
                                     .to(LocalDateTime.of(2021, 1, 3, 23, 0))
                                     .build()

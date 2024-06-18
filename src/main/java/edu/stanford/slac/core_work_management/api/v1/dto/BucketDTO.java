@@ -17,9 +17,9 @@ public record BucketDTO(
         @Schema(description = "The description of the bucket slot")
         String description,
         @Schema(description = "The the lov value that represent the type")
-        LOVValueDTO bucketType,
+        LOVValueDTO type,
         @Schema(description = "The the lov value that represent the status")
-        LOVValueDTO bucketStatus,
+        LOVValueDTO status,
         @Schema(description = "The start date and time of the bucket slot")
         LocalDateTime from,
         @Schema(description = "The end date and time of the bucket slot")

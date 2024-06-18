@@ -25,16 +25,16 @@ public class BucketSlot {
     /**
      * The id of the lov value used to define the bucket type
      */
-    @LOVField(fieldReference = "bucketType", isMandatory = true)
+    @LOVField(fieldReference = "type", isMandatory = true)
     /**
      * The id of the lov value used to define the bucket status
      */
-    private String bucketType;
+    private String type;
     /**
      * The id of the lov value used to define the bucket status
      */
-    @LOVField(fieldReference = "bucketStatus", isMandatory = true)
-    private String bucketStatus;
+    @LOVField(fieldReference = "status", isMandatory = true)
+    private String status;
     /**
      * The start date and time of the bucket slot
      */
