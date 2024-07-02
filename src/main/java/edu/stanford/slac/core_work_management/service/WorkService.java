@@ -795,7 +795,6 @@ public class WorkService {
                 -3
         );
 
-        //TODO validate location and shop group against domain
         if (updateActivityDTO.locationId() != null) {
             validateLocationForDomain(updateActivityDTO.locationId(), activityStored.getDomainId(), -3);
         }
