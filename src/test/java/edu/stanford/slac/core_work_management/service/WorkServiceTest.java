@@ -1280,5 +1280,12 @@ public class WorkServiceTest {
         assertThat(foundWorkWithHistory).isNotNull();
         assertThat(foundWorkWithHistory.id()).isEqualTo(newWorkId);
         assertThat(foundWorkWithHistory.changesHistory()).isNotNull().hasSize(1);
+
+        var foundWorkNoHistory = assertDoesNotThrow(
+                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build())
+        );
+        assertThat(foundWorkNoHistory).isNotNull();
+        assertThat(foundWorkNoHistory.id()).isEqualTo(newWorkId);
+        assertThat(foundWorkNoHistory.changesHistory()).isNotNull().isEmpty();
     }
 }

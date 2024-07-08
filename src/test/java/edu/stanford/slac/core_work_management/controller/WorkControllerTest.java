@@ -460,12 +460,13 @@ public class WorkControllerTest {
         );
 
         var updatedWork = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindById(
+                () -> testControllerHelperService.workControllerFindWorkById(
                         mockMvc,
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user1@slac.stanford.edu"),
-                        newWorkIdResult.getPayload()
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
                 )
         );
 
@@ -588,11 +589,12 @@ public class WorkControllerTest {
         assertThat(newWorkIdResult.getPayload()).isNotNull();
 
         var fullWorkDTO = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindById(
+                () -> testControllerHelperService.workControllerFindWorkById(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        newWorkIdResult.getPayload()
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
                 )
         );
 
@@ -606,11 +608,12 @@ public class WorkControllerTest {
 
         // read with different user is a reader
         fullWorkDTO = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindById(
+                () -> testControllerHelperService.workControllerFindWorkById(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user3@slac.stanford.edu"),
-                        newWorkIdResult.getPayload()
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
                 )
         );
 

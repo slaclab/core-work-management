@@ -534,14 +534,18 @@ public class TestControllerHelperService {
      * @return the work
      * @throws Exception the exception
      */
-    public ApiResultResponse<WorkDTO> workControllerFindById(
+    public ApiResultResponse<WorkDTO> workControllerFindWorkById(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
-            String workId
+            String workId,
+            WorkDetailsOptionDTO workDetailsOptionDTO
     ) throws Exception {
         var requestBuilder = get("/v1/work/{workId}", workId)
                 .contentType(MediaType.APPLICATION_JSON);
+        if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes()!=null) {
+            workDetailsOptionDTO.changes().ifPresent(aBoolean -> requestBuilder.param("changes", aBoolean.toString()));
+        }
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

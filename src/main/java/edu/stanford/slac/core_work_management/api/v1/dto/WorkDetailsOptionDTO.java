@@ -13,8 +13,6 @@ import java.util.Optional;
 @Schema(description = "Define the options for the work details")
 public record WorkDetailsOptionDTO(
         @Schema(description = "The flag to include the work changes")
-        Optional<Boolean> changes,
-        @Schema(description = "The flag to include the work model changes")
-        Optional<Boolean> modelChanges
+        Optional<Boolean> changes
 ) {
 }

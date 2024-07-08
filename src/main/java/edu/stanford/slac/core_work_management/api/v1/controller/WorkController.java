@@ -174,7 +174,6 @@ public class WorkController {
                         workId,
                         WorkDetailsOptionDTO.builder()
                                 .changes(changes)
-                                .modelChanges(modelChanges)
                                 .build()
                 )
         );
