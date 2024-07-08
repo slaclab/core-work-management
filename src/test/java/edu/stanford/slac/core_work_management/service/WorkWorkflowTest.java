@@ -168,7 +168,7 @@ public class WorkWorkflowTest {
             workIds.add(workId);
         }
         for (int idx = 0; idx <= 99; idx++) {
-            var work = workService.findWorkById(workIds.get(idx));
+            var work = workService.findWorkById(workIds.get(idx), WorkDetailsOptionDTO.builder().build());
             workNumbers.add(work.workNumber());
         }
         assertThat(workNumbers).hasSize(100);
@@ -216,7 +216,7 @@ public class WorkWorkflowTest {
             workIds.add(assertDoesNotThrow(()->future.get()));
         }
         for (int idx = 0; idx <= 99; idx++) {
-            var work = workService.findWorkById(workIds.get(idx));
+            var work = workService.findWorkById(workIds.get(idx), WorkDetailsOptionDTO.builder().build());
             workNumbers.add(work.workNumber());
         }
         assertThat(workNumbers).hasSize(100);

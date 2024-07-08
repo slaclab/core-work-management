@@ -630,15 +630,17 @@ public class WorkService {
      * @param id the id of the work
      * @return the work
      */
-    public WorkDTO findWorkById(String id) {
+    public WorkDTO findWorkById(String id, WorkDetailsOptionDTO workDetailsOptionDTO) {
         return wrapCatch(
-                () -> workRepository.findById(id).map(workMapper::toDTO).orElseThrow(
-                        () -> WorkNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .workId(id)
-                                .build()
-                ),
+                () -> workRepository.findById(id)
+                        .map(w -> workMapper.toDTO(w, workDetailsOptionDTO))
+                        .orElseThrow(
+                                () -> WorkNotFound
+                                        .notFoundById()
+                                        .errorCode(-1)
+                                        .workId(id)
+                                        .build()
+                        ),
                 -1
         );
     }
@@ -966,7 +968,9 @@ public class WorkService {
                 () -> workRepository.searchAll(workMapper.toModel(workQueryParameterDTO)),
                 -1
         );
-        return workList.stream().map(workMapper::toDTO).toList();
+        return workList.stream()
+                .map(w -> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                .toList();
     }
 
     /**

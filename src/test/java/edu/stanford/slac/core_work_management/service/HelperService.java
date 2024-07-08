@@ -42,7 +42,7 @@ public class HelperService {
      */
     public boolean checkStatusOnWork(String workId, WorkStatusDTO workStatus){
         var foundFullWork =  assertDoesNotThrow(
-                ()->workService.findWorkById(workId)
+                ()->workService.findWorkById(workId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundFullWork).isNotNull();
         return foundFullWork.currentStatus().status().equals(workStatus);
@@ -53,7 +53,7 @@ public class HelperService {
      */
     public boolean checkStatusAndHistoryOnWork(String workId, List<WorkStatusDTO> workStatusList){
         var foundFullWork =  assertDoesNotThrow(
-                ()->workService.findWorkById(workId)
+                ()->workService.findWorkById(workId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundFullWork).isNotNull();
         if(workStatusList != null && !workStatusList.isEmpty()) {

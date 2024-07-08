@@ -182,7 +182,7 @@ public class WorkServiceOnInitWorkTest {
                 )
         );
 
-        var createdWork = workService.findWorkById(testWorkId);
+        var createdWork = workService.findWorkById(testWorkId, WorkDetailsOptionDTO.builder().build());
         assertThat(createdWork).isNotNull();
         assertThat(createdWork.customFields()).isNotEmpty();
         assertThat(createdWork.customFields().size()).isEqualTo(writeCustomFieldValue.size());

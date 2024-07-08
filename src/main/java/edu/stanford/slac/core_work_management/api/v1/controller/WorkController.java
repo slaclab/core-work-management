@@ -162,9 +162,22 @@ public class WorkController {
     public ApiResultResponse<WorkDTO> findWorkById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
-            @PathVariable String workId
+            @PathVariable String workId,
+            @Parameter(description = "Is the flag to include the changes history")
+            @RequestParam(name = "changes", required = false, defaultValue = "false") Optional<Boolean> changes,
+            @Parameter(description = "Is the flag to include the model changes history")
+            @RequestParam(name = "model-changes", required = false, defaultValue = "false") Optional<Boolean> modelChanges
+
     ) {
-        return ApiResultResponse.of(workService.findWorkById(workId));
+        return ApiResultResponse.of(
+                workService.findWorkById(
+                        workId,
+                        WorkDetailsOptionDTO.builder()
+                                .changes(changes)
+                                .modelChanges(modelChanges)
+                                .build()
+                )
+        );
     }
 
     @Operation(summary = "Create a new work activity")
