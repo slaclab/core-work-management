@@ -1427,4 +1427,58 @@ public class WorkControllerTest {
                 .isNotEmpty()
                 .contains(ActivityStatusDTO.Completed, ActivityStatusDTO.Approved, ActivityStatusDTO.Drop, ActivityStatusDTO.Roll);
     }
+
+    @Test
+    public void getWorkHistory() {
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                NewWorkDTO.builder()
+                                        .domainId(domainId)
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+        var updateResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                .title("work 1 updated")
+                                .description("work 1 description updated")
+                                .locationId(testLocationIds.get(1))
+                                .shopGroupId(testShopGroupIds.get(1))
+                                .assignedTo(
+                                        List.of("user2@slac.stanford.edu")
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateResult.getErrorCode()).isEqualTo(0);
+        assertThat(updateResult.getPayload()).isNotNull().isTrue();
+
+        var historyResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkHistoryById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        newWorkIdResult.getPayload()
+                )
+        );
+        assertThat(historyResult.getErrorCode()).isEqualTo(0);
+        assertThat(historyResult.getPayload()).isNotNull().hasSize(2);
+        assertThat(historyResult.getPayload().get(0).description()).isEqualTo("work 1 description updated");
+        assertThat(historyResult.getPayload().get(1).description()).isEqualTo("work 1 description");
+    }
 }

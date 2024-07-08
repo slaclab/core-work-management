@@ -179,6 +179,21 @@ public class WorkController {
         );
     }
 
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(value = "/{workId}/history", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<WorkDTO>> findWorkHistoryById(
+            Authentication authentication,
+            @Parameter(description = "Is the id of the work to use to find the history", required = true)
+            @PathVariable String workId
+    ) {
+        return ApiResultResponse.of(
+                workService.findWorkHistoryById(
+                        workId
+                )
+        );
+    }
+
     @Operation(summary = "Create a new work activity")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Work saved")

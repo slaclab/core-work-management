@@ -503,7 +503,7 @@ public class TestControllerHelperService {
      * @param updateWorkDTO the update work dto
      * @return the id of the newly created work
      */
-    public ApiResultResponse<String> workControllerUpdate(
+    public ApiResultResponse<Boolean> workControllerUpdate(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -546,6 +546,33 @@ public class TestControllerHelperService {
         if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes()!=null) {
             workDetailsOptionDTO.changes().ifPresent(aBoolean -> requestBuilder.param("changes", aBoolean.toString()));
         }
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Find all work history by id
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param workId
+     * @return
+     * @throws Exception
+     */
+    public ApiResultResponse<List<WorkDTO>> workControllerFindWorkHistoryById(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String workId
+    ) throws Exception {
+        var requestBuilder = get("/v1/work/{workId}/history", workId)
+                .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

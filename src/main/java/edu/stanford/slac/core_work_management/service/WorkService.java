@@ -5,6 +5,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
@@ -57,7 +58,7 @@ public class WorkService {
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
-
+    private final ModelHistoryService modelHistoryService;
     /**
      * Create a new work type
      *
@@ -641,6 +642,22 @@ public class WorkService {
                                         .workId(id)
                                         .build()
                         ),
+                -1
+        );
+    }
+
+    /**
+     * Return the work history by his id
+     *
+     * @param id the id of the work
+     * @return the list of work changed during the time
+     */
+    public List<WorkDTO> findWorkHistoryById(String id) {
+        return wrapCatch(
+                () -> modelHistoryService.findModelChangesByModelId(Work.class, id)
+                        .stream()
+                        .map(w->workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                        .toList(),
                 -1
         );
     }
