@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
 import edu.stanford.slac.core_work_management.model.WorkLocation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -47,6 +48,8 @@ public record WorkDTO(
         ShopGroupDTO shopGroup,
         @Schema(description = "The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
         List<CustomFieldDTO> customFields,
+        @Schema(description = "The list of changes on the work, each element represent a change on the work for a single save operation")
+        List<ModelChangesHistoryDTO> changesHistory,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

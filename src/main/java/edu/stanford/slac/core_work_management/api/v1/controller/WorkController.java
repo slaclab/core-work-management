@@ -150,11 +150,13 @@ public class WorkController {
         return ApiResultResponse.of(true);
     }
 
-    @Operation(summary = "Get full work by id")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Work found"),
-            @ApiResponse(responseCode = "404", description = "Work not found")
-    })
+    @Operation(
+            summary = "Get full work by id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The work found"),
+                    @ApiResponse(responseCode = "404", description = "Work not found")
+            }
+    )
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
@@ -162,9 +164,42 @@ public class WorkController {
     public ApiResultResponse<WorkDTO> findWorkById(
             Authentication authentication,
             @Parameter(description = "Is the id of the work to find", required = true)
+            @PathVariable String workId,
+            @Parameter(description = "Is the flag to include the changes history")
+            @RequestParam(name = "changes", required = false, defaultValue = "false") Optional<Boolean> changes,
+            @Parameter(description = "Is the flag to include the model changes history")
+            @RequestParam(name = "model-changes", required = false, defaultValue = "false") Optional<Boolean> modelChanges
+
+    ) {
+        return ApiResultResponse.of(
+                workService.findWorkById(
+                        workId,
+                        WorkDetailsOptionDTO.builder()
+                                .changes(changes)
+                                .build()
+                )
+        );
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Get work history by id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The list of the found history state of the work")
+            }
+    )
+    @GetMapping(value = "/{workId}/history", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<WorkDTO>> findWorkHistoryById(
+            Authentication authentication,
+            @Parameter(description = "Is the id of the work to use to find the history", required = true)
             @PathVariable String workId
     ) {
-        return ApiResultResponse.of(workService.findWorkById(workId));
+        return ApiResultResponse.of(
+                workService.findWorkHistoryById(
+                        workId
+                )
+        );
     }
 
     @Operation(summary = "Create a new work activity")

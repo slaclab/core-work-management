@@ -113,7 +113,7 @@ public class WorkAuthorizationService {
     public boolean checkUpdate(Authentication authentication, String workId, UpdateWorkDTO updateWorkDTO) {
         // get stored work for check authorization on all fields
         var currentStoredWork = wrapCatch(
-                () -> workService.findWorkById(workId),
+                () -> workService.findWorkById(workId, WorkDetailsOptionDTO.builder().build()),
                 -1
         );
         boolean isRoot = authService.checkForRoot(authentication);
@@ -197,7 +197,7 @@ public class WorkAuthorizationService {
     public boolean checkLoggingOnWork(Authentication authentication, String workId) {
         // get stored work for check authorization on all fields
         var currentStoredWork = wrapCatch(
-                () -> workService.findWorkById(workId),
+                () -> workService.findWorkById(workId, WorkDetailsOptionDTO.builder().build()),
                 -1
         );
         boolean isRoot = authService.checkForRoot(authentication);

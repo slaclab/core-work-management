@@ -8,7 +8,6 @@ import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import jakarta.validation.ConstraintViolationException;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -23,6 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -609,7 +609,7 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotNull();
 
         var foundWork = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId)
+                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundWork).isNotNull();
         assertThat(foundWork.id()).isNotNull();
@@ -620,7 +620,7 @@ public class WorkServiceTest {
     public void errorTryToGetWorkWithBadId() {
         var workNotFoundException = assertThrows(
                 WorkNotFound.class,
-                () -> workService.findWorkById("bad id")
+                () -> workService.findWorkById("bad id", WorkDetailsOptionDTO.builder().build())
         );
         assertThat(workNotFoundException).isNotNull();
         assertThat(workNotFoundException.getErrorCode()).isEqualTo(-1);
@@ -1244,5 +1244,48 @@ public class WorkServiceTest {
         );
 
         assertThat(mandatoryException.getErrorCode()).isEqualTo(-4);
+    }
+
+    @Test
+    public void testWorkChanges() {
+        // create base work
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> workService.ensureWorkType(
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        NewWorkDTO
+                                .builder()
+                                .domainId(domainId)
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        var foundWorkWithHistory = assertDoesNotThrow(
+                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(true)).build())
+        );
+        assertThat(foundWorkWithHistory).isNotNull();
+        assertThat(foundWorkWithHistory.id()).isEqualTo(newWorkId);
+        assertThat(foundWorkWithHistory.changesHistory()).isNotNull().hasSize(1);
+
+        var foundWorkNoHistory = assertDoesNotThrow(
+                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build())
+        );
+        assertThat(foundWorkNoHistory).isNotNull();
+        assertThat(foundWorkNoHistory.id()).isEqualTo(newWorkId);
+        assertThat(foundWorkNoHistory.changesHistory()).isNotNull().isEmpty();
     }
 }

@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.repository;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatus;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -11,6 +12,7 @@ import java.util.List;
 /**
  * Repository for Work objects
  */
+@JaversSpringDataAuditable
 public interface WorkRepository extends MongoRepository<Work, String>,WorkRepositoryCustom {
     @Aggregation(pipeline = {
             "{ '$group': { '_id': { 'workTypeId': '$workTypeId', 'status': '$currentStatus.status' }, 'count': { '$sum': 1 } } }",

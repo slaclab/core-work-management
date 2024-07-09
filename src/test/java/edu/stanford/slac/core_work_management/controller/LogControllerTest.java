@@ -271,7 +271,7 @@ public class LogControllerTest {
             assertThat(uploadResult.getPayload()).isTrue();
 
             //try to fetch the log entry using elog api
-            var fullWork = workService.findWorkById(newWorkId);
+            var fullWork = workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().build());
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)
@@ -322,7 +322,7 @@ public class LogControllerTest {
 
 
         //try to fetch the log entry using elog api
-        var fullWork = workService.findWorkById(newWorkLogIdResult.getPayload());
+        var fullWork = workService.findWorkById(newWorkLogIdResult.getPayload(), WorkDetailsOptionDTO.builder().build());
         await()
                 .atMost(30, SECONDS)
                 .pollDelay(2, SECONDS)

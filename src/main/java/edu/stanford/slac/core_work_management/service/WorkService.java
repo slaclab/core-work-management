@@ -5,27 +5,35 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
 import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.MongoTransactionException;
+import org.springframework.data.mongodb.UncategorizedMongoDbException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.validation.annotation.Validated;
 
-import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -37,8 +45,6 @@ import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.W
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.*;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.*;
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Service
 @Log4j2
@@ -57,7 +63,8 @@ public class WorkService {
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
-
+    private final ModelHistoryService modelHistoryService;
+    private final ApplicationContext applicationContext;
     /**
      * Create a new work type
      *
@@ -305,7 +312,8 @@ public class WorkService {
                 workRepository::getNextWorkId,
                 -1
         );
-        return createNew(newWorkSequenceId, newWorkDTO, Optional.of(false));
+        WorkService self = applicationContext.getBean(WorkService.class);
+        return self.createNew(newWorkSequenceId, newWorkDTO, Optional.of(false));
     }
 
     /**
@@ -320,7 +328,8 @@ public class WorkService {
                 workRepository::getNextWorkId,
                 -1
         );
-        return createNew(newWorkSequenceId, newWorkDTO, logIf);
+        WorkService self = applicationContext.getBean(WorkService.class);
+        return self.createNew(newWorkSequenceId, newWorkDTO, logIf);
     }
 
     /**
@@ -329,7 +338,11 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Retryable(
+            maxAttempts = 8,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public String createNew(Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
         //check if the domain exists
         assertion(
@@ -373,7 +386,7 @@ public class WorkService {
                 -5
         );
 
-        log.info("New Work '{}' has been created by '{}'", savedWork.getTitle(), savedWork.getCreatedBy());
+        log.info("New Work '{}-{}' has been created by '{}'", savedWork.getWorkNumber(), savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
         log.info("Update domain statistic");
         domainService.updateDomainStatistics(savedWork.getDomainId());
@@ -630,15 +643,33 @@ public class WorkService {
      * @param id the id of the work
      * @return the work
      */
-    public WorkDTO findWorkById(String id) {
+    public WorkDTO findWorkById(String id, WorkDetailsOptionDTO workDetailsOptionDTO) {
         return wrapCatch(
-                () -> workRepository.findById(id).map(workMapper::toDTO).orElseThrow(
-                        () -> WorkNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .workId(id)
-                                .build()
-                ),
+                () -> workRepository.findById(id)
+                        .map(w -> workMapper.toDTO(w, workDetailsOptionDTO))
+                        .orElseThrow(
+                                () -> WorkNotFound
+                                        .notFoundById()
+                                        .errorCode(-1)
+                                        .workId(id)
+                                        .build()
+                        ),
+                -1
+        );
+    }
+
+    /**
+     * Return the work history by his id
+     *
+     * @param id the id of the work
+     * @return the list of work changed during the time
+     */
+    public List<WorkDTO> findWorkHistoryById(String id) {
+        return wrapCatch(
+                () -> modelHistoryService.findModelChangesByModelId(Work.class, id)
+                        .stream()
+                        .map(w->workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                        .toList(),
                 -1
         );
     }
@@ -966,7 +997,9 @@ public class WorkService {
                 () -> workRepository.searchAll(workMapper.toModel(workQueryParameterDTO)),
                 -1
         );
-        return workList.stream().map(workMapper::toDTO).toList();
+        return workList.stream()
+                .map(w -> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                .toList();
     }
 
     /**

@@ -1,8 +1,10 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
@@ -10,6 +12,7 @@ import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
+import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.*;
 import org.mapstruct.*;
@@ -50,6 +53,8 @@ public abstract class WorkMapper {
     WorkTypeRepository workTypeRepository;
     @Autowired
     ActivityTypeRepository activityTypeRepository;
+    @Autowired
+    ModelHistoryService modelHistoryService;
 
     /**
      * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
@@ -180,7 +185,20 @@ public abstract class WorkMapper {
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
-    abstract public WorkDTO toDTO(Work work);
+    @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
+    abstract public WorkDTO toDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
+
+    /**
+     * Fetch the list of changed on the work
+     *
+     * @param workId the entity to convert
+     * @return the list of changed
+     */
+    public List<ModelChangesHistoryDTO> getChanges(String workId, WorkDetailsOptionDTO workDetailsOptionDTO) {
+        if(workDetailsOptionDTO==null || workDetailsOptionDTO.changes()==null || workDetailsOptionDTO.changes().isPresent()==false) return Collections.emptyList();
+        if(workDetailsOptionDTO.changes().get()==false) return Collections.emptyList();
+        return modelHistoryService.findChangesByModelId(Work.class, workId);
+    }
 
     /**
      * Convert the {@link Activity} to a {@link ActivityDTO}
