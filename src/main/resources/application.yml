@@ -16,7 +16,7 @@ spring:
     base: ${CWM_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
   data:
     mongodb:
-      uri: ${CWM_MONGODB_URI:mongodb://cwm:cwm@localhost:27017/cwm?authSource=cwm}
+      uri: ${CWM_MONGODB_URI:mongodb://cwm:cwm@localhost:27017/cwm?authSource=cwm&serverSelectionTimeoutMS=2000&connectTimeoutMS=2000}
   kafka:
     bootstrap-servers: ${CWM_KAFKA_BOOTSTRAP:localhost:9094}
     producer:

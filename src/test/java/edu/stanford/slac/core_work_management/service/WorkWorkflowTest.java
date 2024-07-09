@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.service;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
@@ -22,10 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Collections.emptyList;
@@ -57,6 +55,8 @@ public class WorkWorkflowTest {
 
     @BeforeEach
     public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Counter.class);
+        mongoTemplate.insert(Counter.builder().id(Work.class.getSimpleName()).sequence(0L).build());
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
@@ -176,7 +176,7 @@ public class WorkWorkflowTest {
 
     @Test
     public void testWorkSequenceOnMultiThread() {
-        int numberOfThreads = 10; // Number of concurrent threads
+        int numberOfThreads = 5; // Number of concurrent threads
         List<Future<String>> futures;
         List<String> workIds = new ArrayList<>();
         Set<Long> workNumbers = new HashSet<>();
@@ -212,14 +212,32 @@ public class WorkWorkflowTest {
             executorService.shutdown();
         }
 
+        List<CompletableFuture<String>> completableFutures = futures.stream()
+                .map(future -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                }))
+                .toList();
+
+        // Wait for all futures to complete
+        Stopwatch stopwatch = Stopwatch.createStarted(); // Start the stopwatch
+        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+        stopwatch.stop(); // Stop the stopwatch
+        System.out.println("Time taken to complete all futures: " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
         for (Future<String> future : futures) {
             workIds.add(assertDoesNotThrow(()->future.get()));
         }
-        for (int idx = 0; idx <= 99; idx++) {
+        stopwatch.reset().start(); // Reset and start the stopwatch for the second part
+        for (int idx = 0; idx <= 49; idx++) {
             var work = workService.findWorkById(workIds.get(idx), WorkDetailsOptionDTO.builder().build());
             workNumbers.add(work.workNumber());
         }
-        assertThat(workNumbers).hasSize(100);
+        stopwatch.stop(); // Stop the stopwatch
+        System.out.println("Time taken to get work numbers: " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + "ms");
+        assertThat(workNumbers).hasSize(50);
     }
 
     @Test

@@ -21,10 +21,15 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
 import edu.stanford.slac.core_work_management.model.*;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.MongoTransactionException;
+import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -75,15 +80,20 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
     }
 
     @Override
+    @Retryable(
+            value = {MongoTransactionException.class, UncategorizedMongoDbException.class},
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public Long getNextWorkId() {
         // Define the query to find the counter document based on its id (sequenceName)
-        Query query = new Query(Criteria.where("_id").is(Work.class.getSimpleName()));
+        Query query = new Query(Criteria.where("id").is(Work.class.getSimpleName()));
         // Define the update operation to increment the counter
         Update update = new Update().inc("sequence", 1);
         // Ensure the option to return the new incremented value and to upsert
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);
         // Execute the findAndModify operation, which will atomically increment the counter and create it if it doesn't exist
-        Counter counter = mongoTemplate.findAndModify(query, update, options, Counter.class, "counters");
+        Counter counter = mongoTemplate.findAndModify(query, update, options, Counter.class);
         // Return the next sequence number
         return Objects.requireNonNull(counter).getSequence();
     }
