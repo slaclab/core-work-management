@@ -9,7 +9,7 @@ spring:
   application:
     name: 'cwm'
   cache:
-    cache-names: user-root-authorization,work-authorization
+    cache-names: user-root-authorization,work-authorization,user-authorization
     type: hazelcast
   ldap:
     urls: ${CWM_LDAP_URI:ldap://localhost:8389}
@@ -43,6 +43,7 @@ edu:
       ad:
         eed:
           baselib:
+            autoload-user-authorizations: true
             app-token-prefix: ${spring.application.name}
             app-token-jwt-key: ${CWM_APP_TOKEN_JWT_KEY:token-header-key}
             user-header-name: ${CWM_AUTH_HEADER:x-vouch-idp-accesstoken}
