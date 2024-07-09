@@ -150,11 +150,13 @@ public class WorkController {
         return ApiResultResponse.of(true);
     }
 
-    @Operation(summary = "Get full work by id")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Work found"),
-            @ApiResponse(responseCode = "404", description = "Work not found")
-    })
+    @Operation(
+            summary = "Get full work by id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The work found"),
+                    @ApiResponse(responseCode = "404", description = "Work not found")
+            }
+    )
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "/{workId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
@@ -180,6 +182,12 @@ public class WorkController {
     }
 
     @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Get work history by id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The list of the found history state of the work")
+            }
+    )
     @GetMapping(value = "/{workId}/history", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<WorkDTO>> findWorkHistoryById(
