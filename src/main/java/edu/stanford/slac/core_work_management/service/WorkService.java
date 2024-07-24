@@ -365,17 +365,18 @@ public class WorkService {
                         ),
                 -2
         );
-        // validate lov
-        modelFieldValidationService.verify(
-                newWorkDTO,
-                Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
-        );
-
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
                 workSequence,
                 newWorkDTO
         );
+
+        // validate lov
+        modelFieldValidationService.verify(
+                workToSave,
+                Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
+        );
+
 
         // validate location and group shop against the domain
         validateLocationForDomain(workToSave.getLocationId(), workToSave.getDomainId(), -3);
@@ -481,11 +482,6 @@ public class WorkService {
                 -4
         );
 
-        // validate lov
-        modelFieldValidationService.verify(
-                updateWorkDTO,
-                Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
-        );
 
         // check that all the user in the assigned to are listed into the shop group
         if (updateWorkDTO.assignedTo() != null) {
@@ -506,6 +502,12 @@ public class WorkService {
 
         // update the model
         workMapper.updateModel(updateWorkDTO, foundWork);
+
+        // validate lov
+        modelFieldValidationService.verify(
+                foundWork,
+                Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
+        );
 
         // validate location and group shop against the domain
         validateLocationForDomain(foundWork.getLocationId(), foundWork.getDomainId(), -4);
@@ -714,6 +716,7 @@ public class WorkService {
      */
     @Transactional
     public String createNew(@NotNull String workId, @NotNull Long nextActivityNumbers, @Valid NewActivityDTO newActivityDTO) {
+        NewActivityDTO newActivityProcessed = newActivityDTO;
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -738,21 +741,26 @@ public class WorkService {
         );
 
         //validate location and shop group against domain
-        if (newActivityDTO.locationId() != null) {
-            validateLocationForDomain(newActivityDTO.locationId(), work.getDomainId(), -3);
+        if (newActivityProcessed.locationId() != null) {
+            validateLocationForDomain(newActivityProcessed.locationId(), work.getDomainId(), -3);
         }
-        if (newActivityDTO.shopGroupId() != null) {
-            validateShopGroupForDomain(newActivityDTO.shopGroupId(), work.getDomainId(), -4);
+        if (newActivityProcessed.shopGroupId() != null) {
+            validateShopGroupForDomain(newActivityProcessed.shopGroupId(), work.getDomainId(), -4);
         }
+
+        if(newActivityProcessed.project()==null) {
+            // force project to follow the one expressed by the parent work
+            newActivityProcessed = newActivityProcessed.toBuilder().project(work.getProject()).build();
+        }
+
+        // convert to model
+        var newActivity = workMapper.toModel(newActivityProcessed, workId, work.getWorkNumber(), work.getDomainId(), nextActivityNumbers);
 
         // validate model custom attributes
         modelFieldValidationService.verify(
-                newActivityDTO,
+                newActivity,
                 Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
         );
-
-        // convert to model
-        var newActivity = workMapper.toModel(newActivityDTO, workId, work.getWorkNumber(), work.getDomainId(), nextActivityNumbers);
 
         var savedActivity = wrapCatch(
                 () -> activityRepository.save(newActivity),
@@ -833,12 +841,6 @@ public class WorkService {
             validateShopGroupForDomain(updateActivityDTO.shopGroupId(), activityStored.getDomainId(), -4);
         }
 
-        // validate model attribute
-        modelFieldValidationService.verify(
-                updateActivityDTO,
-                Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
-        );
-
         // assert that activity need to be related to the work
         assertion(
                 () -> workId.equals(activityStored.getWorkId()),
@@ -852,6 +854,12 @@ public class WorkService {
 
         // update the model
         workMapper.updateModel(updateActivityDTO, activityStored);
+
+        // validate model attribute
+        modelFieldValidationService.verify(
+                activityStored,
+                Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
+        );
 
         // save the activity
         var savedActivity = wrapCatch(

@@ -23,6 +23,7 @@ import edu.stanford.slac.core_work_management.api.v1.validator.NullOrNotEmpty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.util.List;
@@ -50,6 +51,8 @@ public record UpdateWorkDTO(
         @NullOrNotEmpty(message = "Shop group can be null or not empty")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
+        @NotNull(message = "Project is required")
+        String project,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
         List<WriteCustomFieldDTO> customFieldValues

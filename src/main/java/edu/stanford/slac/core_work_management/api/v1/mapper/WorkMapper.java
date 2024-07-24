@@ -491,65 +491,75 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     public AbstractValue toAbstractValue(ValueDTO value) {
-        switch (value.type()) {
-            case String -> {
-                return StringValue
-                        .builder()
-                        .value(value.value())
-                        .build();
-            }
-            case Number -> {
-                return NumberValue
-                        .builder()
-                        .value(Long.valueOf(value.value()))
-                        .build();
-            }
-            case Double -> {
-                return DoubleValue
-                        .builder()
-                        .value(Double.valueOf(value.value()))
-                        .build();
-            }
-            case Boolean -> {
-                return BooleanValue
-                        .builder()
-                        .value(Boolean.valueOf(value.value()))
-                        .build();
-            }
-            case Date -> {
-                try {
-                    return DateValue
+        try {
+
+
+            switch (value.type()) {
+                case String -> {
+                    return StringValue
                             .builder()
-                            .value(LocalDate.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE))
-                            .build();
-                } catch (Exception e) {
-                    // try to parse the date as OffsetDateTime
-                    var date = OffsetDateTime.parse(value.value());
-                    return DateValue
-                            .builder()
-                            .value(date.toLocalDate())
+                            .value(value.value())
                             .build();
                 }
-            }
-            case DateTime -> {
-                try {
-                    return DateTimeValue
+                case Number -> {
+                    return NumberValue
                             .builder()
-                            .value(LocalDateTime.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                            .build();
-                } catch (Exception e) {
-                    // try to parse the date as OffsetDateTime
-                    var date = OffsetDateTime.parse(value.value());
-                    return DateTimeValue
-                            .builder()
-                            .value(date.toLocalDateTime())
+                            .value(Long.valueOf(value.value()))
                             .build();
                 }
+                case Double -> {
+                    return DoubleValue
+                            .builder()
+                            .value(Double.valueOf(value.value()))
+                            .build();
+                }
+                case Boolean -> {
+                    return BooleanValue
+                            .builder()
+                            .value(Boolean.valueOf(value.value()))
+                            .build();
+                }
+                case Date -> {
+                    try {
+                        return DateValue
+                                .builder()
+                                .value(LocalDate.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE))
+                                .build();
+                    } catch (Exception e) {
+                        // try to parse the date as OffsetDateTime
+                        var date = OffsetDateTime.parse(value.value());
+                        return DateValue
+                                .builder()
+                                .value(date.toLocalDate())
+                                .build();
+                    }
+                }
+                case DateTime -> {
+                    try {
+                        return DateTimeValue
+                                .builder()
+                                .value(LocalDateTime.parse(value.value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                                .build();
+                    } catch (Exception e) {
+                        // try to parse the date as OffsetDateTime
+                        var date = OffsetDateTime.parse(value.value());
+                        return DateTimeValue
+                                .builder()
+                                .value(date.toLocalDateTime())
+                                .build();
+                    }
+                }
+                default -> throw ControllerLogicException.builder()
+                        .errorCode(-4)
+                        .errorMessage("Invalid attribute type")
+                        .errorDomain("WorkMapper::toElementAttributeWithClass")
+                        .build();
             }
-            default -> throw ControllerLogicException.builder()
-                    .errorCode(-4)
-                    .errorMessage("Invalid attribute type")
-                    .errorDomain("InventoryElementMapper::toElementAttributeWithClass")
+        }catch (Exception e){
+            throw ControllerLogicException.builder()
+                    .errorCode(-5)
+                    .errorMessage(e.getMessage())
+                    .errorDomain("WorkMapper::toElementAttributeWithClass")
                     .build();
         }
     }

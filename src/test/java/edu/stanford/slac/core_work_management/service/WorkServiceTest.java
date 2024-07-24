@@ -56,7 +56,7 @@ public class WorkServiceTest {
     private String locationIdOnAlternateDomain;
     private String domainId;
     private String alternateDomainId;
-
+    private List<LOVElementDTO> projectLovValues = null;
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Domain.class);
@@ -161,6 +161,7 @@ public class WorkServiceTest {
         // crete lov for 'project' static filed
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
         assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @Test
@@ -390,6 +391,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -418,6 +420,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -459,6 +462,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -503,6 +507,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -550,6 +555,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -582,6 +588,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -611,6 +618,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -658,6 +666,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -738,6 +747,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -832,6 +842,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -874,6 +885,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO
@@ -936,6 +948,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1074,6 +1087,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1125,6 +1139,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO
@@ -1219,7 +1234,7 @@ public class WorkServiceTest {
                 )
         );
 
-        assertThat(badTypeException.getErrorCode()).isEqualTo(-3);
+        assertThat(badTypeException.getErrorCode()).isEqualTo(-5);
 
         // fail because the id has not been found
         var mandatoryException = assertThrows(
@@ -1277,6 +1292,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
