@@ -1,8 +1,7 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.ad.eed.base_mongodb_lib.utility.MongoDDLOps;
-import edu.stanford.slac.core_work_management.model.BucketSlot;
-import edu.stanford.slac.core_work_management.model.LOVElement;
+import edu.stanford.slac.core_work_management.model.Domain;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
@@ -12,24 +11,20 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-bucket-slot-index", order = "5", author = "bisegni")
-public class InitBucketSlotIndex {
+@ChangeUnit(id = "init-domain-index", order = "5", author = "bisegni")
+public class M5_InitDomainIndex {
     private final MongoTemplate mongoTemplate;
-
     @Execution
     public void changeSet() {
         MongoDDLOps.createIndex(
-                BucketSlot.class,
+                Domain.class,
                 mongoTemplate,
                 new Index().on(
-                                "createdDate",
+                                "name",
                                 Sort.Direction.ASC
                         )
-                        .on(
-                                "from",
-                                Sort.Direction.DESC
-                        )
-                        .named("value-group-name")
+                        .named("name")
+                        .unique()
         );
     }
 

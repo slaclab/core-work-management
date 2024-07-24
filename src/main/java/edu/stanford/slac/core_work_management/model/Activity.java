@@ -107,7 +107,11 @@ public class Activity {
      * This field stores the planned end date and time of the activity.
      */
     private LocalDateTime plannedEndDate;
-
+    /**
+     * The id of the lov value used to define the project
+     */
+    @LOVField(fieldReference = "project", isMandatory = true)
+    private String project;
     /**
      * The list of the custom fields associated with the activity.
      * The custom fields are used to store additional information about the activity.

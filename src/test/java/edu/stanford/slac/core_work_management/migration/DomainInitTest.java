@@ -1,15 +1,9 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WATypeCustomFieldDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
 import edu.stanford.slac.core_work_management.model.Domain;
-import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.DomainService;
-import edu.stanford.slac.core_work_management.service.LOVService;
-import edu.stanford.slac.core_work_management.service.WorkService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -48,7 +42,7 @@ public class DomainInitTest {
 
     @Test
     public void initTest() {
-        InitDomain initWorkType = new InitDomain(domainService);
+        M1000_InitDomain initWorkType = new M1000_InitDomain(domainService);
         assertDoesNotThrow(initWorkType::changeSet);
         var allDomain = assertDoesNotThrow(
                 () -> domainService.finAll()

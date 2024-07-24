@@ -1,10 +1,6 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.model.ActivityType;
-import edu.stanford.slac.core_work_management.model.WorkType;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
-import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.mongock.api.annotations.ChangeUnit;
@@ -20,7 +16,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @AllArgsConstructor
 @Profile({"init-work-activity-type", "init-default-data"})
 @ChangeUnit(id = "init-work-type", order = "1001", author = "bisegni")
-public class InitWorkType {
+public class M101_InitWorkType {
     private final LOVService lovService;
     private final WorkService workService;
 

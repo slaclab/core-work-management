@@ -1,7 +1,7 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.InitBucketTypeLOV;
+import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.LOVElement;
 import jakarta.validation.ConstraintViolationException;
@@ -46,7 +46,7 @@ public class BucketServiceTest {
     @BeforeAll
     public void initLOV() {
         mongoTemplate.remove(new Query(), LOVElement.class);
-        InitBucketTypeLOV initBucketTypeLOV = new InitBucketTypeLOV(lovService);
+        M1003_InitBucketTypeLOV initBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
         assertDoesNotThrow(()->initBucketTypeLOV.changeSet());
 
         bucketTypeLOVIds = lovService.findAllByGroupName("BucketType").stream().map(LOVElementDTO::id).toList();

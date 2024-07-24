@@ -3,7 +3,6 @@ package edu.stanford.slac.core_work_management.migration;
 import edu.stanford.slac.core_work_management.api.v1.dto.WATypeCustomFieldDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.WorkService;
@@ -47,7 +46,7 @@ public class WorkTypeInitTest {
 
     @Test
     public void initTest() {
-        InitWorkType initWorkType = new InitWorkType(lovService, workService);
+        M101_InitWorkType initWorkType = new M101_InitWorkType(lovService, workService);
         assertDoesNotThrow(initWorkType::changeSet);
         var allWorkType = assertDoesNotThrow(
                 () -> workService.findAllWorkTypes()

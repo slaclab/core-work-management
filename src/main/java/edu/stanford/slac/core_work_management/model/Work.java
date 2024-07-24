@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.model;
 
+import edu.stanford.slac.core_work_management.model.value.LOVField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -76,6 +77,11 @@ public class Work {
      * This field links the work to a specific user, identified by its ID.
      */
     private List<String> assignedTo;
+    /**
+     * The id of the lov value used to define the project
+     */
+    @LOVField(fieldReference = "project", isMandatory = true)
+    private String project;
     /**
      * The list of the custom fields associated with the activity.
      * The custom fields are used to store additional information about the activity.

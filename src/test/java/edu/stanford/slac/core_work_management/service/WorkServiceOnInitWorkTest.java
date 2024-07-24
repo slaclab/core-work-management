@@ -2,8 +2,8 @@ package edu.stanford.slac.core_work_management.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.InitActivityType;
-import edu.stanford.slac.core_work_management.migration.InitWorkType;
+import edu.stanford.slac.core_work_management.migration.M1002_InitActivityType;
+import edu.stanford.slac.core_work_management.migration.M101_InitWorkType;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -115,12 +115,12 @@ public class WorkServiceOnInitWorkTest {
                         )
                 );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
-        InitWorkType initWorkType = new InitWorkType(lovService, workService);
+        M101_InitWorkType initWorkType = new M101_InitWorkType(lovService, workService);
         assertDoesNotThrow(initWorkType::changeSet);
         allWorkType = assertDoesNotThrow(
                 () -> workTypeRepository.findAll()
         );
-        InitActivityType initActivityType = new InitActivityType(lovService, workService, activityTypeRepository);
+        M1002_InitActivityType initActivityType = new M1002_InitActivityType(lovService, workService, activityTypeRepository);
         assertDoesNotThrow(initActivityType::changeSet);
         allActivityTypes = assertDoesNotThrow(
                 () -> activityTypeRepository.findAll()

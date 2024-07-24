@@ -16,7 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Profile({"init-shop-group-demo"})
 @ChangeUnit(id = "init-shop-group", order = "2000", author = "bisegni")
-public class InitShopGroup {
+public class M2000InitShopGroup {
     private DomainService domainService;
     private final ShopGroupService shopGroupService;
 

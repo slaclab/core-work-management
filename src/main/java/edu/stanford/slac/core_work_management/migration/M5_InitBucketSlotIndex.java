@@ -1,8 +1,7 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.ad.eed.base_mongodb_lib.utility.MongoDDLOps;
-import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.BucketSlot;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
@@ -12,25 +11,24 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-work-statistic-index", order = "6", author = "bisegni")
-public class IndexForWorkStatistic {
+@ChangeUnit(id = "init-bucket-slot-index", order = "5", author = "bisegni")
+public class M5_InitBucketSlotIndex {
     private final MongoTemplate mongoTemplate;
 
     @Execution
     public void changeSet() {
         MongoDDLOps.createIndex(
-                Work.class,
+                BucketSlot.class,
                 mongoTemplate,
-                new Index()
-                        .on(
-                                "workTypeId",
+                new Index().on(
+                                "createdDate",
                                 Sort.Direction.ASC
                         )
                         .on(
-                                "currentStatus.status",
-                                Sort.Direction.ASC
+                                "from",
+                                Sort.Direction.DESC
                         )
-                        .named("work-type-status-statistic-index")
+                        .named("value-group-name")
         );
     }
 

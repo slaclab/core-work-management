@@ -46,7 +46,7 @@ public class ActivityTypeInitTest {
 
     @Test
     public void initTest() {
-        InitActivityType initActivityType = new InitActivityType(lovService, workService, activityTypeRepository);
+        M1002_InitActivityType initActivityType = new M1002_InitActivityType(lovService, workService, activityTypeRepository);
         assertDoesNotThrow(initActivityType::changeSet);
         var allActivityType = assertDoesNotThrow(
                 () -> activityTypeRepository.findAll()

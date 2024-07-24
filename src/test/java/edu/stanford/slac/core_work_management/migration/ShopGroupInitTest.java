@@ -1,11 +1,8 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.service.DomainService;
-import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
-import edu.stanford.slac.core_work_management.service.WorkService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -45,9 +42,9 @@ public class ShopGroupInitTest {
 
     @Test
     public void initTest() {
-        InitDomain initDomain = new InitDomain(domainService);
+        M1000_InitDomain initDomain = new M1000_InitDomain(domainService);
         assertDoesNotThrow(initDomain::changeSet);
-        InitShopGroup initShopGroup = new InitShopGroup(domainService, shopGroupService);
+        M2000InitShopGroup initShopGroup = new M2000InitShopGroup(domainService, shopGroupService);
         assertDoesNotThrow(initShopGroup::changeSet);
 
         assertDoesNotThrow(()->domainService.findByName("TEC"));
