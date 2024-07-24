@@ -8,6 +8,7 @@ import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.elog_api.api.EntriesControllerApi;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -65,6 +66,8 @@ public class LogControllerTest {
     @Autowired
     WorkService workService;
     @Autowired
+    LOVService lovService;
+    @Autowired
     TestControllerHelperService testControllerHelperService;
     @Autowired
     DocumentGenerationService documentGenerationService;
@@ -81,7 +84,7 @@ public class LogControllerTest {
     private String newWorkId;
     private List<String> testActivityTypeIds = new ArrayList<>();
     private String newActivityId;
-
+    private List<LOVElementDTO> projectLovValues;
     @BeforeAll
     public void setUpWorkAndJob() {
         mongoTemplate.remove(new Query(), Domain.class);
@@ -91,9 +94,15 @@ public class LogControllerTest {
         mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
         appProperties.getRootUserList().clear();
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
+
+        // crete lov for 'project' static filed
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
 
         // create domain
         domainId = assertDoesNotThrow(
@@ -184,6 +193,7 @@ public class LogControllerTest {
                                         .locationId(locationId)
                                         .workTypeId(newWorkTypeId)
                                         .shopGroupId(shopGroupId)
+                                        .project(projectLovValues.get(0).id())
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -315,6 +325,7 @@ public class LogControllerTest {
                                 .shopGroupId(shopGroupId)
                                 .title("work contextually to log creation")
                                 .description("this is a work that will be used to test log creation during the work creation")
+                                .project(projectLovValues.get(0).id())
                                 .build(),
                         Optional.of(true)
                 )

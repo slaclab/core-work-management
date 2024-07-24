@@ -52,6 +52,8 @@ public record ActivityDTO(
         LocalDateTime plannedEndDate,
         @Schema(description = "The feedback comment for the activity")
         String feedbackComment,
+        @Schema(description = "The the lov value that represent the project")
+        LOVValueDTO project,
         @Schema(description="The list of the custom fields associated with the activity. The custom fields are used to store additional information about the activity.")
         List<CustomFieldDTO> customFields,
         @Schema(description = "The current status of the activity")

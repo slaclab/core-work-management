@@ -435,6 +435,7 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -478,6 +479,7 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationIdOnAlternateDomain)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -523,6 +525,7 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1029,6 +1032,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description updated")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO

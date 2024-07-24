@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.M1002_InitActivityType;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.migration.M101_InitWorkType;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
@@ -60,6 +61,7 @@ public class WorkServiceOnInitActivityTest {
     private String locationId;
     private List<ActivityType> allActivityTypes;
     private List<WorkType> allWorkType;
+    private List<LOVElementDTO> projectLovValues;
 
     @BeforeAll
     public void cleanCollection() {
@@ -124,6 +126,9 @@ public class WorkServiceOnInitActivityTest {
         allActivityTypes = assertDoesNotThrow(
                 () -> activityTypeRepository.findAll()
         );
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @BeforeEach
@@ -192,6 +197,7 @@ public class WorkServiceOnInitActivityTest {
                                 .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -205,6 +211,7 @@ public class WorkServiceOnInitActivityTest {
                                 .activityTypeId(activityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.BugFix)
                                 .customFieldValues(writeCustomFieldValue)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );

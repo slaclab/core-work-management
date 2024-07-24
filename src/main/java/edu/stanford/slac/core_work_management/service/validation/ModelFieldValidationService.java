@@ -93,18 +93,37 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static java.util.Collections.emptyList;
 
+/**
+ * Service to validate the model field
+ */
 @Service
 @Validated
 @AllArgsConstructor
 public class ModelFieldValidationService {
     LOVElementRepository lovElementRepository;
 
+    /**
+     * Verify the custom field
+     * @param work the work
+     * @param customFields the custom fields
+     */
     public void verify(@NotNull Work work, @NotNull List<WATypeCustomField> customFields) {
         verify(work, Objects.requireNonNullElse(work.getCustomFields(),emptyList()), customFields);
     }
+    /**
+     * Verify the custom field
+     * @param activity the activity
+     * @param customFields the custom fields
+     */
     public void verify(@NotNull Activity activity, @NotNull List<WATypeCustomField> customFields) {
         verify(activity, Objects.requireNonNullElse(activity.getCustomFields(),emptyList()), customFields);
     }
+    /**
+     * Verify the custom field
+     * @param source the source
+     * @param customFieldValues the custom field values
+     * @param customFields the custom fields
+     */
     public void verify(@NotNull Object source, @NotNull List<CustomField> customFieldValues, @NotNull List<WATypeCustomField> customFields) {
         // check duplicated id
         assertion(
@@ -179,6 +198,11 @@ public class ModelFieldValidationService {
         verifyDynamicField(customFieldValues, customFields);
     }
 
+    /**
+     * Get the type of the value
+     * @param value the value
+     * @return the type of the value
+     */
     private ValueType getType(AbstractValue value) {
         if(value.getClass().isAssignableFrom(BooleanValue.class)) {
             return ValueType.Boolean;
@@ -229,7 +253,7 @@ public class ModelFieldValidationService {
                     );
 
                     // check if the value is consistent with the list of possible values
-                    String lovValueId = customField.getValue().toString();
+                    String lovValueId = ((StringValue)customField.getValue()).getValue();
                     assertion(
                             LOVValueNotFound.byId()
                                     .errorCode(-2)
@@ -244,6 +268,12 @@ public class ModelFieldValidationService {
                 });
     }
 
+    /**
+     * Validate the field
+     * @param source the source
+     * @param field the field
+     * @param annotationConstraint the annotation constraint
+     */
     private void validateField(Object source, Field field, LOVField annotationConstraint) {
         field.setAccessible(true);
         try {

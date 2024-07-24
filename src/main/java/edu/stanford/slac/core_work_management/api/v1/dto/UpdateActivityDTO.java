@@ -36,7 +36,7 @@ public record UpdateActivityDTO(
         LocalDateTime plannedStartDate,
         @Schema(description = "The planned stop date of the activity")
         LocalDateTime plannedEndDate,
-        @NotNull(message = "Project is required")
+        @Schema(description = "The project to which the activity belongs")
         String project,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")

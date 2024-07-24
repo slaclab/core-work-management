@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.M1002_InitActivityType;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.migration.M101_InitWorkType;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
@@ -53,14 +54,14 @@ public class WorkServiceOnInitWorkTest {
     WorkTypeRepository workTypeRepository;
     @Autowired
     ActivityTypeRepository activityTypeRepository;
-
+    @Autowired
+    ObjectMapper objectMapper;
     private String domainId;
     private String shopGroupId;
     private String locationId;
     private List<ActivityType> allActivityTypes;
     private List<WorkType> allWorkType;
-    @Autowired
-    ObjectMapper objectMapper;
+    private List<LOVElementDTO> projectLovValues = null;
 
     @BeforeAll
     public void cleanCollection() {
@@ -125,6 +126,11 @@ public class WorkServiceOnInitWorkTest {
         allActivityTypes = assertDoesNotThrow(
                 () -> activityTypeRepository.findAll()
         );
+
+        // crete lov for 'project' static filed
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @BeforeEach
@@ -177,6 +183,7 @@ public class WorkServiceOnInitWorkTest {
                                 .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(writeCustomFieldValue)
                                 .build()
                 )

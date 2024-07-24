@@ -51,7 +51,7 @@ public record UpdateWorkDTO(
         @NullOrNotEmpty(message = "Shop group can be null or not empty")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
-        @NotNull(message = "Project is required")
+        @Schema(description = "The project where the work is associated")
         String project,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
