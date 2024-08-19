@@ -2,7 +2,7 @@ package edu.stanford.slac.core_work_management.controller;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.LOVElementDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
-import edu.stanford.slac.core_work_management.migration.InitBucketTypeLOV;
+import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.LOVElement;
 import edu.stanford.slac.core_work_management.service.BucketService;
@@ -54,7 +54,7 @@ public class MaintenanceControllerTest {
     @BeforeAll
     public void initLOV() {
         mongoTemplate.remove(new Query(), LOVElement.class);
-        InitBucketTypeLOV initBucketTypeLOV = new InitBucketTypeLOV(lovService);
+        M1003_InitBucketTypeLOV initBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
         assertDoesNotThrow(()->initBucketTypeLOV.changeSet());
 
         bucketTypeLOVIds = lovService.findAllByGroupName("BucketType").stream().map(LOVElementDTO::id).toList();

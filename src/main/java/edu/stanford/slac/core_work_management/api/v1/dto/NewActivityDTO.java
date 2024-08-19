@@ -16,7 +16,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define a new activity for an existing work-plan")
-public record NewActivityDTO (
+public record NewActivityDTO(
         @NotEmpty
         @Schema(description = "The title of the activity")
         String title,
@@ -41,14 +41,16 @@ public record NewActivityDTO (
         LocalDateTime plannedStartDate,
         @Schema(description = "The planned stop date of the activity")
         LocalDateTime plannedEndDate,
-        @Schema(description = "The feedback comment for the activity")
-        String feedbackComment,
+        @Schema(description = "The project where the activity is associated, if empty will be associated to the default work project")
+        String project,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
-        List<WriteCustomFieldDTO> customFieldValues){
-        public NewActivityDTO {
-                if (customFieldValues == null) {
-                        customFieldValues = Collections.emptyList();
-                }
+        List<WriteCustomFieldDTO> customFieldValues,
+        @Schema(description = "The feedback comment for the activity")
+        String feedbackComment) {
+    public NewActivityDTO {
+        if (customFieldValues == null) {
+            customFieldValues = Collections.emptyList();
         }
+    }
 }

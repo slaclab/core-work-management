@@ -2,8 +2,9 @@ package edu.stanford.slac.core_work_management.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.InitActivityType;
-import edu.stanford.slac.core_work_management.migration.InitWorkType;
+import edu.stanford.slac.core_work_management.migration.M1002_InitActivityType;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
+import edu.stanford.slac.core_work_management.migration.M101_InitWorkType;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -53,14 +54,14 @@ public class WorkServiceOnInitWorkTest {
     WorkTypeRepository workTypeRepository;
     @Autowired
     ActivityTypeRepository activityTypeRepository;
-
+    @Autowired
+    ObjectMapper objectMapper;
     private String domainId;
     private String shopGroupId;
     private String locationId;
     private List<ActivityType> allActivityTypes;
     private List<WorkType> allWorkType;
-    @Autowired
-    ObjectMapper objectMapper;
+    private List<LOVElementDTO> projectLovValues = null;
 
     @BeforeAll
     public void cleanCollection() {
@@ -115,16 +116,21 @@ public class WorkServiceOnInitWorkTest {
                         )
                 );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
-        InitWorkType initWorkType = new InitWorkType(lovService, workService);
+        M101_InitWorkType initWorkType = new M101_InitWorkType(lovService, workService);
         assertDoesNotThrow(initWorkType::changeSet);
         allWorkType = assertDoesNotThrow(
                 () -> workTypeRepository.findAll()
         );
-        InitActivityType initActivityType = new InitActivityType(lovService, workService, activityTypeRepository);
+        M1002_InitActivityType initActivityType = new M1002_InitActivityType(lovService, workService, activityTypeRepository);
         assertDoesNotThrow(initActivityType::changeSet);
         allActivityTypes = assertDoesNotThrow(
                 () -> activityTypeRepository.findAll()
         );
+
+        // crete lov for 'project' static filed
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @BeforeEach
@@ -177,6 +183,7 @@ public class WorkServiceOnInitWorkTest {
                                 .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(writeCustomFieldValue)
                                 .build()
                 )

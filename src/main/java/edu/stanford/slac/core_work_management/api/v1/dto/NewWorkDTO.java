@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.util.Collections;
@@ -14,7 +15,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the information for create new work plan")
-public record NewWorkDTO (
+public record NewWorkDTO(
         @Schema(description = "The domain where the work belongs to")
         @NotEmpty(message = "The domain is required")
         String domainId,
@@ -29,23 +30,25 @@ public record NewWorkDTO (
         String workTypeId,
         @Schema(description =
                 """
-                Define the location of the work to do. Location is considered to
-                be optional for the work plan. If the location is provide it
-                shall to be matched with an inventory item frm core inventory system
-                """
+                        Define the location of the work to do. Location is considered to
+                        be optional for the work plan. If the location is provide it
+                        shall to be matched with an inventory item frm core inventory system
+                        """
         )
         @NotEmpty(message = "Location is required")
         String locationId,
         @NotEmpty(message = "Shop group is mandatory is required")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
+        @NotNull(message = "Project is required")
+        String project,
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
         List<WriteCustomFieldDTO> customFieldValues
-){
-        public NewWorkDTO {
-                if (customFieldValues == null) {
-                        customFieldValues = Collections.emptyList();
-                }
+) {
+    public NewWorkDTO {
+        if (customFieldValues == null) {
+            customFieldValues = Collections.emptyList();
         }
+    }
 }

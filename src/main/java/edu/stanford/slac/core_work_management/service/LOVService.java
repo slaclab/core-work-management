@@ -78,7 +78,7 @@ public class LOVService {
      */
     public void associateDomainFieldToGroupName(
             @NotNull LOVDomainTypeDTO lovDomainDTO,
-            @NotEmpty String subtypeId,
+            String subtypeId,
             @NotEmpty String fieldName,
             @NotEmpty String groupName
     ) {
@@ -267,7 +267,7 @@ public class LOVService {
                                 (existing, replacement) -> existing,
                                 HashMap::new
                         ));
-                resultHash.putAll(getLOVFieldReferenceFromWorkType(subtypeId));
+                if(subtypeId!=null)resultHash.putAll(getLOVFieldReferenceFromWorkType(subtypeId));
                 yield resultHash;
             }
             case LOVDomainTypeDTO.Activity -> {
@@ -279,7 +279,7 @@ public class LOVService {
                                 (existing, replacement) -> existing,
                                 HashMap::new
                         ));
-                resultHash.putAll(getLOVFieldReferenceFromActivityType(subtypeId));
+                if(subtypeId!=null)resultHash.putAll(getLOVFieldReferenceFromActivityType(subtypeId));
                 yield resultHash;
             }
             case Bucket -> {

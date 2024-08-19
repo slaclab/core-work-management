@@ -20,6 +20,7 @@ package edu.stanford.slac.core_work_management.service;
 import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.LOVElementRepository;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -273,6 +274,10 @@ public class LOVServiceTest {
 
     @Test
     public void validateValueOnCreatedLOV() {
+        // crete lov for 'project' static filed
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        var projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
         // add lov for dynamic field
         assertDoesNotThrow(
                 () -> lovService.createNew(
@@ -302,6 +307,7 @@ public class LOVServiceTest {
                                 .workTypeId(workActivityIds.get(0))
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );

@@ -5,6 +5,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.InvalidLocation;
 import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import jakarta.validation.ConstraintViolationException;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -46,13 +47,16 @@ public class WorkServiceTest {
     LocationService locationService;
     @Autowired
     ShopGroupService shopGroupService;
+    @Autowired
+    LOVService lovService;
+
     private String shopGroupId;
     private String alternateShopGroupId;
     private String locationId;
     private String locationIdOnAlternateDomain;
     private String domainId;
     private String alternateDomainId;
-
+    private List<LOVElementDTO> projectLovValues = null;
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Domain.class);
@@ -83,7 +87,7 @@ public class WorkServiceTest {
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Activity.class);
-
+        mongoTemplate.remove(new Query(), LOVElement.class);
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
@@ -153,6 +157,11 @@ public class WorkServiceTest {
                 )
         );
         AssertionsForClassTypes.assertThat(locationIdOnAlternateDomain).isNotEmpty();
+
+        // crete lov for 'project' static filed
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @Test
@@ -382,6 +391,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -410,6 +420,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -424,6 +435,7 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -451,6 +463,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -466,6 +479,7 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationIdOnAlternateDomain)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -495,6 +509,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -510,6 +525,7 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -542,6 +558,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -574,6 +591,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -603,6 +621,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -650,6 +669,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -730,6 +750,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -824,6 +845,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -866,6 +888,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO
@@ -928,6 +951,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1008,6 +1032,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description updated")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO
@@ -1066,6 +1091,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1117,6 +1143,7 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+                                .project(projectLovValues.get(0).id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO
@@ -1211,7 +1238,7 @@ public class WorkServiceTest {
                 )
         );
 
-        assertThat(badTypeException.getErrorCode()).isEqualTo(-3);
+        assertThat(badTypeException.getErrorCode()).isEqualTo(-5);
 
         // fail because the id has not been found
         var mandatoryException = assertThrows(
@@ -1269,6 +1296,7 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );

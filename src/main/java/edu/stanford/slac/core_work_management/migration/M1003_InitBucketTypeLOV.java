@@ -1,9 +1,7 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
-import edu.stanford.slac.core_work_management.service.WorkService;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
@@ -18,7 +16,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @AllArgsConstructor
 @Profile({"init-default-data"})
 @ChangeUnit(id = "init-bucket-slot-lov", order = "1003", author = "bisegni")
-public class InitBucketTypeLOV {
+public class M1003_InitBucketTypeLOV {
     private final LOVService lovService;
 
     @Execution

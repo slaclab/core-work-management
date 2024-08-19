@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 @AllArgsConstructor
 @ChangeUnit(id = "init-auth-index", order = "1000", author = "bisegni")
-public class InitAuthIndex {
+public class M1000_InitAuthIndex {
     private final MongoTemplate mongoTemplate;
     @Execution
     public void changeSet() {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -35,11 +36,13 @@ public record UpdateActivityDTO(
         LocalDateTime plannedStartDate,
         @Schema(description = "The planned stop date of the activity")
         LocalDateTime plannedEndDate,
-        @Schema(description = "The feedback comment for the activity")
-        String feedbackComment,
+        @Schema(description = "The project to which the activity belongs")
+        String project,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
-        List<WriteCustomFieldDTO> customFieldValues
+        List<WriteCustomFieldDTO> customFieldValues,
+        @Schema(description = "The feedback comment for the activity")
+        String feedbackComment
 ) {
         public UpdateActivityDTO {
                 if (assignedTo == null) {

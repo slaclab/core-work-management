@@ -72,8 +72,11 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
+import edu.stanford.slac.core_work_management.model.Activity;
+import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
-import edu.stanford.slac.core_work_management.model.value.LOVField;
+import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.LOVElementRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -90,31 +93,38 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static java.util.Collections.emptyList;
 
+/**
+ * Service to validate the model field
+ */
 @Service
 @Validated
 @AllArgsConstructor
 public class ModelFieldValidationService {
     LOVElementRepository lovElementRepository;
 
-    public void verify(@NotNull Object source, @NotNull List<WATypeCustomField> customFields) {
-        List<WriteCustomFieldDTO> customFieldValues;
-        if (source.getClass().isAssignableFrom(NewWorkDTO.class)) {
-            NewWorkDTO work = (NewWorkDTO) source;
-            customFieldValues = Objects.requireNonNullElse(work.customFieldValues(),emptyList());
-        } else if (source.getClass().isAssignableFrom(UpdateWorkDTO.class)) {
-            UpdateWorkDTO activity = (UpdateWorkDTO) source;
-            customFieldValues = Objects.requireNonNullElse(activity.customFieldValues(), emptyList());
-        }else if (source.getClass().isAssignableFrom(NewActivityDTO.class)) {
-            NewActivityDTO activity = (NewActivityDTO) source;
-            customFieldValues = Objects.requireNonNullElse(activity.customFieldValues(), emptyList());
-        } else if (source.getClass().isAssignableFrom(UpdateActivityDTO.class)) {
-            UpdateActivityDTO activity = (UpdateActivityDTO) source;
-            customFieldValues = Objects.requireNonNullElse(activity.customFieldValues(), emptyList());
-        } else {
-            // no valuable class has been found
-            customFieldValues = emptyList();
-        }
-
+    /**
+     * Verify the custom field
+     * @param work the work
+     * @param customFields the custom fields
+     */
+    public void verify(@NotNull Work work, @NotNull List<WATypeCustomField> customFields) {
+        verify(work, Objects.requireNonNullElse(work.getCustomFields(),emptyList()), customFields);
+    }
+    /**
+     * Verify the custom field
+     * @param activity the activity
+     * @param customFields the custom fields
+     */
+    public void verify(@NotNull Activity activity, @NotNull List<WATypeCustomField> customFields) {
+        verify(activity, Objects.requireNonNullElse(activity.getCustomFields(),emptyList()), customFields);
+    }
+    /**
+     * Verify the custom field
+     * @param source the source
+     * @param customFieldValues the custom field values
+     * @param customFields the custom fields
+     */
+    public void verify(@NotNull Object source, @NotNull List<CustomField> customFieldValues, @NotNull List<WATypeCustomField> customFields) {
         // check duplicated id
         assertion(
                 ControllerLogicException.builder()
@@ -124,7 +134,7 @@ public class ModelFieldValidationService {
                         .build(),
                 () -> customFieldValues.stream()
                         // Group by the id
-                        .collect(Collectors.groupingBy(WriteCustomFieldDTO::id))
+                        .collect(Collectors.groupingBy(CustomField::getId))
                         .values().stream()
                         // Filter groups having more than one element, indicating duplicates
                         .filter(duplicates -> duplicates.size() > 1)
@@ -135,12 +145,12 @@ public class ModelFieldValidationService {
         // check that all the id are valid
         customFieldValues.forEach(
                 cv -> {
-                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.id()) == 0).findFirst();
+                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.getId()) == 0).findFirst();
                     // check if id is valid
                     assertion(
                             ControllerLogicException.builder()
                                     .errorCode(-2)
-                                    .errorMessage("The field id %s has not been found".formatted(cv.id()))
+                                    .errorMessage("The field id %s has not been found".formatted(cv.getId()))
                                     .errorDomain("WorkService::validateCustomField")
                                     .build(),
                             foundField::isPresent
@@ -150,10 +160,10 @@ public class ModelFieldValidationService {
                     assertion(
                             ControllerLogicException.builder()
                                     .errorCode(-3)
-                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.id(), cv.value().type(), foundField.get().getValueType()))
+                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.getId(), getType(cv.getValue()), foundField.get().getValueType()))
                                     .errorDomain("WorkService::validateCustomField")
                                     .build(),
-                            () -> cv.value().type().name().compareTo(foundField.get().getValueType().name()) == 0
+                            () -> getType(cv.getValue()) == foundField.get().getValueType()
                     );
                 }
 
@@ -171,7 +181,7 @@ public class ModelFieldValidationService {
                         .filter(WATypeCustomField::getIsMandatory)
                         .map(WATypeCustomField::getId)
                         .allMatch(
-                                s -> customFieldValues.stream().anyMatch(av -> av.id().compareTo(s) == 0)
+                                s -> customFieldValues.stream().anyMatch(av -> av.getId().compareTo(s) == 0)
                         )
         );
 
@@ -189,21 +199,44 @@ public class ModelFieldValidationService {
     }
 
     /**
+     * Get the type of the value
+     * @param value the value
+     * @return the type of the value
+     */
+    private ValueType getType(AbstractValue value) {
+        if(value.getClass().isAssignableFrom(BooleanValue.class)) {
+            return ValueType.Boolean;
+        } else if(value.getClass().isAssignableFrom(DateTimeValue.class)) {
+            return ValueType.DateTime;
+        } else if(value.getClass().isAssignableFrom(DateValue.class)) {
+            return ValueType.Date;
+        } else if(value.getClass().isAssignableFrom(NumberValue.class)) {
+            return ValueType.Number;
+        } else if(value.getClass().isAssignableFrom(DoubleValue.class)) {
+            return ValueType.Double;
+        } else if(value.getClass().isAssignableFrom(StringValue.class)) {
+            return ValueType.String;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Verify the dynamic field
      * @param customFieldValues the custom field values
      * @param customFields the custom fields
      */
-    private void verifyDynamicField(List<WriteCustomFieldDTO> customFieldValues, List<WATypeCustomField> customFields) {
+    private void verifyDynamicField(List<CustomField> customFieldValues, List<WATypeCustomField> customFields) {
         if(customFieldValues == null || customFields == null) return;
         //find relative field
         customFieldValues.forEach(
                 customField -> {
                     WATypeCustomField waTypeCustomField = customFields.stream()
-                            .filter(customField1 -> customField1.getId().equals(customField.id()))
+                            .filter(customField1 -> customField1.getId().equals(customField.getId()))
                             .findFirst()
                             .orElseThrow(
                                     () -> CustomAttributeNotFound.notFoundById()
-                                            .id(customField.id())
+                                            .id(customField.getId())
                                             .build()
                             );
 
@@ -213,14 +246,14 @@ public class ModelFieldValidationService {
                     assertion(
                             ControllerLogicException.builder()
                                     .errorCode(-1)
-                                    .errorMessage("The custom field %s need to use the string value".formatted(customField.id()))
+                                    .errorMessage("The custom field %s need to use the string value".formatted(customField.getId()))
                                     .errorDomain("LOVValidation::verifyDynamicField")
                                     .build(),
-                            ()->customField.value().type()==ValueTypeDTO.String
+                            ()->getType(customField.getValue())==ValueType.String
                     );
 
                     // check if the value is consistent with the list of possible values
-                    String lovValueId = customField.value().value();
+                    String lovValueId = ((StringValue)customField.getValue()).getValue();
                     assertion(
                             LOVValueNotFound.byId()
                                     .errorCode(-2)
@@ -235,6 +268,12 @@ public class ModelFieldValidationService {
                 });
     }
 
+    /**
+     * Validate the field
+     * @param source the source
+     * @param field the field
+     * @param annotationConstraint the annotation constraint
+     */
     private void validateField(Object source, Field field, LOVField annotationConstraint) {
         field.setAccessible(true);
         try {

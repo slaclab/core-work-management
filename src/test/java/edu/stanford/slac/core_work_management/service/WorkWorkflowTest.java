@@ -4,6 +4,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,10 +49,13 @@ public class WorkWorkflowTest {
     @Autowired
     HelperService helperService;
     @Autowired
+    LOVService lovService;
+    @Autowired
     MongoTemplate mongoTemplate;
     private String domainId = null;
     private String locationId = null;
     private String shopGroupId = null;
+    private List<LOVElementDTO> projectLovValues = null;
 
     @BeforeEach
     public void cleanCollection() {
@@ -63,6 +67,7 @@ public class WorkWorkflowTest {
         mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Activity.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
                         NewDomainDTO
@@ -107,6 +112,10 @@ public class WorkWorkflowTest {
                         )
                 );
         assertThat(locationId).isNotEmpty();
+        // crete lov for 'project' static filed
+        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
+        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @Test
@@ -130,6 +139,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(wtId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -161,6 +171,7 @@ public class WorkWorkflowTest {
                                     .workTypeId(wtId)
                                     .locationId(locationId)
                                     .shopGroupId(shopGroupId)
+                                    .project(projectLovValues.get(0).id())
                                     .build()
                     )
             );
@@ -202,6 +213,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(wtId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 ));
             }
@@ -269,6 +281,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(wtId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -334,6 +347,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -417,6 +431,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -545,6 +560,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -590,6 +606,7 @@ public class WorkWorkflowTest {
                                 .workTypeId(listIds.get(0))
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
