@@ -15,7 +15,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @AllArgsConstructor
 @Profile({"init-default-data"})
-@ChangeUnit(id = "init-bucket-slot-lov", order = "1003", author = "bisegni")
+@ChangeUnit(id = "init-project-slot-lov", order = "1003", author = "bisegni")
 public class M1004_InitProjectLOV {
     private final LOVService lovService;
 
