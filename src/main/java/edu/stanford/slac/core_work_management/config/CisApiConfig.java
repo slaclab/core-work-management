@@ -4,14 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
 import edu.stanford.slac.core_work_management.cis_api.invoker.ApiClient;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Log4j2

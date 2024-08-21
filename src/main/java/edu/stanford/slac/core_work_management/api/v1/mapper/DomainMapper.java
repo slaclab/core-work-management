@@ -1,21 +1,26 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkStatusCountStatisticsDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeStatusStatisticsDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeSummaryDTO;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import edu.stanford.slac.core_work_management.service.StringUtility;
-import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.swing.text.Utilities;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,

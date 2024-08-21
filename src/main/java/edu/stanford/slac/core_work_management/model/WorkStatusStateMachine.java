@@ -37,8 +37,6 @@ public class WorkStatusStateMachine {
     }
 
     // Helper method to check if any activity is rolled
-
-
     private boolean isAnyActivityInStatus(Set<ActivityStatus> activities, ActivityStatus activityStatus) {
         return activities.stream().anyMatch(activity -> activity == activityStatus);
     }

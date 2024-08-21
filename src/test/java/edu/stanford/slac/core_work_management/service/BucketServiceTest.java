@@ -47,7 +47,7 @@ public class BucketServiceTest {
     public void initLOV() {
         mongoTemplate.remove(new Query(), LOVElement.class);
         M1003_InitBucketTypeLOV initBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
-        assertDoesNotThrow(()->initBucketTypeLOV.changeSet());
+        assertDoesNotThrow(initBucketTypeLOV::changeSet);
 
         bucketTypeLOVIds = lovService.findAllByGroupName("BucketType").stream().map(LOVElementDTO::id).toList();
         bucketStatusLOVIds = lovService.findAllByGroupName("BucketStatus").stream().map(LOVElementDTO::id).toList();
@@ -184,8 +184,8 @@ public class BucketServiceTest {
                     ()->bucketSlotService.createNew(
                             NewBucketDTO.builder()
                                     .description("bucket-%d".formatted(finalI))
-                                    .type(bucketTypeLOVIds.get(0))
-                                    .status(bucketStatusLOVIds.get(0))
+                                    .type(bucketTypeLOVIds.getFirst())
+                                    .status(bucketStatusLOVIds.getFirst())
                                     .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
                                     .to(LocalDateTime.of(2021, 1, 3, 23, 0))
                                     .build()

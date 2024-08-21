@@ -1,33 +1,89 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.ad.eed.baselib.service.AuthService;
-import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
-import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
-import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
-import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.model.value.*;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
-import edu.stanford.slac.core_work_management.repository.WorkRepository;
-import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import edu.stanford.slac.core_work_management.service.*;
-import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValueCheckStrategy;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import edu.stanford.slac.ad.eed.baselib.service.AuthService;
+import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
+import edu.stanford.slac.core_work_management.api.v1.dto.ActivityDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ActivityQueryParameterDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ActivityStatusDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ActivitySummaryDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ActivityTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.CustomFieldDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.LOVDomainTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.LOVValueDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ValueDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ValueTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WATypeCustomFieldDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDetailsOptionDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeSummaryDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
+import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
+import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
+import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
+import edu.stanford.slac.core_work_management.model.Activity;
+import edu.stanford.slac.core_work_management.model.ActivityQueryParameter;
+import edu.stanford.slac.core_work_management.model.ActivityStatus;
+import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
+import edu.stanford.slac.core_work_management.model.ActivityType;
+import edu.stanford.slac.core_work_management.model.CustomField;
+import edu.stanford.slac.core_work_management.model.WATypeCustomField;
+import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.value.AbstractValue;
+import edu.stanford.slac.core_work_management.model.value.BooleanValue;
+import edu.stanford.slac.core_work_management.model.value.DateTimeValue;
+import edu.stanford.slac.core_work_management.model.value.DateValue;
+import edu.stanford.slac.core_work_management.model.value.DoubleValue;
+import edu.stanford.slac.core_work_management.model.value.NumberValue;
+import edu.stanford.slac.core_work_management.model.value.StringValue;
+import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
+import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import edu.stanford.slac.core_work_management.service.DomainService;
+import edu.stanford.slac.core_work_management.service.LOVService;
+import edu.stanford.slac.core_work_management.service.LocationService;
+import edu.stanford.slac.core_work_management.service.ShopGroupService;
+import edu.stanford.slac.core_work_management.service.StringUtility;
 
 /**
  * Mapper for the entity {@link Work}
@@ -529,11 +585,20 @@ public abstract class WorkMapper {
                                 .build();
                     } catch (Exception e) {
                         // try to parse the date as OffsetDateTime
-                        var date = OffsetDateTime.parse(value.value());
-                        return DateValue
-                                .builder()
-                                .value(date.toLocalDate())
-                                .build();
+                        try {
+                            var date = OffsetDateTime.parse(value.value());
+                            return DateValue
+                                    .builder()
+                                    .value(date.toLocalDate())
+                                    .build();
+                        } catch (Exception e1) {
+                            // throw error
+                            throw ControllerLogicException.builder()
+                                    .errorCode(-1)
+                                    .errorMessage(e1.getMessage())
+                                    .errorDomain("WorkMapper::toAbstractValue")
+                                    .build();
+                        }
                     }
                 }
                 case DateTime -> {
@@ -557,7 +622,7 @@ public abstract class WorkMapper {
                         .errorDomain("WorkMapper::toElementAttributeWithClass")
                         .build();
             }
-        }catch (Exception e){
+        }catch (ControllerLogicException | NumberFormatException e){
             throw ControllerLogicException.builder()
                     .errorCode(-5)
                     .errorMessage(e.getMessage())

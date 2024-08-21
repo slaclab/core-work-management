@@ -1,10 +1,10 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import com.mongodb.DuplicateKeyException;
-import edu.stanford.slac.core_work_management.config.SecurityAuditorAware;
 import edu.stanford.slac.core_work_management.model.ActivityType;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -23,7 +23,7 @@ import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalize
 @AllArgsConstructor
 public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom {
     MongoTemplate mongoTemplate;
-    SecurityAuditorAware securityAuditorAware;
+    AuditorAware<String> auditorAware;
 
     @Override
     public String ensureActivityType(ActivityType activityType) {
@@ -49,8 +49,8 @@ public class ActivityTypeRepositoryImpl implements ActivityTypeRepositoryCustom 
         Update update = new Update()
                 .setOnInsert("title", normalizedTitle)
                 .setOnInsert("description", activityType.getDescription())
-                .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
-                .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
+                .setOnInsert("createdBy", auditorAware.getCurrentAuditor().orElse(null))
+                .setOnInsert("lastModifiedBy", auditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())
                 .setOnInsert("lastModifiedDate", LocalDateTime.now())
                 .setOnInsert("customFields", activityType.getCustomFields());
