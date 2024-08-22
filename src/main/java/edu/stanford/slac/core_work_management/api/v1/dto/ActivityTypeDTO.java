@@ -16,13 +16,17 @@ import java.util.Set;
 @Schema(description = "Define the information the activity of work")
 public record ActivityTypeDTO(
         @Schema(description = "The unique id of the activity type")
-        @NotEmpty String id,
+        String id,
+        @Schema(description = "The unique id of the domain to which the activity type belongs")
+        String domainId,
+        @Schema(description = "The unique id of the work type to which the activity type belongs")
+        String workTypeId,
         @Schema(description = "The title of the activity type")
-        @NotEmpty String title,
+        String title,
         @Schema(description = "The description of when can be used ths activity type")
-        @NotEmpty String description,
+        String description,
         @Schema(description = "The list of activity subtypes in the activity type")
-        @NotEmpty Set<ActivityTypeSubtype> activityTypeSubtypes,
+        Set<ActivityTypeSubtype> activityTypeSubtypes,
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
         List<WATypeCustomFieldDTO> customFields
 ) {

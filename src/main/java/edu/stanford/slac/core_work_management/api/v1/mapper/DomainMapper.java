@@ -1,32 +1,27 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.service.LOVService;
+import edu.stanford.slac.core_work_management.service.StringUtility;
+import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkStatusCountStatisticsDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeStatusStatisticsDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeSummaryDTO;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
-import edu.stanford.slac.core_work_management.model.Domain;
-import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
-import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         componentModel = "spring"
 )
 public abstract class DomainMapper {
+    @Autowired
+    private LOVService lovService;
     @Autowired
     private WorkTypeRepository workTypeRepository;
 
@@ -98,5 +93,132 @@ public abstract class DomainMapper {
                         }
                 )
                 .toList();
+    }
+
+    /**
+     * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
+     *
+     * @param newWorkTypeDTO the DTO to convert
+     * @param domainId       the id of the domain
+     * @return the converted entity
+     */
+    abstract public WorkType toModel(String domainId, NewWorkTypeDTO newWorkTypeDTO);
+
+    /**
+     * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
+     *
+     * @param newActivityTypeDTO the DTO to convert
+     * @return the converted work type
+     */
+    abstract public ActivityType toModel(String domainId, String workTypeId, NewActivityTypeDTO newActivityTypeDTO);
+
+
+    /**
+     * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
+     *
+     * @param dto the DTO to convert
+     * @return the converted entity
+     */
+    @Mapping(target = "customFields", expression = "java(updateModelCustomActivityTypeField(dto.customFields(), activityType.getCustomFields()))")
+    abstract public ActivityType updateModel(UpdateActivityTypeDTO dto, @MappingTarget ActivityType activityType);
+
+    /**
+     * Convert the {@link WorkType} to a {@link WorkTypeDTO}
+     *
+     * @param workType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public WorkTypeDTO toDTO(WorkType workType);
+
+    /**
+     * Convert the {@link ActivityType} to a {@link ActivityTypeDTO}
+     *
+     * @param activityType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public ActivityTypeDTO toDTO(ActivityType activityType);
+
+    /**
+     * Convert the {@link ActivityType} to a {@link ActivityTypeSubtypeDTO}
+     *
+     * @param activityType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public ActivityTypeSubtypeDTO toDTO(ActivityTypeSubtype activityType);
+
+    /**
+     * Convert the {@link WATypeCustomField} to a {@link WATypeCustomFieldDTO}
+     *
+     * @param customField the entity to convert
+     * @return the converted DTO
+     */
+    @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
+    abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
+
+    /**
+     * Convert the {@link WATypeCustomFieldDTO} to a {@link WATypeCustomField}
+     *
+     * @param WATypeCustomFieldDTO the DTO to convert
+     * @return the converted entity
+     */
+    abstract public WATypeCustomField toModel(WATypeCustomFieldDTO WATypeCustomFieldDTO);
+
+    /**
+     * Convert the {@link WATypeCustomFieldDTO} to a {@link WATypeCustomField}
+     *
+     * @param id                   the id of the custom field
+     * @param name                 the name of the custom field
+     * @param WATypeCustomFieldDTO the DTO to convert
+     * @return the converted entity
+     */
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "name", source = "name")
+    abstract public WATypeCustomField toModel(String id, String name, WATypeCustomFieldDTO WATypeCustomFieldDTO);
+
+    /**
+     * Check if the custom field is a LOV
+     *
+     * @param customField the custom field to check
+     * @return true if the custom field is a LOV
+     */
+    public boolean checkIsLOV(WATypeCustomField customField) {
+        if (customField.getLovFieldReference() == null) return false;
+        return wrapCatch(
+                () -> lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
+                -1
+        );
+    }
+
+    /**
+     * Convert the {@link WATypeCustomFieldDTO} to a {@link WATypeCustomField}
+     *
+     * @param customFieldsDTO the lists of the new custom fields
+     * @param customFields    the list of the old custom fields
+     * @return the converted entity
+     */
+    public List<WATypeCustomField> updateModelCustomActivityTypeField(List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
+        List<WATypeCustomField> updatedCustomAttributesList = new ArrayList<>();
+        customFieldsDTO.forEach(
+                customFieldDTO -> {
+                    // try to find the custom field in the old list
+                    Optional<WATypeCustomField> customField = Objects.requireNonNullElse(customFields, Collections.<WATypeCustomField>emptyList()).stream()
+                            .filter(
+                                    customField1 -> customField1.getId().equals(customFieldDTO.id())
+                            ).findFirst();
+
+                    if (customField.isPresent()) {
+                        updatedCustomAttributesList.add(toModel(customFieldDTO));
+                    } else {
+                        updatedCustomAttributesList.add(
+                                toModel(
+                                        UUID.randomUUID().toString(),
+                                        StringUtility.toCamelCase(customFieldDTO.label()),
+                                        customFieldDTO
+                                )
+                        );
+                    }
+                }
+        );
+        return updatedCustomAttributesList;
     }
 }

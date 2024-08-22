@@ -1,10 +1,7 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkStatusDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeStatusStatisticsDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
@@ -55,6 +52,7 @@ public class DomainServiceTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), WorkType.class);
+        mongoTemplate.remove(new Query(), ActivityType.class);
     }
 
     @Test
@@ -267,5 +265,287 @@ public class DomainServiceTest {
             statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.Review)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.Review)));
             statForWTypeId.stream().filter(stat->stat.status().equals(WorkStatusDTO.ScheduledJob)).findFirst().ifPresent(stat->Assertions.assertThat(stat.count()).isEqualTo(workRepository.countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(domainUpdated.id(), workType.workType().id(), WorkStatus.ScheduledJob)));
         }
+    }
+
+
+    @Test
+    public void createNewWorkType() {
+        String domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO.builder()
+                                .name("dom1")
+                                .description("Test domain description")
+                                .build()
+                )
+        );
+        assertThat(domainId).isNotNull();
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+
+        // retrieve created work type
+        var foundWorkType = assertDoesNotThrow(
+                () -> domainService.findWorkTypeById(domainId, newWorkTypeId)
+        );
+        assertThat(foundWorkType).isNotNull();
+        assertThat(foundWorkType.id()).isEqualTo(newWorkTypeId);
+        assertThat(foundWorkType.domainId()).isEqualTo(domainId);
+
+    }
+
+    @Test
+    public void createNewActivityType() {
+        String domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO.builder()
+                                .name("dom1")
+                                .description("Test domain description")
+                                .build()
+                )
+        );
+        assertThat(domainId).isNotNull();
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+        String newActivityTypeId = assertDoesNotThrow(
+                () -> domainService.ensureActivityType(
+                        domainId,
+                        newWorkTypeId,
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId).isNotNull();
+        // retrieve created activity type
+        var foundActivityType = assertDoesNotThrow(
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId,newWorkTypeId)
+        );
+        assertThat(foundActivityType).isNotNull();
+        assertThat(foundActivityType.id()).isEqualTo(newActivityTypeId);
+        assertThat(foundActivityType.domainId()).isEqualTo(domainId);
+        assertThat(foundActivityType.workTypeId()).isEqualTo(newWorkTypeId);
+    }
+
+    @Test
+    public void updateActivityType() {
+        String domainId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        NewDomainDTO.builder()
+                                .name("dom1")
+                                .description("Test domain description")
+                                .build()
+                )
+        );
+        assertThat(domainId).isNotNull();
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+        String newActivityTypeId = assertDoesNotThrow(
+                () -> domainService.ensureActivityType(
+                        domainId,
+                        newWorkTypeId,
+                        NewActivityTypeDTO
+                                .builder()
+                                .title("Activity 1")
+                                .description("Activity 1 description")
+                                .build()
+                )
+        );
+        assertThat(newActivityTypeId).isNotNull();
+        //update activity type
+        assertDoesNotThrow(
+                () -> domainService.updateActivityType(
+                        domainId,
+                        newWorkTypeId,
+                        newActivityTypeId,
+                        UpdateActivityTypeDTO
+                                .builder()
+                                .title("Activity 1 updated")
+                                .description("Activity 1 description updated")
+                                .customFields(
+                                        List.of(
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field1")
+                                                        .description("custom field1 description")
+                                                        .valueType(ValueTypeDTO.String)
+                                                        .isMandatory(true)
+                                                        .build(),
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field2")
+                                                        .description("custom field2 description")
+                                                        .valueType(ValueTypeDTO.Boolean)
+                                                        .isMandatory(false)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        // retrieve and check the full activity type
+        var fullUpdatedActivityType = assertDoesNotThrow(
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId,newActivityTypeId)
+        );
+        assertThat(fullUpdatedActivityType).isNotNull();
+        assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
+        assertThat(fullUpdatedActivityType.title()).isEqualTo("Activity 1 updated");
+        assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description updated");
+        assertThat(fullUpdatedActivityType.customFields()).isNotNull();
+        assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(2);
+        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1");
+        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1");
+        assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description");
+        assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
+        assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isTrue();
+        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field2");
+        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField2");
+        assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field2 description");
+        assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
+        assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isFalse();
+
+        //update activity type adding a new custom filed and modifying the other
+        ActivityTypeDTO finalFullUpdatedActivityType = fullUpdatedActivityType;
+        assertDoesNotThrow(
+                () -> domainService.updateActivityType(
+                        domainId,
+                        newWorkTypeId,
+                        newActivityTypeId,
+                        UpdateActivityTypeDTO
+                                .builder()
+                                .title("Activity 1 re-updated")
+                                .description("Activity 1 description re-updated")
+                                .customFields(
+                                        List.of(
+                                                finalFullUpdatedActivityType.customFields().get(0).toBuilder()
+                                                        .label("custom field1 updated")
+                                                        .description("custom field1 description updated")
+                                                        .valueType(ValueTypeDTO.String)
+                                                        .isLov(false)
+                                                        .isMandatory(false)
+                                                        .build(),
+                                                finalFullUpdatedActivityType.customFields().get(1).toBuilder()
+                                                        .label("custom field2 updated")
+                                                        .description("custom field2 description updated")
+                                                        .valueType(ValueTypeDTO.Number)
+                                                        .isLov(true)
+                                                        .isMandatory(true)
+                                                        .build(),
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field3")
+                                                        .description("custom field3 description")
+                                                        .valueType(ValueTypeDTO.Boolean)
+                                                        .isLov(false)
+                                                        .isMandatory(false)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        fullUpdatedActivityType = assertDoesNotThrow(
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId, newActivityTypeId)
+        );
+        assertThat(fullUpdatedActivityType).isNotNull();
+        assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
+        assertThat(fullUpdatedActivityType.title()).isEqualTo("Activity 1 re-updated");
+        assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description re-updated");
+        assertThat(fullUpdatedActivityType.customFields()).isNotNull();
+        assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(3);
+        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1 updated");
+        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
+        assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description updated");
+        assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
+        assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isFalse();
+        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field2 updated");
+        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField2"); // notice this is correct because if the label is found it is not updated
+        assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field2 description updated");
+        assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Number);
+        assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isTrue();
+        assertThat(fullUpdatedActivityType.customFields().get(2).label()).isEqualTo("custom field3");
+        assertThat(fullUpdatedActivityType.customFields().get(2).name()).isEqualTo("customField3");
+        assertThat(fullUpdatedActivityType.customFields().get(2).description()).isEqualTo("custom field3 description");
+        assertThat(fullUpdatedActivityType.customFields().get(2).valueType()).isEqualTo(ValueTypeDTO.Boolean);
+        assertThat(fullUpdatedActivityType.customFields().get(2).isMandatory()).isFalse();
+
+        //update activity type removing an attribute
+        assertDoesNotThrow(
+                () -> domainService.updateActivityType(
+                        domainId,
+                        newWorkTypeId,
+                        newActivityTypeId,
+                        UpdateActivityTypeDTO
+                                .builder()
+                                .title("Activity 1 re-updated")
+                                .description("Activity 1 description re-updated")
+                                .customFields(
+                                        List.of(
+                                                finalFullUpdatedActivityType.customFields().get(0).toBuilder()
+                                                        .label("custom field1 updated")
+                                                        .description("custom field1 description updated")
+                                                        .valueType(ValueTypeDTO.String)
+                                                        .isLov(false)
+                                                        .isMandatory(false)
+                                                        .build(),
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field3")
+                                                        .description("custom field3 description")
+                                                        .valueType(ValueTypeDTO.Boolean)
+                                                        .isLov(false)
+                                                        .isMandatory(false)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        fullUpdatedActivityType = assertDoesNotThrow(
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId, newActivityTypeId)
+        );
+        assertThat(fullUpdatedActivityType).isNotNull();
+        assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
+        assertThat(fullUpdatedActivityType.title()).isEqualTo("Activity 1 re-updated");
+        assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description re-updated");
+        assertThat(fullUpdatedActivityType.customFields()).isNotNull();
+        assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(2);
+        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1 updated");
+        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
+        assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description updated");
+        assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
+        assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isFalse();
+        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field3");
+        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField3");
+        assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field3 description");
+        assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
+        assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isFalse();
     }
 }

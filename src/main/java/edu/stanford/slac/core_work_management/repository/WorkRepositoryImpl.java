@@ -18,10 +18,10 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
-import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.Counter;
+import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
 import lombok.AllArgsConstructor;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.MongoTransactionException;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
@@ -33,9 +33,10 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.*;
-
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 @Repository
 @AllArgsConstructor

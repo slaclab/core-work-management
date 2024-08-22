@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.*;
@@ -51,9 +52,12 @@ import static java.util.Collections.emptyList;
 @Validated
 @RequiredArgsConstructor
 public class WorkService {
+    private final WorkMapper workMapper;
+    private final DomainMapper domainMapper;
+
     private final DomainService domainService;
     private final AuthService authService;
-    private final WorkMapper workMapper;
+
     private final WorkRepository workRepository;
     private final WorkTypeRepository workTypeRepository;
     private final ActivityTypeRepository activityTypeRepository;

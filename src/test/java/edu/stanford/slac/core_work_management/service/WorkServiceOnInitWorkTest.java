@@ -2,9 +2,7 @@ package edu.stanford.slac.core_work_management.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.M1002_InitActivityType;
 import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
-import edu.stanford.slac.core_work_management.migration.M101_InitWorkType;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;

@@ -29,7 +29,7 @@ public class ActivityType {
     /**
      * Refer to which work type this activity type belongs to.
      */
-    private String workId;
+    private String workTypeId;
     /**
      * The title of the activity type.
      * This field stores the title or name of the activity type.
