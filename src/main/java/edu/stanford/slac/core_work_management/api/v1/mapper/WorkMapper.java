@@ -12,6 +12,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.*;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -29,47 +31,11 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
-import edu.stanford.slac.core_work_management.api.v1.dto.ActivityDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ActivityQueryParameterDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ActivityStatusDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ActivitySummaryDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ActivityTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.CustomFieldDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.LOVDomainTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.LOVValueDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateActivityTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ValueDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ValueTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WATypeCustomFieldDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDetailsOptionDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeSummaryDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
+
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
-import edu.stanford.slac.core_work_management.model.Activity;
-import edu.stanford.slac.core_work_management.model.ActivityQueryParameter;
-import edu.stanford.slac.core_work_management.model.ActivityStatus;
-import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
-import edu.stanford.slac.core_work_management.model.ActivityType;
-import edu.stanford.slac.core_work_management.model.CustomField;
-import edu.stanford.slac.core_work_management.model.WATypeCustomField;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
-import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.model.value.AbstractValue;
 import edu.stanford.slac.core_work_management.model.value.BooleanValue;
 import edu.stanford.slac.core_work_management.model.value.DateTimeValue;
@@ -116,9 +82,10 @@ public abstract class WorkMapper {
      * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
      *
      * @param newWorkTypeDTO the DTO to convert
+     * @param domainId       the id of the domain
      * @return the converted entity
      */
-    abstract public WorkType toModel(NewWorkTypeDTO newWorkTypeDTO);
+    abstract public WorkType toModel(String domainId, NewWorkTypeDTO newWorkTypeDTO);
 
     /**
      * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
@@ -126,7 +93,7 @@ public abstract class WorkMapper {
      * @param newActivityTypeDTO the DTO to convert
      * @return the converted work type
      */
-    abstract public ActivityType toModel(NewActivityTypeDTO newActivityTypeDTO);
+    abstract public ActivityType toModel(String domainId, NewActivityTypeDTO newActivityTypeDTO);
 
     /**
      * Convert the {@link NewWorkDTO} to a {@link Work}
@@ -169,6 +136,14 @@ public abstract class WorkMapper {
      */
     abstract public ActivityTypeDTO toDTO(ActivityType activityType);
 
+    /**
+     * Convert the {@link ActivityType} to a {@link ActivityTypeSubtypeDTO}
+     *
+     * @param activityType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public ActivityTypeSubtypeDTO toDTO(ActivityTypeSubtype activityType);
+
     @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
     abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
 
@@ -208,7 +183,7 @@ public abstract class WorkMapper {
      * Update the {@link Activity} with the data from the {@link UpdateActivityDTO}
      *
      * @param dto  the DTO with the data to update
-     * @param work the entity to update
+     * @param activity the entity to update
      */
     @Mapping(target = "customFields", expression = "java(toCustomFieldValues(dto.customFieldValues()))")
     abstract public void updateModel(UpdateActivityDTO dto, @MappingTarget Activity activity);

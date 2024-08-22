@@ -68,45 +68,6 @@ import lombok.AllArgsConstructor;
 public class WorkController {
     private final WorkService workService;
 
-    @Operation(summary = "Return all the work types")
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping(
-            path = "/work-type",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<List<WorkTypeDTO>> findAllWorkTypes(
-            Authentication authentication
-    ) {
-        return ApiResultResponse.of(workService.findAllWorkTypes());
-    }
-
-    @Operation(summary = "Return all the activity types")
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping(
-            path = "/activity-type",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<List<ActivityTypeDTO>> findAllActivityTypes(
-            Authentication authentication
-    ) {
-        return ApiResultResponse.of(workService.findAllActivityTypes());
-    }
-
-    @Operation(summary = "Return all the activity sub types")
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping(
-            path = "/activity-type-subtype",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<List<ActivityTypeSubtypeDTO>> findAllActivitySubTypes(
-            Authentication authentication
-    ) {
-        return ApiResultResponse.of(workService.findAllActivitySubTypes());
-    }
-
     @Operation(summary = "Create a new work and return his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Work saved")

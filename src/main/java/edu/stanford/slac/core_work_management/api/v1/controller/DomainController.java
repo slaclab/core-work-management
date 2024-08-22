@@ -1,13 +1,13 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -72,5 +72,56 @@ public class DomainController {
         return ApiResultResponse.of(
                 domainService.finAll()
         );
+    }
+
+    @Operation(summary = "Return all the work types for a specific domain")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/{domainId}/work-type",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<WorkTypeDTO>> findAllWorkTypes(
+            Authentication authentication,
+            @Parameter(description = "The domain id", required = true)
+            @PathVariable @NotNull String domainId
+    ) {
+        return ApiResultResponse.of(domainService.findAllWorkTypes(domainId));
+    }
+
+    @Operation(summary = "Return all the activity types")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/{domainId}/work-type/{workTypeId}/activity-type",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<ActivityTypeDTO>> findAllActivityTypes(
+            Authentication authentication,
+            @Parameter(description = "The domain id", required = true)
+            @PathVariable @NotNull String domainId,
+            @Parameter(description = "The work type id", required = true)
+            @PathVariable @NotNull String workTypeId
+    ) {
+        return ApiResultResponse.of(domainService.findAllActivityTypes(domainId, workTypeId));
+    }
+
+    @Operation(summary = "Return all the activity sub types")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/{domainId}/work-type/{workTypeId}/activity-type/{activityTypeId}/sub-type",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<ActivityTypeSubtypeDTO>> findAllActivitySubTypes(
+            Authentication authentication,
+            @Parameter(description = "The domain id", required = true)
+            @PathVariable @NotNull String domainId,
+            @Parameter(description = "The work type id", required = true)
+            @PathVariable @NotNull String workTypeId,
+            @Parameter(description = "The activity type id", required = true)
+            @PathVariable @NotNull String activityTypeId
+    ) {
+        return ApiResultResponse.of(domainService.findAllActivitySubTypes(domainId,workTypeId,activityTypeId));
     }
 }

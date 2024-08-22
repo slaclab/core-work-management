@@ -276,8 +276,9 @@ public class M1002_InitActivityType {
         );
     }
 
-    private void manageSoftwareActivity() {
+    private void manageSoftwareActivity(String domainId) {
         var softwareActivityId = workService.createNew(
+                domainId,
                 NewActivityTypeDTO.builder()
                         .title("Software Task")
                         .description("An issue with currently installed accelerator software")

@@ -9,6 +9,7 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * ActivityType model
@@ -22,6 +23,14 @@ public class ActivityType {
     @Id
     private String id;
     /**
+     * Refer to which domain this activity type belongs to.
+     */
+    private String domainId;
+    /**
+     * Refer to which work type this activity type belongs to.
+     */
+    private String workId;
+    /**
      * The title of the activity type.
      * This field stores the title or name of the activity type.
      */
@@ -31,6 +40,12 @@ public class ActivityType {
      * This field provides a comprehensive description of what the activity type entails.
      */
     private String description;
+
+    /**
+     * The list of activity types in the activity type.
+     */
+    private Set<ActivityTypeSubtype> activityTypeSubtypes;
+
     /**
      * The list of the custom fields associated with the activity type.
      * The custom fields are used to store additional information about the activity.

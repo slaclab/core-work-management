@@ -25,6 +25,10 @@ public class WorkType {
     @Id
     private String id;
     /**
+     * The unique identifier for the domain.
+     */
+    private String domainId;
+    /**
      * The title of the activity type. This field stores the title or name of the activity type.
      */
     private String title;
