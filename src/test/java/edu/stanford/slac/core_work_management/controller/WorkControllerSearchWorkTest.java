@@ -236,7 +236,8 @@ public class WorkControllerSearchWorkTest {
         // create work 1
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.ensureWorkType(
+                                domainId,
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 1")
@@ -248,7 +249,8 @@ public class WorkControllerSearchWorkTest {
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.ensureWorkType(
+                                domainId,
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 2")
@@ -259,7 +261,7 @@ public class WorkControllerSearchWorkTest {
         );
         // crete lov for 'project' static filed
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        assertDoesNotThrow(m1004_initProjectLOV::changeSet);
         projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 

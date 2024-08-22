@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.DomainService;
+import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class ShopGroupInitTest {
     @Autowired
+    private LOVService lovService;
+    @Autowired
     private DomainService domainService;
     @Autowired
     private ShopGroupService shopGroupService;
@@ -42,7 +45,7 @@ public class ShopGroupInitTest {
 
     @Test
     public void initTest() {
-        M1000_InitDomain initDomain = new M1000_InitDomain(domainService);
+        M1000_InitDomain initDomain = new M1000_InitDomain(lovService, domainService);
         assertDoesNotThrow(initDomain::changeSet);
         M2000InitShopGroup initShopGroup = new M2000InitShopGroup(domainService, shopGroupService);
         assertDoesNotThrow(initShopGroup::changeSet);

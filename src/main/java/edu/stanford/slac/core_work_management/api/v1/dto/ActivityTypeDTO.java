@@ -26,7 +26,7 @@ public record ActivityTypeDTO(
         @Schema(description = "The description of when can be used ths activity type")
         String description,
         @Schema(description = "The list of activity subtypes in the activity type")
-        Set<ActivityTypeSubtype> activityTypeSubtypes,
+        Set<ActivityTypeSubtypeDTO> activityTypeSubtypes,
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
         List<WATypeCustomFieldDTO> customFields
 ) {

@@ -95,6 +95,7 @@ public class LOVServiceTest {
         assertThat(domainId).isNotEmpty();
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -318,7 +319,7 @@ public class LOVServiceTest {
         );
 
         // find the full activity type
-        var fullActivityType = workService.findActivityTypeById(workActivityIds.get(1));
+        var fullActivityType = domainService.findActivityTypeById(domainId, workActivityIds.get(0), workActivityIds.get(1));
 
         // create new activity for work plan send it to ScheduledJob state
         var newActivityId = assertDoesNotThrow(

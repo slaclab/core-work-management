@@ -308,13 +308,13 @@ public class DomainService {
     /**
      * Ensure activity types
      */
-    public List<String> ensureActivitiesTypes(@NotEmpty String domainId, @Valid List<NewActivityTypeDTO> newActivityTypeDTOS) {
-        List<String> listIds = new ArrayList<>();
-        newActivityTypeDTOS.forEach(
-                at -> listIds.add(ensureActivityType(domainId, at))
-        );
-        return listIds;
-    }
+//    public List<String> ensureActivitiesTypes(@NotEmpty String domainId, @NotEmpty String workTypeId, @Valid List<NewActivityTypeDTO> newActivityTypeDTOS) {
+//        List<String> listIds = new ArrayList<>();
+//        newActivityTypeDTOS.forEach(
+//                at -> listIds.add(ensureActivityType(domainId, workTypeId, at))
+//        );
+//        return listIds;
+//    }
 
 
     /**
@@ -340,7 +340,7 @@ public class DomainService {
      */
     public List<ActivityTypeDTO> findAllActivityTypes(@NotEmpty String domainId, @NotNull String workTypeId) {
         var workTypeList = wrapCatch(
-                () -> activityTypeRepository.findAllByDomainIdAndWorkId(domainId, workTypeId),
+                () -> activityTypeRepository.findAllByDomainIdAndWorkTypeId(domainId, workTypeId),
                 -1
         );
         return workTypeList.stream().map(domainMapper::toDTO).toList();
@@ -353,10 +353,14 @@ public class DomainService {
      */
     public List<ActivityTypeSubtypeDTO> findAllActivitySubTypes(@NotEmpty String domainId, @NotNull String workTypeId, @NotNull String activityTypeId) {
         var activityType = wrapCatch(
-                () -> activityTypeRepository.findByDomainIdAndWorkIdAndId(domainId, workTypeId, activityTypeId),
+                () -> activityTypeRepository.findByDomainIdIsAndWorkTypeIdIsAndIdIs(domainId, workTypeId, activityTypeId),
                 -1
         );
-        return activityType.getActivityTypeSubtypes().stream().map(domainMapper::toDTO).toList();
+        return activityType
+                .map(domainMapper::toDTO)
+                .map(ActivityTypeDTO::activityTypeSubtypes)
+                .map(ArrayList::new)
+                .orElseThrow(() -> ActivityTypeNotFound.notFoundById().errorCode(-2).activityTypeId(activityTypeId).build());
     }
 
     /**

@@ -74,6 +74,7 @@ public class LOVControllerTest {
         );
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")

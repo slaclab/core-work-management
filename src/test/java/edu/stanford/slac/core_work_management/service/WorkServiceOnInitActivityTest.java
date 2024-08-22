@@ -114,16 +114,16 @@ public class WorkServiceOnInitActivityTest {
                         )
                 );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
-        M101_InitWorkType initWorkType = new M101_InitWorkType(lovService, workService);
-        assertDoesNotThrow(initWorkType::changeSet);
-        allWorkType = assertDoesNotThrow(
-                () -> workTypeRepository.findAll()
-        );
-        M1002_InitActivityType initActivityType = new M1002_InitActivityType(lovService, workService, activityTypeRepository);
-        assertDoesNotThrow(initActivityType::changeSet);
-        allActivityTypes = assertDoesNotThrow(
-                () -> activityTypeRepository.findAll()
-        );
+//        M101_InitWorkType initWorkType = new M101_InitWorkType(lovService, workService);
+//        assertDoesNotThrow(initWorkType::changeSet);
+//        allWorkType = assertDoesNotThrow(
+//                () -> workTypeRepository.findAll()
+//        );
+//        M1002_InitActivityType initActivityType = new M1002_InitActivityType(lovService, workService, activityTypeRepository);
+//        assertDoesNotThrow(initActivityType::changeSet);
+//        allActivityTypes = assertDoesNotThrow(
+//                () -> activityTypeRepository.findAll()
+//        );
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
         assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
         projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));

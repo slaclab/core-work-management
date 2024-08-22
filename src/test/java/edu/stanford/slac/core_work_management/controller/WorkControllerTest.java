@@ -167,7 +167,8 @@ public class WorkControllerTest {
         // create work 1
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.ensureWorkType(
+                                domainId,
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 1")
@@ -179,7 +180,8 @@ public class WorkControllerTest {
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.ensureWorkType(
+                                domainId,
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 2")
@@ -192,7 +194,9 @@ public class WorkControllerTest {
         // create activity type for work 1
         testActivityTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
+                        () -> domainService.ensureActivityType(
+                                domainId,
+                                testWorkTypeIds.getFirst(),
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 1")
@@ -203,7 +207,9 @@ public class WorkControllerTest {
         );
         testActivityTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
+                        () -> domainService.ensureActivityType(
+                                domainId,
+                                testWorkTypeIds.getFirst(),
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 2")
@@ -217,7 +223,9 @@ public class WorkControllerTest {
         // create activity type for work 2
         testActivityTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
+                        () -> domainService.ensureActivityType(
+                                domainId,
+                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 3")
@@ -228,7 +236,9 @@ public class WorkControllerTest {
         );
         testActivityTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
+                        () -> domainService.ensureActivityType(
+                                domainId,
+                                testWorkTypeIds.get(1),
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 4")

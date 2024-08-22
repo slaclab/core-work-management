@@ -4,6 +4,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.DomainService;
+import edu.stanford.slac.core_work_management.service.LOVService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -28,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class DomainInitTest {
     @Autowired
+    private LOVService lovService;
+    @Autowired
     private DomainService domainService;
 
     @Autowired
@@ -42,7 +45,7 @@ public class DomainInitTest {
 
     @Test
     public void initTest() {
-        M1000_InitDomain initWorkType = new M1000_InitDomain(domainService);
+        M1000_InitDomain initWorkType = new M1000_InitDomain(lovService, domainService);
         assertDoesNotThrow(initWorkType::changeSet);
         var allDomain = assertDoesNotThrow(
                 () -> domainService.finAll()

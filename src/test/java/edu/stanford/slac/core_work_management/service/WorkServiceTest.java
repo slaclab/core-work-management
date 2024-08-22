@@ -167,7 +167,8 @@ public class WorkServiceTest {
     @Test
     public void createNewWork() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -196,7 +197,8 @@ public class WorkServiceTest {
     @Test
     public void updateWorkOK() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -239,7 +241,8 @@ public class WorkServiceTest {
     @Test
     public void updateWorkFailOnInvalidLocationForDomainId() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -285,7 +288,8 @@ public class WorkServiceTest {
     @Test
     public void updateWorkFailOnInvalidShopGroupForDomainId() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -331,7 +335,8 @@ public class WorkServiceTest {
     @Test
     public void createNewWorkFailWithLocationInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -364,7 +369,8 @@ public class WorkServiceTest {
     @Test
     public void createNewWorkFailWithShopGroupInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -397,7 +403,8 @@ public class WorkServiceTest {
     @Test
     public void createNewWorkAndGetIt() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -444,7 +451,8 @@ public class WorkServiceTest {
     public void createNewActivityOK() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -471,7 +479,9 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotEmpty();
         // create new activity type for work type
         String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
+                () -> domainService.ensureActivityType(
+                        domainId,
+                        newWorkId,
                         NewActivityTypeDTO
                                 .builder()
                                 .title("Activity 1")
@@ -525,7 +535,8 @@ public class WorkServiceTest {
     public void createNewActivityFailOnWorkCustomFieldInfo() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -552,7 +563,9 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotEmpty();
         // create new activity type for work type
         String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
+                () -> domainService.ensureActivityType(
+                        domainId,
+                        newWorkId,
                         NewActivityTypeDTO
                                 .builder()
                                 .title("Activity 1")
@@ -574,7 +587,7 @@ public class WorkServiceTest {
         assertThat(newActivityTypeId).isNotEmpty();
 
         var activityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId, newActivityTypeId)
         );
         assertThat(activityType).isNotNull();
         assertThat(activityType.customFields()).isNotNull().hasSize(1);
@@ -620,7 +633,8 @@ public class WorkServiceTest {
     public void createNewActivityWithCustomAttributesOK() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -647,7 +661,9 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotEmpty();
         // create new activity type for work type
         String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.createNew(
+                () -> domainService.createNew(
+                        domainId,
+                        newWorkTypeId,
                         NewActivityTypeDTO
                                 .builder()
                                 .title("Activity 1")
@@ -670,7 +686,7 @@ public class WorkServiceTest {
         assertThat(newActivityTypeId).isNotEmpty();
 
         var fullActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId, newActivityTypeId)
         );
 
         // create new activity OK
@@ -683,12 +699,12 @@ public class WorkServiceTest {
                                 .description("Activity 1 description")
                                 .activityTypeId(newActivityTypeId)
                                 .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .project(projectLovValues.get(0).id())
+                                .project(projectLovValues.getFirst().id())
                                 .customFieldValues(
                                         List.of(
                                                 WriteCustomFieldDTO
                                                         .builder()
-                                                        .id(fullActivityType.customFields().get(0).id())
+                                                        .id(fullActivityType.customFields().getFirst().id())
                                                         .value(
                                                                 ValueDTO
                                                                         .builder()
@@ -726,7 +742,8 @@ public class WorkServiceTest {
     public void updateActivityWithCustomAttributesOK() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -746,14 +763,16 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
+                                .project(projectLovValues.getFirst().id())
                                 .build()
                 )
         );
         assertThat(newWorkId).isNotEmpty();
         // create new activity type for work type
         String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.createNew(
+                () -> domainService.createNew(
+                        domainId,
+                        newWorkTypeId,
                         NewActivityTypeDTO
                                 .builder()
                                 .title("Activity 1")
@@ -776,7 +795,7 @@ public class WorkServiceTest {
         assertThat(newActivityTypeId).isNotEmpty();
 
         var fullActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId, newActivityTypeId)
         );
 
         // create new activity OK
@@ -793,7 +812,7 @@ public class WorkServiceTest {
                                         List.of(
                                                 WriteCustomFieldDTO
                                                         .builder()
-                                                        .id(fullActivityType.customFields().get(0).id())
+                                                        .id(fullActivityType.customFields().getFirst().id())
                                                         .value(
                                                                 ValueDTO
                                                                         .builder()
@@ -866,7 +885,8 @@ public class WorkServiceTest {
     public void createNewActivityCheckValidationError() {
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -893,7 +913,9 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotEmpty();
         // create new activity type for work type
         String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.createNew(
+                () -> domainService.createNew(
+                        domainId,
+                        newWorkTypeId,
                         NewActivityTypeDTO
                                 .builder()
                                 .title("Activity 1")
@@ -924,7 +946,7 @@ public class WorkServiceTest {
         assertThat(newActivityTypeId).isNotEmpty();
 
         var fullActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
+                () -> domainService.findActivityTypeById(domainId, newWorkTypeId, newActivityTypeId)
         );
 
         // check duplicated id
@@ -1072,7 +1094,8 @@ public class WorkServiceTest {
     public void testWorkChanges() {
         // create base work
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")

@@ -101,7 +101,7 @@ public class LogControllerTest {
 
         // crete lov for 'project' static filed
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        assertDoesNotThrow(m1004_initProjectLOV::changeSet);
         projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
 
         // create domain
@@ -116,6 +116,7 @@ public class LogControllerTest {
 
         // create test work
         workActivityIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -174,7 +175,8 @@ public class LogControllerTest {
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
 
         newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
@@ -204,7 +206,9 @@ public class LogControllerTest {
         // create activity type for work 2
         testActivityTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
+                        () -> domainService.ensureActivityType(
+                                domainId,
+                                newWorkId,
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 3")
@@ -215,7 +219,9 @@ public class LogControllerTest {
         );
         testActivityTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
+                        () -> domainService.ensureActivityType(
+                                domainId,
+                                newWorkId,
                                 NewActivityTypeDTO
                                         .builder()
                                         .title("Activity 4")

@@ -11,15 +11,17 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Service
-
 public class HelperService {
     @Autowired
     WorkService workService;
+    @Autowired
+    DomainService domainService;
 
-    public List<String> ensureWorkAndActivitiesTypes(NewWorkTypeDTO newWorkTypeDTO, List<NewActivityTypeDTO> newActivityTypeDTOS) {
+    public List<String> ensureWorkAndActivitiesTypes(String domainId, NewWorkTypeDTO newWorkTypeDTO, List<NewActivityTypeDTO> newActivityTypeDTOS) {
         List<String> listIds = new ArrayList<>();
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.ensureWorkType(
+                        domainId,
                         newWorkTypeDTO
                 )
         );
@@ -27,7 +29,9 @@ public class HelperService {
         listIds.add(newWorkTypeId);
         for(NewActivityTypeDTO newActivityDTO : newActivityTypeDTOS) {
             String newActivityTypeId = assertDoesNotThrow(
-                    () -> workService.ensureActivityType(
+                    () -> domainService.ensureActivityType(
+                            domainId,
+                            newWorkTypeId,
                             newActivityDTO
                     )
             );

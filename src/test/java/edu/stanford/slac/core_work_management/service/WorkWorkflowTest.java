@@ -114,13 +114,14 @@ public class WorkWorkflowTest {
         assertThat(locationId).isNotEmpty();
         // crete lov for 'project' static filed
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        assertDoesNotThrow(m1004_initProjectLOV::changeSet);
         projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @Test
     public void creatingNewWorkItIsInNewState() {
-        var wtId = workService.ensureWorkType(
+        var wtId = domainService.ensureWorkType(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -152,7 +153,8 @@ public class WorkWorkflowTest {
     public void testWorkNumberSequences() {
         List<String> workIds = new ArrayList<>();
         Set<Long> workNumbers = new HashSet<>();
-        var wtId = workService.ensureWorkType(
+        var wtId = domainService.ensureWorkType(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -191,7 +193,8 @@ public class WorkWorkflowTest {
         List<Future<String>> futures;
         List<String> workIds = new ArrayList<>();
         Set<Long> workNumbers = new HashSet<>();
-        var wtId = workService.ensureWorkType(
+        var wtId = domainService.ensureWorkType(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -254,7 +257,8 @@ public class WorkWorkflowTest {
 
     @Test
     public void createNewActivitySendWorkInScheduledJobOK() {
-        var wtId = workService.ensureWorkType(
+        var wtId = domainService.ensureWorkType(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -262,7 +266,9 @@ public class WorkWorkflowTest {
                         .build()
         );
         assertThat(wtId).isNotNull();
-        var atId = workService.ensureActivityType(
+        var atId = domainService.ensureActivityType(
+                domainId,
+                wtId,
                 NewActivityTypeDTO
                         .builder()
                         .title("Activity 1")
@@ -322,6 +328,7 @@ public class WorkWorkflowTest {
     @Test
     public void createNewActivitySetToCloseSendWorkInReviewToWorkOK() {
         var listIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -406,6 +413,7 @@ public class WorkWorkflowTest {
     @Test
     public void createNewActivitySetToCloseSendWorkInReviewToWorkWithMoreActivityOK() {
         var listIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -535,6 +543,7 @@ public class WorkWorkflowTest {
     @Test
     public void errorClosingWorkInWrongState() {
         var listIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
@@ -581,6 +590,7 @@ public class WorkWorkflowTest {
     @Test
     public void closeWorkWhenInReviewOK() {
         var listIds = helperService.ensureWorkAndActivitiesTypes(
+                domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
