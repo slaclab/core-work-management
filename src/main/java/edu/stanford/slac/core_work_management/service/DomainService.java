@@ -193,7 +193,9 @@ public class DomainService {
                 );
     }
 
-
+    public void updateWorkType(@NotEmpty String domainId, @Valid String workTypeId, @Valid UpdateWorkTypeDTO workTypeDTO) {
+       //todo implement
+    }
     /**
      * Return all the work types for a specific domain id
      *

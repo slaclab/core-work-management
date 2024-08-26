@@ -115,7 +115,6 @@ public class WorkControllerTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
 
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -191,68 +190,11 @@ public class WorkControllerTest {
                 )
         );
 
-        // create activity type for work 1
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.getFirst(),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 1")
-                                        .description("Activity 1 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.getFirst(),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 2")
-                                        .description("Activity 2 description")
-                                        .build()
-                        )
-                )
-        );
-
-
-        // create activity type for work 2
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.get(1),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.get(1),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 4")
-                                        .description("Activity 4 description")
-                                        .build()
-                        )
-                )
-        );
     }
 
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
@@ -362,50 +304,6 @@ public class WorkControllerTest {
                 .hasSize(testWorkTypeIds.size())
                 .extracting(WorkTypeDTO::id)
                 .contains(testWorkTypeIds.toArray(new String[0]));
-    }
-
-    @Test
-    public void testFetchAllActivityTypes() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerFindAllActivityTypes(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user1@slac.stanford.edu")
-                        )
-                );
-
-        assertThat(newWorkIdResult.getPayload())
-                .hasSize(testActivityTypeIds.size())
-                .extracting(ActivityTypeDTO::id)
-                .contains(testActivityTypeIds.toArray(new String[0]));
-    }
-
-    @Test
-    public void testFetchAllActivityTypeSubTypes() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerFindAllActivitySubTypes(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user1@slac.stanford.edu")
-                        )
-                );
-
-        assertThat(newWorkIdResult.getPayload())
-                .contains(
-                        ActivityTypeSubtypeDTO.BugFix,
-                        ActivityTypeSubtypeDTO.DeferredRepair,
-                        ActivityTypeSubtypeDTO.Enhancement,
-                        ActivityTypeSubtypeDTO.Fabrication,
-                        ActivityTypeSubtypeDTO.Inspection,
-                        ActivityTypeSubtypeDTO.Installation,
-                        ActivityTypeSubtypeDTO.Maintenance,
-                        ActivityTypeSubtypeDTO.NewApplication,
-                        ActivityTypeSubtypeDTO.Safety,
-                        ActivityTypeSubtypeDTO.SoftwareRelease,
-                        ActivityTypeSubtypeDTO.Other
-                );
     }
 
     @Test
@@ -670,26 +568,11 @@ public class WorkControllerTest {
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
 
-        var newActivityIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResult.getPayload()).isNotNull();
+        //todo create a new subwork
     }
 
     @Test
+    //todo fix with subwork
     public void testFindAllActivityForWorkId() {
         String[] activityIds = new String[10];
         var newWorkIdResult =
@@ -712,62 +595,25 @@ public class WorkControllerTest {
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
         for (int i = 0; i < 10; i++) {
-            var newActivityIdResult =
-                    assertDoesNotThrow(
-                            () -> testControllerHelperService.workControllerCreateNew(
-                                    mockMvc,
-                                    status().isCreated(),
-                                    Optional.of("user1@slac.stanford.edu"),
-                                    newWorkIdResult.getPayload(),
-                                    NewActivityDTO.builder()
-                                            .activityTypeId(testActivityTypeIds.getFirst())
-                                            .title("New activity 1")
-                                            .description("activity 1 description")
-                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                            .build()
-                            )
-                    );
-            assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-            assertThat(newActivityIdResult.getPayload()).isNotNull();
-            activityIds[i] = newActivityIdResult.getPayload();
+//            var newActivityIdResult =
+//                    assertDoesNotThrow(
+//                            () -> testControllerHelperService.workControllerCreateNew(
+//                                    mockMvc,
+//                                    status().isCreated(),
+//                                    Optional.of("user1@slac.stanford.edu"),
+//                                    newWorkIdResult.getPayload(),
+//                                    NewActivityDTO.builder()
+//                                            .activityTypeId(testActivityTypeIds.getFirst())
+//                                            .title("New activity 1")
+//                                            .description("activity 1 description")
+//                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                            .build()
+//                            )
+//                    );
+//            assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+//            assertThat(newActivityIdResult.getPayload()).isNotNull();
+//            activityIds[i] = newActivityIdResult.getPayload();
         }
-
-        // find all activity for work by the admin
-        var allActivityFound =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerFindAllActivitiesByWorkId(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                newWorkIdResult.getPayload()
-                        )
-                );
-        assertThat(allActivityFound.getErrorCode()).isEqualTo(0);
-        assertThat(allActivityFound.getPayload())
-                .hasSize(activityIds.length)
-                .extracting(ActivitySummaryDTO::id)
-                .contains(activityIds);
-
-        assertThat(allActivityFound.getPayload())
-                .hasSize(activityIds.length)
-                .extracting(ActivitySummaryDTO::access)
-                .containsOnly(AuthorizationTypeDTO.Admin);
-
-        // get all by a normal user (all user should be enabled to read all the activities)
-        allActivityFound =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerFindAllActivitiesByWorkId(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user2@slac.stanford.edu"),
-                                newWorkIdResult.getPayload()
-                        )
-                );
-        assertThat(allActivityFound.getErrorCode()).isEqualTo(0);
-        assertThat(allActivityFound.getPayload())
-                .hasSize(activityIds.length)
-                .extracting(ActivitySummaryDTO::access)
-                .containsOnly(AuthorizationTypeDTO.Read);
     }
 
     @Test
@@ -794,24 +640,24 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        var newActivityIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResult.getPayload()).isNotNull();
+        //todo implements with subwork
+//        var newActivityIdResult =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerCreateNew(
+//                                mockMvc,
+//                                status().isCreated(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                NewActivityDTO.builder()
+//                                        .activityTypeId(testActivityTypeIds.getFirst())
+//                                        .title("New activity 1")
+//                                        .description("activity 1 description")
+//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+//        assertThat(newActivityIdResult.getPayload()).isNotNull();
     }
 
     @Test
@@ -839,23 +685,24 @@ public class WorkControllerTest {
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
 
-        var newActivityIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user2@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResult.getPayload()).isNotNull();
+        //todo implements with subwork
+//        var newActivityIdResult =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerCreateNew(
+//                                mockMvc,
+//                                status().isCreated(),
+//                                Optional.of("user2@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                NewActivityDTO.builder()
+//                                        .activityTypeId(testActivityTypeIds.getFirst())
+//                                        .title("New activity 1")
+//                                        .description("activity 1 description")
+//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+//        assertThat(newActivityIdResult.getPayload()).isNotNull();
     }
 
     @Test
@@ -882,24 +729,24 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        var newActivityIdResultByUser3 =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.get(2))
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
+        //todo implements with subwork
+//        var newActivityIdResultByUser3 =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerCreateNew(
+//                                mockMvc,
+//                                status().isCreated(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                NewActivityDTO.builder()
+//                                        .activityTypeId(testActivityTypeIds.get(2))
+//                                        .title("New activity 1")
+//                                        .description("activity 1 description")
+//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
+//        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
     }
 
     @Test
@@ -926,24 +773,24 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        var newActivityIdResultByUser3 =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
+        //todo implements with subwork
+//        var newActivityIdResultByUser3 =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerCreateNew(
+//                                mockMvc,
+//                                status().isCreated(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                NewActivityDTO.builder()
+//                                        .activityTypeId(testActivityTypeIds.getFirst())
+//                                        .title("New activity 1")
+//                                        .description("activity 1 description")
+//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
+//        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
     }
 
     @Test
@@ -1256,68 +1103,68 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        var newActivityIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResult.getPayload()).isNotNull();
-        // check saved data
-        var fulActivityResult = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindById(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user3@slac.stanford.edu"),
-                        newWorkIdResult.getPayload(),
-                        newActivityIdResult.getPayload()
-                )
-        );
-        assertThat(fulActivityResult.getErrorCode()).isEqualTo(0);
-        assertThat(fulActivityResult.getPayload()).isNotNull();
-        assertThat(fulActivityResult.getPayload().title()).isEqualTo("New activity 1");
-        assertThat(fulActivityResult.getPayload().description()).isEqualTo("activity 1 description");
-
-        // try to update
-        assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user3@slac.stanford.edu"),
-                        newWorkIdResult.getPayload(),
-                        newActivityIdResult.getPayload(),
-                        UpdateActivityDTO.builder()
-                                .title("New activity 1 updated")
-                                .description("activity 1 description updated")
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-
-        var fulActivityUpdateResult = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindById(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user3@slac.stanford.edu"),
-                        newWorkIdResult.getPayload(),
-                        newActivityIdResult.getPayload()
-                )
-        );
-        assertThat(fulActivityUpdateResult.getErrorCode()).isEqualTo(0);
-        assertThat(fulActivityUpdateResult.getPayload()).isNotNull();
-        assertThat(fulActivityUpdateResult.getPayload().title()).isEqualTo("New activity 1 updated");
-        assertThat(fulActivityUpdateResult.getPayload().description()).isEqualTo("activity 1 description updated");
+        //todo implements with subwork
+//        var newActivityIdResult =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerCreateNew(
+//                                mockMvc,
+//                                status().isCreated(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                NewActivityDTO.builder()
+//                                        .activityTypeId(testActivityTypeIds.getFirst())
+//                                        .title("New activity 1")
+//                                        .description("activity 1 description")
+//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+//        assertThat(newActivityIdResult.getPayload()).isNotNull();
+//        // check saved data
+//        var fulActivityResult = assertDoesNotThrow(
+//                () -> testControllerHelperService.workControllerFindById(
+//                        mockMvc,
+//                        status().isOk(),
+//                        Optional.of("user3@slac.stanford.edu"),
+//                        newWorkIdResult.getPayload(),
+//                        newActivityIdResult.getPayload()
+//                )
+//        );
+//        assertThat(fulActivityResult.getErrorCode()).isEqualTo(0);
+//        assertThat(fulActivityResult.getPayload()).isNotNull();
+//        assertThat(fulActivityResult.getPayload().title()).isEqualTo("New activity 1");
+//        assertThat(fulActivityResult.getPayload().description()).isEqualTo("activity 1 description");
+//
+//        // try to update
+//        assertDoesNotThrow(
+//                () -> testControllerHelperService.workControllerUpdate(
+//                        mockMvc,
+//                        status().isOk(),
+//                        Optional.of("user3@slac.stanford.edu"),
+//                        newWorkIdResult.getPayload(),
+//                        newActivityIdResult.getPayload(),
+//                        UpdateActivityDTO.builder()
+//                                .title("New activity 1 updated")
+//                                .description("activity 1 description updated")
+//                                .project(projectLovValues.get(0).id())
+//                                .build()
+//                )
+//        );
+//
+//        var fulActivityUpdateResult = assertDoesNotThrow(
+//                () -> testControllerHelperService.workControllerFindById(
+//                        mockMvc,
+//                        status().isOk(),
+//                        Optional.of("user3@slac.stanford.edu"),
+//                        newWorkIdResult.getPayload(),
+//                        newActivityIdResult.getPayload()
+//                )
+//        );
+//        assertThat(fulActivityUpdateResult.getErrorCode()).isEqualTo(0);
+//        assertThat(fulActivityUpdateResult.getPayload()).isNotNull();
+//        assertThat(fulActivityUpdateResult.getPayload().title()).isEqualTo("New activity 1 updated");
+//        assertThat(fulActivityUpdateResult.getPayload().description()).isEqualTo("activity 1 description updated");
     }
 
     @Test
@@ -1344,51 +1191,51 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotEmpty();
-
-        var newActivityIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newActivityIdResult.getPayload()).isNotEmpty();
-
-        var updateStatusResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerUpdateStatus(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                newActivityIdResult.getPayload(),
-                                UpdateActivityStatusDTO
-                                        .builder()
-                                        .newStatus(ActivityStatusDTO.Completed)
-                                        .build()
-                        )
-                );
-        assertThat(updateStatusResult.getErrorCode()).isEqualTo(0);
-
-        // check the workflow status
-        assertThat(
-                helperService.checkStatusAndHistoryOnActivity(
-                        newActivityIdResult.getPayload(),
-                        ImmutableList.of(
-                                ActivityStatusDTO.Completed,
-                                ActivityStatusDTO.New
-                        )
-                )
-        ).isTrue();
+        //todo implements with subwork
+//        var newActivityIdResult =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerCreateNew(
+//                                mockMvc,
+//                                status().isCreated(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                NewActivityDTO.builder()
+//                                        .activityTypeId(testActivityTypeIds.getFirst())
+//                                        .title("New activity 1")
+//                                        .description("activity 1 description")
+//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
+//        assertThat(newActivityIdResult.getPayload()).isNotEmpty();
+//
+//        var updateStatusResult =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerUpdateStatus(
+//                                mockMvc,
+//                                status().isOk(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                newActivityIdResult.getPayload(),
+//                                UpdateActivityStatusDTO
+//                                        .builder()
+//                                        .newStatus(ActivityStatusDTO.Completed)
+//                                        .build()
+//                        )
+//                );
+//        assertThat(updateStatusResult.getErrorCode()).isEqualTo(0);
+//
+//        // check the workflow status
+//        assertThat(
+//                helperService.checkStatusAndHistoryOnActivity(
+//                        newActivityIdResult.getPayload(),
+//                        ImmutableList.of(
+//                                ActivityStatusDTO.Completed,
+//                                ActivityStatusDTO.New
+//                        )
+//                )
+//        ).isTrue();
         // work latest status should be review
         assertThat(
                 helperService.checkStatusAndHistoryOnWork(
@@ -1400,40 +1247,40 @@ public class WorkControllerTest {
                         )
                 )
         ).isTrue();
-
-        // try closing the work with an unauthorized user
-        var reviewNotAuthorizeOnCreator =
-                assertThrows(
-                        NotAuthorized.class,
-                        () -> testControllerHelperService.workControllerReviewWork(
-                                mockMvc,
-                                status().isUnauthorized(),
-                                Optional.of("user3@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                newActivityIdResult.getPayload(),
-                                ReviewWorkDTO
-                                        .builder()
-                                        .followUpDescription("work has completely finished")
-                                        .build()
-                        )
-                );
-        assertThat(reviewNotAuthorizeOnCreator.getErrorCode()).isEqualTo(-1);
-        // review the work with location area manager
-        var reviewWorkResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerReviewWork(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user2@slac.stanford.edu"),
-                                newWorkIdResult.getPayload(),
-                                newActivityIdResult.getPayload(),
-                                ReviewWorkDTO
-                                        .builder()
-                                        .followUpDescription("work has completely finished")
-                                        .build()
-                        )
-                );
-        assertThat(reviewWorkResult.getErrorCode()).isEqualTo(0);
+//
+//        // try closing the work with an unauthorized user
+//        var reviewNotAuthorizeOnCreator =
+//                assertThrows(
+//                        NotAuthorized.class,
+//                        () -> testControllerHelperService.workControllerReviewWork(
+//                                mockMvc,
+//                                status().isUnauthorized(),
+//                                Optional.of("user3@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                newActivityIdResult.getPayload(),
+//                                ReviewWorkDTO
+//                                        .builder()
+//                                        .followUpDescription("work has completely finished")
+//                                        .build()
+//                        )
+//                );
+//        assertThat(reviewNotAuthorizeOnCreator.getErrorCode()).isEqualTo(-1);
+//        // review the work with location area manager
+//        var reviewWorkResult =
+//                assertDoesNotThrow(
+//                        () -> testControllerHelperService.workControllerReviewWork(
+//                                mockMvc,
+//                                status().isOk(),
+//                                Optional.of("user2@slac.stanford.edu"),
+//                                newWorkIdResult.getPayload(),
+//                                newActivityIdResult.getPayload(),
+//                                ReviewWorkDTO
+//                                        .builder()
+//                                        .followUpDescription("work has completely finished")
+//                                        .build()
+//                        )
+//                );
+//        assertThat(reviewWorkResult.getErrorCode()).isEqualTo(0);
         // check the updated workflow states
         assertThat(
                 helperService.checkStatusAndHistoryOnWork(
@@ -1446,24 +1293,6 @@ public class WorkControllerTest {
                         )
                 )
         ).isTrue();
-    }
-
-    @Test
-    public void getPermittedStatusFromASpecificOne() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerGetPermittedStatus(
-                                mockMvc,
-                                status().isOk(),
-                                Optional.of("user2@slac.stanford.edu"),
-                                ActivityStatusDTO.New
-                        )
-                );
-
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload())
-                .isNotEmpty()
-                .contains(ActivityStatusDTO.Completed, ActivityStatusDTO.Approved, ActivityStatusDTO.Drop, ActivityStatusDTO.Roll);
     }
 
     @Test

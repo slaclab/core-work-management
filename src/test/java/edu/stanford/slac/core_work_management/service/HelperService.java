@@ -17,7 +17,7 @@ public class HelperService {
     @Autowired
     DomainService domainService;
 
-    public List<String> ensureWorkAndActivitiesTypes(String domainId, NewWorkTypeDTO newWorkTypeDTO, List<NewActivityTypeDTO> newActivityTypeDTOS) {
+    public List<String> ensureWorkAndActivitiesTypes(String domainId, NewWorkTypeDTO newWorkTypeDTO, List<NewWorkTypeDTO> subWork) {
         List<String> listIds = new ArrayList<>();
         String newWorkTypeId = assertDoesNotThrow(
                 () -> domainService.ensureWorkType(
@@ -27,17 +27,6 @@ public class HelperService {
         );
         assertThat(newWorkTypeId).isNotNull();
         listIds.add(newWorkTypeId);
-        for(NewActivityTypeDTO newActivityDTO : newActivityTypeDTOS) {
-            String newActivityTypeId = assertDoesNotThrow(
-                    () -> domainService.ensureActivityType(
-                            domainId,
-                            newWorkTypeId,
-                            newActivityDTO
-                    )
-            );
-            assertThat(newActivityTypeId).isNotEmpty();
-            listIds.add(newActivityTypeId);
-        }
         return listIds;
     }
 
@@ -64,35 +53,6 @@ public class HelperService {
             if(foundFullWork.currentStatus().status().equals(workStatusList.getFirst())) {
                 for(int idx = 0; idx < foundFullWork.statusHistory().size(); idx++)
                     if (!foundFullWork.statusHistory().get(idx).status().equals(workStatusList.get(idx + 1))) {
-                        return false;
-                    }
-            } else
-                return false;
-        } else
-            return false;
-        return true;
-    }
-
-    /**
-     * Fetch activity and check status from latest to oldest status value
-     */
-    public boolean checkStatusOnActivity(String activityId, ActivityStatusDTO activityStatus){
-        var foundFullActivity =  assertDoesNotThrow(
-                ()->workService.findActivityById(activityId)
-        );
-        assertThat(foundFullActivity).isNotNull();
-        return foundFullActivity.currentStatus().status().equals(activityStatus);
-    }
-
-    public boolean checkStatusAndHistoryOnActivity(String activityId, List<ActivityStatusDTO> activityStatus){
-        var foundFullActivity =  assertDoesNotThrow(
-                ()->workService.findActivityById(activityId)
-        );
-        assertThat(foundFullActivity).isNotNull();
-        if(activityStatus != null && !activityStatus.isEmpty()) {
-            if(foundFullActivity.currentStatus().status().equals(activityStatus.getFirst())) {
-                for(int idx = 0; idx < foundFullActivity.statusHistory().size(); idx++)
-                    if (!foundFullActivity.statusHistory().get(idx).status().equals(activityStatus.get(idx + 1))) {
                         return false;
                     }
             } else

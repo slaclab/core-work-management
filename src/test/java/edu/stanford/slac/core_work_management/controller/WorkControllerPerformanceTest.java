@@ -114,7 +114,6 @@ public class WorkControllerPerformanceTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
 
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -190,68 +189,11 @@ public class WorkControllerPerformanceTest {
                 )
         );
 
-        // create activity type for work 1
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.getFirst(),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 1")
-                                        .description("Activity 1 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.getFirst(),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 2")
-                                        .description("Activity 2 description")
-                                        .build()
-                        )
-                )
-        );
-
-
-        // create activity type for work 2
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.get(1),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                testWorkTypeIds.get(1),
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 4")
-                                        .description("Activity 4 description")
-                                        .build()
-                        )
-                )
-        );
     }
 
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), LOVElement.class);

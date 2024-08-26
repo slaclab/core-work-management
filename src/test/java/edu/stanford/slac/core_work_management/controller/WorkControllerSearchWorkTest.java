@@ -106,7 +106,6 @@ public class WorkControllerSearchWorkTest {
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -268,7 +267,6 @@ public class WorkControllerSearchWorkTest {
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
 
         appProperties.getRootUserList().clear();

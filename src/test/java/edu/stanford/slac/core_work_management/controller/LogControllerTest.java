@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -82,7 +83,6 @@ public class LogControllerTest {
     private String locationId;
     private String newWorkTypeId;
     private String newWorkId;
-    private List<String> testActivityTypeIds = new ArrayList<>();
     private String newActivityId;
     private List<LOVElementDTO> projectLovValues;
     @BeforeAll
@@ -90,8 +90,6 @@ public class LogControllerTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
@@ -122,19 +120,7 @@ public class LogControllerTest {
                         .title("Update the documentation")
                         .description("Update the documentation description")
                         .build(),
-                of(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        of(
-                                                WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                                WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build()
-                                        )
-                                )
-                                .build()
-                )
+                emptyList()
         );
         assertThat(workActivityIds).hasSize(2);
 
@@ -203,47 +189,7 @@ public class LogControllerTest {
                 );
         assertThat(newWorkId).isNotEmpty();
 
-        // create activity type for work 2
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                newWorkId,
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.ensureActivityType(
-                                domainId,
-                                newWorkId,
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 4")
-                                        .description("Activity 4 description")
-                                        .build()
-                        )
-                )
-        );
-
-        newActivityId =
-                assertDoesNotThrow(
-                        () -> workService.createNew(
-                                newWorkId,
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityId).isNotNull();
+        // crea
     }
 
     @BeforeEach
@@ -380,7 +326,6 @@ public class LogControllerTest {
                             status().isCreated(),
                             Optional.of("user1@slac.stanford.edu"),
                             newWorkId,
-                            newActivityId,
                             NewLogEntry
                                     .builder()
                                     .title("second test entry from cwm")
@@ -403,8 +348,6 @@ public class LogControllerTest {
             assertThat(uploadResult).isNotNull();
             assertThat(uploadResult.getPayload()).isTrue();
 
-            //try to fetch the log entry using elog api
-            var fulActivity = workService.findActivityById(newActivityId);
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)
@@ -421,7 +364,7 @@ public class LogControllerTest {
                                 null,
                                 null,
                                 null,
-                                "cwm:work:%s:activity:%s".formatted(fulActivity.workNumber(), fulActivity.activityNumber())
+                                "cwm:work:%s".formatted(newWorkId)
                         );
                         return result != null &&
                                 result.getErrorCode() == 0 &&

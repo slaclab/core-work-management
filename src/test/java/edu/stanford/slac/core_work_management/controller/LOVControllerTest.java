@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,7 +55,7 @@ public class LOVControllerTest {
     private DomainService domainService;
 
     private String domainId;
-    private List<String> workActivityIds;
+    private List<String> workIds;
 
 
     @BeforeAll
@@ -62,8 +63,6 @@ public class LOVControllerTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
 
         domainId = domainService.createNew(
@@ -73,29 +72,23 @@ public class LOVControllerTest {
                         .build()
         );
         // create test work
-        workActivityIds = helperService.ensureWorkAndActivitiesTypes(
+        workIds = helperService.ensureWorkAndActivitiesTypes(
                 domainId,
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
                         .description("Update the documentation description")
-                        .build(),
-                ImmutableList.of(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        ImmutableList.of(
-                                                WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                                WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build(),
-                                                WATypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).isLov(false).build()
-                                        )
+                        .customFields(
+                                ImmutableList.of(
+                                        WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
+                                        WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build(),
+                                        WATypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).isLov(false).build()
                                 )
-                                .build()
-                )
+                        )
+                        .build(),
+                emptyList()
         );
-        assertThat(workActivityIds).hasSize(2);
+        assertThat(workIds).hasSize(2);
     }
 
     @BeforeEach
@@ -116,8 +109,8 @@ public class LOVControllerTest {
         );
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1),
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0),
                         "field1",
                         "field1_group"
                 )
@@ -128,8 +121,8 @@ public class LOVControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1)
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0)
                 )
         );
         assertThat(lovFieldList.getErrorCode()).isEqualTo(0);
@@ -151,8 +144,8 @@ public class LOVControllerTest {
 
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1),
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0),
                         "fieldWithSpace",
                         "field_with_space_group"
                 )
@@ -163,8 +156,8 @@ public class LOVControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1)
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0)
                 )
         );
         assertThat(fieldThatAreLovList.getErrorCode()).isEqualTo(0);
@@ -176,8 +169,8 @@ public class LOVControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1),
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0),
                         "fieldWithSpace"
                 )
         );
@@ -205,8 +198,8 @@ public class LOVControllerTest {
 
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1),
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0),
                         "fieldWithSpace",
                         "field_with_space_group"
                 )
@@ -217,30 +210,30 @@ public class LOVControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Activity,
-                        workActivityIds.get(1)
+                        LOVDomainTypeDTO.Work,
+                        workIds.get(0)
                 )
         );
         assertThat(fieldThatAreLovList.getErrorCode()).isEqualTo(0);
         assertThat(fieldThatAreLovList.getPayload())
                 .hasSize(1)
                 .contains("fieldWithSpace");
-
-        var activityType = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindAllActivityTypes(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu")
-                )
-        );
-        assertThat(activityType.getErrorCode()).isEqualTo(0);
-        assertThat(activityType.getPayload())
-                .hasSize(1);
-        assertThat(activityType.getPayload().get(0).customFields())
-                .extracting(WATypeCustomFieldDTO::name)
-                .contains("field1","field2","fieldWithSpace");
-        assertThat(activityType.getPayload().get(0).customFields())
-                .extracting(WATypeCustomFieldDTO::isLov)
-                .contains(false, false, true);
+//todo implement this with worktype
+//        var activityType = assertDoesNotThrow(
+//                () -> testControllerHelperService.domain(
+//                        mockMvc,
+//                        status().isOk(),
+//                        Optional.of("user1@slac.stanford.edu"),
+//                        workIds.get(0),
+//                        WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build()
+//                )
+//        );
+//        assertThat(activityType.getErrorCode()).isEqualTo(0);
+//        assertThat(activityType.getPayload().customFields())
+//                .extracting(CustomFieldDTO::name)
+//                .contains("field1","field2","fieldWithSpace");
+//        assertThat(activityType.getPayload().customFields())
+//                .extracting(WATypeCustomFieldDTO::isLov)
+//                .contains(false, false, true);
     }
 }

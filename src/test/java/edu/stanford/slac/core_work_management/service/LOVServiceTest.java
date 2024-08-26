@@ -79,8 +79,6 @@ public class LOVServiceTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
         // create domain
         domainId = assertDoesNotThrow(
@@ -102,17 +100,7 @@ public class LOVServiceTest {
                         .description("Update the documentation description")
                         .build(),
                 of(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        of(
-                                                WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                                WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build()
-                                        )
-                                )
-                                .build()
+
                 )
         );
         assertThat(workActivityIds).hasSize(2);
@@ -245,14 +233,14 @@ public class LOVServiceTest {
         // add lov for dynamic field
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
+                        LOVDomainTypeDTO.Work,
                         workActivityIds.get(1),
                         "field1",
                         "field1_group"
                 )
         );
         var listOfAllLOV = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, workActivityIds.get(1), "field1")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, workActivityIds.get(1), "field1")
         );
         assertThat(listOfAllLOV).hasSize(2);
         assertThat(listOfAllLOV).extracting(LOVElementDTO::value).contains("field1 value1", "field1 value2");
@@ -264,7 +252,7 @@ public class LOVServiceTest {
         var fieldNotFound = assertThrows(
                 LOVFieldReferenceNotFound.class,
                 () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
+                        LOVDomainTypeDTO.Work,
                         workActivityIds.get(1),
                         "wrong field",
                         "field1_group"
@@ -277,7 +265,7 @@ public class LOVServiceTest {
     public void validateValueOnCreatedLOV() {
         // crete lov for 'project' static filed
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
+        assertDoesNotThrow(m1004_initProjectLOV::changeSet);
         var projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
         // add lov for dynamic field
         assertDoesNotThrow(
@@ -291,7 +279,7 @@ public class LOVServiceTest {
         );
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Activity,
+                        LOVDomainTypeDTO.Work,
                         workActivityIds.get(1),
                         "field1",
                         "field1_group"
@@ -315,47 +303,47 @@ public class LOVServiceTest {
         AssertionsForClassTypes.assertThat(newWorkId).isNotEmpty();
 
         var listOfAllLOVField1 = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Activity, workActivityIds.get(1), "field1")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, workActivityIds.get(1), "field1")
         );
 
         // find the full activity type
-        var fullActivityType = domainService.findActivityTypeById(domainId, workActivityIds.get(0), workActivityIds.get(1));
-
-        // create new activity for work plan send it to ScheduledJob state
-        var newActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(workActivityIds.get(1))
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customFieldValues(
-                                        of(
-                                                WriteCustomFieldDTO.builder()
-                                                        .id(
-                                                                fullActivityType.customFields().get(0).id()
-                                                        ).value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value(listOfAllLOVField1.getFirst().id())
-                                                                        .build()
-                                                        ).build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        AssertionsForClassTypes.assertThat(newActivityId).isNotEmpty();
-
-        var fullActivity = assertDoesNotThrow(
-                () -> workService.findActivityById(
-                        newActivityId
-                )
-        );
-        assertThat(fullActivity.customFields()).hasSize(1);
-        assertThat(fullActivity.customFields().get(0).value().value()).isEqualTo(listOfAllLOVField1.getFirst().value());
+        var fullWorkType = domainService.findWorkTypeById(domainId, workActivityIds.get(0));
+//
+//        // create new activity for work plan send it to ScheduledJob state
+//        var newActivityId = assertDoesNotThrow(
+//                () -> workService.createNew(
+//                        newWorkId,
+//                        NewActivityDTO
+//                                .builder()
+//                                .title("Activity 1")
+//                                .description("Activity 1 description")
+//                                .activityTypeId(workActivityIds.get(1))
+//                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
+//                                .customFieldValues(
+//                                        of(
+//                                                WriteCustomFieldDTO.builder()
+//                                                        .id(
+//                                                                fullActivityType.customFields().get(0).id()
+//                                                        ).value(
+//                                                                ValueDTO
+//                                                                        .builder()
+//                                                                        .type(ValueTypeDTO.String)
+//                                                                        .value(listOfAllLOVField1.getFirst().id())
+//                                                                        .build()
+//                                                        ).build()
+//                                        )
+//                                )
+//                                .build()
+//                )
+//        );
+//        AssertionsForClassTypes.assertThat(newActivityId).isNotEmpty();
+//
+//        var fullActivity = assertDoesNotThrow(
+//                () -> workService.findActivityById(
+//                        newActivityId
+//                )
+//        );
+//        assertThat(fullActivity.customFields()).hasSize(1);
+//        assertThat(fullActivity.customFields().get(0).value().value()).isEqualTo(listOfAllLOVField1.getFirst().value());
     }
 }
