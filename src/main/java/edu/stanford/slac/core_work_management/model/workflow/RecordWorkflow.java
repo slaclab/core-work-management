@@ -1,6 +1,5 @@
 package edu.stanford.slac.core_work_management.model.workflow;
 
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.model.Work;
 
 import java.util.Map;
@@ -22,7 +21,7 @@ public class RecordWorkflow extends BaseWorkflow {
 
 
     @Override
-    public void updateWithModel(Work work, Set<Activity> activities) {
+    public void updateWithModel(Work work) {
 
     }
 }

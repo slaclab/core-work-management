@@ -1,7 +1,5 @@
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.NewActivityTypeDTO;
-import edu.stanford.slac.core_work_management.model.ActivityType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;

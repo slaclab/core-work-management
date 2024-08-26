@@ -43,25 +43,4 @@ public class LogController {
         logService.createNewLogEntry(workId, entry, files);
         return ApiResultResponse.of(true);
     }
-
-    @PostMapping(
-            path = "/work/{workId}/activity/{activityId}",
-            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
-            produces = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    @Operation(summary = "Create a log entry")
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("@workAuthorizationService.checkLoggingOnActivity(#authentication, #workId, #activityId)")
-    public ApiResultResponse<Boolean> createActivityLogEntry(
-            Authentication authentication,
-            @PathVariable() @NotEmpty String workId,
-            @PathVariable() @NotEmpty String activityId,
-            @ModelAttribute @Valid NewLogEntry entry,
-            @RequestPart(value = "files", required = false)
-            MultipartFile[] files
-    ) {
-        // create new log entry
-        logService.createNewLogEntry(workId, activityId, entry, files);
-        return ApiResultResponse.of(true);
-    }
 }

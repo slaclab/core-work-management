@@ -9,7 +9,6 @@ import edu.stanford.slac.core_work_management.exception.ActivityAlreadyAssociate
 import edu.stanford.slac.core_work_management.exception.BucketSlotNotFound;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotActivityStatus;
-import edu.stanford.slac.core_work_management.repository.ActivityRepository;
 import edu.stanford.slac.core_work_management.repository.BucketActivityRepository;
 import edu.stanford.slac.core_work_management.repository.BucketRepository;
 import edu.stanford.slac.core_work_management.service.validation.BucketValidationService;
@@ -27,7 +26,6 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @Service
 @AllArgsConstructor
 public class BucketService {
-    private final ActivityRepository activityRepository;
     private final BucketRepository bucketSlotRepository;
     private final BucketActivityRepository bucketSlotActivityRepository;
     private final BucketSlotMapper bucketSlotMapper;

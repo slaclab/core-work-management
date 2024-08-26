@@ -1,8 +1,5 @@
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.model.Activity;
-import edu.stanford.slac.core_work_management.model.ActivityStatus;
-import edu.stanford.slac.core_work_management.model.ActivityStatusLog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;

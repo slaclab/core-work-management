@@ -69,10 +69,8 @@
 package edu.stanford.slac.core_work_management.service.validation;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
@@ -110,14 +108,7 @@ public class ModelFieldValidationService {
     public void verify(@NotNull Work work, @NotNull List<WATypeCustomField> customFields) {
         verify(work, Objects.requireNonNullElse(work.getCustomFields(),emptyList()), customFields);
     }
-    /**
-     * Verify the custom field
-     * @param activity the activity
-     * @param customFields the custom fields
-     */
-    public void verify(@NotNull Activity activity, @NotNull List<WATypeCustomField> customFields) {
-        verify(activity, Objects.requireNonNullElse(activity.getCustomFields(),emptyList()), customFields);
-    }
+
     /**
      * Verify the custom field
      * @param source the source

@@ -11,8 +11,6 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.repository.ActivityRepository;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
@@ -22,17 +20,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
-import org.springframework.data.mongodb.MongoTransactionException;
-import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
@@ -60,8 +54,6 @@ public class WorkService {
 
     private final WorkRepository workRepository;
     private final WorkTypeRepository workTypeRepository;
-    private final ActivityTypeRepository activityTypeRepository;
-    private final ActivityRepository activityRepository;
     private final LogService logService;
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
@@ -465,305 +457,7 @@ public class WorkService {
         );
     }
 
-    /**
-     * Create a new activity automatically generating the next activity id
-     *
-     * @param workId         the id of the work
-     * @param newActivityDTO the DTO to create the activity
-     * @return the id of the created activity
-     */
-    public String createNew(@NotNull String workId, @Valid NewActivityDTO newActivityDTO) {
-        return createNew(workId, workRepository.getNextActivityNumber(workId), newActivityDTO);
-    }
 
-    /**
-     * Create a new activity
-     *
-     * @param workId              the id of the work
-     * @param nextActivityNumbers the next activity number
-     * @param newActivityDTO      the DTO to create the activity
-     * @return the id of the created activity
-     */
-    @Transactional
-    public String createNew(@NotNull String workId, @NotNull Long nextActivityNumbers, @Valid NewActivityDTO newActivityDTO) {
-        NewActivityDTO newActivityProcessed = newActivityDTO;
-        // check for work existence
-        var work = wrapCatch(
-                () -> workRepository.findById(workId).orElseThrow(
-                        () -> WorkNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .workId(workId)
-                                .build()
-                ),
-                -1
-        );
-
-        var activityType = wrapCatch(
-                () -> activityTypeRepository.findById(newActivityDTO.activityTypeId()).orElseThrow(
-                        () -> ActivityTypeNotFound
-                                .notFoundById()
-                                .errorCode(-2)
-                                .activityTypeId(newActivityDTO.activityTypeId())
-                                .build()
-                ),
-                -3
-        );
-
-        //validate location and shop group against domain
-        if (newActivityProcessed.locationId() != null) {
-            validateLocationForDomain(newActivityProcessed.locationId(), work.getDomainId(), -3);
-        }
-        if (newActivityProcessed.shopGroupId() != null) {
-            validateShopGroupForDomain(newActivityProcessed.shopGroupId(), work.getDomainId(), -4);
-        }
-
-        if(newActivityProcessed.project()==null) {
-            // force project to follow the one expressed by the parent work
-            newActivityProcessed = newActivityProcessed.toBuilder().project(work.getProject()).build();
-        }
-
-        // convert to model
-        var newActivity = workMapper.toModel(newActivityProcessed, workId, work.getWorkNumber(), work.getDomainId(), nextActivityNumbers);
-
-        // validate model custom attributes
-        modelFieldValidationService.verify(
-                newActivity,
-                Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
-        );
-
-        var savedActivity = wrapCatch(
-                () -> activityRepository.save(newActivity),
-                -5
-        );
-
-        // fetch all activity status for work
-        var activityStatusList = wrapCatch(
-                () -> activityRepository.findAllActivityStatusByWorkId(workId),
-                -6
-        );
-
-        // update the work status
-        work.updateStatus(
-                activityStatusList
-                        .stream()
-                        .map(ActivityStatusLog::getStatus)
-                        .collect(Collectors.toSet())
-        );
-
-        // save work and unlock
-        wrapCatch(
-                () -> workRepository.save(work),
-                -7
-        );
-        log.info("New Activity '{}' has been added to work '{}'", savedActivity.getTitle(), work.getTitle());
-        //update domain statistic
-        domainService.updateDomainStatistics(savedActivity.getDomainId());
-        return savedActivity.getId();
-    }
-
-    /**
-     * Update an activity
-     *
-     * @param workId            the id of the work
-     * @param activityId        the id of the activity
-     * @param updateActivityDTO the DTO to update the activity
-     */
-    public void update(@NotNull String workId, @NotNull String activityId, @Valid UpdateActivityDTO updateActivityDTO) {
-        // check for work existence
-        assertion(
-                () -> workRepository.existsById(workId),
-                WorkNotFound
-                        .notFoundById()
-                        .errorCode(-1)
-                        .workId(workId)
-                        .build()
-        );
-        // check for activity
-        var activityStored = wrapCatch(
-                () -> activityRepository.findById(activityId).orElseThrow(
-                        () -> ActivityNotFound
-                                .notFoundById()
-                                .errorCode(-2)
-                                .activityId(activityId)
-                                .build()
-                ),
-                -2
-        );
-
-
-        //fetch the whole activity type
-        var activityType = wrapCatch(
-                () -> activityTypeRepository.findById(activityStored.getActivityTypeId()).orElseThrow(
-                        () -> ActivityTypeNotFound
-                                .notFoundById()
-                                .errorCode(-2)
-                                .activityTypeId(activityStored.getActivityTypeId())
-                                .build()
-                ),
-                -3
-        );
-
-        if (updateActivityDTO.locationId() != null) {
-            validateLocationForDomain(updateActivityDTO.locationId(), activityStored.getDomainId(), -3);
-        }
-        if (updateActivityDTO.shopGroupId() != null) {
-            validateShopGroupForDomain(updateActivityDTO.shopGroupId(), activityStored.getDomainId(), -4);
-        }
-
-        // assert that activity need to be related to the work
-        assertion(
-                () -> workId.equals(activityStored.getWorkId()),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-3)
-                        .errorMessage("The activity does not belong to the work")
-                        .errorDomain("WorkService::update(String,String,UpdateActivityDTO)")
-                        .build()
-        );
-
-        // update the model
-        workMapper.updateModel(updateActivityDTO, activityStored);
-
-        // validate model attribute
-        modelFieldValidationService.verify(
-                activityStored,
-                Objects.requireNonNullElse(activityType.getCustomFields(), emptyList())
-        );
-
-        // save the activity
-        var savedActivity = wrapCatch(
-                () -> activityRepository.save(activityStored),
-                -2
-        );
-        log.info("Activity '{}' has been updated by '{}'", savedActivity.getId(), savedActivity.getLastModifiedBy());
-        //update domain statistic
-        domainService.updateDomainStatistics(activityStored.getDomainId());
-    }
-
-    /**
-     * Return the activity by his id
-     *
-     * @param activityId the id of the activity
-     * @return the activity
-     */
-    public ActivityDTO findActivityById(String activityId) {
-        return wrapCatch(
-                () -> activityRepository.findById(activityId).map(workMapper::toDTO).orElseThrow(
-                        () -> ActivityNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .activityId(activityId)
-                                .build()
-                ),
-                -1
-        );
-    }
-
-    /**
-     * Return all the activities by the work id
-     *
-     * @param workId the id of the work
-     * @return the list of activities
-     */
-    public List<ActivitySummaryDTO> findAllActivitiesByWorkId(String workId) {
-        return wrapCatch(
-                () -> activityRepository.findAllByWorkId(workId)
-                        .stream()
-                        .map(workMapper::toSummaryDTO)
-                        .toList(),
-                -1
-        );
-    }
-
-    /**
-     * Return the activity type by his id
-     *
-     * @param activity the id of the activity type
-     * @return the activity type
-     */
-    public List<ActivityStatusDTO> getPermittedStatus(ActivityStatusDTO activity) {
-        ActivityStatusStateMachine activityStatusStateMachine = new ActivityStatusStateMachine();
-        return activityStatusStateMachine.getAvailableState(workMapper.toModel(activity))
-                .stream()
-                .map(workMapper::toDTO)
-                .toList();
-    }
-
-    /**
-     * Change the status of an activity
-     *
-     * @param workId                  the id of the work
-     * @param activityID              the id of the activity
-     * @param updateActivityStatusDTO the DTO to update the activity status
-     */
-    @Transactional
-    public void setActivityStatus(String workId, String activityID, UpdateActivityStatusDTO updateActivityStatusDTO) {
-        // check for work existence
-        var workFound = wrapCatch(
-                () -> workRepository.findById(workId).orElseThrow(
-                        () -> WorkNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .workId(workId)
-                                .build()
-                ),
-                -1
-        );
-        // check for activity
-        var activityFound = wrapCatch(
-                () -> activityRepository.findById(activityID).orElseThrow(
-                        () -> ActivityNotFound
-                                .notFoundById()
-                                .errorCode(-2)
-                                .activityId(activityID)
-                                .build()
-                ),
-                -2
-        );
-        // assert that activity need to be related to the work
-        assertion(
-                () -> workFound.getId().equals(activityFound.getWorkId()),
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-3)
-                        .errorMessage("The activity does not belong to the work")
-                        .errorDomain("WorkService::changeActivityStatus")
-                        .build()
-        );
-        // switch to current status. internal is checked the validity of the transition
-        activityFound.setStatus(
-                workMapper.toModel(updateActivityStatusDTO.newStatus()),
-                updateActivityStatusDTO.followupDescription()
-        );
-        // save the activity
-        var savedActivity = wrapCatch(
-                () -> activityRepository.save(activityFound),
-                -2
-        );
-        log.info("Activity '{}' has change his status to '{}' by '{}'", savedActivity.getId(), savedActivity.getCurrentStatus().getStatus(), savedActivity.getCurrentStatus().getChanged_by());
-        // fetch all activity status for work
-        var activityStatusList = wrapCatch(
-                () -> activityRepository.findAllActivityStatusByWorkId(workId),
-                -3
-        );
-
-        // update the work status
-        workFound.updateStatus(
-                activityStatusList
-                        .stream()
-                        .map(ActivityStatusLog::getStatus)
-                        .collect(Collectors.toSet())
-        );
-
-        // save work and unlock
-        var savedWork = wrapCatch(
-                () -> workRepository.save(workFound),
-                -4
-        );
-        log.info("Work '{}' has change his status to status '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus());
-        domainService.updateDomainStatistics(activityFound.getDomainId());
-    }
 
     /**
      * Search on all the works
@@ -778,24 +472,6 @@ public class WorkService {
         return workList.stream()
                 .map(w -> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
                 .toList();
-    }
-
-    /**
-     * Search on all the activities
-     *
-     * @return the found activities
-     */
-    public List<ActivityDTO> searchAllActivities(ActivityQueryParameterDTO activityQueryParameterDTO) {
-        var activittList = wrapCatch(
-                () -> activityRepository.searchAll(workMapper.toModel(activityQueryParameterDTO)),
-                -1
-        );
-        return activittList.stream().map(workMapper::toDTO).toList();
-    }
-
-    @Cacheable("work-authorization")
-    public String getCachedData() {
-        return "cached";
     }
 
     /**

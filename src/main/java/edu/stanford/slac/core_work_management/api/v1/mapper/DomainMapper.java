@@ -50,6 +50,13 @@ public abstract class DomainMapper {
      * @return the DTO
      */
     public abstract WorkStatusCountStatisticsDTO toDTO(WorkStatusCountStatistics model);
+    /**
+     * Convert the {@link WorkType} to a {@link WorkTypeDTO}
+     *
+     * @param workType the entity to convert
+     * @return the converted DTO
+     */
+    abstract public WorkTypeDTO toDTO(WorkType workType);
 
     /**
      * Convert a WorkType model to a WorkTypeSummaryDTO
@@ -103,49 +110,6 @@ public abstract class DomainMapper {
      * @return the converted entity
      */
     abstract public WorkType toModel(String domainId, NewWorkTypeDTO newWorkTypeDTO);
-
-    /**
-     * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
-     *
-     * @param newActivityTypeDTO the DTO to convert
-     * @return the converted work type
-     */
-    abstract public ActivityType toModel(String domainId, String workTypeId, NewActivityTypeDTO newActivityTypeDTO);
-
-
-    /**
-     * Convert the {@link NewActivityTypeDTO} to a {@link ActivityType}
-     *
-     * @param dto the DTO to convert
-     * @return the converted entity
-     */
-    @Mapping(target = "customFields", expression = "java(updateModelCustomActivityTypeField(dto.customFields(), activityType.getCustomFields()))")
-    abstract public ActivityType updateModel(UpdateActivityTypeDTO dto, @MappingTarget ActivityType activityType);
-
-    /**
-     * Convert the {@link WorkType} to a {@link WorkTypeDTO}
-     *
-     * @param workType the entity to convert
-     * @return the converted DTO
-     */
-    abstract public WorkTypeDTO toDTO(WorkType workType);
-
-    /**
-     * Convert the {@link ActivityType} to a {@link ActivityTypeDTO}
-     *
-     * @param activityType the entity to convert
-     * @return the converted DTO
-     */
-    abstract public ActivityTypeDTO toDTO(ActivityType activityType);
-
-    /**
-     * Convert the {@link ActivityType} to a {@link ActivityTypeSubtypeDTO}
-     *
-     * @param activityType the entity to convert
-     * @return the converted DTO
-     */
-    abstract public ActivityTypeSubtypeDTO toDTO(ActivityTypeSubtype activityType);
-
     /**
      * Convert the {@link WATypeCustomField} to a {@link WATypeCustomFieldDTO}
      *

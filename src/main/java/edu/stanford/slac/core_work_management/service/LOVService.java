@@ -24,9 +24,7 @@ import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.LOVElement;
 import edu.stanford.slac.core_work_management.model.value.LOVField;
 import edu.stanford.slac.core_work_management.exception.LOVFieldReferenceNotFound;
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.LOVElementRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
@@ -51,7 +49,6 @@ import static java.util.Map.*;
 public class LOVService {
     private final LOVMapper lovMapper;
     private final WorkTypeRepository workTypeRepository;
-    private final ActivityTypeRepository activityTypeRepository;
     private final LOVElementRepository lovElementRepository;
 
 
@@ -270,18 +267,6 @@ public class LOVService {
                 if(subtypeId!=null)resultHash.putAll(getLOVFieldReferenceFromWorkType(subtypeId));
                 yield resultHash;
             }
-            case LOVDomainTypeDTO.Activity -> {
-                var resultHash = Arrays.stream(Activity.class.getDeclaredFields())
-                        .filter(field -> field.isAnnotationPresent(LOVField.class))
-                        .collect(Collectors.toMap(
-                                Field::getName,
-                                field -> field.getAnnotation(LOVField.class).fieldReference(),
-                                (existing, replacement) -> existing,
-                                HashMap::new
-                        ));
-                if(subtypeId!=null)resultHash.putAll(getLOVFieldReferenceFromActivityType(subtypeId));
-                yield resultHash;
-            }
             case Bucket -> {
                 var resultHash = Arrays.stream(BucketSlot.class.getDeclaredFields())
                         .filter(field -> field.isAnnotationPresent(LOVField.class))
@@ -296,6 +281,12 @@ public class LOVService {
         };
     }
 
+    /**
+     * Return a full list of field/lov reference from work type
+     *
+     * @param workTypeId the id of the work type
+     * @return the field reference of the LOV element
+     */
     private Map<String, String> getLOVFieldReferenceFromWorkType(String workTypeId) {
         HashMap<String, String> result = new HashMap<>();
         if (workTypeId == null)
@@ -315,46 +306,6 @@ public class LOVService {
         else
             workTypeRepository
                     .findById(workTypeId)
-                    .ifPresent(
-                            activityType -> {
-                                if (activityType.getCustomFields() != null) {
-                                    activityType.getCustomFields().forEach(
-                                            customField -> {
-                                                if (customField.getLovFieldReference() != null) {
-                                                    result.put(customField.getName(), customField.getLovFieldReference());
-                                                }
-                                            }
-                                    );
-                                }
-                            }
-                    );
-        return result;
-    }
-
-    /**
-     * Return a full list of field/lov reference for each domain
-     *
-     * @return the field reference of the LOV element
-     */
-    private HashMap<String, String> getLOVFieldReferenceFromActivityType(String activityTypeId) {
-        HashMap<String, String> result = new HashMap<>();
-        if (activityTypeId == null)
-            activityTypeRepository.findAll().forEach(
-                    activityType -> {
-                        if (activityType.getCustomFields() != null) {
-                            activityType.getCustomFields().forEach(
-                                    customField -> {
-                                        if (customField.getLovFieldReference() != null) {
-                                            result.put(customField.getName(), customField.getLovFieldReference());
-                                        }
-                                    }
-                            );
-                        }
-                    }
-            );
-        else
-            activityTypeRepository
-                    .findById(activityTypeId)
                     .ifPresent(
                             activityType -> {
                                 if (activityType.getCustomFields() != null) {

@@ -262,44 +262,6 @@ public class WorkAuthorizationService {
         return true;
     }
 
-    /**
-     * Check if the user can update an activity
-     *
-     * @param authentication the authentication object
-     * @param workId         the work id
-     * @param activityId     the activity id
-     * @param updateWorkDTO  the update work dto
-     * @return true if the user can update the activity, false otherwise
-     */
-    public boolean checkUpdate(Authentication authentication, String workId, String activityId, UpdateActivityDTO updateWorkDTO) {
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, activityId, updateWorkDTO)")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be one of these
-                () -> any(
-                        // a root users
-                        () -> authService.checkForRoot(authentication),
-                        // or a user that has the right to write on the work
-                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                AuthorizationTypeDTO.Write,
-                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                        ),
-                        // user of the shop group are always treated as admin on the work
-                        () -> shopGroupService.checkContainsAUserEmail(
-                                // fire not found work exception
-                                workService.getShopGroupIdByWorkId(workId),
-                                authentication.getCredentials().toString()
-                        )
-                )
-        );
-        return true;
-    }
 
     /**
      * Check if the user can create log on activity
@@ -307,49 +269,9 @@ public class WorkAuthorizationService {
      * @param authentication the authentication object
      * @param workId         the work id
      * @param activityId     the activity id
-     * @param updateWorkDTO  the update work dto
      * @return true if the user can create a new work, false otherwise
      */
     public boolean checkLoggingOnActivity(Authentication authentication, String workId, String activityId) {
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, activityId, updateWorkDTO)")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be one of these
-                () -> any(
-                        // a root users
-                        () -> authService.checkForRoot(authentication),
-                        // or a user that has the right to write on the work
-                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                AuthorizationTypeDTO.Write,
-                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                        ),
-                        // user of the shop group are always treated as admin on the work
-                        () -> shopGroupService.checkContainsAUserEmail(
-                                // fire not found work exception
-                                workService.getShopGroupIdByWorkId(workId),
-                                authentication.getCredentials().toString()
-                        )
-                )
-        );
-        return true;
-    }
-
-    /**
-     * Check if the user can update the status of an activity
-     *
-     * @param authentication          the authentication object
-     * @param workId                  the work id
-     * @param activityId              the activity id
-     * @param updateActivityStatusDTO the update activity status dto
-     * @return true if the user can update the status of the activity, false otherwise
-     */
-    public boolean checkUpdateStatus(Authentication authentication, String workId, String activityId, UpdateActivityStatusDTO updateActivityStatusDTO) {
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()

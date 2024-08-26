@@ -1,9 +1,6 @@
 package edu.stanford.slac.core_work_management.migration;
 
-import edu.stanford.slac.core_work_management.model.ActivityType;
-import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import org.junit.jupiter.api.BeforeEach;

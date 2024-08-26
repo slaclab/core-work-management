@@ -1,22 +1,18 @@
 package edu.stanford.slac.core_work_management.service;
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
-import edu.stanford.slac.core_work_management.exception.ActivityTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
-import edu.stanford.slac.core_work_management.repository.ActivityTypeRepository;
 import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
@@ -28,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Log4j2
@@ -41,7 +36,6 @@ public class DomainService {
     private final WorkRepository workRepository;
     private final DomainRepository domainRepository;
     private final WorkTypeRepository workTypeRepository;
-    private final ActivityTypeRepository activityTypeRepository;
 
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
 
@@ -199,123 +193,6 @@ public class DomainService {
                 );
     }
 
-    /**
-     * Create a new activity type
-     *
-     * @param newActivityTypeDTO the DTO to create the activity type
-     */
-    public String ensureActivityType(@NotNull String domainId, @NotNull String workId, @Valid NewActivityTypeDTO newActivityTypeDTO) {
-        // set the id of the custom attributes
-        List<WATypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
-        newActivityTypeDTO.customFields().forEach(
-                (customField) -> {
-                    var tmpName = customField.name();
-                    normalizedCustomField.add(
-                            customField.toBuilder()
-                                    .id(UUID.randomUUID().toString())
-                                    .label(tmpName)
-                                    .name(StringUtility.toCamelCase(tmpName))
-                                    .build()
-                    );
-                }
-        );
-        var normalizedActivityDTO = newActivityTypeDTO.toBuilder().customFields(normalizedCustomField).build();
-        return wrapCatch(
-                () -> activityTypeRepository.ensureActivityType(
-                        domainMapper.toModel(domainId, workId, normalizedActivityDTO)
-                ),
-                -1
-        );
-    }
-
-    /**
-     * create a new activity type
-     *
-     * @param newActivityTypeDTO the new activity to create
-     * @return the activity id
-     */
-    public String createNew(@NotNull String domainId, @NotNull String workTypeId, @Valid NewActivityTypeDTO newActivityTypeDTO) {
-        // set the id of the custom attributes
-        var toSave = domainMapper.toModel(domainId, workTypeId, newActivityTypeDTO);
-        toSave.getCustomFields().forEach(
-                (customField) -> {
-                    customField.setId(UUID.randomUUID().toString());
-                    customField.setName(
-                            customField.getLabel() == null ?
-                                    StringUtility.toCamelCase(customField.getName()) :
-                                    StringUtility.toCamelCase(customField.getLabel())
-                    );
-                    customField.setLabel(customField.getLabel());
-                }
-        );
-        return wrapCatch(
-                () -> activityTypeRepository.save(toSave),
-                -1
-        ).getId();
-    }
-
-    /**
-     * Return the activity type by his id
-     *
-     * @param domainId   the id of the domain
-     * @param workTypeId the id of the work type
-     * @param activityId the id of the activity type
-     * @return the activity type
-     */
-    public ActivityTypeDTO findActivityTypeById(@NotNull String domainId, @NotNull String workTypeId, @NotNull String activityId) {
-        return wrapCatch
-                (
-                        () -> activityTypeRepository.findByDomainIdIsAndWorkTypeIdIsAndIdIs(
-                                domainId,
-                                workTypeId,
-                                activityId
-                        ),
-                        -1
-                )
-                .map(domainMapper::toDTO).orElseThrow(
-                        () -> ActivityTypeNotFound
-                                .notFoundById()
-                                .errorCode(-2)
-                                .activityTypeId(activityId)
-                                .build()
-                );
-    }
-
-    /**
-     * Update an activity type
-     *
-     * @param activityId            the id of the activity type
-     * @param updateActivityTypeDTO the DTO to update the activity type
-     */
-    public void updateActivityType(String domainId, String workDomainId, String activityId, UpdateActivityTypeDTO updateActivityTypeDTO) {
-        var activityType = wrapCatch(
-                () -> activityTypeRepository.findByDomainIdIsAndWorkTypeIdIsAndIdIs(domainId, workDomainId, activityId).orElseThrow(
-                        () -> ActivityTypeNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .activityTypeId(activityId)
-                                .build()
-                ),
-                -1
-        );
-        var updatedActivityTypeModel = domainMapper.updateModel(updateActivityTypeDTO, activityType);
-        wrapCatch(
-                () -> activityTypeRepository.save(updatedActivityTypeModel),
-                -3
-        );
-    }
-
-    /**
-     * Ensure activity types
-     */
-//    public List<String> ensureActivitiesTypes(@NotEmpty String domainId, @NotEmpty String workTypeId, @Valid List<NewActivityTypeDTO> newActivityTypeDTOS) {
-//        List<String> listIds = new ArrayList<>();
-//        newActivityTypeDTOS.forEach(
-//                at -> listIds.add(ensureActivityType(domainId, workTypeId, at))
-//        );
-//        return listIds;
-//    }
-
 
     /**
      * Return all the work types for a specific domain id
@@ -329,38 +206,6 @@ public class DomainService {
                 -1
         );
         return workTypeList.stream().map(domainMapper::toDTO).toList();
-    }
-
-    /**
-     * Return all the activity types for a specific domain id
-     *
-     * @param domainId   the id of the domain
-     * @param workTypeId the id of the work type
-     * @return the list of activity types
-     */
-    public List<ActivityTypeDTO> findAllActivityTypes(@NotEmpty String domainId, @NotNull String workTypeId) {
-        var workTypeList = wrapCatch(
-                () -> activityTypeRepository.findAllByDomainIdAndWorkTypeId(domainId, workTypeId),
-                -1
-        );
-        return workTypeList.stream().map(domainMapper::toDTO).toList();
-    }
-
-    /**
-     * Return all the activity subtypes for a specific activity type
-     *
-     * @return the list of activity subtypes
-     */
-    public List<ActivityTypeSubtypeDTO> findAllActivitySubTypes(@NotEmpty String domainId, @NotNull String workTypeId, @NotNull String activityTypeId) {
-        var activityType = wrapCatch(
-                () -> activityTypeRepository.findByDomainIdIsAndWorkTypeIdIsAndIdIs(domainId, workTypeId, activityTypeId),
-                -1
-        );
-        return activityType
-                .map(domainMapper::toDTO)
-                .map(ActivityTypeDTO::activityTypeSubtypes)
-                .map(ArrayList::new)
-                .orElseThrow(() -> ActivityTypeNotFound.notFoundById().errorCode(-2).activityTypeId(activityTypeId).build());
     }
 
     /**

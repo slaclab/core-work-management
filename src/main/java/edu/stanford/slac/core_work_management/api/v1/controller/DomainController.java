@@ -88,40 +88,4 @@ public class DomainController {
     ) {
         return ApiResultResponse.of(domainService.findAllWorkTypes(domainId));
     }
-
-    @Operation(summary = "Return all the activity types")
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping(
-            path = "/{domainId}/work-type/{workTypeId}/activity-type",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<List<ActivityTypeDTO>> findAllActivityTypes(
-            Authentication authentication,
-            @Parameter(description = "The domain id", required = true)
-            @PathVariable @NotNull String domainId,
-            @Parameter(description = "The work type id", required = true)
-            @PathVariable @NotNull String workTypeId
-    ) {
-        return ApiResultResponse.of(domainService.findAllActivityTypes(domainId, workTypeId));
-    }
-
-    @Operation(summary = "Return all the activity sub types")
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping(
-            path = "/{domainId}/work-type/{workTypeId}/activity-type/{activityTypeId}/sub-type",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
-    public ApiResultResponse<List<ActivityTypeSubtypeDTO>> findAllActivitySubTypes(
-            Authentication authentication,
-            @Parameter(description = "The domain id", required = true)
-            @PathVariable @NotNull String domainId,
-            @Parameter(description = "The work type id", required = true)
-            @PathVariable @NotNull String workTypeId,
-            @Parameter(description = "The activity type id", required = true)
-            @PathVariable @NotNull String activityTypeId
-    ) {
-        return ApiResultResponse.of(domainService.findAllActivitySubTypes(domainId,workTypeId,activityTypeId));
-    }
 }

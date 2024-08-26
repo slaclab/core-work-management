@@ -88,18 +88,5 @@ public class M1004_InitProjectLOV {
                 },
                 -1
         );
-
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Activity,
-                            null,
-                            "project",
-                            "Project"
-                    );
-                    return null;
-                },
-                -2
-        );
     }
 }

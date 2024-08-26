@@ -10,7 +10,6 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Represents a Work entity in the system.
@@ -21,7 +20,6 @@ import java.util.Set;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Work {
-    private static WorkStatusStateMachine workStatusStateMachine = new WorkStatusStateMachine();
     /**
      * The unique identifier for the work.
      * This field is annotated with @Id to signify its use as a primary key in MongoDB.
@@ -137,12 +135,5 @@ public class Work {
      */
     @Version
     private Long version;
-
-    /**
-     * updateStatus according to the list of all job statuses
-     */
-    public void updateStatus(Set<ActivityStatus> allActivitiesStatus) {
-        workStatusStateMachine.updateModel(this, allActivitiesStatus);
-    }
 }
 
