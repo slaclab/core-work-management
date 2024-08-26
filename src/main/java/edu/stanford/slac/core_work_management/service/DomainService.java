@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
@@ -24,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Log4j2
@@ -193,9 +195,32 @@ public class DomainService {
                 );
     }
 
+    /**
+     * Update the work type
+     *
+     * @param domainId    the id of the domain
+     * @param workTypeId  the id of the work type
+     * @param workTypeDTO the DTO to update the work type
+     */
     public void updateWorkType(@NotEmpty String domainId, @Valid String workTypeId, @Valid UpdateWorkTypeDTO workTypeDTO) {
-       //todo implement
+            var workType = wrapCatch(
+                    () -> workTypeRepository.findByDomainIdAndId(domainId, workTypeId).orElseThrow(
+                            () -> WorkTypeNotFound
+                                    .notFoundById()
+                                    .errorCode(-1)
+                                    .workId(workTypeId)
+                                    .build()
+                    ),
+                    -1
+            );
+            // check for domain id
+            var updatedWorkType = domainMapper.updateModel(workTypeDTO, workType);
+            wrapCatch(
+                    () -> workTypeRepository.save(updatedWorkType),
+                    -3
+            );
     }
+
     /**
      * Return all the work types for a specific domain id
      *

@@ -79,7 +79,7 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
 
     // hazelcast
-    implementation 'com.hazelcast:hazelcast-spring:5.3.7'
+    implementation 'com.hazelcast:hazelcast-spring:5.3.8'
 
     //eed library
     implementation "edu.stanford.slac:slac-ad-eed-baselib:$project.ext.ad_eed_baselib_version",

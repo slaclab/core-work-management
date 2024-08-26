@@ -58,6 +58,9 @@ public abstract class DomainMapper {
      */
     abstract public WorkTypeDTO toDTO(WorkType workType);
 
+    @Mapping(target = "customFields", expression = "java(updateModelCustomField(dto.customFields(), workType.getCustomFields()))")
+    abstract public WorkType updateModel(UpdateWorkTypeDTO dto, @MappingTarget WorkType workType);
+
     /**
      * Convert a WorkType model to a WorkTypeSummaryDTO
      *
@@ -160,7 +163,7 @@ public abstract class DomainMapper {
      * @param customFields    the list of the old custom fields
      * @return the converted entity
      */
-    public List<WATypeCustomField> updateModelCustomActivityTypeField(List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
+    public List<WATypeCustomField> updateModelCustomField(List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
         List<WATypeCustomField> updatedCustomAttributesList = new ArrayList<>();
         customFieldsDTO.forEach(
                 customFieldDTO -> {
