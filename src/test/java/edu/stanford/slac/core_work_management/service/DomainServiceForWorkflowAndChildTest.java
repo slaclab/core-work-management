@@ -8,6 +8,7 @@ import edu.stanford.slac.core_work_management.model.workflow.ReportWorkflow;
 import edu.stanford.slac.core_work_management.model.workflow.RequestWorkflow;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import edu.stanford.slac.core_work_management.service.workflow.TestWorkflowOne;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,9 +64,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        RequestWorkflow.class.getCanonicalName(),
-                                                        RecordWorkflow.class.getCanonicalName(),
-                                                        ReportWorkflow.class.getCanonicalName()
+                                                        TestWorkflowOne.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -78,11 +77,9 @@ public class DomainServiceForWorkflowAndChildTest {
         );
 
         assertThat(fullDomain).isNotNull();
-        assertThat(fullDomain.workflows()).isNotNull().isNotEmpty().hasSize(3);
+        assertThat(fullDomain.workflows()).isNotNull().isNotEmpty().hasSize(1);
         assertThat(fullDomain.workflows().stream().map(WorkflowDTO::name)).containsExactlyInAnyOrder(
-                "Request",
-                "Record",
-                "Report"
+                "TestWorkflowOne"
         );
     }
 
@@ -97,9 +94,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        RequestWorkflow.class.getCanonicalName(),
-                                                        RecordWorkflow.class.getCanonicalName(),
-                                                        ReportWorkflow.class.getCanonicalName()
+                                                        TestWorkflowOne.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -111,7 +106,7 @@ public class DomainServiceForWorkflowAndChildTest {
                 () -> domainService.findById(domainId)
         );
         assertThat(fullDomain).isNotNull();
-        assertThat(fullDomain.workflows()).isNotEmpty().hasSize(3);
+        assertThat(fullDomain.workflows()).isNotEmpty().hasSize(1);
 
         // now create a new WorkType associating a workflow
         String workTypeId = assertDoesNotThrow(
@@ -145,9 +140,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        RequestWorkflow.class.getCanonicalName(),
-                                                        RecordWorkflow.class.getCanonicalName(),
-                                                        ReportWorkflow.class.getCanonicalName()
+                                                        TestWorkflowOne.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -159,7 +152,7 @@ public class DomainServiceForWorkflowAndChildTest {
                 () -> domainService.findById(domainId)
         );
         assertThat(fullDomain).isNotNull();
-        assertThat(fullDomain.workflows()).isNotEmpty().hasSize(3);
+        assertThat(fullDomain.workflows()).isNotEmpty().hasSize(1);
 
         // now create a new WorkType associating a workflow
         var workflowNotFoundExc = assertThrows(
@@ -188,9 +181,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        RequestWorkflow.class.getCanonicalName(),
-                                                        RecordWorkflow.class.getCanonicalName(),
-                                                        ReportWorkflow.class.getCanonicalName()
+                                                        TestWorkflowOne.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -230,9 +221,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        RequestWorkflow.class.getCanonicalName(),
-                                                        RecordWorkflow.class.getCanonicalName(),
-                                                        ReportWorkflow.class.getCanonicalName()
+                                                        TestWorkflowOne.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
