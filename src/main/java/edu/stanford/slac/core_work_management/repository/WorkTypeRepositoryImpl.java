@@ -37,6 +37,7 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
                 Criteria.where("title").is(normalizedTitle)
         );
         Update update = new Update()
+                .set("domainId", workType.getDomainId())
                 .setOnInsert("title", normalizedTitle)
                 .setOnInsert("description", workType.getDescription())
                 .setOnInsert("createdBy", auditorAware.getCurrentAuditor().orElse(null))

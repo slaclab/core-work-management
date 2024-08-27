@@ -2,7 +2,7 @@ spring:
   ldap:
     embedded:
       base-dn: dc=sdf,dc=slac,dc=stanford,dc=edu
-      ldif: classpath:test-ldap-schema.ldif
+      ldif: test-ldap-schema.ldif
       port: 8389
       validation:
         enabled: false

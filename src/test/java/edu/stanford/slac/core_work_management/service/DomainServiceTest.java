@@ -331,7 +331,7 @@ public class DomainServiceTest {
                         UpdateWorkTypeDTO
                                 .builder()
                                 .title("work type 1 updated")
-                                .description("work 1 description updated")
+                                .description("work type 1 description updated")
                                 .customFields(
                                         List.of(
                                                 WATypeCustomFieldDTO
@@ -359,8 +359,8 @@ public class DomainServiceTest {
         );
         assertThat(fullUpdatedWorkType).isNotNull();
         assertThat(fullUpdatedWorkType.id()).isEqualTo(newWorkTypeId);
-        assertThat(fullUpdatedWorkType.title()).isEqualTo("work 1 updated");
-        assertThat(fullUpdatedWorkType.description()).isEqualTo("work 1 description updated");
+        assertThat(fullUpdatedWorkType.title()).isEqualTo("work type 1 updated");
+        assertThat(fullUpdatedWorkType.description()).isEqualTo("work type 1 description updated");
         assertThat(fullUpdatedWorkType.customFields()).isNotNull();
         assertThat(fullUpdatedWorkType.customFields().size()).isEqualTo(2);
         assertThat(fullUpdatedWorkType.customFields().get(0).label()).isEqualTo("custom field1");
@@ -474,8 +474,8 @@ public class DomainServiceTest {
         );
         assertThat(fullUpdatedWorkType).isNotNull();
         assertThat(fullUpdatedWorkType.id()).isEqualTo(newWorkTypeId);
-        assertThat(fullUpdatedWorkType.title()).isEqualTo("Activity 1 re-updated");
-        assertThat(fullUpdatedWorkType.description()).isEqualTo("Activity 1 description re-updated");
+        assertThat(fullUpdatedWorkType.title()).isEqualTo("work 1 re-updated");
+        assertThat(fullUpdatedWorkType.description()).isEqualTo("work 1 description re-updated");
         assertThat(fullUpdatedWorkType.customFields()).isNotNull();
         assertThat(fullUpdatedWorkType.customFields().size()).isEqualTo(2);
         assertThat(fullUpdatedWorkType.customFields().get(0).label()).isEqualTo("custom field1 updated");
