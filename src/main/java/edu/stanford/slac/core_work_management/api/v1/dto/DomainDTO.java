@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,6 +25,8 @@ public record DomainDTO(
         String name,
         @Schema(description = "The domain description")
         String description,
+        @Schema(description = "The list of the workflows associated with the domain")
+        Set<WorkflowDTO> workflows,
         @Schema(description = "The work type status statistics of the domain")
         List<WorkTypeStatusStatisticsDTO> workTypeStatusStatistics,
         @Schema(description = "The created date")

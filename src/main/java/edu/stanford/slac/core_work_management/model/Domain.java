@@ -39,6 +39,11 @@ public class Domain {
     private String description;
 
     /**
+     * The list of the work types associated with the domain.
+     */
+    private Set<Workflow> workflows;
+
+    /**
      * The work type status statistics of the domain.
      * this field contains the statistics of the work by work type id
      * the key of the map is the work type id and the value is the list of the status statistics

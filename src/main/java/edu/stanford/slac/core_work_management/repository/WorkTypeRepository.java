@@ -15,5 +15,21 @@ public interface WorkTypeRepository extends MongoRepository<WorkType, String>, W
      */
     List<WorkType> findAllByDomainId(String domainId);
 
+    /**
+     * Find a work type by domain id and id.
+     *
+     * @param domainId the domain id
+     * @param id the id
+     * @return the work type
+     */
     Optional<WorkType> findByDomainIdAndId(String domainId, String id);
+
+    /**
+     * Check if a work type exists by domain id and id.
+     *
+     * @param domainId the domain id
+     * @param id the id
+     * @return true if the work type exists, false otherwise
+     */
+    boolean existsByDomainIdAndId(String domainId, String id);
 }

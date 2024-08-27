@@ -152,6 +152,51 @@ public class DomainService {
     public String createNew(@NotEmpty String domainId, @Valid NewWorkTypeDTO newWorkTypeDTO) {
         // set the id of the custom attributes
         var toSave = domainMapper.toModel(domainId, newWorkTypeDTO);
+
+        // check domain existence
+        Domain d = wrapCatch(
+                () -> domainRepository.findById(domainId).orElseThrow(
+                        () -> DomainNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .id(domainId)
+                                .build()
+                ),
+                -1
+        );
+        // check for existence workflow id
+        if(newWorkTypeDTO.workflowId()!=null) {
+            d.getWorkflows().stream()
+                    .filter(w -> w.getId().equals(newWorkTypeDTO.workflowId()))
+                    .findFirst()
+                    .orElseThrow(
+                            () -> ControllerLogicException
+                                    .builder()
+                                    .errorCode(-3)
+                                    .errorMessage("Workflow not found")
+                                    .errorDomain("DomainService::createNew(String, NewWorkTypeDTO)")
+                                    .build()
+                    );
+        }
+
+        // check for WorkType used as child
+        newWorkTypeDTO.childWorkTypeIds().forEach(
+                (childId) -> {
+                    assertion(
+                            ControllerLogicException
+                                    .builder()
+                                    .errorCode(-4)
+                                    .errorMessage("Child WorkType of id '%s' not found".formatted(childId))
+                                    .errorDomain("DomainService::createNew(String, NewWorkTypeDTO)")
+                                    .build(),
+                            () -> wrapCatch(
+                                    () -> workTypeRepository.existsByDomainIdAndId(domainId, childId),
+                                    -5
+                            )
+                    );
+                }
+        );
+        // check for custom fields
         toSave.getCustomFields().forEach(
                 (customField) -> {
                     customField.setId(UUID.randomUUID().toString());
@@ -165,7 +210,7 @@ public class DomainService {
         );
         return wrapCatch(
                 () -> workTypeRepository.save(toSave),
-                -1
+                -16
         ).getId();
     }
 
@@ -203,22 +248,22 @@ public class DomainService {
      * @param workTypeDTO the DTO to update the work type
      */
     public void updateWorkType(@NotEmpty String domainId, @Valid String workTypeId, @Valid UpdateWorkTypeDTO workTypeDTO) {
-            var workType = wrapCatch(
-                    () -> workTypeRepository.findByDomainIdAndId(domainId, workTypeId).orElseThrow(
-                            () -> WorkTypeNotFound
-                                    .notFoundById()
-                                    .errorCode(-1)
-                                    .workId(workTypeId)
-                                    .build()
-                    ),
-                    -1
-            );
-            // check for domain id
-            var updatedWorkType = domainMapper.updateModel(workTypeDTO, workType);
-            wrapCatch(
-                    () -> workTypeRepository.save(updatedWorkType),
-                    -3
-            );
+        var workType = wrapCatch(
+                () -> workTypeRepository.findByDomainIdAndId(domainId, workTypeId).orElseThrow(
+                        () -> WorkTypeNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workTypeId)
+                                .build()
+                ),
+                -1
+        );
+        // check for domain id
+        var updatedWorkType = domainMapper.updateModel(workTypeDTO, workType);
+        wrapCatch(
+                () -> workTypeRepository.save(updatedWorkType),
+                -3
+        );
     }
 
     /**

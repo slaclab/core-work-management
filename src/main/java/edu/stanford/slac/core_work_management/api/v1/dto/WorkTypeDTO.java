@@ -8,6 +8,7 @@ import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,6 +25,10 @@ public record WorkTypeDTO(
         String description,
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
         List<WATypeCustomFieldDTO> customFields,
+        @Schema(description = "The list of the work types that can be child of this one")
+        Set<String> childWorkTypeIds,
+        @Schema(description = "The id of the workflow that rule the life cycle of the work that refer to this type")
+        String workflowId,
         @Schema(description = "The date when the work type was created")
         LocalDateTime createdDate,
         @Schema(description = "The user that created the work type")

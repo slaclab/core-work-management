@@ -3,15 +3,20 @@ package edu.stanford.slac.core_work_management.api.v1.mapper;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
+import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.StringUtility;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import org.springframework.context.ApplicationContext;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
@@ -20,6 +25,8 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
         componentModel = "spring"
 )
 public abstract class DomainMapper {
+    @Autowired
+    private ApplicationContext context;
     @Autowired
     private LOVService lovService;
     @Autowired
@@ -32,6 +39,7 @@ public abstract class DomainMapper {
      * @return the model
      */
     @Mapping(target = "name", source = "name", qualifiedByName = "normalizeName")
+    @Mapping(target = "workflows", source = "workflowImplementations", qualifiedByName = "toWorkflowModel")
     public abstract Domain toModel(NewDomainDTO newDomainDTO);
 
     /**
@@ -40,6 +48,7 @@ public abstract class DomainMapper {
      * @param domain the model to convert
      * @return the DTO
      */
+    @Mapping(target="workflows", source="workflows", qualifiedByName="toWorkflowDTO")
     @Mapping(target = "workTypeStatusStatistics", source = "workTypeStatusStatistics", qualifiedByName = "convertStatistic")
     public abstract DomainDTO toDTO(Domain domain);
 
@@ -50,6 +59,7 @@ public abstract class DomainMapper {
      * @return the DTO
      */
     public abstract WorkStatusCountStatisticsDTO toDTO(WorkStatusCountStatistics model);
+
     /**
      * Convert the {@link WorkType} to a {@link WorkTypeDTO}
      *
@@ -70,42 +80,6 @@ public abstract class DomainMapper {
     abstract public WorkTypeSummaryDTO toSummaryDTO(WorkType workType);
 
     /**
-     * Normalize the name of the domain
-     *
-     * @param name the name to normalize
-     * @return the normalized name
-     */
-    @Named("normalizeName")
-    public String modifyName(String name) {
-        return name.trim().toLowerCase().replace(" ", "-");
-    }
-
-    /**
-     * Convert a map of WorkStatusCountStatistics to a map of WorkStatusCountStatisticsDTO
-     *
-     * @param value the map to convert
-     * @return the converted map
-     */
-    @Named("convertStatistic")
-    public List<WorkTypeStatusStatisticsDTO> map(Map<String, List<WorkStatusCountStatistics>> value) {
-        List<WorkTypeStatusStatisticsDTO> result = new ArrayList<>();
-        if (value == null) return result;
-        return value.entrySet().stream()
-                .map(
-                        entry -> {
-                            WorkType workType = workTypeRepository.findById(entry.getKey())
-                                    .orElseThrow(() -> WorkTypeNotFound.notFoundById().errorCode(-1).workId(entry.getKey()).build());
-                            return WorkTypeStatusStatisticsDTO
-                                    .builder()
-                                    .workType(toSummaryDTO(workType))
-                                    .status(entry.getValue().stream().map(this::toDTO).collect(Collectors.toList()))
-                                    .build();
-                        }
-                )
-                .toList();
-    }
-
-    /**
      * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
      *
      * @param newWorkTypeDTO the DTO to convert
@@ -113,6 +87,7 @@ public abstract class DomainMapper {
      * @return the converted entity
      */
     abstract public WorkType toModel(String domainId, NewWorkTypeDTO newWorkTypeDTO);
+
     /**
      * Convert the {@link WATypeCustomField} to a {@link WATypeCustomFieldDTO}
      *
@@ -154,6 +129,117 @@ public abstract class DomainMapper {
                 () -> lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
                 -1
         );
+    }
+
+    /**
+     * Convert a WorkType model to a WorkTypeSummaryDTO
+     *
+     * @param workflowImplementations the implementations of the workflows for a new domain
+     * @return the list of workflow dtos
+     */
+    @Named("toWorkflowModel")
+    public Set<Workflow> toWorkflowModel(Set<String> workflowImplementations) {
+        Set<Workflow> result = new HashSet<>();
+        if (workflowImplementations == null) return result;
+        workflowImplementations.forEach(
+                workflowImplementation -> {
+                    result.add(
+                            Workflow.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .implementation(workflowImplementation)
+                                    .build()
+                    );
+                }
+        );
+        return result;
+    }
+
+    @Named("toWorkflowDTO")
+    public Set<WorkflowDTO> toWorkflowDTO(Set<Workflow> workflows) {
+        Set<WorkflowDTO> result = new HashSet<>();
+        if (workflows == null) return result;
+        workflows.forEach(
+                w -> {
+                    String beanName = w.getImplementation().contains(".") ? w.getImplementation().substring(w.getImplementation().lastIndexOf(".")+1) : w.getImplementation();
+                    BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(beanName);
+                    var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.model.workflow.Workflow.class);
+                    if (!isPresent) {
+                        throw ControllerLogicException.builder()
+                                .errorCode(-1)
+                                .errorMessage("The workflow class with name '%s' is not available".formatted(beanName))
+                                .errorDomain("DomainMapper::toWorkflowDTO")
+                                .build();
+                    }
+                    var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.model.workflow.Workflow.class);
+                    result.add(
+                            WorkflowDTO.builder()
+                                    .id(w.getId())
+                                    .name(annot.name())
+                                    .description(annot.description())
+                                    .validTransitions(toDTO(workFlowInstance.getValidTransitions()))
+                                    .build()
+                    );
+                }
+        );
+        return result;
+    }
+
+    /**
+     * Convert a map of WorkflowState to a map of WorkflowStateDTO
+     *
+     * @param validTransitions the map to convert
+     * @return the converted map
+     */
+    private Map<WorkflowStateDTO, Set<WorkflowStateDTO>> toDTO(Map<WorkflowState, Set<WorkflowState>> validTransitions) {
+        Map<WorkflowStateDTO, Set<WorkflowStateDTO>> result = new HashMap<>();
+        if (validTransitions == null) return result;
+        validTransitions.forEach(
+                (key, value) -> {
+                    result.put(
+                            WorkflowStateDTO.valueOf(key.name()),
+                            value.stream().map(
+                                    workflowState -> WorkflowStateDTO.valueOf(workflowState.name())
+                            ).collect(Collectors.toSet())
+                    );
+                }
+        );
+        return result;
+    }
+
+    /**
+     * Normalize the name of the domain
+     *
+     * @param name the name to normalize
+     * @return the normalized name
+     */
+    @Named("normalizeName")
+    public String modifyName(String name) {
+        return name.trim().toLowerCase().replace(" ", "-");
+    }
+
+    /**
+     * Convert a map of WorkStatusCountStatistics to a map of WorkStatusCountStatisticsDTO
+     *
+     * @param value the map to convert
+     * @return the converted map
+     */
+    @Named("convertStatistic")
+    public List<WorkTypeStatusStatisticsDTO> map(Map<String, List<WorkStatusCountStatistics>> value) {
+        List<WorkTypeStatusStatisticsDTO> result = new ArrayList<>();
+        if (value == null) return result;
+        return value.entrySet().stream()
+                .map(
+                        entry -> {
+                            WorkType workType = workTypeRepository.findById(entry.getKey())
+                                    .orElseThrow(() -> WorkTypeNotFound.notFoundById().errorCode(-1).workId(entry.getKey()).build());
+                            return WorkTypeStatusStatisticsDTO
+                                    .builder()
+                                    .workType(toSummaryDTO(workType))
+                                    .status(entry.getValue().stream().map(this::toDTO).collect(Collectors.toList()))
+                                    .build();
+                        }
+                )
+                .toList();
     }
 
     /**
