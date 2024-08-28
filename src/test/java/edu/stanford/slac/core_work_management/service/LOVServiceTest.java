@@ -291,7 +291,6 @@ public class LOVServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(workActivityIds.get(0))

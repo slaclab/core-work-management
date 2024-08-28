@@ -178,7 +178,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -209,7 +208,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Work 1")
                                 .description("Work 1 description")
                                 .workTypeId(newWorkTypeId)
@@ -255,7 +253,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Work 1")
                                 .description("Work 1 description")
                                 .workTypeId(newWorkTypeId)
@@ -304,7 +301,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Work 1")
                                 .description("Work 1 description")
                                 .workTypeId(newWorkTypeId)
@@ -356,7 +352,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(alternateDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -391,7 +386,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -423,7 +417,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -473,7 +466,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -519,7 +511,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
@@ -1058,7 +1049,6 @@ public class WorkServiceTest {
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)

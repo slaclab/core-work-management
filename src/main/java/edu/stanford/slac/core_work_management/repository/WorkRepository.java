@@ -15,7 +15,7 @@ import java.util.Optional;
  * Repository for Work objects
  */
 @JaversSpringDataAuditable
-public interface WorkRepository extends MongoRepository<Work, String>,WorkRepositoryCustom {
+public interface WorkRepository extends MongoRepository<Work, String>, WorkRepositoryCustom {
     @Aggregation(pipeline = {
             "{ '$group': { '_id': { 'workTypeId': '$workTypeId', 'status': '$currentStatus.status' }, 'count': { '$sum': 1 } } }",
             "{ '$group': { '_id':'$_id.workTypeId',  'status': { $addToSet: {status: '$_id.status', count: '$count'} } } }",
@@ -39,7 +39,7 @@ public interface WorkRepository extends MongoRepository<Work, String>,WorkReposi
      * Find a work by domain id and id.
      *
      * @param domainId the domain id
-     * @param id the id
+     * @param id       the id
      * @return the work
      */
     Optional<Work> findByDomainIdAndId(String domainId, String id);
@@ -48,7 +48,7 @@ public interface WorkRepository extends MongoRepository<Work, String>,WorkReposi
      * The Statistic for the work status count.
      *
      * @param workTypeId the work type id
-     * @param status the status
+     * @param status     the status
      * @return the count of work
      */
     long countByWorkTypeIdAndCurrentStatus_StatusIs(String workTypeId, WorkflowState status);
@@ -56,10 +56,19 @@ public interface WorkRepository extends MongoRepository<Work, String>,WorkReposi
     /**
      * The Statistic for the work status count.
      *
-     * @param domainId the domain id
+     * @param domainId   the domain id
      * @param workTypeId the work type id
-     * @param status the status
+     * @param status     the status
      * @return the count of work
      */
     long countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(String domainId, String workTypeId, WorkflowState status);
+
+    /**
+     * Check for the work existence.
+     *
+     * @param domainId the domain id
+     * @param id       the id
+     * @return true if the work exists
+     */
+    boolean existsByDomainIdAndId(String domainId, String id);
 }

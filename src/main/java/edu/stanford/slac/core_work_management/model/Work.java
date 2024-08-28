@@ -47,7 +47,7 @@ public class Work {
      * The type of the work.
      * This field identify the work which this is related to. This creates dependency between works
      */
-    private String relatedToWorkId;
+    private List<String> relatedToWorkIds;
     /**
      * The type of the work.
      * This field categorizes the work into a specific type

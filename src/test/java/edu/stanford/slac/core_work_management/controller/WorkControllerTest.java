@@ -312,8 +312,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))
@@ -336,8 +336,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // user1@slac.stanford.edu si the are manager
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
@@ -403,8 +403,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isUnauthorized(),
                                 Optional.empty(),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))
@@ -427,8 +427,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user1 and user2 and all of them should be reader
                                         .locationId(testLocationIds.get(1))
@@ -491,8 +491,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))
@@ -551,8 +551,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(testLocationIds.getFirst())
                                         .workTypeId(testWorkTypeIds.getFirst())
                                         .shopGroupId(testShopGroupIds.getFirst())
@@ -578,8 +578,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(testLocationIds.getFirst())
                                         .workTypeId(testWorkTypeIds.getFirst())
                                         .shopGroupId(testShopGroupIds.getFirst())
@@ -622,8 +622,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -666,8 +666,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -711,8 +711,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user2 and user3 and all of them should be admin
                                         .locationId(testLocationIds.get(2))
@@ -755,8 +755,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user2 and user3 and all of them should be admin
                                         .locationId(testLocationIds.getFirst())
@@ -799,8 +799,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // user2@slac.stanford.edu si the are manager
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -840,8 +840,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // user2@slac.stanford.edu si the are manager
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -921,8 +921,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // user2@slac.stanford.edu si the are manager
                                         // user[1-3]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -1003,8 +1003,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // user2@slac.stanford.edu si the are manager
                                         // user[2-3(l)]@slac.stanford.edu are in the shop group
                                         .locationId(testLocationIds.get(2))
@@ -1085,8 +1085,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -1173,8 +1173,8 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         .locationId(testLocationIds.get(1))
                                         // the group contains user1 and user2 and all of them should be admin
@@ -1300,8 +1300,8 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
+                                domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
                                         .shopGroupId(testShopGroupIds.get(0))

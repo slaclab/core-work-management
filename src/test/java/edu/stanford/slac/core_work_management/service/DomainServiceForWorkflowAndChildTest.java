@@ -3,12 +3,9 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.model.workflow.RecordWorkflow;
-import edu.stanford.slac.core_work_management.model.workflow.ReportWorkflow;
-import edu.stanford.slac.core_work_management.model.workflow.RequestWorkflow;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import edu.stanford.slac.core_work_management.service.workflow.TestWorkflowOne;
+import edu.stanford.slac.core_work_management.service.workflow.DummyWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -64,7 +61,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        TestWorkflowOne.class.getCanonicalName()
+                                                        DummyWork.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -94,7 +91,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        TestWorkflowOne.class.getCanonicalName()
+                                                        DummyWork.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -140,7 +137,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        TestWorkflowOne.class.getCanonicalName()
+                                                        DummyWork.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -181,7 +178,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        TestWorkflowOne.class.getCanonicalName()
+                                                        DummyWork.class.getCanonicalName()
                                                 )
                                 )
                                 .build()
@@ -221,7 +218,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        TestWorkflowOne.class.getCanonicalName()
+                                                        DummyWork.class.getCanonicalName()
                                                 )
                                 )
                                 .build()

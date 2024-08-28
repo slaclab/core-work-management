@@ -294,8 +294,8 @@ public class WorkControllerPerformanceTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
+                                    domainId,
                                     NewWorkDTO.builder()
-                                            .domainId(domainId)
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
                                             .shopGroupId(testShopGroupIds.get(0))

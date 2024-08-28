@@ -13,9 +13,9 @@ import java.util.Set;
         name = "TestWorkflowOne",
         description = "The workflow for a test"
 )
-@Component("TestWorkflowOne")
-public class TestWorkflowOne extends BaseWorkflow {
-    public TestWorkflowOne() {
+@Component("DummyWork")
+public class DummyWork extends BaseWorkflow {
+    public DummyWork() {
         validTransitions = Map.of(
                 // Rule: workStatus = "Approved"
                 WorkflowState.Submitted, Set.of(WorkflowState.Approved),

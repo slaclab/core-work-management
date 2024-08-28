@@ -177,7 +177,6 @@ public class LogControllerTest {
                         () -> workService.createNew(
                                 domainId,
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(locationId)
                                         .workTypeId(newWorkTypeId)
                                         .shopGroupId(shopGroupId)
@@ -270,8 +269,8 @@ public class LogControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewWorkDTO.builder()
-                                .domainId(domainId)
                                 .locationId(locationId)
                                 .workTypeId(newWorkTypeId)
                                 .shopGroupId(shopGroupId)

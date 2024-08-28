@@ -395,9 +395,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewWorkDTO newWorkDTO
     ) throws Exception {
-        var requestBuilder = post("/v1/work")
+        var requestBuilder = post("/v1/domain/{domainId}/work", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newWorkDTO));
@@ -425,10 +426,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewWorkDTO newWorkDTO,
             Optional<Boolean> logIf
     ) throws Exception {
-        var requestBuilder = post("/v1/work")
+        var requestBuilder = post("/v1/domain/{domainId}/work", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newWorkDTO));

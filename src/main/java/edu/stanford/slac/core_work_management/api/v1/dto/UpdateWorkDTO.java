@@ -52,6 +52,8 @@ public record UpdateWorkDTO(
         String shopGroupId,
         @Schema(description = "The project where the work is associated")
         String project,
+        @Schema(description = "The unique identifier of the work which his is related to")
+        List<String> relatedToWorkIds,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
         List<WriteCustomFieldDTO> customFieldValues

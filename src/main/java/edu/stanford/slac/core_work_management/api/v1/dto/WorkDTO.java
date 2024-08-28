@@ -27,7 +27,7 @@ public record WorkDTO(
         @Schema(description = "The unique identifier of the work plan")
         Long workNumber,
         @Schema(description = "The unique identifier of the work which his is related to")
-        String relatedToWorkId,
+        List<String> relatedToWorkIds,
         @Schema(description = "The type of the work")
         WorkTypeDTO workType,
         @Schema(description = "The current status of the work")

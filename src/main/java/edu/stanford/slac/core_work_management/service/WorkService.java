@@ -112,9 +112,9 @@ public class WorkService {
                 DomainNotFound
                         .notFoundById()
                         .errorCode(-1)
-                        .id(newWorkDTO.domainId())
+                        .id(domainId)
                         .build(),
-                () -> domainService.existsById(newWorkDTO.domainId())
+                () -> domainService.existsById(domainId)
         );
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
@@ -122,12 +122,28 @@ public class WorkService {
                         .orElseThrow(
                                 () -> WorkTypeNotFound
                                         .notFoundById()
-                                        .errorCode(-1)
+                                        .errorCode(-2)
                                         .workId(newWorkDTO.workTypeId())
                                         .build()
                         ),
-                -2
+                -3
         );
+
+        // check if the parent id exists, in case new work is a sub work
+        if(newWorkDTO.parentWorkId() != null) {
+            assertion(
+                    WorkNotFound
+                            .notFoundById()
+                            .errorCode(-3)
+                            .workId(newWorkDTO.parentWorkId())
+                            .build(),
+                    () -> wrapCatch(
+                            () -> workRepository.existsByDomainIdAndId(domainId, newWorkDTO.parentWorkId()),
+                            -4
+                    )
+            );
+        }
+
         // check the work type against the domain
         assertion(
                 ControllerLogicException

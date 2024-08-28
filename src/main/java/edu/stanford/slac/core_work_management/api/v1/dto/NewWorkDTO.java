@@ -16,9 +16,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the information for create new work plan")
 public record NewWorkDTO(
-        @Schema(description = "The domain where the work belongs to")
-        @NotEmpty(message = "The domain is required")
-        String domainId,
+        @Schema(description = "The parent work id if the work is a sub work")
+        String parentWorkId,
         @Schema(description = "The title of the work plan")
         @NotEmpty(message = "Title is required")
         String title,
@@ -42,6 +41,8 @@ public record NewWorkDTO(
         String shopGroupId,
         @NotNull(message = "Project is required")
         String project,
+        @Schema(description = "The unique identifier of the work which his is related to")
+        List<String> relatedToWorkIds,
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
         List<WriteCustomFieldDTO> customFieldValues
