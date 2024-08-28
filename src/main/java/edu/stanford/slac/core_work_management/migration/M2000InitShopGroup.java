@@ -26,7 +26,6 @@ public class M2000InitShopGroup {
 
         List<NewShopGroupDTO> newShopGroupDTOList = List.of(
                 NewShopGroupDTO.builder()
-                        .domainId(tecDomain.id())
                         .name("Accelerator Physics")
                         .description("Accelerator Physics")
                         .users(
@@ -38,7 +37,6 @@ public class M2000InitShopGroup {
                         )
                         .build(),
                 NewShopGroupDTO.builder()
-                        .domainId(tecDomain.id())
                         .name("Accelerator Controls Systems")
                         .description("Accelerator Controls Systems")
                         .users(Set.of(
@@ -51,7 +49,7 @@ public class M2000InitShopGroup {
                         .build()
         );
         for (NewShopGroupDTO shopGroupDTO : newShopGroupDTOList) {
-            shopGroupService.createNew(shopGroupDTO);
+            shopGroupService.createNew(tecDomain.id(), shopGroupDTO);
         }
     }
 

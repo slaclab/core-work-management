@@ -38,14 +38,15 @@ public class ShopGroupService {
     /**
      * Create a new shop group
      *
+     * @param domainId        the id of the domain
      * @param newShopGroupDTO the DTO to create the shop group
      * @return the id of the created shop group
      */
     @Transactional
-    public String createNew(@Valid NewShopGroupDTO newShopGroupDTO) {
+    public String createNew(@NotEmpty String domainId, @Valid NewShopGroupDTO newShopGroupDTO) {
         // validate user emails
         ShopGroup savedShopGroup = wrapCatch(
-                () -> shopGroupRepository.save(shopGroupMapper.toModel(newShopGroupDTO)),
+                () -> shopGroupRepository.save(shopGroupMapper.toModel(domainId, newShopGroupDTO)),
                 -1
         );
 
@@ -60,9 +61,9 @@ public class ShopGroupService {
      * @param shopGroupId        the id of the shop group
      * @param updateShopGroupDTO the DTO to update the shop group
      */
-    public void update(@NotEmpty String shopGroupId, @Valid UpdateShopGroupDTO updateShopGroupDTO) {
+    public void update(@NotEmpty String domainId, @NotEmpty String shopGroupId, @Valid UpdateShopGroupDTO updateShopGroupDTO) {
         var storedShopGroup = wrapCatch(
-                () -> shopGroupRepository.findById(shopGroupId),
+                () -> shopGroupRepository.findByDomainIdAndId(domainId, shopGroupId),
                 -1
         ).orElseThrow(
                 () -> ShopGroupNotFound.notFoundById()
@@ -116,9 +117,9 @@ public class ShopGroupService {
      *
      * @return the list of shop groups
      */
-    public List<ShopGroupDTO> findAll() {
+    public List<ShopGroupDTO> findAllByDomainId(@NotEmpty String domainId) {
         return wrapCatch(
-                () -> shopGroupRepository.findAll(),
+                () -> shopGroupRepository.findAllByDomainId(domainId),
                 -1
         ).stream().map(shopGroupMapper::toDTO).toList();
     }
@@ -142,9 +143,9 @@ public class ShopGroupService {
      * @param shopGroupId the id of the shop group
      * @return the shop group
      */
-    public ShopGroupDTO findById(String shopGroupId) {
+    public ShopGroupDTO findByDomainIdAndId(@NotEmpty String domainId, @NotEmpty String shopGroupId) {
         return wrapCatch(
-                () -> shopGroupRepository.findById(shopGroupId)
+                () -> shopGroupRepository.findByDomainIdAndId(domainId, shopGroupId)
                         .map(shopGroupMapper::toDTO)
                         .orElseThrow(
                                 () -> ShopGroupNotFound.notFoundById()
@@ -159,13 +160,14 @@ public class ShopGroupService {
     /**
      * Check if a specific shop group contains a user email
      *
+     * @param domainId    the id of the domain
      * @param shopGroupId the id of the shop group
      * @param userEmail   the email of the user
      * @return true if the shop group exists
      */
-    public Boolean checkContainsAUserEmail(String shopGroupId, String userEmail) {
+    public Boolean checkContainsAUserEmail(String domainId, String shopGroupId, String userEmail) {
         return wrapCatch(
-                () -> shopGroupRepository.existsByIdAndUsers_User_mail_ContainingIgnoreCase(shopGroupId, userEmail),
+                () -> shopGroupRepository.existsByDomainIdAndIdAndUsers_User_mail_ContainingIgnoreCase(domainId, shopGroupId, userEmail),
                 -1
         );
     }

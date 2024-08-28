@@ -57,7 +57,7 @@ public class ELogService implements LogService{
      * @param files  The files to be attached to the log entry
      */
     @Transactional
-    public String createNewLogEntry(String workId, NewLogEntry entry, MultipartFile[] files) {
+    public String createNewLogEntry(String domainId, String workId, NewLogEntry entry, MultipartFile[] files) {
         var foundWork = workRepository.findById(workId).orElseThrow(()-> WorkNotFound.notFoundById().workId(workId).errorCode(-1).build());
         log.info("Creating new log entry for work {}", foundWork.getWorkNumber());
         List<String> attachmentIds = new ArrayList<>();
@@ -90,13 +90,13 @@ public class ELogService implements LogService{
         log.info("[logging work number {}] Fetching all authorization",foundWork.getWorkNumber());
         List<AuthorizationDTO> allWorkAuthorization = authService.findByResourceIs(WORK_AUTHORIZATION_TEMPLATE.formatted(workId));
 
-        // check if within allWorkAuthorization there is some ower with the postfix 'shopgroup.cws.slac.stanford.edu'
-        // in this case i need to fetch the shop gorup and return an array of user id
+        // check if within allWorkAuthorization there is some owner with the postfix 'shopgroup.cws.slac.stanford.edu'
+        // in this case i need to fetch the shop group and return an array of user id
         List<String> userIdForAuthorization = allWorkAuthorization.stream().map(
                 auth -> {
                     if (auth.owner().endsWith("@shopgroup.cws.slac.stanford.edu")) {
                         log.info("[logging work number {}] Fetching all user for shop group: {}", foundWork.getWorkNumber(), auth.owner());
-                        var shopGroup = shopGroupService.findById(auth.owner().split("@")[0]);
+                        var shopGroup = shopGroupService.findByDomainIdAndId(domainId, auth.owner().split("@")[0]);
                         return shopGroup.users().stream().map(member -> member.user().mail()).toList();
                     }
                     return List.of(auth.owner());

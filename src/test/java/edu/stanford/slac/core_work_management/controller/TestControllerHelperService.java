@@ -135,9 +135,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewShopGroupDTO newShopGroupDTO
     ) throws Exception {
-        var requestBuilder = post("/v1/shop-group")
+        var requestBuilder = post("/v1/domain/{domainId}/shop-group", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newShopGroupDTO));

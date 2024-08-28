@@ -30,7 +30,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,8 +126,8 @@ public class LogControllerTest {
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -176,6 +175,7 @@ public class LogControllerTest {
         newWorkId =
                 assertDoesNotThrow(
                         () -> workService.createNew(
+                                domainId,
                                 NewWorkDTO.builder()
                                         .domainId(domainId)
                                         .locationId(locationId)
@@ -233,7 +233,7 @@ public class LogControllerTest {
             assertThat(uploadResult.getPayload()).isTrue();
 
             //try to fetch the log entry using elog api
-            var fullWork = workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().build());
+            var fullWork = workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build());
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)
@@ -285,7 +285,7 @@ public class LogControllerTest {
 
 
         //try to fetch the log entry using elog api
-        var fullWork = workService.findWorkById(newWorkLogIdResult.getPayload(), WorkDetailsOptionDTO.builder().build());
+        var fullWork = workService.findWorkById( domainId, newWorkLogIdResult.getPayload(), WorkDetailsOptionDTO.builder().build());
         await()
                 .atMost(30, SECONDS)
                 .pollDelay(2, SECONDS)

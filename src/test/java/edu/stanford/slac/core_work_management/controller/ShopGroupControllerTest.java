@@ -100,9 +100,9 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewShopGroupDTO
                                 .builder()
-                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -129,9 +129,9 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewShopGroupDTO
                                 .builder()
-                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -169,9 +169,9 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewShopGroupDTO
                                 .builder()
-                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -280,9 +280,9 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewShopGroupDTO
                                 .builder()
-                                .domainId(domainId)
                                 .name("shopGroup1")
                                 .description("shopGroup1 description")
                                 .users(
@@ -306,9 +306,9 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewShopGroupDTO
                                 .builder()
-                                .domainId(domainId)
                                 .name("shopGroup2")
                                 .description("shopGroup2 description")
                                 .users(

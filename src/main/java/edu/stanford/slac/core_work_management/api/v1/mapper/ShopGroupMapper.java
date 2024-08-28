@@ -34,7 +34,7 @@ public abstract class ShopGroupMapper {
      * @param newShopGroupDTO the new shop group
      * @return the DTO
      */
-    public abstract ShopGroup toModel(NewShopGroupDTO newShopGroupDTO);
+    public abstract ShopGroup toModel(String domainId, NewShopGroupDTO newShopGroupDTO);
 
     public abstract ShopGroup updateModel(UpdateShopGroupDTO updateShopGroupDTO, @MappingTarget ShopGroup shopGroup);
 

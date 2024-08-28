@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,20 +34,20 @@ public class HelperService {
     /**
      * Fetch work and check status
      */
-    public boolean checkStatusOnWork(String workId, WorkStatusDTO workStatus){
+    public boolean checkStatusOnWork(String domainId, String workId, WorkflowStateDTO state){
         var foundFullWork =  assertDoesNotThrow(
-                ()->workService.findWorkById(workId, WorkDetailsOptionDTO.builder().build())
+                ()->workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundFullWork).isNotNull();
-        return foundFullWork.currentStatus().status().equals(workStatus);
+        return foundFullWork.currentStatus().status().equals(state);
     }
 
     /**
      * Fetch work and check status and history from latest to oldest status value
      */
-    public boolean checkStatusAndHistoryOnWork(String workId, List<WorkStatusDTO> workStatusList){
+    public boolean checkStatusAndHistoryOnWork(String domainId, String workId, List<WorkflowStateDTO> workStatusList){
         var foundFullWork =  assertDoesNotThrow(
-                ()->workService.findWorkById(workId, WorkDetailsOptionDTO.builder().build())
+                ()->workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundFullWork).isNotNull();
         if(workStatusList != null && !workStatusList.isEmpty()) {

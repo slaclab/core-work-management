@@ -17,11 +17,7 @@
 
 package edu.stanford.slac.core_work_management.controller;
 
-import com.google.common.collect.ImmutableList;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
@@ -39,7 +35,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -49,8 +44,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.ImmutableSet.of;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -109,6 +102,7 @@ public class WorkControllerPerformanceTest {
     private final List<String> testWorkTypeIds = new ArrayList<>();
     private final List<String> testActivityTypeIds = new ArrayList<>();
     private List<LOVElementDTO> projectLovValues;
+
     @BeforeAll
     public void init() {
         mongoTemplate.remove(new Query(), Domain.class);
@@ -206,8 +200,9 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
+
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -228,8 +223,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -249,8 +244,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -267,8 +262,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(
@@ -284,14 +279,14 @@ public class WorkControllerPerformanceTest {
         );
         // crete lov for 'project' static filed
         M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
-        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
+        assertDoesNotThrow(() -> m1004_initProjectLOV.changeSet());
+        projectLovValues = assertDoesNotThrow(() -> lovService.findAllByGroupName("Project"));
     }
 
 
     @Test
     public void testCreateNewWork() {
-        for(int i=0; i<200; i++) {
+        for (int i = 0; i < 200; i++) {
             // create new work
             var newWorkIdResult =
                     assertDoesNotThrow(

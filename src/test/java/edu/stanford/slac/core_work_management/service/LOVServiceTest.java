@@ -108,8 +108,8 @@ public class LOVServiceTest {
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -288,6 +288,7 @@ public class LOVServiceTest {
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)

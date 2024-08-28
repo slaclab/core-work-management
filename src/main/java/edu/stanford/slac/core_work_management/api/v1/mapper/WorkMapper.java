@@ -89,7 +89,7 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getWorkTypeId()))")
-    @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getShopGroupId()))")
+    @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getDomainId(), work.getShopGroupId()))")
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
@@ -212,7 +212,7 @@ public abstract class WorkMapper {
     /**
      * Get the authorization level on activity
      */
-    public AuthorizationTypeDTO getActivityAuthorizationByWorkId(String workId) {
+    public AuthorizationTypeDTO getActivityAuthorizationByWorkId(String domainId, String workId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             // if the DTO has been requested by an anonymous user, then the access level is Read
@@ -231,6 +231,7 @@ public abstract class WorkMapper {
         )) return AuthorizationTypeDTO.Write;
         if (shopGroupService.checkContainsAUserEmail(
                 // fire not found work exception
+                domainId,
                 workId,
                 authentication.getCredentials().toString()
         )) return AuthorizationTypeDTO.Write;
@@ -243,9 +244,9 @@ public abstract class WorkMapper {
      * @param shopGroupId the id of the shop group
      * @return the converted DTO
      */
-    public ShopGroupDTO toShopGroupDTOById(String shopGroupId) {
+    public ShopGroupDTO toShopGroupDTOById(String domainId, String shopGroupId) {
         if (shopGroupId == null) return null;
-        return shopGroupService.findById(shopGroupId);
+        return shopGroupService.findByDomainIdAndId(domainId, shopGroupId);
     }
 
     /**

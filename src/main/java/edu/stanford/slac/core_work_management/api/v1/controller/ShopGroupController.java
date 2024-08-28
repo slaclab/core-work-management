@@ -47,13 +47,14 @@ import lombok.AllArgsConstructor;
 
 
 @RestController()
-@RequestMapping("/v1/shop-group")
+@RequestMapping("/v1/domain")
 @AllArgsConstructor
 @Schema(description = "Set of api for the location management")
 public class ShopGroupController {
     ShopGroupService shopGroupService;
 
     @PostMapping(
+            path="{domainId}/shop-group",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
@@ -62,48 +63,55 @@ public class ShopGroupController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
+            @Parameter(description = "The domain id")
+            @PathVariable String domainId,
+            @Schema(description = "The new shop group to create")
             @Valid @RequestBody NewShopGroupDTO newShopGroupDTO
     ) {
         return ApiResultResponse.of(
-                shopGroupService.createNew(newShopGroupDTO)
+                shopGroupService.createNew(domainId, newShopGroupDTO)
         );
     }
 
     @PutMapping(
-            path = "/{id}",
+            path = "{domainId}/shop-group/{id}",
             consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Update a shop group")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@shopGroupAuthorizationService.checkUpdate(#authentication, #id, #updateShopGroupDTO)")
+    @PreAuthorize("@shopGroupAuthorizationService.checkUpdate(authentication, domainId, id, updateShopGroupDTO)")
     public ApiResultResponse<Boolean> update(
             Authentication authentication,
+            @Parameter(description = "The domain id")
+            @PathVariable String domainId,
             @Parameter(description = "The id of the shop group to update")
             @PathVariable String id,
             @Valid @RequestBody UpdateShopGroupDTO updateShopGroupDTO
     ) {
-        shopGroupService.update(id, updateShopGroupDTO);
+        shopGroupService.update(domainId, id, updateShopGroupDTO);
         return ApiResultResponse.of(true);
     }
 
     @GetMapping(
+            path = "{domainId}/shop-group",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a new shop group")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
 
-    public ApiResultResponse<List<ShopGroupDTO>> findAll(
-            Authentication authentication
+    public ApiResultResponse<List<ShopGroupDTO>> findAllForDomainId(
+            Authentication authentication,
+            @PathVariable @NotEmpty String domainId
     ) {
         return ApiResultResponse.of(
-                shopGroupService.findAll()
+                shopGroupService.findAllByDomainId(domainId)
         );
     }
 
     @GetMapping(
-            path = "/{id}",
+            path = "{domainId}/shop-group/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a new shop group")
@@ -111,10 +119,13 @@ public class ShopGroupController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<ShopGroupDTO> findById(
             Authentication authentication,
+            @Schema(description = "The domain id")
+            @PathVariable @NotEmpty String domainId,
+            @Schema(description = "The shop group id")
             @PathVariable @NotEmpty String id
     ) {
         return ApiResultResponse.of(
-                shopGroupService.findById(id)
+                shopGroupService.findByDomainIdAndId(domainId, id)
         );
     }
 }

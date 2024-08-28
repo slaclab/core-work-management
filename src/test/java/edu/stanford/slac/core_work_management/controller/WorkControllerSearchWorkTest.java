@@ -118,8 +118,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -139,8 +139,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -160,8 +160,7 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                NewShopGroupDTO.builder()
-                                        .domainId(domainId)
+                                domainId, NewShopGroupDTO.builder()
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -178,8 +177,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(

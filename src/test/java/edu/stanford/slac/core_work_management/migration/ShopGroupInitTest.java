@@ -50,9 +50,10 @@ public class ShopGroupInitTest {
         M2000InitShopGroup initShopGroup = new M2000InitShopGroup(domainService, shopGroupService);
         assertDoesNotThrow(initShopGroup::changeSet);
 
-        assertDoesNotThrow(()->domainService.findByName("TEC"));
+        var foundDomain = assertDoesNotThrow(()->domainService.findByName("TEC"));
+        assertThat(foundDomain).isNotNull();
 
-        var sg = assertDoesNotThrow(()->shopGroupService.findAll());
+        var sg = assertDoesNotThrow(()->shopGroupService.findAllByDomainId(foundDomain.id()));
         assertThat(sg).hasSize(2);
         assertThat(sg.get(0).name()).isEqualTo("Accelerator Physics");
         assertThat(sg.get(1).name()).isEqualTo("Accelerator Controls Systems");

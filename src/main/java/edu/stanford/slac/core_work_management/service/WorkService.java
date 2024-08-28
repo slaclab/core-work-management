@@ -11,6 +11,7 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
@@ -68,14 +69,14 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
-    public String createNew(@Valid NewWorkDTO newWorkDTO) {
+    public String createNew(@Valid String domainId, @Valid NewWorkDTO newWorkDTO) {
         // contain the set of all user that will become admin for this new work
         Long newWorkSequenceId = wrapCatch(
                 workRepository::getNextWorkId,
                 -1
         );
         WorkService self = applicationContext.getBean(WorkService.class);
-        return self.createNew(newWorkSequenceId, newWorkDTO, Optional.of(false));
+        return self.createNew(domainId, newWorkSequenceId, newWorkDTO, Optional.of(false));
     }
 
     /**
@@ -84,14 +85,14 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
-    public String createNew(@Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
+    public String createNew(String domainId, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
         // contain the set of all user that will become admin for this new work
         Long newWorkSequenceId = wrapCatch(
                 workRepository::getNextWorkId,
                 -1
         );
         WorkService self = applicationContext.getBean(WorkService.class);
-        return self.createNew(newWorkSequenceId, newWorkDTO, logIf);
+        return self.createNew(domainId, newWorkSequenceId, newWorkDTO, logIf);
     }
 
     /**
@@ -105,7 +106,7 @@ public class WorkService {
             maxAttempts = 8,
             backoff = @Backoff(delay = 100, multiplier = 2)
     )
-    public String createNew(Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
+    public String createNew(String domainId, Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
         //check if the domain exists
         assertion(
                 DomainNotFound
@@ -127,6 +128,16 @@ public class WorkService {
                         ),
                 -2
         );
+        // check the work type against the domain
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("The work type is not part of the domain")
+                        .errorDomain("WorkService::createNew")
+                        .build(),
+                () -> workType.getDomainId().compareTo(domainId) == 0
+        );
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
                 workSequence,
@@ -141,8 +152,8 @@ public class WorkService {
 
 
         // validate location and group shop against the domain
-        validateLocationForDomain(workToSave.getLocationId(), workToSave.getDomainId(), -3);
-        validateShopGroupForDomain(workToSave.getShopGroupId(), workToSave.getDomainId(), -4);
+        validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(),  -3);
+        validateShopGroupForDomain(workToSave.getDomainId(), workToSave.getShopGroupId(), -4);
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -158,6 +169,7 @@ public class WorkService {
         if (logIf.isPresent() && logIf.get()) {
             logService.createNewLogEntry
                     (
+                            savedWork.getDomainId(),
                             savedWork.getId(),
                             NewLogEntry.builder()
                                     .title(savedWork.getTitle())
@@ -173,20 +185,20 @@ public class WorkService {
      * Validate the location for the domain
      * check if the location belong to the source domain
      *
+     * @param domainId  the domain id
      * @param locationId the id of the location
-     * @param srcDomain  the domain id
      * @param errorCode  the error code
      */
-    private void validateLocationForDomain(String locationId, String srcDomain, int errorCode) {
+    private void validateLocationForDomain(String domainId, String locationId, int errorCode) {
         var location = wrapCatch(() -> locationService.findById(locationId), errorCode);
         assertion(
                 InvalidLocation
                         .byLocationNameDomainId()
                         .errorCode(errorCode)
                         .locationName(location.name())
-                        .domainId(srcDomain)
+                        .domainId(domainId)
                         .build(),
-                () -> (location.domain().id().compareTo(srcDomain) == 0)
+                () -> (location.domain().id().compareTo(domainId) == 0)
         );
     }
 
@@ -194,20 +206,20 @@ public class WorkService {
      * Validate shop group for the domain
      * check if the shop group belong to the source domain
      *
+     * @param domainId   the domain id
      * @param shopGroupId the id of the location
-     * @param srcDomain   the domain id
      * @param errorCode   the error code
      */
-    private void validateShopGroupForDomain(String shopGroupId, String srcDomain, int errorCode) {
-        var shopGroup = wrapCatch(() -> shopGroupService.findById(shopGroupId), errorCode);
+    private void validateShopGroupForDomain(String domainId, String shopGroupId,int errorCode) {
+        var shopGroup = wrapCatch(() -> shopGroupService.findByDomainIdAndId(domainId, shopGroupId), errorCode);
         assertion(
                 InvalidShopGroup
                         .byShopGroupNameDomainId()
                         .errorCode(errorCode)
                         .shopGroupName(shopGroup.name())
-                        .domainId(srcDomain)
+                        .domainId(domainId)
                         .build(),
-                () -> (shopGroup.domain().id().compareTo(srcDomain) == 0)
+                () -> (shopGroup.domain().id().compareTo(domainId) == 0)
         );
     }
 
@@ -218,7 +230,7 @@ public class WorkService {
      * @param updateWorkDTO the DTO to update the work
      */
     @Transactional
-    public void update(String workId, @Valid UpdateWorkDTO updateWorkDTO) {
+    public void update(@NotNull String domainId, @NotNull String workId, @Valid UpdateWorkDTO updateWorkDTO) {
         // fetch stored work to check if the work exists
         Work foundWork = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -231,6 +243,18 @@ public class WorkService {
                 -2
         );
 
+        // check domain match
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-2)
+                        .errorMessage("The work is not part of the domain")
+                        .errorDomain("WorkService::update")
+                        .build(),
+                () -> foundWork.getDomainId().compareTo(domainId) == 0
+        );
+
+        // fetch work type for custom field validation
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
                         .findById(foundWork.getWorkTypeId())
@@ -245,12 +269,12 @@ public class WorkService {
         );
 
 
-        // check that all the user in the assigned to are listed into the shop group
+        // check that all the user in the assignedTo are listed into the shop group
         if (updateWorkDTO.assignedTo() != null) {
             updateWorkDTO.assignedTo().forEach(
                     (user) -> {
                         assertion(
-                                () -> shopGroupService.checkContainsAUserEmail(foundWork.getShopGroupId(), user),
+                                () -> shopGroupService.checkContainsAUserEmail(foundWork.getDomainId(), foundWork.getShopGroupId(), user),
                                 ControllerLogicException
                                         .builder()
                                         .errorCode(-3)
@@ -322,6 +346,7 @@ public class WorkService {
         // so remove all the admin that are also reader
         writerUserList.removeAll(adminUserList);
 
+        // add admin authorization
         adminUserList.forEach(
                 (user) -> {
                     authService.addNewAuthorization(
@@ -334,6 +359,7 @@ public class WorkService {
                     );
                 }
         );
+        // add user authorization
         writerUserList.forEach(
                 (user) -> {
                     authService.addNewAuthorization(
@@ -357,10 +383,11 @@ public class WorkService {
     /**
      * Close a work
      *
+     * @param domainId      the id of the domain
      * @param workId        the id of the work
      * @param reviewWorkDTO the DTO to close the work
      */
-    public void reviewWork(String workId, @Valid ReviewWorkDTO reviewWorkDTO) {
+    public void reviewWork(@NotNull String domainId, @NotNull String workId, @Valid ReviewWorkDTO reviewWorkDTO) {
         // check for work existence
         var work = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -372,9 +399,19 @@ public class WorkService {
                 ),
                 -1
         );
+        // check domain match
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-2)
+                        .errorMessage("The work is not part of the domain")
+                        .errorDomain("WorkService::reviewWork")
+                        .build(),
+                () -> work.getDomainId().compareTo(domainId) == 0
+        );
         // check for work status
         assertion(
-                () -> work.getCurrentStatus().getStatus() == WorkStatus.Review,
+                () -> work.getCurrentStatus().getStatus() == WorkflowState.ReviewToClose,
                 ControllerLogicException
                         .builder()
                         .errorCode(-2)
@@ -387,7 +424,7 @@ public class WorkService {
         // set to close
         work.setCurrentStatus(
                 WorkStatusLog.builder()
-                        .status(WorkStatus.Closed)
+                        .status(WorkflowState.Closed)
                         .build()
         );
         work.setFollowupDescriptionOnClose(reviewWorkDTO.followUpDescription());
@@ -407,7 +444,7 @@ public class WorkService {
      * @param id the id of the work
      * @return the work
      */
-    public WorkDTO findWorkById(String id, WorkDetailsOptionDTO workDetailsOptionDTO) {
+    public WorkDTO findWorkById(@NotNull String domainId, @NotNull String id, @Valid WorkDetailsOptionDTO workDetailsOptionDTO) {
         return wrapCatch(
                 () -> workRepository.findById(id)
                         .map(w -> workMapper.toDTO(w, workDetailsOptionDTO))
@@ -428,11 +465,11 @@ public class WorkService {
      * @param id the id of the work
      * @return the list of work changed during the time
      */
-    public List<WorkDTO> findWorkHistoryById(String id) {
+    public List<WorkDTO> findWorkHistoryById(@NotNull String domainId, @NotNull String id) {
         return wrapCatch(
                 () -> modelHistoryService.findModelChangesByModelId(Work.class, id)
                         .stream()
-                        .map(w->workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                        .map(w -> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
                         .toList(),
                 -1
         );
@@ -456,7 +493,6 @@ public class WorkService {
                 -1
         );
     }
-
 
 
     /**
@@ -508,6 +544,7 @@ public class WorkService {
                                 // user of the shop group are always treated as admin on the work
                                 () -> shopGroupService.checkContainsAUserEmail(
                                         // fire not found work exception
+                                        workDTO.domain().id(),
                                         workDTO.shopGroup().id(),
                                         authentication.getCredentials().toString()
                                 )

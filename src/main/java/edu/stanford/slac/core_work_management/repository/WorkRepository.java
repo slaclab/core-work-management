@@ -1,13 +1,15 @@
 package edu.stanford.slac.core_work_management.repository;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkflowStateDTO;
 import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkStatus;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
+import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for Work objects
@@ -33,6 +35,31 @@ public interface WorkRepository extends MongoRepository<Work, String>,WorkReposi
     })
     List<WorkTypeStatusStatistics> getWorkStatisticsByDomainId(String domainId);
 
-    long countByWorkTypeIdAndCurrentStatus_StatusIs(String workTypeId, WorkStatus status);
-    long countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(String domainId, String workTypeId, WorkStatus status);
+    /**
+     * Find a work by domain id and id.
+     *
+     * @param domainId the domain id
+     * @param id the id
+     * @return the work
+     */
+    Optional<Work> findByDomainIdAndId(String domainId, String id);
+
+    /**
+     * The Statistic for the work status count.
+     *
+     * @param workTypeId the work type id
+     * @param status the status
+     * @return the count of work
+     */
+    long countByWorkTypeIdAndCurrentStatus_StatusIs(String workTypeId, WorkflowState status);
+
+    /**
+     * The Statistic for the work status count.
+     *
+     * @param domainId the domain id
+     * @param workTypeId the work type id
+     * @param status the status
+     * @return the count of work
+     */
+    long countByDomainIdAndWorkTypeIdAndCurrentStatus_StatusIs(String domainId, String workTypeId, WorkflowState status);
 }

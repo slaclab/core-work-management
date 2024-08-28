@@ -1,13 +1,11 @@
 package edu.stanford.slac.core_work_management.service;
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.InvalidLocation;
 import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
-import jakarta.validation.ConstraintViolationException;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,8 +87,8 @@ public class WorkServiceTest {
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -111,8 +109,8 @@ public class WorkServiceTest {
         alternateShopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(alternateDomainId)
                                         .name("shop2")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -177,6 +175,7 @@ public class WorkServiceTest {
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -207,6 +206,7 @@ public class WorkServiceTest {
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -223,6 +223,7 @@ public class WorkServiceTest {
 
         assertDoesNotThrow(
                 () -> workService.update(
+                        domainId,
                         newWorkId,
                         UpdateWorkDTO
                                 .builder()
@@ -251,6 +252,7 @@ public class WorkServiceTest {
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -268,6 +270,7 @@ public class WorkServiceTest {
         InvalidLocation invalidLocationForDomainException = assertThrows(
                 InvalidLocation.class,
                 () -> workService.update(
+                        domainId,
                         newWorkId,
                         UpdateWorkDTO
                                 .builder()
@@ -298,6 +301,7 @@ public class WorkServiceTest {
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -315,6 +319,7 @@ public class WorkServiceTest {
         InvalidShopGroup invalidLocationForDomainException = assertThrows(
                 InvalidShopGroup.class,
                 () -> workService.update(
+                        domainId,
                         newWorkId,
                         UpdateWorkDTO
                                 .builder()
@@ -348,6 +353,7 @@ public class WorkServiceTest {
         InvalidLocation invalidLocationException = assertThrows(
                 InvalidLocation.class,
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(alternateDomainId)
@@ -382,6 +388,7 @@ public class WorkServiceTest {
         InvalidShopGroup invalidLocationException = assertThrows(
                 InvalidShopGroup.class,
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -413,6 +420,7 @@ public class WorkServiceTest {
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -428,7 +436,7 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotNull();
 
         var foundWork = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundWork).isNotNull();
         assertThat(foundWork.id()).isNotNull();
@@ -439,7 +447,7 @@ public class WorkServiceTest {
     public void errorTryToGetWorkWithBadId() {
         var workNotFoundException = assertThrows(
                 WorkNotFound.class,
-                () -> workService.findWorkById("bad id", WorkDetailsOptionDTO.builder().build())
+                () -> workService.findWorkById(domainId, "bad id", WorkDetailsOptionDTO.builder().build())
         );
         assertThat(workNotFoundException).isNotNull();
         assertThat(workNotFoundException.getErrorCode()).isEqualTo(-1);
@@ -462,6 +470,7 @@ public class WorkServiceTest {
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -507,6 +516,7 @@ public class WorkServiceTest {
         // create work plan
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -1045,6 +1055,7 @@ public class WorkServiceTest {
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
                                 .domainId(domainId)
@@ -1060,14 +1071,14 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotNull();
 
         var foundWorkWithHistory = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(true)).build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(true)).build())
         );
         assertThat(foundWorkWithHistory).isNotNull();
         assertThat(foundWorkWithHistory.id()).isEqualTo(newWorkId);
         assertThat(foundWorkWithHistory.changesHistory()).isNotNull().hasSize(1);
 
         var foundWorkNoHistory = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build())
         );
         assertThat(foundWorkNoHistory).isNotNull();
         assertThat(foundWorkNoHistory.id()).isEqualTo(newWorkId);

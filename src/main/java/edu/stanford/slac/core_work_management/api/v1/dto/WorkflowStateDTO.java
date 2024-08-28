@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the full list of the workflow states")
 public enum WorkflowStateDTO {
+    Created,
     Submitted,
     PendingAssignment,
     Assigned,
