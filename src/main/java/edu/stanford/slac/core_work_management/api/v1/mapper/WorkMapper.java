@@ -68,7 +68,7 @@ public abstract class WorkMapper {
      * @return the converted entity
      */
     @Mapping(target = "customFields", expression = "java(toCustomFieldValues(newWorkDTO.customFieldValues()))")
-    abstract public Work toModel(Long workNumber, NewWorkDTO newWorkDTO);
+    abstract public Work toModel(String domainId, Long workNumber, NewWorkDTO newWorkDTO);
 
 
 
@@ -104,8 +104,8 @@ public abstract class WorkMapper {
      * @return the list of changed
      */
     public List<ModelChangesHistoryDTO> getChanges(String workId, WorkDetailsOptionDTO workDetailsOptionDTO) {
-        if(workDetailsOptionDTO==null || workDetailsOptionDTO.changes()==null || workDetailsOptionDTO.changes().isPresent()==false) return Collections.emptyList();
-        if(workDetailsOptionDTO.changes().get()==false) return Collections.emptyList();
+        if(workDetailsOptionDTO==null || workDetailsOptionDTO.changes()==null || !workDetailsOptionDTO.changes()) return Collections.emptyList();
+        if(workDetailsOptionDTO.changes()==false) return Collections.emptyList();
         return modelHistoryService.findChangesByModelId(Work.class, workId);
     }
 

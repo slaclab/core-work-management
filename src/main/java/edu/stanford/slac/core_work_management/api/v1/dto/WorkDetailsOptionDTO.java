@@ -13,8 +13,12 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the options for the work details")
 public record WorkDetailsOptionDTO(
-        @NotNull
         @Schema(description = "The flag to include the work changes")
-        Optional<Boolean> changes
+        Boolean changes
 ) {
+    public WorkDetailsOptionDTO {
+        if(changes == null) {
+            changes = false;
+        }
+    }
 }

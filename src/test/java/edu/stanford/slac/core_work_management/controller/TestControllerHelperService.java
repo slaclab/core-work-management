@@ -496,7 +496,7 @@ public class TestControllerHelperService {
         var requestBuilder = get("/v1/work/{workId}", workId)
                 .contentType(MediaType.APPLICATION_JSON);
         if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes()!=null) {
-            workDetailsOptionDTO.changes().ifPresent(aBoolean -> requestBuilder.param("changes", aBoolean.toString()));
+           requestBuilder.param("changes", String.valueOf(workDetailsOptionDTO.changes()));
         }
         return executeHttpRequest(
                 new TypeReference<>() {

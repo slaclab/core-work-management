@@ -6,6 +6,7 @@ import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.service.workflow.DummyWorkflow;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -48,6 +50,7 @@ public class WorkServiceTest {
     @Autowired
     LOVService lovService;
 
+    private DomainDTO fullDomain;
     private String shopGroupId;
     private String alternateShopGroupId;
     private String locationId;
@@ -64,10 +67,21 @@ public class WorkServiceTest {
                                 .builder()
                                 .name("Test Domain")
                                 .description("Test Domain Description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                DummyWorkflow.class.getName()
+                                        )
+                                )
                                 .build()
                 )
         );
         assertThat(domainId).isNotEmpty();
+
+        // fetch full domain
+        fullDomain = assertDoesNotThrow(
+                () -> domainService.findById(domainId)
+        );
+
 
         alternateDomainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -75,6 +89,11 @@ public class WorkServiceTest {
                                 .builder()
                                 .name("Alternate Test Domain")
                                 .description("Alternate Test Domain Description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                DummyWorkflow.class.getName()
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -1061,17 +1080,142 @@ public class WorkServiceTest {
         assertThat(newWorkId).isNotNull();
 
         var foundWorkWithHistory = assertDoesNotThrow(
-                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(true)).build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(true).build())
         );
         assertThat(foundWorkWithHistory).isNotNull();
         assertThat(foundWorkWithHistory.id()).isEqualTo(newWorkId);
         assertThat(foundWorkWithHistory.changesHistory()).isNotNull().hasSize(1);
 
         var foundWorkNoHistory = assertDoesNotThrow(
-                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(false).build())
         );
         assertThat(foundWorkNoHistory).isNotNull();
         assertThat(foundWorkNoHistory.id()).isEqualTo(newWorkId);
         assertThat(foundWorkNoHistory.changesHistory()).isNotNull().isEmpty();
+    }
+
+    @Test
+    public void testWorkChildCreation() {
+        // create base work type
+        String newChildWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(fullDomain.workflows().toArray()[0].toString())
+                                .build()
+                )
+        );
+        assertThat(newChildWorkTypeId).isNotNull();
+
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("find the documentation")
+                                .description("find the documentation description")
+                                .childWorkTypeIds(Set.of(newChildWorkTypeId))
+                                .workflowId(fullDomain.workflows().toArray()[0].toString())
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
+
+        // type for the parent
+        var newParentWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newParentWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
+                                .build()
+                )
+        );
+        assertThat(newParentWorkId).isNotNull();
+
+        // create new child work
+        var newChildWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newChildWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
+                                .parentWorkId(newParentWorkId)
+                                .build()
+                )
+        );
+        assertThat(newChildWorkId).isNotNull();
+
+        // fetch the child and check for the parent
+        var foundChildWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newChildWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(foundChildWork).isNotNull();
+        assertThat(foundChildWork.id()).isEqualTo(newChildWorkId);
+        assertThat(foundChildWork.parentWorkId()).isEqualTo(newParentWorkId);
+    }
+
+    @Test
+    public void savingWorkFailsWithWrongParentId() {
+        // create base work type
+        String newChildWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(fullDomain.workflows().toArray()[0].toString())
+                                .build()
+                )
+        );
+        assertThat(newChildWorkTypeId).isNotNull();
+
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("find the documentation")
+                                .description("find the documentation description")
+                                .childWorkTypeIds(Set.of(newChildWorkTypeId))
+                                .workflowId(fullDomain.workflows().toArray()[0].toString())
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
+
+        // type for the parent
+        var workNotFound = assertThrows(
+                WorkNotFound.class,
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newParentWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .project(projectLovValues.get(0).id())
+                                .parentWorkId("bad id")
+                                .build()
+                )
+        );
+        assertThat(workNotFound).isNotNull();
+
     }
 }

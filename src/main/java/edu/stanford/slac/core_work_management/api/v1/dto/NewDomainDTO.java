@@ -22,11 +22,12 @@ public record NewDomainDTO(
         @Schema(description = "The domain description")
         String description,
         @Schema(description = "The list of the workflow that can be used on this domain")
+        @NotEmpty(message = "The list of workflow implementations cannot be empty")
         Set<String> workflowImplementations
 ) {
-        public NewDomainDTO {
-                if(workflowImplementations == null){
-                        workflowImplementations = new HashSet<>();
-                }
+    public NewDomainDTO {
+        if (workflowImplementations == null) {
+            workflowImplementations = new HashSet<>();
         }
+    }
 }

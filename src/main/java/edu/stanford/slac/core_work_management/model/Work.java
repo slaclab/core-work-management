@@ -29,6 +29,11 @@ public class Work {
     @Id
     private String id;
     /**
+     * The parent work id if the work is a sub work.
+     * This field is used to identify the parent work of the current work.
+     */
+    private String parentWorkId;
+    /**
      * The unique identifier for the domain.
      * This field is used to identify the domain to which the work belongs.
      */

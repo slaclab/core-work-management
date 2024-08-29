@@ -116,6 +116,8 @@ public class WorkService {
                         .build(),
                 () -> domainService.existsById(domainId)
         );
+        // fetch WorkType to check if the work type exists and get information
+        // about the custom fields
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
                         .findById(newWorkDTO.workTypeId())
@@ -156,6 +158,7 @@ public class WorkService {
         );
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
+                domainId,
                 workSequence,
                 newWorkDTO
         );

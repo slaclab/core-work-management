@@ -156,7 +156,7 @@ public class DomainWorkController {
                         domainId,
                         workId,
                         WorkDetailsOptionDTO.builder()
-                                .changes(changes)
+                                .changes(changes.orElse(false))
                                 .build()
                 )
         );

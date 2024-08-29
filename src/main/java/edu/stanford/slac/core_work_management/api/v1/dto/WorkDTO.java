@@ -22,6 +22,8 @@ import lombok.Builder;
 public record WorkDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
+        @Schema(description = "The parent work id if the work is a sub work")
+        String parentWorkId,
         @Schema(description = "The domain where the work belongs to")
         DomainDTO domain,
         @Schema(description = "The unique identifier of the work plan")
