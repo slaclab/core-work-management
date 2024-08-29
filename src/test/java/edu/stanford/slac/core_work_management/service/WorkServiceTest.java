@@ -6,7 +6,7 @@ import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.service.workflow.DummyWorkflow;
+import edu.stanford.slac.core_work_management.service.workflow.DummyParentWorkflow;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -69,7 +68,7 @@ public class WorkServiceTest {
                                 .description("Test Domain Description")
                                 .workflowImplementations(
                                         Set.of(
-                                                DummyWorkflow.class.getName()
+                                                DummyParentWorkflow.class.getName()
                                         )
                                 )
                                 .build()
@@ -91,7 +90,7 @@ public class WorkServiceTest {
                                 .description("Alternate Test Domain Description")
                                 .workflowImplementations(
                                         Set.of(
-                                                DummyWorkflow.class.getName()
+                                                DummyParentWorkflow.class.getName()
                                         )
                                 )
                                 .build()

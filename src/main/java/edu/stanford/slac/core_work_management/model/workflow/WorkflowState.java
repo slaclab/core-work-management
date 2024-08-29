@@ -15,5 +15,6 @@ public enum WorkflowState {
     Approved,
     WorkComplete,
     ReviewToClose,
-    Closed
+    Closed,
+    None
 }

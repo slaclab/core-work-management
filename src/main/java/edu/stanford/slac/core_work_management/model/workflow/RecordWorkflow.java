@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -33,8 +34,18 @@ public class RecordWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void updateWithModel(Work work) {
+    public void update(Work work, WorkflowState newState) {
 
+    }
+
+    @Override
+    public boolean canUpdate(Authentication authentication, Work work, WorkflowState newState) {
+        return false;
+    }
+
+    @Override
+    public boolean canCreateChild(Work work) {
+        return false;
     }
 
     @Override
