@@ -36,4 +36,14 @@ public class RecordWorkflow extends BaseWorkflow {
     public void updateWithModel(Work work) {
 
     }
+
+    @Override
+    public boolean isCompleted(Work work) {
+        return true;
+    }
+
+    @Override
+    public Set<WorkflowState> permittedStatus(Work work) {
+        return Set.of();
+    }
 }

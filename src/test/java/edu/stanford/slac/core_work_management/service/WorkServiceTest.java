@@ -1166,6 +1166,14 @@ public class WorkServiceTest {
         assertThat(foundChildWork).isNotNull();
         assertThat(foundChildWork.id()).isEqualTo(newChildWorkId);
         assertThat(foundChildWork.parentWorkId()).isEqualTo(newParentWorkId);
+
+        // find child work from parent
+        var foundChildren = assertDoesNotThrow(
+                () -> workService.findWorkChildrenById(domainId, newParentWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(foundChildren).isNotNull();
+        assertThat(foundChildren).hasSize(1);
+        assertThat(foundChildren.get(0).id()).isEqualTo(newChildWorkId);
     }
 
     @Test

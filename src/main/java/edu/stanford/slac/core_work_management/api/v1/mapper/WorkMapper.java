@@ -105,7 +105,6 @@ public abstract class WorkMapper {
      */
     public List<ModelChangesHistoryDTO> getChanges(String workId, WorkDetailsOptionDTO workDetailsOptionDTO) {
         if(workDetailsOptionDTO==null || workDetailsOptionDTO.changes()==null || !workDetailsOptionDTO.changes()) return Collections.emptyList();
-        if(workDetailsOptionDTO.changes()==false) return Collections.emptyList();
         return modelHistoryService.findChangesByModelId(Work.class, workId);
     }
 

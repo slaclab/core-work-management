@@ -36,18 +36,49 @@ public abstract class ShopGroupMapper {
      */
     public abstract ShopGroup toModel(String domainId, NewShopGroupDTO newShopGroupDTO);
 
+    /**
+     * Update a shop group with the new data
+     *
+     * @param updateShopGroupDTO the new data
+     * @param shopGroup the shop group to update
+     * @return the updated shop group
+     */
     public abstract ShopGroup updateModel(UpdateShopGroupDTO updateShopGroupDTO, @MappingTarget ShopGroup shopGroup);
 
+    /**
+     * Map a shop group to a DTO
+     *
+     * @param shopGroup the shop group
+     * @return the DTO
+     */
     @Mapping(target = "domain", expression = "java(toDomainDTO(shopGroup.getDomainId()))")
     public abstract ShopGroupDTO toDTO(ShopGroup shopGroup);
 
+    /**
+     * Map a shop group user to a model
+     *
+     * @param shopGroupUserInputDTO the shop group user
+     * @return the model
+     */
     @Mapping(target = "user", expression = "java(fillPersonDTOById(shopGroupUserInputDTO.userId()))")
     public abstract ShopGroupUser toModel(ShopGroupUserInputDTO shopGroupUserInputDTO);
 
+    /**
+     * Fill a person DTO by the user id
+     *
+     * @param userId the shop group user
+     * @return the model
+     */
     public PersonDTO fillPersonDTOById(String userId){
         return peopleGroupService.findPersonByEMail(userId);
     }
 
+    /**
+     * Map a domain to a DTO
+     *
+     * @param domainId the domain
+     * @return the DTO
+     */
     public DomainDTO toDomainDTO(String domainId) {
         if(domainId == null) return null;
         return domainService.findById(domainId);

@@ -16,10 +16,25 @@ import java.util.Set;
  */
 @Data
 public abstract class BaseWorkflow {
+    /**
+     * The valid transitions for each state
+     */
     protected Map<WorkflowState, Set<WorkflowState>> validTransitions;
     /**
      * Update the workflow  with the model with all the activities
      * @param work the work to update
      */
     abstract public void updateWithModel(Work work);
+
+    /**
+     * Check if the work is completed
+     * @param work the work to check
+     */
+    abstract public boolean isCompleted(Work work);
+
+    /**
+     * Return the permitted status for the work
+     * @param work the work to check
+     */
+    abstract public Set<WorkflowState> permittedStatus(Work work);
 }

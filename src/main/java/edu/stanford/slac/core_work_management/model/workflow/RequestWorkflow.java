@@ -32,4 +32,14 @@ public class RequestWorkflow extends BaseWorkflow {
     public void updateWithModel(Work work) {
 
     }
+
+    @Override
+    public boolean isCompleted(Work work) {
+        return false;
+    }
+
+    @Override
+    public Set<WorkflowState> permittedStatus(Work work) {
+        return Set.of();
+    }
 }

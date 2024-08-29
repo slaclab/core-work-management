@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This is a simple workflow with two state
+ * for testing purposes
+ */
 @Workflow(
         name = "TestWorkflowOne",
         description = "The workflow for a test"
@@ -18,15 +22,24 @@ public class DummyWorkflow extends BaseWorkflow {
     public DummyWorkflow() {
         validTransitions = Map.of(
                 // Rule: workStatus = "Approved"
-                WorkflowState.Submitted, Set.of(WorkflowState.Approved),
-                // Rule: becomes active when startDate starts
-                WorkflowState.Approved, Set.of(WorkflowState.InProgress),
-                // Rule: becomes active when endDate reaches or user tag completed the work
-                WorkflowState.InProgress, Set.of(WorkflowState.Closed)
+                WorkflowState.Created, Set.of(WorkflowState.Closed)
         );
     }
     @Override
     public void updateWithModel(Work work) {
+        // if works contains one or more children
+        // it could be closed when all the children are closed
+        
+    }
 
+    @Override
+    public boolean isCompleted(Work work) {
+        if(work==null) return false;
+        return work.getCurrentStatus().getStatus()==WorkflowState.Closed;
+    }
+
+    @Override
+    public Set<WorkflowState> permittedStatus(Work work) {
+        return Set.of();
     }
 }

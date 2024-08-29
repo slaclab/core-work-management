@@ -132,7 +132,7 @@ public class WorkService {
         );
 
         // check if the parent id exists, in case new work is a sub work
-        if(newWorkDTO.parentWorkId() != null) {
+        if (newWorkDTO.parentWorkId() != null) {
             assertion(
                     WorkNotFound
                             .notFoundById()
@@ -171,7 +171,7 @@ public class WorkService {
 
 
         // validate location and group shop against the domain
-        validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(),  -3);
+        validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(), -3);
         validateShopGroupForDomain(workToSave.getDomainId(), workToSave.getShopGroupId(), -4);
         // save work
         Work savedWork = wrapCatch(
@@ -204,7 +204,7 @@ public class WorkService {
      * Validate the location for the domain
      * check if the location belong to the source domain
      *
-     * @param domainId  the domain id
+     * @param domainId   the domain id
      * @param locationId the id of the location
      * @param errorCode  the error code
      */
@@ -225,11 +225,11 @@ public class WorkService {
      * Validate shop group for the domain
      * check if the shop group belong to the source domain
      *
-     * @param domainId   the domain id
+     * @param domainId    the domain id
      * @param shopGroupId the id of the location
      * @param errorCode   the error code
      */
-    private void validateShopGroupForDomain(String domainId, String shopGroupId,int errorCode) {
+    private void validateShopGroupForDomain(String domainId, String shopGroupId, int errorCode) {
         var shopGroup = wrapCatch(() -> shopGroupService.findByDomainIdAndId(domainId, shopGroupId), errorCode);
         assertion(
                 InvalidShopGroup
@@ -474,6 +474,24 @@ public class WorkService {
                                         .workId(id)
                                         .build()
                         ),
+                -1
+        );
+    }
+
+    /**
+     * Return the child of a work by his id
+     *
+     * @param domainId             the id of the domain
+     * @param workId               the id of the work
+     * @param workDetailsOptionDTO the option to retrieve the work
+     * @return the work
+     */
+    public List<WorkDTO> findWorkChildrenById(@NotNull String domainId, @NotNull String workId, @Valid WorkDetailsOptionDTO workDetailsOptionDTO) {
+        return wrapCatch(
+                () -> workRepository.findByDomainIdAndParentWorkId(domainId, workId)
+                        .stream()
+                        .map(w -> workMapper.toDTO(w, workDetailsOptionDTO))
+                        .toList(),
                 -1
         );
     }

@@ -71,4 +71,13 @@ public interface WorkRepository extends MongoRepository<Work, String>, WorkRepos
      * @return true if the work exists
      */
     boolean existsByDomainIdAndId(String domainId, String id);
+
+    /**
+     * Find all works that are children of the parent work id.
+     *
+     * @param domainId the domain id
+     * @param parentWorkId the parent work id
+     * @return the list of works that are children of the parent work id
+     */
+    List<Work> findByDomainIdAndParentWorkId(String domainId, String parentWorkId);
 }
