@@ -39,6 +39,7 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
         Update update = new Update()
                 .set("domainId", workType.getDomainId())
                 .setOnInsert("title", normalizedTitle)
+                .setOnInsert("workflowId", workType.getWorkflowId())
                 .setOnInsert("description", workType.getDescription())
                 .setOnInsert("createdBy", auditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", auditorAware.getCurrentAuditor().orElse(null))

@@ -26,7 +26,7 @@ import static edu.stanford.slac.core_work_management.model.workflow.WorkflowStat
         name = "TestWorkflowOne",
         description = "The workflow for a test"
 )
-@Component("DummyWorkflow")
+@Component("DummyParentWorkflow")
 public class DummyParentWorkflow extends BaseWorkflow {
     @Autowired
     WorkRepository workRepository;

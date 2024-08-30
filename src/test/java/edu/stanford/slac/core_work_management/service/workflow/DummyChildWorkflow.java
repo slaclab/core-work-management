@@ -24,7 +24,7 @@ import java.util.Set;
         name = "TestWorkflowOne",
         description = "The workflow for a test"
 )
-@Component("DummyWorkflow")
+@Component("DummyChildWorkflow")
 
 public class DummyChildWorkflow extends BaseWorkflow {
     @Autowired
