@@ -159,14 +159,13 @@ public abstract class DomainMapper {
         Set<WorkflowDTO> result = new HashSet<>();
         if (workflows == null) return result;
         workflows.forEach(
-                w -> {
-                    String beanName = w.getImplementation().contains(".") ? w.getImplementation().substring(w.getImplementation().lastIndexOf(".")+1) : w.getImplementation();
-                    BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(beanName);
+                w -> {;
+                    BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(w.getImplementation());
                     var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.model.workflow.Workflow.class);
                     if (!isPresent) {
                         throw ControllerLogicException.builder()
                                 .errorCode(-1)
-                                .errorMessage("The workflow class with name '%s' is not available".formatted(beanName))
+                                .errorMessage("The workflow class with name '%s' is not available".formatted(w.getImplementation()))
                                 .errorDomain("DomainMapper::toWorkflowDTO")
                                 .build();
                     }
@@ -176,6 +175,7 @@ public abstract class DomainMapper {
                                     .id(w.getId())
                                     .name(annot.name())
                                     .description(annot.description())
+                                    .implementation(w.getImplementation())
                                     .validTransitions(toDTO(workFlowInstance.getValidTransitions()))
                                     .build()
                     );

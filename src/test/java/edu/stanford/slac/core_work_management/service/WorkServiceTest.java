@@ -68,7 +68,7 @@ public class WorkServiceTest {
                                 .description("Test Domain Description")
                                 .workflowImplementations(
                                         Set.of(
-                                                DummyParentWorkflow.class.getName()
+                                                "DummyParentWorkflow"
                                         )
                                 )
                                 .build()
@@ -90,7 +90,7 @@ public class WorkServiceTest {
                                 .description("Alternate Test Domain Description")
                                 .workflowImplementations(
                                         Set.of(
-                                                DummyParentWorkflow.class.getName()
+                                                "DummyParentWorkflow"
                                         )
                                 )
                                 .build()

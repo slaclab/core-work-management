@@ -10,7 +10,11 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
-import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.Domain;
+import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkStatusLog;
+import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
 import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -33,7 +37,6 @@ import org.springframework.validation.annotation.Validated;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
@@ -181,6 +184,11 @@ public class WorkService {
 
         log.info("New Work '{}-{}' has been created by '{}'", savedWork.getWorkNumber(), savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
+
+        // after this work is update we need to update all the
+        // tree up to the ancestor
+        updateParentWorkWorkflow(domainId, savedWork);
+
         log.info("Update domain statistic");
         domainService.updateDomainStatistics(savedWork.getDomainId());
 
@@ -250,6 +258,7 @@ public class WorkService {
      */
     @Transactional
     public void update(@NotNull String domainId, @NotNull String workId, @Valid UpdateWorkDTO updateWorkDTO) {
+        DomainDTO domain = domainService.findById(domainId);
         // fetch stored work to check if the work exists
         Work foundWork = wrapCatch(
                 () -> workRepository.findById(workId).orElseThrow(
@@ -318,16 +327,80 @@ public class WorkService {
         validateLocationForDomain(foundWork.getLocationId(), foundWork.getDomainId(), -4);
         validateShopGroupForDomain(foundWork.getShopGroupId(), foundWork.getDomainId(), -5);
 
+        // lastly we need to update the workflow
+        updateWorkWorkflow(domainId, foundWork);
+
         // save the work
         var updatedWork = wrapCatch(
                 () -> workRepository.save(foundWork),
                 -6
         );
+
+        // after this work is update we need to update all the
+        // tree up to the ancestor
+        updateParentWorkWorkflow(domainId, foundWork);
+
         // update all authorization
         updateWorkAuthorization(updatedWork);
 
         //update domain statistic
         domainService.updateDomainStatistics(updatedWork.getDomainId());
+    }
+
+    /**
+     * Update a work workflow
+     * <p>
+     * it takes care of updating the workflow of the work
+     *
+     * @param domainId   the id of the domain
+     * @param work     the work to update
+     */
+    public void updateWorkWorkflow(String domainId, Work work) {
+        if (work == null) {
+            return;
+        }
+        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
+        // update workflow
+        wInstance.update(work, null);
+    }
+
+    /**
+     * Update all the parent workflow of a work
+     *
+     * @param domainId the id of the domain
+     * @param work     the work
+     */
+    public void updateParentWorkWorkflow(String domainId, Work work) {
+        if (domainId == null || work == null) {
+            return;
+        }
+
+        // check if it has a parent
+        if (work.getParentWorkId() != null) {
+            // update the parent work
+            var foundParentWork = wrapCatch(
+                    () -> workRepository
+                            .findById(work.getParentWorkId())
+                            .orElseThrow(
+                                    () -> WorkNotFound
+                                            .notFoundById()
+                                            .errorCode(-1)
+                                            .workId(work.getParentWorkId())
+                                            .build()
+                            ),
+                    -1
+            );
+            var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, foundParentWork.getWorkTypeId());
+            // update workflow
+            wInstance.update(foundParentWork, null);
+            // update workflow
+            updateParentWorkWorkflow(domainId, foundParentWork);
+            // save parent work
+            wrapCatch(
+                    () -> workRepository.save(foundParentWork),
+                    -2
+            );
+        }
     }
 
     /**

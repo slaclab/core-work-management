@@ -61,7 +61,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        DummyParentWorkflow.class.getCanonicalName()
+                                                        "DummyParentWorkflow"
                                                 )
                                 )
                                 .build()
@@ -91,7 +91,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        DummyParentWorkflow.class.getCanonicalName()
+                                                        "DummyParentWorkflow"
                                                 )
                                 )
                                 .build()
@@ -137,7 +137,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        DummyParentWorkflow.class.getCanonicalName()
+                                                        "DummyParentWorkflow"
                                                 )
                                 )
                                 .build()
@@ -178,7 +178,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        DummyParentWorkflow.class.getCanonicalName()
+                                                        "DummyParentWorkflow"
                                                 )
                                 )
                                 .build()
@@ -218,7 +218,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .workflowImplementations(
                                         Set.of
                                                 (
-                                                        DummyParentWorkflow.class.getCanonicalName()
+                                                        "DummyParentWorkflow"
                                                 )
                                 )
                                 .build()

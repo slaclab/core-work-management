@@ -76,8 +76,8 @@ public class WorkServiceWorkflowArchitectureTestTest {
                                 .description("Test Domain Description")
                                 .workflowImplementations(
                                         Set.of(
-                                                DummyParentWorkflow.class.getName(),
-                                                DummyChildWorkflow.class.getName()
+                                                "DummyParentWorkflow",
+                                                "DummyChildWorkflow"
                                         )
                                 )
                                 .build()

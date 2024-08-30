@@ -16,6 +16,7 @@ public record WorkflowDTO (
         String id,
         String name,
         String description,
+        String implementation,
         Map<WorkflowStateDTO, Set<WorkflowStateDTO>> validTransitions
 )
 {}

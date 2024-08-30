@@ -5,10 +5,12 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
+import edu.stanford.slac.core_work_management.exception.WorkflowNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
+import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
 import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -33,6 +36,8 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @Validated
 @AllArgsConstructor
 public class DomainService {
+    private final ApplicationContext applicationContext;
+
     private final DomainMapper domainMapper;
 
     private final WorkRepository workRepository;
@@ -278,6 +283,30 @@ public class DomainService {
                 -1
         );
         return workTypeList.stream().map(domainMapper::toDTO).toList();
+    }
+
+    /**
+     * Try to find the workflow instance
+     *
+     * @param domainId   the id of the domain
+     * @param workTypeId the id work type
+     */
+    public BaseWorkflow getWorkflowInstanceByDomainIdAndWorkTypeId(String domainId, String workTypeId) {
+        var domain = findById(domainId);
+        var workType = findWorkTypeById(domainId, workTypeId);
+
+        var workflow = domain.workflows()
+                .stream()
+                .filter(w -> w.id().compareTo(workType.workflowId()) == 0)
+                .findFirst()
+                .orElseThrow(
+                        () -> WorkflowNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workflowId(workType.workflowId())
+                                .build()
+                );
+        return (BaseWorkflow) applicationContext.getBean(workflow.implementation());
     }
 
     /**
