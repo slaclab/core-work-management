@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static edu.stanford.slac.core_work_management.model.workflow.WorkflowState.Created;
-import static edu.stanford.slac.core_work_management.model.workflow.WorkflowState.InProgress;
+import static edu.stanford.slac.core_work_management.model.workflow.WorkflowState.*;
 
 /**
  * This is a simple workflow for a prent work four states
@@ -65,7 +64,18 @@ public class DummyParentWorkflow extends BaseWorkflow {
         boolean allChildrenClosed = children.stream().allMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.Closed);
 
         switch (work.getCurrentStatus().getStatus()) {
-            case Created, ReviewToClose -> {
+            case Created -> {
+                if (children.isEmpty()) return;
+
+                if (allChildrenClosed) {
+                    // if there are children we can only move to the next state
+                    work.setCurrentStatus(WorkStatusLog.builder().status(Closed).build());
+                } else {
+                    // if there are children we can only move to the next state
+                    work.setCurrentStatus(WorkStatusLog.builder().status(InProgress).build());
+                }
+            }
+            case ReviewToClose -> {
                 if (newState == null) return;
                 canMoveToState(work, newState);
                 // we can move to the new state
@@ -90,7 +100,7 @@ public class DummyParentWorkflow extends BaseWorkflow {
 
     @Override
     public boolean canCreateChild(Work work) {
-        return  isStatusEqualTo(work, Set.of(Created, InProgress));
+        return isStatusEqualTo(work, Set.of(Created, InProgress));
     }
 
     @Override

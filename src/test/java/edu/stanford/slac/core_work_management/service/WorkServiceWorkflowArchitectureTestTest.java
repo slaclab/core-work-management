@@ -99,7 +99,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
                                 .builder()
                                 .title("Parent work type")
                                 .description("Parent work type description")
-                                .workflowId(workflows[0].id())
+                                .workflowId(workflows[1].id())
                                 .build()
                 )
         );
@@ -112,7 +112,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
                                 .builder()
                                 .title("Child work type")
                                 .description("Child work type description")
-                                .workflowId(workflows[1].id())
+                                .workflowId(workflows[0].id())
                                 .build()
                 )
         );
@@ -165,8 +165,8 @@ public class WorkServiceWorkflowArchitectureTestTest {
     public void createNewWork() {
         // create new work
         NewWorkDTO newWorkDTO = NewWorkDTO.builder()
-                .title("Test work")
-                .description("Test work description")
+                .title("Test parent work")
+                .description("Test parent work description")
                 .workTypeId(newParentWorkTypeId)
                 .locationId(locationId)
                 .shopGroupId(shopGroupId)

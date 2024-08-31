@@ -393,13 +393,13 @@ public class WorkService {
             var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, foundParentWork.getWorkTypeId());
             // update workflow
             wInstance.update(foundParentWork, null);
-            // update workflow
-            updateParentWorkWorkflow(domainId, foundParentWork);
-            // save parent work
+            // save parent work with updated workflow
             wrapCatch(
                     () -> workRepository.save(foundParentWork),
                     -2
             );
+            // update ancestor workflow recursively
+            updateParentWorkWorkflow(domainId, foundParentWork);
         }
     }
 
