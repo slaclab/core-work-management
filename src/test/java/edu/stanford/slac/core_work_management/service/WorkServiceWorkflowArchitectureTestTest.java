@@ -1,11 +1,13 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.InvalidLocation;
 import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.service.workflow.DummyChildWorkflow;
 import edu.stanford.slac.core_work_management.service.workflow.DummyParentWorkflow;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -13,10 +15,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
@@ -29,6 +34,9 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest()
@@ -39,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class WorkServiceWorkflowArchitectureTestTest {
     @Autowired
     HelperService helperService;
-    @Autowired
+    @SpyBean
     DomainService domainService;
     @Autowired
     WorkService workService;
@@ -62,6 +70,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
 
     @BeforeEach
     public void cleanCollection() {
+        reset(domainService);
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
@@ -194,5 +203,45 @@ public class WorkServiceWorkflowArchitectureTestTest {
         assertThat(helperService.checkStatusOnWork(domainId, childWorkId, WorkflowStateDTO.Created)).isTrue();
         // check the state of the parent work
         assertThat(helperService.checkStatusOnWork(domainId, workId, WorkflowStateDTO.InProgress)).isTrue();
+    }
+
+    @Test
+    public void testWorkflowOnFailedTransaction(){
+        // create new work
+        NewWorkDTO newWorkDTO = NewWorkDTO.builder()
+                .title("Test parent work")
+                .description("Test parent work description")
+                .workTypeId(newParentWorkTypeId)
+                .locationId(locationId)
+                .shopGroupId(shopGroupId)
+                .project(projectLovValues.get(0).id())
+                .build();
+        String workId = assertDoesNotThrow(() -> workService.createNew(domainId, newWorkDTO));
+        assertThat(workId).isNotEmpty();
+
+        assertThat(helperService.checkStatusOnWork(domainId, workId, WorkflowStateDTO.Created)).isTrue();
+
+        // Temporarily mock the domainService to fails after the
+        // parent workflow has been updated and saved
+        doThrow(ControllerLogicException.builder().build()).when(domainService).updateDomainStatistics(domainId);
+
+        // add child work, send parent to in progress state
+        NewWorkDTO newChildWorkDTO = NewWorkDTO.builder()
+                .title("Test child work")
+                .description("Test child work description")
+                .workTypeId(newChildWorkType)
+                .locationId(locationId)
+                .shopGroupId(shopGroupId)
+                .project(projectLovValues.get(0).id())
+                .parentWorkId(workId)
+                .build();
+        ControllerLogicException exceptionOnUpdateStatistic = assertThrows(
+                ControllerLogicException.class,
+                () -> workService.createNew(domainId, newChildWorkDTO));
+        assertThat(exceptionOnUpdateStatistic).isNotNull();
+
+        // check the state of the parent work
+        assertThat(helperService.checkStatusOnWork(domainId, workId, WorkflowStateDTO.Created)).isTrue();
+
     }
 }
