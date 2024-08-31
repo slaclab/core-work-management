@@ -2,15 +2,11 @@ package edu.stanford.slac.core_work_management.service.workflow;
 
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatusLog;
-import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
-import edu.stanford.slac.core_work_management.model.workflow.Workflow;
-import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,8 +58,8 @@ public class DummyChildWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public boolean canUpdate(Authentication authentication, Work work, WorkflowState newState) {
-        return false;
+    public void canUpdate(String identityId, Work work) {
+
     }
 
     @Override

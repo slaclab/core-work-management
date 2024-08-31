@@ -1,7 +1,6 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

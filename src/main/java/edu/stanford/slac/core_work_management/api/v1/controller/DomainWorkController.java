@@ -68,7 +68,7 @@ public class DomainWorkController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkCanCreate(authentication, domainId, newWorkDTO)")
     public ApiResultResponse<String> createNewWork(
             Authentication authentication,
             @Parameter(description = "Is the domain id to use to create the work", required = true)

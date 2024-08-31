@@ -1,4 +1,4 @@
-package edu.stanford.slac.core_work_management.model.workflow;
+package edu.stanford.slac.core_work_management.service.workflow;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

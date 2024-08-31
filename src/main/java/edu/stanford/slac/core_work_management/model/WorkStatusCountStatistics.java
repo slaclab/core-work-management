@@ -1,6 +1,6 @@
 package edu.stanford.slac.core_work_management.model;
 
-import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
+import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

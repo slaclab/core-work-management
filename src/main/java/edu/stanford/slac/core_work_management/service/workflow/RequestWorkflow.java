@@ -1,7 +1,7 @@
-package edu.stanford.slac.core_work_management.model.workflow;
+package edu.stanford.slac.core_work_management.service.workflow;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.model.Work;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -35,8 +35,7 @@ public class RequestWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public boolean canUpdate(Authentication authentication, Work work, WorkflowState newState) {
-        return false;
+    public void canUpdate(String identityId, Work work) {
     }
 
     @Override

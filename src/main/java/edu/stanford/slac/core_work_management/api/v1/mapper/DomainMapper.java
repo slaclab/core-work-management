@@ -6,11 +6,10 @@ import java.util.stream.Collectors;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
-import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
+import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow;
+import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.StringUtility;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -161,7 +160,7 @@ public abstract class DomainMapper {
         workflows.forEach(
                 w -> {;
                     BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(w.getImplementation());
-                    var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.model.workflow.Workflow.class);
+                    var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
                     if (!isPresent) {
                         throw ControllerLogicException.builder()
                                 .errorCode(-1)
@@ -169,7 +168,7 @@ public abstract class DomainMapper {
                                 .errorDomain("DomainMapper::toWorkflowDTO")
                                 .build();
                     }
-                    var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.model.workflow.Workflow.class);
+                    var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
                     result.add(
                             WorkflowDTO.builder()
                                     .id(w.getId())

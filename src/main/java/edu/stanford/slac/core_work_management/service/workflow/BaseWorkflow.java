@@ -1,16 +1,11 @@
-package edu.stanford.slac.core_work_management.model.workflow;
+package edu.stanford.slac.core_work_management.service.workflow;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.model.Work;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.springframework.data.annotation.Id;
 import org.springframework.security.core.Authentication;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -32,17 +27,28 @@ public abstract class BaseWorkflow {
      *
      * @param work     the work to update
      * @param newState the state to move to, this is optional and can be null
+     * @throws ControllerLogicException if the transition is not valid
      */
     abstract public void update(Work work, WorkflowState newState);
 
     /**
      * Check if the user can update the work
      *
-     * @param authentication the user that is trying to update the work
-     * @param work           the work to update
-     * @param newState       the state to move to, this is optional and can be null
+     * @param identityId the user that is trying to update the work
+     * @param work       the work
+     * @throws ControllerLogicException if the user cannot update the work
      */
-    abstract public boolean canUpdate(Authentication authentication, Work work, WorkflowState newState);
+    public void canUpdate(String identityId, Work work) {
+        if(isCompleted(work)) {
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("Cannot update a completed work")
+                    .errorDomain("DummyParentWorkflow::canUpdate")
+                    .build();
+        }
+    }
+
 
     /**
      * Check if the work can have children
@@ -98,7 +104,8 @@ public abstract class BaseWorkflow {
 
     /**
      * Check if the status of the work is equal to any provided states
-     * @param work the work to check
+     *
+     * @param work  the work to check
      * @param state the states to check
      * @return true if the status is equal to any of the provided states
      */

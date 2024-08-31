@@ -1,9 +1,8 @@
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkflowStateDTO;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
-import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
+import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;

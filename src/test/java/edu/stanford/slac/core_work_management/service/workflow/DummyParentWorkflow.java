@@ -1,10 +1,8 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatusLog;
-import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
-import edu.stanford.slac.core_work_management.model.workflow.Workflow;
-import edu.stanford.slac.core_work_management.model.workflow.WorkflowState;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -14,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static edu.stanford.slac.core_work_management.model.workflow.WorkflowState.*;
+import static edu.stanford.slac.core_work_management.service.workflow.WorkflowState.*;
 
 /**
  * This is a simple workflow for a prent work four states
@@ -37,11 +35,11 @@ public class DummyParentWorkflow extends BaseWorkflow {
     public DummyParentWorkflow() {
         validTransitions = Map.of(
                 // Rule: work is created and if no children are present it can be closed by the user
-                Created, Set.of(InProgress, WorkflowState.Closed),
+                Created, Set.of(InProgress, Closed),
                 // Rule: all children are closed
                 InProgress, Set.of(WorkflowState.ReviewToClose),
                 // Rule: admin user review and close the work
-                WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed)
+                WorkflowState.ReviewToClose, Set.of(Closed)
         );
     }
 
@@ -56,12 +54,12 @@ public class DummyParentWorkflow extends BaseWorkflow {
     public void update(Work work, WorkflowState newState) {
         if (work == null) return;
         // return if it is closed
-        if (work.getCurrentStatus().getStatus() == WorkflowState.Closed) return;
+        if (work.getCurrentStatus().getStatus() == Closed) return;
 
         List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
 
         // check if all the children are closed
-        boolean allChildrenClosed = children.stream().allMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.Closed);
+        boolean allChildrenClosed = children.stream().allMatch(w -> w.getCurrentStatus().getStatus() == Closed);
 
         switch (work.getCurrentStatus().getStatus()) {
             case Created -> {
@@ -94,8 +92,10 @@ public class DummyParentWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public boolean canUpdate(Authentication authentication, Work work, WorkflowState newState) {
-        return false;
+    public void canUpdate(String identityId, Work work) {
+        // perform the base standard checks
+        super.canUpdate(identityId, work);
+
     }
 
     @Override
@@ -106,7 +106,7 @@ public class DummyParentWorkflow extends BaseWorkflow {
     @Override
     public boolean isCompleted(Work work) {
         if (work == null) return false;
-        return work.getCurrentStatus().getStatus() == WorkflowState.Closed;
+        return work.getCurrentStatus().getStatus() == Closed;
     }
 
     @Override

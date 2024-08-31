@@ -1,4 +1,4 @@
-package edu.stanford.slac.core_work_management.model.workflow;
+package edu.stanford.slac.core_work_management.service.workflow;
 
 import edu.stanford.slac.core_work_management.model.Work;
 import org.springframework.security.core.Authentication;
@@ -36,13 +36,12 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void update(Work work, WorkflowState newState) {
+    public void update(Work Work, WorkflowState newState) {
 
     }
 
     @Override
-    public boolean canUpdate(Authentication authentication, Work work, WorkflowState newState) {
-        return false;
+    public void canUpdate(String identityId, Work work) {
     }
 
     @Override

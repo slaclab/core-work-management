@@ -1,4 +1,4 @@
-package edu.stanford.slac.core_work_management.model.workflow;
+package edu.stanford.slac.core_work_management.service.workflow;
 
 /**
  * The state of the workflow

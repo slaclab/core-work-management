@@ -10,7 +10,7 @@ import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
-import edu.stanford.slac.core_work_management.model.workflow.BaseWorkflow;
+import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow;
 import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
