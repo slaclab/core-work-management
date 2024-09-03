@@ -2,6 +2,8 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.WorkCannotHaveChildren;
+import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdatable;
 import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -172,7 +174,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
      * then add a child work and check if the parent work is in progress
      */
     @Test
-    public void createNewWorWithChildGoIntoInProgress() {
+    public void createNewWorkWithChildAccordingToDummyWorkflow() {
         // create new work
         NewWorkDTO newWorkDTO = NewWorkDTO.builder()
                 .title("Test parent work")
@@ -182,10 +184,10 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 .shopGroupId(shopGroupId)
                 .project(projectLovValues.get(0).id())
                 .build();
-        String workId = assertDoesNotThrow(() -> workService.createNew(domainId, newWorkDTO));
-        assertThat(workId).isNotEmpty();
+        String newParentWorkId = assertDoesNotThrow(() -> workService.createNew(domainId, newWorkDTO));
+        assertThat(newParentWorkId).isNotEmpty();
 
-        assertThat(helperService.checkStatusOnWork(domainId, workId, WorkflowStateDTO.Created)).isTrue();
+        assertThat(helperService.checkStatusOnWork(domainId, newParentWorkId, WorkflowStateDTO.Created)).isTrue();
 
         // add child work, send parent to in progress state
         NewWorkDTO newChildWorkDTO = NewWorkDTO.builder()
@@ -195,15 +197,66 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 .locationId(locationId)
                 .shopGroupId(shopGroupId)
                 .project(projectLovValues.get(0).id())
-                .parentWorkId(workId)
+                .parentWorkId(newParentWorkId)
                 .build();
-        String childWorkId = assertDoesNotThrow(() -> workService.createNew(domainId, newChildWorkDTO));
-        assertThat(childWorkId).isNotEmpty();
+        String newChildWorkId = assertDoesNotThrow(() -> workService.createNew(domainId, newChildWorkDTO));
+        assertThat(newChildWorkId).isNotEmpty();
 
         // check the state of the child work
-        assertThat(helperService.checkStatusOnWork(domainId, childWorkId, WorkflowStateDTO.Created)).isTrue();
+        assertThat(helperService.checkStatusOnWork(domainId, newChildWorkId, WorkflowStateDTO.Created)).isTrue();
+
         // check the state of the parent work
-        assertThat(helperService.checkStatusOnWork(domainId, workId, WorkflowStateDTO.InProgress)).isTrue();
+        assertThat(helperService.checkStatusOnWork(domainId, newParentWorkId, WorkflowStateDTO.InProgress)).isTrue();
+
+        // now try to close the parent work
+        var stateNotPermitted = assertThrows(
+                WorkflowNotManuallyUpdatable.class,
+                () -> workService.update(
+                        domainId,
+                        newParentWorkId,
+                        UpdateWorkDTO.builder()
+                                .workflowStateUpdate(UpdateWorkflowStateDTO.builder().newState(WorkflowStateDTO.Closed).build())
+                                .build()
+                )
+        );
+        assertThat(stateNotPermitted).isNotNull();
+
+        // now close the child work
+        assertDoesNotThrow(() -> workService.update(
+                domainId,
+                newChildWorkId,
+                UpdateWorkDTO.builder()
+                        .workflowStateUpdate(UpdateWorkflowStateDTO.builder().newState(WorkflowStateDTO.Closed).build())
+                        .build()
+        ));
+
+        // check the state of the child work
+        assertThat(helperService.checkStatusOnWork(domainId, newChildWorkId, WorkflowStateDTO.Closed)).isTrue();
+        // parent work should be gone in review to close state
+        assertThat(helperService.checkStatusOnWork(domainId, newParentWorkId, WorkflowStateDTO.ReviewToClose)).isTrue();
+
+        // now try to add another children should give exception
+        var parentWorkCannotHaveChildren = assertThrows(
+                WorkCannotHaveChildren.class,
+                () -> workService.createNew(domainId, newChildWorkDTO)
+        );
+        assertThat(parentWorkCannotHaveChildren).isNotNull();
+
+        // now close the parent work
+        assertDoesNotThrow(() -> workService.update(
+                domainId,
+                newParentWorkId,
+                UpdateWorkDTO.builder()
+                        .workflowStateUpdate(UpdateWorkflowStateDTO
+                                .builder()
+                                .newState(WorkflowStateDTO.Closed)
+                                .comment("closing parent work")
+                                .build())
+                        .build()
+        ));
+
+        // check the state of the parent work
+        assertThat(helperService.checkStatusOnWork(domainId, newParentWorkId, WorkflowStateDTO.Closed, "closing parent work")).isTrue();
     }
 
     @Test

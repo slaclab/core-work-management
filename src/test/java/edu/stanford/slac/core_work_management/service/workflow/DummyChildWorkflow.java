@@ -1,14 +1,17 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
+import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdatable;
+import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatusLog;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Set;
+
+import static edu.stanford.slac.core_work_management.service.workflow.WorkflowState.Created;
 
 /**
  * This is a simple workflow with two state
@@ -41,20 +44,22 @@ public class DummyChildWorkflow extends BaseWorkflow {
      * if works contains one or more children, it could be closed when
      * all the children are closed
      *
-     * @param work     the work to update
-     * @param newState the state to move to, this is optional and can be null
+     * @param work                the work to update
+     * @param updateWorkflowState the state to move to, this is optional and can be null
      */
     @Override
-    public void update(Work work, WorkflowState newState) {
+    public void update(Work work, UpdateWorkflowState updateWorkflowState) {
         if (work == null) return;
+        if (updateWorkflowState != null && work.getCurrentStatus().getStatus() != Created) {
+            throw WorkflowNotManuallyUpdatable.of()
+                    .errorCode(-1)
+                    .build();
+        }
         // return if it is closed
         if (work.getCurrentStatus().getStatus() == WorkflowState.Closed) return;
 
-
-        if (newState == null) return;
-        canMoveToState(work, newState);
-        // we can move to the new state
-        work.setCurrentStatus(WorkStatusLog.builder().status(newState).build());
+        if (updateWorkflowState == null) return;
+        moveToState(work, updateWorkflowState);
     }
 
     @Override

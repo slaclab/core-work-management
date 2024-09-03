@@ -22,6 +22,8 @@ import java.time.LocalDateTime;
 public record WorkStatusLogDTO (
         @Schema(description = "The status of the work")
         WorkflowStateDTO status,
+        @Schema(description = "The comment for the status change")
+        String comment,
         @Schema(description = "The date when the status was changed")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

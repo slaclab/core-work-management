@@ -54,6 +54,8 @@ public record UpdateWorkDTO(
         String project,
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
+        @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
+        UpdateWorkflowStateDTO workflowStateUpdate,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
         List<WriteCustomFieldDTO> customFieldValues

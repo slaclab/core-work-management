@@ -117,6 +117,14 @@ public abstract class DomainMapper {
     abstract public WATypeCustomField toModel(String id, String name, WATypeCustomFieldDTO WATypeCustomFieldDTO);
 
     /**
+     * Convert a WorkflowStateDTO to a WorkflowState
+     *
+     * @param state the DTO to convert
+     * @return the converted entity
+     */
+    abstract public UpdateWorkflowState toModel(UpdateWorkflowStateDTO state);
+
+    /**
      * Check if the custom field is a LOV
      *
      * @param customField the custom field to check

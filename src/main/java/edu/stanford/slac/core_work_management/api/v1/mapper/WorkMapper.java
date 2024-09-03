@@ -80,6 +80,7 @@ public abstract class WorkMapper {
      * @param dto  the DTO with the data to update
      * @param work the entity to update
      */
+//    @Mapping(target = "currentStatus", expression = "java(toWorkStatusLog(dto.workflowStateUpdate()))")
     abstract public void updateModel(UpdateWorkDTO dto, @MappingTarget Work work);
 
     /**

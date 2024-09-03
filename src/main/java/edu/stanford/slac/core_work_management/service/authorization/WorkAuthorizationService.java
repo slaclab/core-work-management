@@ -43,9 +43,6 @@ public class WorkAuthorizationService {
     private final ShopGroupService shopGroupService;
 
     public boolean checkCanCreate(Authentication authentication, String domainId, NewWorkDTO newWorkDTO) {
-        if(newWorkDTO.parentWorkId()!=null) {
-            workService.checkParentWorkflowForChild(authentication.getCredentials().toString(), domainId, newWorkDTO);
-        }
         return true;
     }
 

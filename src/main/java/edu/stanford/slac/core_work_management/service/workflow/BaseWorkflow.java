@@ -1,14 +1,16 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
+import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkStatusLog;
 import lombok.Data;
-import org.springframework.security.core.Authentication;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 /**
  * Base class for all workflows
@@ -25,11 +27,11 @@ public abstract class BaseWorkflow {
      * if a new state is provided it try to understand if the transition is valid
      * and in case new state is set
      *
-     * @param work     the work to update
-     * @param newState the state to move to, this is optional and can be null
+     * @param work        the work to update
+     * @param updateState the state to move to, this is optional and can be null
      * @throws ControllerLogicException if the transition is not valid
      */
-    abstract public void update(Work work, WorkflowState newState);
+    abstract public void update(Work work, UpdateWorkflowState updateState);
 
     /**
      * Check if the user can update the work
@@ -39,7 +41,7 @@ public abstract class BaseWorkflow {
      * @throws ControllerLogicException if the user cannot update the work
      */
     public void canUpdate(String identityId, Work work) {
-        if(isCompleted(work)) {
+        if (isCompleted(work)) {
             throw ControllerLogicException
                     .builder()
                     .errorCode(-1)
@@ -78,15 +80,32 @@ public abstract class BaseWorkflow {
      * @param work     the work to check
      * @param newState the state to move to
      */
-    protected void canMoveToState(Work work, WorkflowState newState) {
-        boolean canTransitioning = validTransitions != null && validTransitions.get(work.getCurrentStatus().getStatus()).contains(Objects.requireNonNullElse(newState, WorkflowState.None));
-        if (canTransitioning) return;
-        throw ControllerLogicException
+    protected void moveToState(Work work, UpdateWorkflowState newState) {
+        if(newState == null) {
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("Cannot move to null state")
+                    .errorDomain("BaseWorkflow::update")
+                    .build();
+        }
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("Cannot move to state %s from %s".formatted(newState.getNewState().name(), work.getCurrentStatus().getStatus().name()))
+                        .errorDomain("BaseWorkflow::update")
+                        .build(),
+                ()-> validTransitions != null && validTransitions.get(work.getCurrentStatus().getStatus()).contains(Objects.requireNonNullElse(newState.getNewState(), WorkflowState.None))
+        );
+        // add current status to the history
+        work.getStatusHistory().addFirst(work.getCurrentStatus());
+        // we can move to the new state
+        work.setCurrentStatus(WorkStatusLog
                 .builder()
-                .errorCode(-1)
-                .errorMessage("Cannot move to state %s from %s".formatted(newState.name(), work.getCurrentStatus().getStatus().name()))
-                .errorDomain("DummyWorkflow::update")
-                .build();
+                .status(newState.getNewState())
+                .comment(newState.getComment())
+                .build());
     }
 
     /**

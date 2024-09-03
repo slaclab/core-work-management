@@ -16,9 +16,22 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class WorkStatusLog {
+    /**
+     * The status of the work
+     */
     private WorkflowState status;
+    /**
+     * The comment for the status change
+     */
+    private String comment;
+    /**
+     * The date of the status change
+     */
     @LastModifiedDate
     private LocalDateTime changed_on;
+    /**
+     * The user that changed the status
+     */
     @LastModifiedBy
     private String changed_by;
 }

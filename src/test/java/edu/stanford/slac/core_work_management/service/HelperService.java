@@ -34,11 +34,19 @@ public class HelperService {
      * Fetch work and check status
      */
     public boolean checkStatusOnWork(String domainId, String workId, WorkflowStateDTO state){
+        return checkStatusOnWork(domainId, workId, state, null);
+    }
+
+    /**
+     * Fetch work and check status
+     */
+    public boolean checkStatusOnWork(String domainId, String workId, WorkflowStateDTO state, String commentContains){
         var foundFullWork =  assertDoesNotThrow(
                 ()->workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build())
         );
         assertThat(foundFullWork).isNotNull();
-        return foundFullWork.currentStatus().status().equals(state);
+        return foundFullWork.currentStatus().status().equals(state) &&
+                (commentContains == null || foundFullWork.currentStatus().comment().contains(commentContains));
     }
 
     /**
