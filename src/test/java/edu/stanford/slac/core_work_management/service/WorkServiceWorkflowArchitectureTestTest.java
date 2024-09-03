@@ -257,10 +257,27 @@ public class WorkServiceWorkflowArchitectureTestTest {
 
         // check the state of the parent work
         assertThat(helperService.checkStatusOnWork(domainId, newParentWorkId, WorkflowStateDTO.Closed, "closing parent work")).isTrue();
+        // check all full history of both works
+        assertThat(helperService.checkStatusAndHistoryOnWork(
+                domainId,
+                newChildWorkId,
+                List.of(
+                        WorkflowStateDTO.Closed,
+                        WorkflowStateDTO.Created
+                ))).isTrue();
+        assertThat(helperService.checkStatusAndHistoryOnWork(
+                domainId,
+                newParentWorkId,
+                List.of(
+                        WorkflowStateDTO.Closed,
+                        WorkflowStateDTO.ReviewToClose,
+                        WorkflowStateDTO.InProgress,
+                        WorkflowStateDTO.Created
+                ))).isTrue();
     }
 
     @Test
-    public void testWorkflowOnFailedTransaction(){
+    public void testWorkflowOnFailedTransaction() {
         // create new work
         NewWorkDTO newWorkDTO = NewWorkDTO.builder()
                 .title("Test parent work")
