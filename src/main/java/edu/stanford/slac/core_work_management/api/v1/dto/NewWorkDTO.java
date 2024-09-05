@@ -39,8 +39,6 @@ public record NewWorkDTO(
         @NotEmpty(message = "Shop group is mandatory is required")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
-        @NotNull(message = "Project is required")
-        String project,
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
         @Valid

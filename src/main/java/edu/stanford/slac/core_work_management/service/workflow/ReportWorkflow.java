@@ -42,6 +42,11 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
+    public void isValid(Work work) {
+
+    }
+
+    @Override
     public void canUpdate(String identityId, Work work) {
     }
 

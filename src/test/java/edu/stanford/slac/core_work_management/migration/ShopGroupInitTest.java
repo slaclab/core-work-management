@@ -45,7 +45,7 @@ public class ShopGroupInitTest {
 
     @Test
     public void initTest() {
-        M1000_InitDomain initDomain = new M1000_InitDomain(lovService, domainService);
+        M1001_InitTECDomain initDomain = new M1001_InitTECDomain(lovService, domainService);
         assertDoesNotThrow(initDomain::changeSet);
         M2000InitShopGroup initShopGroup = new M2000InitShopGroup(domainService, shopGroupService);
         assertDoesNotThrow(initShopGroup::changeSet);

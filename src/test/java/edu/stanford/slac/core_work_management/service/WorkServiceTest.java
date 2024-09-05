@@ -4,9 +4,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.InvalidLocation;
 import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.service.workflow.DummyParentWorkflow;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -171,11 +169,6 @@ public class WorkServiceTest {
                 )
         );
         AssertionsForClassTypes.assertThat(locationIdOnAlternateDomain).isNotEmpty();
-
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(m1004_initProjectLOV::changeSet);
-        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @Test
@@ -201,7 +194,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -231,7 +223,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -247,7 +238,6 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -276,7 +266,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -293,7 +282,6 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationIdOnAlternateDomain)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -324,7 +312,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -341,7 +328,6 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -375,7 +361,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -409,7 +394,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -440,7 +424,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -489,7 +472,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -534,7 +516,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1072,7 +1053,6 @@ public class WorkServiceTest {
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1134,7 +1114,6 @@ public class WorkServiceTest {
                                 .workTypeId(newParentWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -1151,7 +1130,6 @@ public class WorkServiceTest {
                                 .workTypeId(newChildWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .parentWorkId(newParentWorkId)
                                 .build()
                 )
@@ -1217,7 +1195,6 @@ public class WorkServiceTest {
                                 .workTypeId(newParentWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .parentWorkId("bad id")
                                 .build()
                 )

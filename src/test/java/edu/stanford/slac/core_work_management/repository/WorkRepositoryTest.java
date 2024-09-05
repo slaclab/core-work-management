@@ -60,57 +60,6 @@ public class WorkRepositoryTest {
     }
 
     @Test
-    public void testGentNextActivitiesNumber() {
-        var savedWork = assertDoesNotThrow(
-                () -> workRepository.save(Work.builder().title("name").build())
-        );
-        assertThat(savedWork).isNotNull();
-        assertThat(savedWork.getActivitiesNumber()).isEqualTo(0);
-
-        var nextId = assertDoesNotThrow(
-                () -> workRepository.getNextActivityNumber(savedWork.getId())
-        );
-
-        assertThat(nextId).isEqualTo(1);
-    }
-
-    @Test
-    public void testGentNextActivitiesMultiThreading() throws InterruptedException, ExecutionException {
-        var savedWork = assertDoesNotThrow(
-                () -> workRepository.save(Work.builder().title("name").build())
-        );
-        assertThat(savedWork).isNotNull();
-        assertThat(savedWork.getActivitiesNumber()).isEqualTo(0);
-
-        int numberOfThreads = 20; // Number of concurrent threads
-        List<Future<Long>> futures;
-        List<Long> generatedIds = new ArrayList<>();
-        try (ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads)) {
-            List<Callable<Long>> tasks = new ArrayList<>();
-            for (int i = 0; i < numberOfThreads * 10; i++) {
-                tasks.add(() -> workRepository.getNextActivityNumber(savedWork.getId()));
-            }
-
-            futures = executorService.invokeAll(tasks);
-
-            // Shut down the executor service
-            executorService.shutdown();
-        }
-
-        // Assert that all threads received the same ID
-        for (Future<Long> future : futures) {
-            generatedIds.add(future.get());
-        }
-        var array = generatedIds.toArray();
-        Arrays.sort(array);
-
-        //check if all the ids are unique
-        for (int i = 0; i < array.length - 1; i++) {
-            assertThat(array[i]).isNotEqualTo(array[i + 1]);
-        }
-    }
-
-    @Test
     public void testWorkStatusStatistics() {
         // Create work in new state
 //        for (int i = 0; i < 1000; i++) {

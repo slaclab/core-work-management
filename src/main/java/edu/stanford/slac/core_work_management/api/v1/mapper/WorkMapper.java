@@ -95,7 +95,6 @@ public abstract class WorkMapper {
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
-    @Mapping(target = "project", expression = "java(toLOVValueDTO(work.getProject()))")
     abstract public WorkDTO toDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
 
     /**

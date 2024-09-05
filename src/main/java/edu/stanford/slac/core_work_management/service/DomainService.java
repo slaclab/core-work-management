@@ -53,12 +53,22 @@ public class DomainService {
      * @return the id of the created domain
      */
     public String createNew(@Valid NewDomainDTO newDomainDTO) {
+        return createNewAndGet(newDomainDTO).id();
+    }
+
+    /**
+     * Create a new domain and return the domain
+     *
+     * @param newDomainDTO the DTO to create the domain
+     * @return the created domain
+     */
+    public DomainDTO createNewAndGet(@Valid NewDomainDTO newDomainDTO) {
         Domain savedDomain = wrapCatch(
                 () -> domainRepository.save(domainMapper.toModel(newDomainDTO)),
                 -1
         );
         log.info("Domain created: {} by {}", savedDomain.getName(), savedDomain.getCreatedBy());
-        return savedDomain.getId();
+        return domainMapper.toDTO(savedDomain);
     }
 
     /**

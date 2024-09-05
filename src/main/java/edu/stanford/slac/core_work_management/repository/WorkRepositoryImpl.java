@@ -72,15 +72,6 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
     }
 
     @Override
-    public Long getNextActivityNumber(String id) {
-        Query query = new Query(Criteria.where("id").is(id));
-        Update update = new Update().inc("activitiesNumber", 1);
-        FindAndModifyOptions options = FindAndModifyOptions.options().returnNew(true);
-        var res =  mongoTemplate.findAndModify(query, update, options, Work.class);
-        return Objects.requireNonNull(res).getActivitiesNumber();
-    }
-
-    @Override
     @Retryable(
             value = {MongoTransactionException.class, UncategorizedMongoDbException.class},
             maxAttempts = 5,

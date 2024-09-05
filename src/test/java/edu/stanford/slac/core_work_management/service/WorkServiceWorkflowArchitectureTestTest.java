@@ -4,7 +4,6 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.WorkCannotHaveChildren;
 import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdatable;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -161,12 +160,6 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 )
         );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
-
-
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(m1004_initProjectLOV::changeSet);
-        projectLovValues = assertDoesNotThrow(() -> lovService.findAllByGroupName("Project"));
     }
 
     /**
@@ -182,7 +175,6 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 .workTypeId(newParentWorkTypeId)
                 .locationId(locationId)
                 .shopGroupId(shopGroupId)
-                .project(projectLovValues.get(0).id())
                 .build();
         String newParentWorkId = assertDoesNotThrow(() -> workService.createNew(domainId, newWorkDTO));
         assertThat(newParentWorkId).isNotEmpty();
@@ -196,7 +188,6 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 .workTypeId(newChildWorkType)
                 .locationId(locationId)
                 .shopGroupId(shopGroupId)
-                .project(projectLovValues.get(0).id())
                 .parentWorkId(newParentWorkId)
                 .build();
         String newChildWorkId = assertDoesNotThrow(() -> workService.createNew(domainId, newChildWorkDTO));
@@ -285,7 +276,6 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 .workTypeId(newParentWorkTypeId)
                 .locationId(locationId)
                 .shopGroupId(shopGroupId)
-                .project(projectLovValues.get(0).id())
                 .build();
         String workId = assertDoesNotThrow(() -> workService.createNew(domainId, newWorkDTO));
         assertThat(workId).isNotEmpty();
@@ -303,7 +293,6 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 .workTypeId(newChildWorkType)
                 .locationId(locationId)
                 .shopGroupId(shopGroupId)
-                .project(projectLovValues.get(0).id())
                 .parentWorkId(workId)
                 .build();
         ControllerLogicException exceptionOnUpdateStatistic = assertThrows(

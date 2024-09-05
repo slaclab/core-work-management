@@ -34,23 +34,12 @@ public abstract class BaseWorkflow {
     abstract public void update(Work work, UpdateWorkflowState updateState);
 
     /**
-     * Check if the user can update the work
+     * Check if the work is valid
+     * the validation is done according to the state of the workflow
      *
-     * @param identityId the user that is trying to update the work
-     * @param work       the work
-     * @throws ControllerLogicException if the user cannot update the work
+     * @param work the work to check
      */
-    public void canUpdate(String identityId, Work work) {
-        if (isCompleted(work)) {
-            throw ControllerLogicException
-                    .builder()
-                    .errorCode(-1)
-                    .errorMessage("Cannot update a completed work")
-                    .errorDomain("DummyParentWorkflow::canUpdate")
-                    .build();
-        }
-    }
-
+    abstract public void isValid(Work work);
 
     /**
      * Check if the work can have children
@@ -73,14 +62,13 @@ public abstract class BaseWorkflow {
      */
     abstract public Set<WorkflowState> permittedStatus(Work work);
 
-
     /**
      * Check if the work can move to the state
      *
      * @param work     the work to check
      * @param newState the state to move to
      */
-    protected void moveToState(Work work, UpdateWorkflowState newState) {
+    protected void canMoveToState(Work work, UpdateWorkflowState newState) {
         if(newState == null) {
             throw ControllerLogicException
                     .builder()
@@ -98,6 +86,16 @@ public abstract class BaseWorkflow {
                         .build(),
                 ()-> validTransitions != null && validTransitions.get(work.getCurrentStatus().getStatus()).contains(Objects.requireNonNullElse(newState.getNewState(), WorkflowState.None))
         );
+    }
+
+    /**
+     * Check if the work can move to the state
+     *
+     * @param work     the work to check
+     * @param newState the state to move to
+     */
+    protected void moveToState(Work work, UpdateWorkflowState newState) {
+        canMoveToState(work, newState);
         // add current status to the history
         work.getStatusHistory().addFirst(work.getCurrentStatus());
         // we can move to the new state
@@ -106,6 +104,24 @@ public abstract class BaseWorkflow {
                 .status(newState.getNewState())
                 .comment(newState.getComment())
                 .build());
+    }
+
+    /**
+     * Check if the user can update the work
+     *
+     * @param identityId the user that is trying to update the work
+     * @param work       the work
+     * @throws ControllerLogicException if the user cannot update the work
+     */
+    public void canUpdate(String identityId, Work work) {
+        if (isCompleted(work)) {
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("Cannot update a completed work")
+                    .errorDomain("DummyParentWorkflow::canUpdate")
+                    .build();
+        }
     }
 
     /**

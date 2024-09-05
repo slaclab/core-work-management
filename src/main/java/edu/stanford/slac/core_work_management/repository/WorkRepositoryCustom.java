@@ -35,13 +35,10 @@ public interface WorkRepositoryCustom {
     List<Work> searchAll(WorkQueryParameter queryParameter);
 
     /**
-     * Get the next activity number
+     * Return the next work id
      *
-     * @param id the id
-     * @return the next activity number
+     * @return the next work id
      */
-    Long getNextActivityNumber(String id);
-
     Long getNextWorkId();
 
 }

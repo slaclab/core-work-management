@@ -45,7 +45,7 @@ public class DomainInitTest {
 
     @Test
     public void initTest() {
-        M1000_InitDomain initWorkType = new M1000_InitDomain(lovService, domainService);
+        M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(lovService, domainService);
         assertDoesNotThrow(initWorkType::changeSet);
         var allDomain = assertDoesNotThrow(
                 () -> domainService.finAll()

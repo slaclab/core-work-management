@@ -43,11 +43,6 @@ public class Work {
      */
     private Long workNumber;
     /**
-     * The total number of activities present in the work.
-     */
-    @Builder.Default
-    private Long activitiesNumber = 0L;
-    /**
      * The type of the work.
      * This field identify the work which this is related to. This creates dependency between works
      */
@@ -81,11 +76,7 @@ public class Work {
      * This field links the work to a specific user, identified by its ID.
      */
     private List<String> assignedTo;
-    /**
-     * The id of the lov value used to define the project
-     */
-    @LOVField(fieldReference = "projectWork", isMandatory = true)
-    private String project;
+
     /**
      * The list of the custom fields associated with the activity.
      * The custom fields are used to store additional information about the activity.

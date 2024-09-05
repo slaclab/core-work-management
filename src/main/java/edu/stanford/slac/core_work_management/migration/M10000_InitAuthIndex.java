@@ -9,8 +9,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-auth-index", order = "1000", author = "bisegni")
-public class M1000_InitAuthIndex {
+@ChangeUnit(id = "init-auth-index", order = "10000", author = "bisegni")
+public class M10000_InitAuthIndex {
     private final MongoTemplate mongoTemplate;
     @Execution
     public void changeSet() {

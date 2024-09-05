@@ -21,7 +21,6 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -277,10 +276,6 @@ public class WorkControllerPerformanceTest {
                         )
                 )
         );
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(() -> m1004_initProjectLOV.changeSet());
-        projectLovValues = assertDoesNotThrow(() -> lovService.findAllByGroupName("Project"));
     }
 
 
@@ -299,7 +294,6 @@ public class WorkControllerPerformanceTest {
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
                                             .shopGroupId(testShopGroupIds.get(0))
-                                            .project(projectLovValues.get(0).id())
                                             .title("work 1")
                                             .description("work 1 description")
                                             .build()

@@ -50,8 +50,6 @@ public record UpdateWorkDTO(
         @NullOrNotEmpty(message = "Shop group can be null or not empty")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
-        @Schema(description = "The project where the work is associated")
-        String project,
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
         @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
