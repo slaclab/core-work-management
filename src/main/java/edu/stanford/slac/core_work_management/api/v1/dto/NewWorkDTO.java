@@ -43,7 +43,10 @@ public record NewWorkDTO(
         List<String> relatedToWorkIds,
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
-        List<WriteCustomFieldDTO> customFieldValues
+        List<WriteCustomFieldDTO> customFieldValues,
+        @Valid
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments
 ) {
     public NewWorkDTO {
         if (customFieldValues == null) {

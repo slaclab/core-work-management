@@ -48,6 +48,8 @@ public record WorkDTO(
         ShopGroupDTO shopGroup,
         @Schema(description = "The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
         List<CustomFieldDTO> customFields,
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments,
         @Schema(description = "The list of changes on the work, each element represent a change on the work for a single save operation")
         List<ModelChangesHistoryDTO> changesHistory,
         @Schema(description = "The created date of the work")

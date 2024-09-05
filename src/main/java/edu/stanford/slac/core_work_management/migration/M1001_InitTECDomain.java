@@ -152,6 +152,97 @@ public class M1001_InitTECDomain {
                                                 .description("Beamlost Time")
                                                 .valueType(ValueTypeDTO.String)
                                                 .build(),
+                                        // Request Customers
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Request Customers")
+                                                .description("Request Customers")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // High Opr Priority
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("High Opr Priority")
+                                                .description("High Opr Priority")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.Boolean)
+                                                .build(),
+                                        // Pv Name
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Pv Name")
+                                                .description("Pv Name")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // Action Item Review Date
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Action Item Review Date")
+                                                .description("Action Item Review Date")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.DateTime)
+                                                .build(),
+                                        // Date Due Next
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Date Due Next")
+                                                .description("Date Due Next")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.Date)
+                                                .build(),
+                                        // CEF Request Submitted
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("CEF Request Submitted")
+                                                .description("CEF Request Submitted")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.Boolean)
+                                                .build(),
+                                        // CEF Tracking No.
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("CEF Tracking No.")
+                                                .description("CEF Tracking No.")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // Building
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Building")
+                                                .description("Building")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // Building Manager
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Building Manager")
+                                                .description("Building Manager")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // Asst Bldg Manager
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Asst Bldg Manager")
+                                                .description("Asst Bldg Manager")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // Area Mgr Rev Date
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Area Mgr Rev Date")
+                                                .description("Area Mgr Rev Date")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.Date)
+                                                .build(),
+                                        // Area Mgr Rev Comments
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Area Mgr Rev Comments")
+                                                .description("Area Mgr Rev Comments")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // Facilities FAMIS Information
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Facilities FAMIS Information")
+                                                .description("Facilities FAMIS Information")
+                                                .group("Other")
+                                                .valueType(ValueTypeDTO.String)
+                                                .build(),
                                         WATypeCustomFieldDTO.builder()
                                                 .label("Urgency")
                                                 .description("Urgency of the issue")

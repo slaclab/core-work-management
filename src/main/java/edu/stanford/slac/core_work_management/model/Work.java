@@ -1,6 +1,5 @@
 package edu.stanford.slac.core_work_management.model;
 
-import edu.stanford.slac.core_work_management.model.value.LOVField;
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -82,15 +81,23 @@ public class Work {
      * The custom fields are used to store additional information about the activity.
      */
     private List<CustomField> customFields;
+
     /**
-     * Give a followup description when the work is closed
+     * The list of the attachments associated with the work.
      */
-    private String followupDescriptionOnClose;
+    private List<String> attachments;
+
     /**
      * Is the actual status of the work.
      */
     @Builder.Default
     private WorkStatusLog currentStatus = WorkStatusLog.builder().status(WorkflowState.Created).build();
+
+    /**
+     * The list of the notifications associated with the work.
+     */
+    @Builder.Default
+    private List<Notification> notificationsHistory = new ArrayList<>();
 
     /**
      * Is the full work status history
