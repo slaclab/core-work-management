@@ -169,6 +169,8 @@ public class WorkService {
         // validate location and group shop against the domain
         validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(), -3);
         validateShopGroupForDomain(workToSave.getDomainId(), workToSave.getShopGroupId(), -4);
+
+
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -180,7 +182,9 @@ public class WorkService {
 
         // after this work is update we need to update all the
         // tree up to the ancestor
-        if(parentWork!=null) {updateParentWorkWorkflow(domainId, parentWork);}
+        if (parentWork != null) {
+            updateParentWorkWorkflow(domainId, parentWork);
+        }
 
         log.info("Update domain statistic");
         domainService.updateDomainStatistics(savedWork.getDomainId());
@@ -331,7 +335,7 @@ public class WorkService {
 
         // after this work is update we need to update all the
         // tree up to the ancestor
-        if(foundWork.getParentWorkId()!=null) {
+        if (foundWork.getParentWorkId() != null) {
             // find parent work
             var parentWork = wrapCatch(
                     () -> workRepository.findByDomainIdAndId(domainId, foundWork.getParentWorkId()).orElseThrow(
@@ -359,6 +363,35 @@ public class WorkService {
      * <p>
      * it takes care of updating the workflow of the work
      *
+     * @param domainId   the id of the domain
+     * @param newWorkDTO the new work to create
+     */
+    public void isValidForWorkflow(String domainId, NewWorkDTO newWorkDTO) {
+        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, newWorkDTO.workTypeId());
+        // update workflow
+        wInstance.isValid(newWorkDTO);
+    }
+
+    /**
+     * Update a work workflow
+     * <p>
+     * it takes care of updating the workflow of the work
+     *
+     * @param domainId      the id of the domain
+     * @param existingWork  the work to update
+     * @param updateWorkDTO the new work updates
+     */
+    public void isValidForWorkflow(String domainId, Work existingWork, UpdateWorkDTO updateWorkDTO) {
+        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, existingWork.getWorkTypeId());
+        // update workflow
+        wInstance.isValid(updateWorkDTO, existingWork);
+    }
+
+    /**
+     * Update a work workflow
+     * <p>
+     * it takes care of updating the workflow of the work
+     *
      * @param domainId the id of the domain
      * @param work     the work to update
      */
@@ -374,7 +407,7 @@ public class WorkService {
     /**
      * Update all the parent workflow of a work
      *
-     * @param domainId the id of the domain
+     * @param domainId    the id of the domain
      * @param parentWWork the parent work
      */
     public void updateParentWorkWorkflow(String domainId, Work parentWWork) {
@@ -432,8 +465,8 @@ public class WorkService {
     /**
      * Check if the user can create a new work
      *
-     * @param domainId    the id of the domain
-     * @param parentWorkId  the id of the parent work
+     * @param domainId     the id of the domain
+     * @param parentWorkId the id of the parent work
      * @return the parent work
      */
     public Work checkParentWorkflowForChild(String domainId, String parentWorkId) {
@@ -532,64 +565,6 @@ public class WorkService {
                 work.getTitle(),
                 work.getId()
         );
-    }
-
-    /**
-     * Close a work
-     *
-     * @param domainId      the id of the domain
-     * @param workId        the id of the work
-     * @param reviewWorkDTO the DTO to close the work
-     */
-    public void reviewWork(@NotNull String domainId, @NotNull String workId, @Valid ReviewWorkDTO reviewWorkDTO) {
-        // check for work existence
-        var work = wrapCatch(
-                () -> workRepository.findById(workId).orElseThrow(
-                        () -> WorkNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .workId(workId)
-                                .build()
-                ),
-                -1
-        );
-        // check domain match
-        assertion(
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-2)
-                        .errorMessage("The work is not part of the domain")
-                        .errorDomain("WorkService::reviewWork")
-                        .build(),
-                () -> work.getDomainId().compareTo(domainId) == 0
-        );
-        // check for work status
-        assertion(
-                () -> work.getCurrentStatus().getStatus() == WorkflowState.ReviewToClose,
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-2)
-                        .errorMessage("The work is not closeable")
-                        .errorDomain("WorkService::closeWork")
-                        .build()
-        );
-        // update put current status on history
-        work.getStatusHistory().addFirst(work.getCurrentStatus());
-        // set to close
-        work.setCurrentStatus(
-                WorkStatusLog.builder()
-                        .status(WorkflowState.Closed)
-                        .build()
-        );
-        work.setFollowupDescriptionOnClose(reviewWorkDTO.followUpDescription());
-        // save work and unlock
-        var savedWork = wrapCatch(
-                () -> workRepository.save(work),
-                -3
-        );
-        log.info("Work '{}' has change his status to status '{}' by '{}'", savedWork.getId(), savedWork.getCurrentStatus().getStatus(), savedWork.getCurrentStatus().getChanged_by());
-        //update domain statistic
-        domainService.updateDomainStatistics(savedWork.getDomainId());
     }
 
     /**

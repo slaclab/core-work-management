@@ -1,9 +1,12 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatusLog;
+import jakarta.validation.ConstraintViolationException;
 import lombok.Data;
 
 import java.util.Map;
@@ -38,8 +41,18 @@ public abstract class BaseWorkflow {
      * the validation is done according to the state of the workflow
      *
      * @param work the work to check
+     * @throws ConstraintViolationException if the work is not valid
      */
-    abstract public void isValid(Work work);
+    abstract public void isValid(NewWorkDTO work);
+
+    /**
+     * Check if the work update are valid
+     * the validation is done according to the state of the workflow
+     *
+     * @param work the work to check
+     * @throws ConstraintViolationException if the work is not valid
+     */
+    abstract public void isValid(UpdateWorkDTO work, Work existingWork);
 
     /**
      * Check if the work can have children
@@ -69,7 +82,7 @@ public abstract class BaseWorkflow {
      * @param newState the state to move to
      */
     protected void canMoveToState(Work work, UpdateWorkflowState newState) {
-        if(newState == null) {
+        if (newState == null) {
             throw ControllerLogicException
                     .builder()
                     .errorCode(-1)
@@ -84,7 +97,7 @@ public abstract class BaseWorkflow {
                         .errorMessage("Cannot move to state %s from %s".formatted(newState.getNewState().name(), work.getCurrentStatus().getStatus().name()))
                         .errorDomain("BaseWorkflow::update")
                         .build(),
-                ()-> validTransitions != null && validTransitions.get(work.getCurrentStatus().getStatus()).contains(Objects.requireNonNullElse(newState.getNewState(), WorkflowState.None))
+                () -> validTransitions != null && validTransitions.get(work.getCurrentStatus().getStatus()).contains(Objects.requireNonNullElse(newState.getNewState(), WorkflowState.None))
         );
     }
 

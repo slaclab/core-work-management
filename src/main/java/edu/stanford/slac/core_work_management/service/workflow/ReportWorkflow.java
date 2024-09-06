@@ -1,5 +1,7 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import org.springframework.security.core.Authentication;
@@ -18,7 +20,7 @@ public class ReportWorkflow extends BaseWorkflow {
     public ReportWorkflow() {
         validTransitions = Map.of(
                 // Rule: AssignedTo != null
-                WorkflowState.Submitted, Set.of(WorkflowState.PendingAssignment),
+                WorkflowState.Created, Set.of(WorkflowState.PendingAssignment),
                 // Rule: if one or more safety forms were required, those forms must be attached. if no safety forms are required, move on to next state
                 WorkflowState.PendingAssignment, Set.of(WorkflowState.PendingPaperwork, WorkflowState.PendingApproval),
                 // Rule: when admin changes field of workStatus = "Approve"
@@ -42,7 +44,12 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void isValid(Work work) {
+    public void isValid(NewWorkDTO work) {
+
+    }
+
+    @Override
+    public void isValid(UpdateWorkDTO work, Work existingWork) {
 
     }
 

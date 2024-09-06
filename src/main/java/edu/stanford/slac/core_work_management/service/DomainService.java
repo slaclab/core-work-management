@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -301,6 +302,7 @@ public class DomainService {
      * @param domainId   the id of the domain
      * @param workTypeId the id work type
      */
+//    @Cacheable(value = "workflow", key = "#domainId + #workTypeId")
     public BaseWorkflow getWorkflowInstanceByDomainIdAndWorkTypeId(String domainId, String workTypeId) {
         var domain = findById(domainId);
         var workType = findWorkTypeById(domainId, workTypeId);

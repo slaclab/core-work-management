@@ -105,29 +105,6 @@ public class DomainWorkController {
         return ApiResultResponse.of(true);
     }
 
-    @Operation(summary = "Review a work")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Activity updated")
-    })
-    @ResponseStatus(HttpStatus.OK)
-    @PutMapping(
-            path = "/{domainId}/work/{workId}/review",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    @PreAuthorize("@workAuthorizationService.checkReviewWork(#authentication, #workId,#reviewWorkDTO)")
-    public ApiResultResponse<Boolean> reviewWork(
-            Authentication authentication,
-            @Parameter(description = "Is the domain id that contains the work", required = true)
-            @PathVariable String domainId,
-            @Parameter(description = "Is the work id that contains the activity", required = true)
-            @PathVariable String workId,
-            @Valid @RequestBody ReviewWorkDTO reviewWorkDTO
-    ) {
-        workService.reviewWork(domainId, workId, reviewWorkDTO);
-        return ApiResultResponse.of(true);
-    }
-
     @Operation(
             summary = "Get full work by id",
             responses = {

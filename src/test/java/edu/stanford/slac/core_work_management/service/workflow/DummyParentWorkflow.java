@@ -1,5 +1,7 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdatable;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
@@ -112,7 +114,12 @@ public class DummyParentWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void isValid(Work work) {
+    public void isValid(NewWorkDTO work) {
+
+    }
+
+    @Override
+    public void isValid(UpdateWorkDTO work, Work existingWork) {
 
     }
 

@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import io.mongock.api.annotations.ChangeUnit;
@@ -28,7 +29,8 @@ public class M1001_InitTECDomain {
 
     @Execution
     public void changeSet() {
-        initTECDomain();
+        var tecDomain = initTECDomain();
+        log.info("TEC domain created with id {} ", tecDomain.id());
     }
 
 
@@ -39,7 +41,7 @@ public class M1001_InitTECDomain {
     /**
      * Initialize the TEC domain
      */
-    private void initTECDomain() {
+    public DomainDTO initTECDomain() {
         var domain = wrapCatch(
                 () -> domainService.createNewAndGet(
                         NewDomainDTO
@@ -58,6 +60,7 @@ public class M1001_InitTECDomain {
 
         // create work types
         createHardwareReportWT(domain);
+        return domain;
     }
 
     /**
@@ -66,7 +69,7 @@ public class M1001_InitTECDomain {
      * @param domain the domain id
      */
     private void createHardwareReportWT(DomainDTO domain) {
-        var workflow = domain.workflows().stream().filter(w -> w.equals("ReportWorkflow")).findFirst().orElse(null);
+        var workflow = domain.workflows().stream().filter(w -> w.implementation().contains("ReportWorkflow")).findFirst().orElse(null);
         assertion(
                 ControllerLogicException.builder()
                         .errorCode(-1)
@@ -81,12 +84,18 @@ public class M1001_InitTECDomain {
                 NewWorkTypeDTO.builder()
                         .title("Hardware Report")
                         .description("It is used to report a problem")
-                        .workflowId(workflow.implementation())
+                        .workflowId(workflow.id())
                         .customFields(
                                 List.of(
                                         WATypeCustomFieldDTO.builder()
                                                 .label("Subsystem")
                                                 .description("Subsystem Group")
+                                                .valueType(ValueTypeDTO.String)
+                                                .group("General Information")
+                                                .build(),
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("Group")
+                                                .description("Group")
                                                 .valueType(ValueTypeDTO.String)
                                                 .group("General Information")
                                                 .build(),
@@ -290,7 +299,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Subsystem",
+                            "subsystem",
                             "SubsystemGroup"
                     );
                     return null;
@@ -302,7 +311,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Group",
+                            "group",
                             "ProjectGroup"
                     );
                     return null;
@@ -314,7 +323,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Urgency",
+                            "urgency",
                             "UrgencyGroup"
                     );
                     return null;
@@ -326,7 +335,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Micro",
+                            "micro",
                             "MicroGroup"
                     );
                     return null;
@@ -338,7 +347,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Primary",
+                            "primary",
                             "PrimaryGroup"
                     );
                     return null;
@@ -350,7 +359,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Unit",
+                            "unit",
                             "UnitGroup"
                     );
                     return null;
@@ -362,7 +371,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Facility",
+                            "facility",
                             "FacilityGroup"
                     );
                     return null;
@@ -374,7 +383,7 @@ public class M1001_InitTECDomain {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
                             newProblemReportId,
-                            "Issue Priority",
+                            "issuePriority",
                             "IssuePriorityGroup"
                     );
                     return null;
