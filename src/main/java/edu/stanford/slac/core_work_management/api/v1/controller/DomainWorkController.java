@@ -25,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,7 +69,7 @@ public class DomainWorkController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkCanCreate(authentication, domainId, newWorkDTO)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkCanCreate(#authentication, #domainId, #newWorkDTO)")
     public ApiResultResponse<String> createNewWork(
             Authentication authentication,
             @Parameter(description = "Is the domain id to use to create the work", required = true)
@@ -77,7 +78,7 @@ public class DomainWorkController {
             @Parameter(description = "Log the operation if true")
             Optional<Boolean> logIf,
             @Parameter(description = "The new work to create", required = true)
-            @Valid @RequestBody NewWorkDTO newWorkDTO
+            @Validated @RequestBody NewWorkDTO newWorkDTO
     ) {
         return ApiResultResponse.of(workService.createNew(domainId, newWorkDTO, logIf));
     }

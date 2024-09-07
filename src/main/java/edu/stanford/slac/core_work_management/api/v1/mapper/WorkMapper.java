@@ -91,7 +91,7 @@ public abstract class WorkMapper {
      */
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getWorkTypeId()))")
     @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getDomainId(), work.getShopGroupId()))")
-    @Mapping(target = "location", expression = "java(toLocationDTOById(work.getLocationId()))")
+    @Mapping(target = "location", expression = "java(toLocationDTOById(work.getDomainId(), work.getLocationId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
@@ -254,9 +254,9 @@ public abstract class WorkMapper {
      * @param locationId the id of the location
      * @return the converted DTO
      */
-    public LocationDTO toLocationDTOById(String locationId) {
+    public LocationDTO toLocationDTOById(String domainId, String locationId) {
         if (locationId == null) return null;
-        return locationService.findById(locationId);
+        return locationService.findById(domainId, locationId);
     }
 
     /**

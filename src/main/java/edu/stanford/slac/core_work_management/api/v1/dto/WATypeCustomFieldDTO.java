@@ -30,4 +30,9 @@ public record WATypeCustomFieldDTO(
         Boolean isLov,
         @Schema(description = "Specify is the custom field is mandatory.")
         Boolean isMandatory) {
+        public WATypeCustomFieldDTO {
+                if(isMandatory == null) {
+                        isMandatory = false;
+                }
+        }
 }

@@ -119,6 +119,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
                                 .build()
                 )
@@ -130,6 +131,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
                                 .name("location1")
                                 .build()
@@ -142,6 +144,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
                                 .description("location1 description")
                                 .build()
@@ -154,6 +157,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
                                 .locationManagerUserId("user1@slac.stanford.edu")
                                 .build()
@@ -166,6 +170,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
                                 .build()
                 )
@@ -180,8 +185,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -199,8 +204,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("bad@slac.stanford.edu")
@@ -219,8 +224,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -249,8 +254,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        "bad-id",
                         NewLocationDTO.builder()
-                                .domainId("bad-id")
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -270,8 +275,8 @@ public class LocationControllerTest {
                             mockMvc,
                             status().isCreated(),
                             Optional.of("user1@slac.stanford.edu"),
+                            domainId,
                             NewLocationDTO.builder()
-                                    .domainId(domainId)
                                     .name("location-%d".formatted((finalI)))
                                     .description("location-%d description".formatted((finalI)))
                                     .locationManagerUserId("user1@slac.stanford.edu")
@@ -321,8 +326,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -352,8 +357,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is5xxServerError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .externalLocationIdentifier(externalLocationIdentifier)
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -373,8 +378,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .externalLocationIdentifier(externalLocationIdentifier)
                                 .locationManagerUserId("user1@slac.stanford.edu")

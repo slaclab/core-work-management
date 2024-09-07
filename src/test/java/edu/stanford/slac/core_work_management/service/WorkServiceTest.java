@@ -146,9 +146,8 @@ public class WorkServiceTest {
 
         locationId = assertDoesNotThrow(
                 () -> locationService.createNew(
-                        NewLocationDTO
-                                .builder()
-                                .domainId(domainId)
+                        domainId,
+                        NewLocationDTO.builder()
                                 .name("SLAC")
                                 .description("SLAC National Accelerator Laboratory")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -159,9 +158,8 @@ public class WorkServiceTest {
 
         locationIdOnAlternateDomain = assertDoesNotThrow(
                 () -> locationService.createNew(
-                        NewLocationDTO
-                                .builder()
-                                .domainId(alternateDomainId)
+                        alternateDomainId,
+                        NewLocationDTO.builder()
                                 .name("Alternate location")
                                 .description("Alternate location description")
                                 .locationManagerUserId("user1@slac.stanford.edu")

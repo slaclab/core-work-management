@@ -12,20 +12,17 @@ import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkStatusLog;
 import edu.stanford.slac.core_work_management.model.WorkType;
-import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
+import edu.stanford.slac.core_work_management.service.workflow.*;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.validation.ModelFieldValidationService;
-import jakarta.validation.Valid;
+import jakarta.validation.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationContext;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,6 +33,7 @@ import org.springframework.validation.annotation.Validated;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
@@ -121,6 +119,7 @@ public class WorkService {
                         .build(),
                 () -> domainService.existsById(domainId)
         );
+
         // fetch WorkType to check if the work type exists and get information
         // about the custom fields
         WorkType workType = wrapCatch(
@@ -135,6 +134,9 @@ public class WorkService {
                         ),
                 -3
         );
+
+        // check if the new work that is being created is valid for the workflow
+        isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(newWorkDTO).workType(workType).build());
 
         // check if the parent id exists, in case new work is a sub work
         if (newWorkDTO.parentWorkId() != null) {
@@ -152,6 +154,7 @@ public class WorkService {
                         .build(),
                 () -> workType.getDomainId().compareTo(domainId) == 0
         );
+
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
                 domainId,
@@ -165,10 +168,13 @@ public class WorkService {
                 Objects.requireNonNullElse(workType.getCustomFields(), emptyList())
         );
 
-
         // validate location and group shop against the domain
-        validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(), -3);
-        validateShopGroupForDomain(workToSave.getDomainId(), workToSave.getShopGroupId(), -4);
+        if (workToSave.getLocationId() != null) {
+            validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(), -3);
+        }
+        if (workToSave.getShopGroupId() != null) {
+            validateShopGroupForDomain(workToSave.getDomainId(), workToSave.getShopGroupId(), -4);
+        }
 
 
         // save work
@@ -203,48 +209,6 @@ public class WorkService {
                     );
         }
         return savedWork.getId();
-    }
-
-    /**
-     * Validate the location for the domain
-     * check if the location belong to the source domain
-     *
-     * @param domainId   the domain id
-     * @param locationId the id of the location
-     * @param errorCode  the error code
-     */
-    private void validateLocationForDomain(String domainId, String locationId, int errorCode) {
-        var location = wrapCatch(() -> locationService.findById(locationId), errorCode);
-        assertion(
-                InvalidLocation
-                        .byLocationNameDomainId()
-                        .errorCode(errorCode)
-                        .locationName(location.name())
-                        .domainId(domainId)
-                        .build(),
-                () -> (location.domain().id().compareTo(domainId) == 0)
-        );
-    }
-
-    /**
-     * Validate shop group for the domain
-     * check if the shop group belong to the source domain
-     *
-     * @param domainId    the domain id
-     * @param shopGroupId the id of the location
-     * @param errorCode   the error code
-     */
-    private void validateShopGroupForDomain(String domainId, String shopGroupId, int errorCode) {
-        var shopGroup = wrapCatch(() -> shopGroupService.findByDomainIdAndId(domainId, shopGroupId), errorCode);
-        assertion(
-                InvalidShopGroup
-                        .byShopGroupNameDomainId()
-                        .errorCode(errorCode)
-                        .shopGroupName(shopGroup.name())
-                        .domainId(domainId)
-                        .build(),
-                () -> (shopGroup.domain().id().compareTo(domainId) == 0)
-        );
     }
 
     /**
@@ -294,6 +258,16 @@ public class WorkService {
         );
 
 
+        // check if the new work that is being created is valid for the workflow
+        isValidForWorkflow(
+                UpdateWorkValidation
+                        .builder()
+                        .updateWorkDTO(updateWorkDTO)
+                        .workType(workType)
+                        .existingWork(foundWork)
+                        .build()
+        );
+
         // check that all the user in the assignedTo are listed into the shop group
         if (updateWorkDTO.assignedTo() != null) {
             updateWorkDTO.assignedTo().forEach(
@@ -321,8 +295,12 @@ public class WorkService {
         );
 
         // validate location and group shop against the domain
-        validateLocationForDomain(foundWork.getDomainId(), foundWork.getLocationId(), -4);
-        validateShopGroupForDomain(foundWork.getDomainId(), foundWork.getShopGroupId(), -5);
+        if (foundWork.getLocationId() != null) {
+            validateLocationForDomain(foundWork.getDomainId(), foundWork.getLocationId(), -4);
+        }
+        if (foundWork.getShopGroupId() != null) {
+            validateShopGroupForDomain(foundWork.getDomainId(), foundWork.getShopGroupId(), -5);
+        }
 
         // lastly we need to update the workflow
         updateWorkWorkflow(domainId, foundWork, domainMapper.toModel(updateWorkDTO.workflowStateUpdate()));
@@ -358,18 +336,47 @@ public class WorkService {
         log.info("Work '{}' has been updated by '{}'", updatedWork.getId(), updatedWork.getLastModifiedBy());
     }
 
+
     /**
-     * Update a work workflow
-     * <p>
-     * it takes care of updating the workflow of the work
+     * Validate the location for the domain
+     * check if the location belong to the source domain
      *
-     * @param domainId   the id of the domain
-     * @param newWorkDTO the new work to create
+     * @param domainId   the domain id
+     * @param locationId the id of the location
+     * @param errorCode  the error code
      */
-    public void isValidForWorkflow(String domainId, NewWorkDTO newWorkDTO) {
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, newWorkDTO.workTypeId());
-        // update workflow
-        wInstance.isValid(newWorkDTO);
+    private void validateLocationForDomain(String domainId, String locationId, int errorCode) {
+        var location = wrapCatch(() -> locationService.findById(domainId, locationId), errorCode);
+        assertion(
+                InvalidLocation
+                        .byLocationNameDomainId()
+                        .errorCode(errorCode)
+                        .locationName(location.name())
+                        .domainId(domainId)
+                        .build(),
+                () -> (location.domain().id().compareTo(domainId) == 0)
+        );
+    }
+
+    /**
+     * Validate shop group for the domain
+     * check if the shop group belong to the source domain
+     *
+     * @param domainId    the domain id
+     * @param shopGroupId the id of the location
+     * @param errorCode   the error code
+     */
+    private void validateShopGroupForDomain(String domainId, String shopGroupId, int errorCode) {
+        var shopGroup = wrapCatch(() -> shopGroupService.findByDomainIdAndId(domainId, shopGroupId), errorCode);
+        assertion(
+                InvalidShopGroup
+                        .byShopGroupNameDomainId()
+                        .errorCode(errorCode)
+                        .shopGroupName(shopGroup.name())
+                        .domainId(domainId)
+                        .build(),
+                () -> (shopGroup.domain().id().compareTo(domainId) == 0)
+        );
     }
 
     /**
@@ -377,14 +384,57 @@ public class WorkService {
      * <p>
      * it takes care of updating the workflow of the work
      *
-     * @param domainId      the id of the domain
-     * @param existingWork  the work to update
-     * @param updateWorkDTO the new work updates
+     * @param newWorkValidation  the id of the domain
      */
-    public void isValidForWorkflow(String domainId, Work existingWork, UpdateWorkDTO updateWorkDTO) {
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, existingWork.getWorkTypeId());
-        // update workflow
-        wInstance.isValid(updateWorkDTO, existingWork);
+    public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
+        Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
+        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, newWorkValidation.getNewWorkDTO().workTypeId());
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            Validator validator = factory.getValidator();
+            var toValidate = WorkflowValidation.<NewWorkValidation>builder()
+                    .value(newWorkValidation)
+                    .workflow(wInstance)
+                    .build();
+            violations = validator.validate(toValidate);
+        }
+        if (violations != null && !violations.isEmpty()) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage(violations.stream()
+                            .map(e->"[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
+                            .collect(Collectors.joining(", ")))
+                    .errorDomain("WorkService::isValidForWorkflow")
+                    .build();
+        }
+    }
+
+    /**
+     * Update a work workflow
+     * <p>
+     * it takes care of updating the workflow of the work
+     *
+     * @param updateWorkValidation  the information to validate
+     */
+    public void isValidForWorkflow(UpdateWorkValidation updateWorkValidation) {
+        Set<ConstraintViolation<WorkflowValidation<UpdateWorkValidation>>> violations = null;
+        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(updateWorkValidation.getExistingWork().getDomainId(), updateWorkValidation.getExistingWork().getWorkTypeId());
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            Validator validator = factory.getValidator();
+            var toValidate = WorkflowValidation.<UpdateWorkValidation>builder()
+                    .value(updateWorkValidation)
+                    .workflow(wInstance)
+                    .build();
+            violations = validator.validate(toValidate);
+        }
+        if (violations != null && !violations.isEmpty()) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage(violations.stream()
+                            .map(e->"[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
+                            .collect(Collectors.joining(", ")))
+                    .errorDomain("WorkService::isValidForWorkflow")
+                    .build();
+        }
     }
 
     /**
@@ -512,7 +562,7 @@ public class WorkService {
         authService.deleteAuthorizationForResourcePrefix(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()));
 
         // this will fire exception in case the location has not been found
-        LocationDTO locationDTO = locationService.findById(work.getLocationId());
+        LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocationId());
         if (authentication != null) {
             // the creator is a writer
             writerUserList.add(work.getCreatedBy());

@@ -5,8 +5,25 @@ import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface LocationRepository extends MongoRepository<Location, String>, LocationRepositoryCustom {
+
+    /**
+     * Find a location by domain id and id.
+     *
+     * @param domainId the domain id
+     * @param id       the id
+     * @return the location
+     */
+    Optional<Location> findByDomainIdAndId(String domainId, String id);
+
+    /**
+     * Find all the location up to root
+     *
+     * @param locationId the id of the location
+     * @return the location
+     */
     @Aggregation(pipeline = {
             "{ $match: { 'id': ?0 } }",
             "{ $graphLookup: { from: 'location', startWith: '$parentId', connectFromField: 'parentId', connectToField: '_id', as: 'pathToRoot', depthField: 'depth' } }",

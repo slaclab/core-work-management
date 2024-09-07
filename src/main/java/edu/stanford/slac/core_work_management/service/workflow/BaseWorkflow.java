@@ -3,15 +3,13 @@ package edu.stanford.slac.core_work_management.service.workflow;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
-import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkStatusLog;
+import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
+import edu.stanford.slac.core_work_management.model.*;
+import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Data;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
@@ -40,19 +38,17 @@ public abstract class BaseWorkflow {
      * Check if the work is valid
      * the validation is done according to the state of the workflow
      *
-     * @param work the work to check
-     * @throws ConstraintViolationException if the work is not valid
+     * @param newWorkValidation the work validation info to check
      */
-    abstract public void isValid(NewWorkDTO work);
+    abstract public boolean isValid(NewWorkValidation newWorkValidation, ConstraintValidatorContext context);
 
     /**
      * Check if the work update are valid
      * the validation is done according to the state of the workflow
      *
-     * @param work the work to check
-     * @throws ConstraintViolationException if the work is not valid
+     * @param updateWorkValidation the work update information to check
      */
-    abstract public void isValid(UpdateWorkDTO work, Work existingWork);
+    abstract public boolean isValid(UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context);
 
     /**
      * Check if the work can have children
@@ -161,5 +157,48 @@ public abstract class BaseWorkflow {
         if (work == null) return false;
         var currentStatus = work.getCurrentStatus().getStatus();
         return state.stream().anyMatch(s -> s == currentStatus);
+    }
+
+    /**
+     * Check if the status of the work is equal to any provided states
+     *
+     * @param customFields  the lis tof the custom field associated to the work type
+     * @param writeCustomFieldList the user valorized custom field
+     * @param customFieldName the name of the custom field to check
+     */
+    protected Optional<WriteCustomFieldDTO> checkFiledPresence(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> writeCustomFieldList, String customFieldName, ConstraintValidatorContext context) {
+        Optional<WriteCustomFieldDTO> customFieldFound = Optional.empty();
+        var filedToCheck =  customFields.stream()
+                .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName)==0)
+                .findFirst();
+        // check if field has been set
+        if (filedToCheck.isPresent() && writeCustomFieldList != null) {
+            customFieldFound = writeCustomFieldList.stream()
+                    .filter(customField1 -> customField1.id().compareTo(filedToCheck.get().getId()) == 0)
+                    .findFirst();
+           if(customFieldFound.isEmpty()) {
+               context.buildConstraintViolationWithTemplate("The custom field '%s' is required".formatted(customFieldName))
+                       .addPropertyNode(customFieldName)
+                       .addConstraintViolation();
+           }
+        }
+        return customFieldFound;
+    }
+
+    /**
+     * Check if the status of the work is equal to any provided states
+     *
+     * @param fieldValue  the value of the field to check
+     * @param fieldName the name of the field to check
+     */
+    protected boolean checkStringField(String fieldValue, String fieldName, ConstraintValidatorContext context) {
+        boolean isValid = true;
+        if (fieldValue == null || fieldValue.isEmpty()) {
+            isValid = false;
+            context.buildConstraintViolationWithTemplate("The field '%s' is required".formatted(fieldName))
+                    .addPropertyNode(fieldName)
+                    .addConstraintViolation();
+        }
+        return isValid;
     }
 }

@@ -129,9 +129,8 @@ public class LOVServiceTest {
         locationId =
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                NewLocationDTO
-                                        .builder()
-                                        .domainId(domainId)
+                                domainId,
+                                NewLocationDTO.builder()
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")

@@ -1,14 +1,22 @@
 package edu.stanford.slac.core_work_management.service.workflow;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
+import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkType;
+import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validation;
+import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorContextImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Workflow(
         name = "Report",
@@ -44,13 +52,42 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void isValid(NewWorkDTO work) {
+    public boolean isValid(@NotNull NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
+        List<Boolean> validationResult = new ArrayList<>();
+        context.disableDefaultConstraintViolation();
 
+        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().title(), "title", context));
+        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().description(), "description", context));
+        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().locationId(),"locationId", context));
+        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().shopGroupId(),"shopGroupId", context));
+        // Find attribute into custom attribute values
+        // find subsystem custom attribute
+        var subsystemAttribute = checkFiledPresence(
+                newWorkValidation.getWorkType().getCustomFields(),
+                newWorkValidation.getNewWorkDTO().customFieldValues(),
+                "subsystem",
+                context);
+        validationResult.add(subsystemAttribute.isPresent());
+        // group custom attribute
+        var groupAttribute = checkFiledPresence(
+                newWorkValidation.getWorkType().getCustomFields(),
+                newWorkValidation.getNewWorkDTO().customFieldValues(),
+                "group",
+                context);
+        validationResult.add(groupAttribute.isPresent());
+        // urgency custom attribute
+        var urgencyAttribute = checkFiledPresence(
+                newWorkValidation.getWorkType().getCustomFields(),
+                newWorkValidation.getNewWorkDTO().customFieldValues(),
+                "urgency",
+                context);
+        validationResult.add(urgencyAttribute.isPresent());
+        return validationResult.stream().anyMatch(b -> b);
     }
 
     @Override
-    public void isValid(UpdateWorkDTO work, Work existingWork) {
-
+    public boolean isValid(@NotNull UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
+        return true;
     }
 
     @Override

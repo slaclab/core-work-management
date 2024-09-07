@@ -7,6 +7,7 @@ import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatusLog;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
+import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -65,13 +66,13 @@ public class DummyChildWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void isValid(NewWorkDTO work) {
-
+    public boolean isValid(NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
+        return true;
     }
 
     @Override
-    public void isValid(UpdateWorkDTO work, Work existingWork) {
-
+    public boolean isValid(UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
+        return true;
     }
 
     @Override

@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class LocationMapper {
     @Autowired
     DomainService domainService;
-    public abstract Location toModel(NewLocationDTO newLocationDTO);
+    public abstract Location toModel(String domainId, NewLocationDTO newLocationDTO);
     public abstract LocationFilter toModel(LocationFilterDTO locationFilterDTO);
 
 
@@ -31,7 +31,7 @@ public abstract class LocationMapper {
     @Mapping(target = "parentId", source = "parentId")
     @Mapping(target = "name", expression = "java(choiceName(newLocationDTO, externalLocationDTO))")
     @Mapping(target = "description", expression = "java(choiceDescription(newLocationDTO, externalLocationDTO))")
-    public abstract Location toModel(String parentId, NewLocationDTO newLocationDTO, InventoryElementDTO externalLocationDTO);
+    public abstract Location toModel(String domainId, String parentId, NewLocationDTO newLocationDTO, InventoryElementDTO externalLocationDTO);
 
     public String choiceName(NewLocationDTO newLocationDTO, InventoryElementDTO inventoryElementDTO) {
         return inventoryElementDTO==null?newLocationDTO.name(): inventoryElementDTO.getName();

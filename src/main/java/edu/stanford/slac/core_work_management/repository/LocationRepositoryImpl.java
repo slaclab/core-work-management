@@ -41,8 +41,9 @@ public class LocationRepositoryImpl implements LocationRepositoryCustom {
      * @return List<Location>
      */
     @Override
-    public List<Location> findByLocationFilter(LocationFilter locationFilter) {
+    public List<Location> findByLocationFilter(String domainId, LocationFilter locationFilter) {
         var query = new Query();
+        query.addCriteria(Criteria.where("domainId").is(domainId));
         if(locationFilter.getText() != null && !locationFilter.getText().isEmpty()) {
             query.addCriteria(TextCriteria.forDefaultLanguage().matchingAny(locationFilter.getText()));
         }

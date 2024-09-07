@@ -250,9 +250,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewLocationDTO newLocationDTO
     ) throws Exception {
-        var requestBuilder = post("/v1/location")
+        var requestBuilder = post("/v1/domain/{domainId}/location", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newLocationDTO));
@@ -364,12 +365,13 @@ public class TestControllerHelperService {
      * @return the id of the newly created work type
      * @throws Exception the exception
      */
-    public ApiResultResponse<List<WorkTypeDTO>> workControllerFindAllWorkTypes(
+    public ApiResultResponse<List<WorkTypeDTO>> domainControllerFindAllWorkTypes(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
-            Optional<String> userInfo
+            Optional<String> userInfo,
+            String domainId
     ) throws Exception {
-        var requestBuilder = get("/v1/work/work-type")
+        var requestBuilder = get("/v1/domain/{domainId}/work-type", domainId)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -536,41 +538,6 @@ public class TestControllerHelperService {
     }
 
     /**
-     * Review a work
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param workId        the work id
-     * @param activityId    the activity id
-     * @param reviewWorkDTO the review work dto
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<Boolean> workControllerReviewWork(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId,
-            String activityId,
-            ReviewWorkDTO reviewWorkDTO
-    ) throws Exception {
-        var requestBuilder = put("/v1/work/{workId}/review", workId, activityId)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(reviewWorkDTO));
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-
-    /**
      * Search all the work
      *
      * @param mockMvc       the mock mvc
@@ -615,7 +582,7 @@ public class TestControllerHelperService {
      * @param resultMatcher the result matcher
      * @param userInfo      the user info
      * @param domainTypeDTO the domain type dto
-     * @return the list of activity dto
+     * @return the list of all lov field dto
      */
     public ApiResultResponse<List<String>> lovControllerFindAllFieldThatAreLOV(
             MockMvc mockMvc,

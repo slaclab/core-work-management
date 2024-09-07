@@ -5,6 +5,8 @@ import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
+import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -38,14 +40,15 @@ public class RequestWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void isValid(NewWorkDTO work) {
-
+    public boolean isValid(@NotNull NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
+        return true;
     }
 
     @Override
-    public void isValid(UpdateWorkDTO work, Work existingWork) {
-
+    public boolean isValid(@NotNull UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
+        return true;
     }
+
 
     @Override
     public void canUpdate(String identityId, Work work) {

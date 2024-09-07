@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import edu.stanford.slac.core_work_management.service.workflow.ValidateOnWorkflow;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,17 +17,15 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the information for create new work plan")
 public record NewWorkDTO(
-        @Schema(description = "The parent work id if the work is a sub work")
-        String parentWorkId,
-        @Schema(description = "The title of the work plan")
-        @NotEmpty(message = "Title is required")
-        String title,
-        @Schema(description = "The description of the work plan")
-        @NotEmpty(message = "Description is required")
-        String description,
         @Schema(description = "Define the type of the work to do")
         @NotEmpty(message = "Work type is required")
         String workTypeId,
+        @Schema(description = "The parent work id if the work is a sub work")
+        String parentWorkId,
+        @Schema(description = "The title of the work plan")
+        String title,
+        @Schema(description = "The description of the work plan")
+        String description,
         @Schema(description =
                 """
                         Define the location of the work to do. Location is considered to
@@ -34,9 +33,7 @@ public record NewWorkDTO(
                         shall to be matched with an inventory item frm core inventory system
                         """
         )
-        @NotEmpty(message = "Location is required")
         String locationId,
-        @NotEmpty(message = "Shop group is mandatory is required")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
         @Schema(description = "The unique identifier of the work which his is related to")

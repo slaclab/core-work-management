@@ -126,8 +126,8 @@ public class WorkControllerTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainId,
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location1")
                                         .description("location1 description")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -138,8 +138,8 @@ public class WorkControllerTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainId,
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location2")
                                         .description("location2 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -150,8 +150,8 @@ public class WorkControllerTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainId,
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location3")
                                         .description("location3 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -284,10 +284,11 @@ public class WorkControllerTest {
     public void testFetchAllWorkTypes() {
         var newWorkIdResult =
                 assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerFindAllWorkTypes(
+                        () -> testControllerHelperService.domainControllerFindAllWorkTypes(
                                 mockMvc,
                                 status().isOk(),
-                                Optional.of("user1@slac.stanford.edu")
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainId
                         )
                 );
 

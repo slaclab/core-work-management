@@ -6,5 +6,5 @@ import edu.stanford.slac.core_work_management.model.LocationFilter;
 import java.util.List;
 
 public interface LocationRepositoryCustom {
-    List<Location> findByLocationFilter(LocationFilter locationFilter);
+    List<Location> findByLocationFilter(String domainId, LocationFilter locationFilter);
 }
