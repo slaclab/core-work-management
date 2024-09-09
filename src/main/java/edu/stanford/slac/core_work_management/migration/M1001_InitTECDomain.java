@@ -298,6 +298,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "subsystem",
                             "SubsystemGroup"
@@ -310,6 +311,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "group",
                             "ProjectGroup"
@@ -322,6 +324,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "urgency",
                             "UrgencyGroup"
@@ -334,6 +337,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "micro",
                             "MicroGroup"
@@ -346,6 +350,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "primary",
                             "PrimaryGroup"
@@ -358,6 +363,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "unit",
                             "UnitGroup"
@@ -370,6 +376,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "facility",
                             "FacilityGroup"
@@ -382,6 +389,7 @@ public class M1001_InitTECDomain {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Work,
+                            domain.id(),
                             newProblemReportId,
                             "issuePriority",
                             "IssuePriorityGroup"

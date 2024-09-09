@@ -49,13 +49,14 @@ public class LOVController {
     @Operation(summary = "Return all the lov values for a work field. for the Bucket domain uses 'bucket' as subtype")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(
-            path = "/{domainType}/{subtypeId}",
+            path = "/{domainType}/{domainId}/{subtypeId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<String>> findAllFieldThatAreLOV(
             Authentication authentication,
             @NotEmpty @PathVariable LOVDomainTypeDTO domainType,
+            @NotEmpty @PathVariable String domainId,
             @NotEmpty @PathVariable String subtypeId
     ) {
         if(domainType==LOVDomainTypeDTO.Bucket && !subtypeId.equalsIgnoreCase("bucket")) {
@@ -65,22 +66,23 @@ public class LOVController {
                     .errorDomain("LOVController::findAllFieldThatAreLOV")
                     .build();
         }
-        return ApiResultResponse.of(lovService.findAllLOVField(domainType, subtypeId));
+        return ApiResultResponse.of(lovService.findAllLOVField(domainType, domainId, subtypeId));
     }
 
     @Operation(summary = "Return all the lov values for a work field.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(
-            path = "/{domainType}/{subtypeId}/{fieldName}",
+            path = "/{domainType}/{domainId}/{subtypeId}/{fieldName}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<LOVElementDTO>> findValuesByDomainAndFieldName(
             Authentication authentication,
             @PathVariable LOVDomainTypeDTO domainType,
+            @NotEmpty @PathVariable String domainId,
             @NotEmpty @PathVariable String subtypeId,
             @NotEmpty @PathVariable String fieldName
     ) {
-        return ApiResultResponse.of(lovService.findAllByDomainAndFieldName(domainType, subtypeId, fieldName));
+        return ApiResultResponse.of(lovService.findAllByDomainAndFieldName(domainType, domainId, subtypeId, fieldName));
     }
 }

@@ -85,7 +85,7 @@ public class HelperService {
     /**
      * Get custom field by name
      */
-    public List<LOVElementDTO> getCustomFiledLOVValue(LOVDomainTypeDTO lovDomainDTO, String subtypeId, String fieldName) {
-        return lovService.findAllByDomainAndFieldName(lovDomainDTO, subtypeId, fieldName);
+    public List<LOVElementDTO> getCustomFiledLOVValue(LOVDomainTypeDTO lovDomainDTO, String domainId, String subtypeId, String fieldName) {
+        return lovService.findAllByDomainAndFieldName(lovDomainDTO, domainId, subtypeId, fieldName);
     }
 }

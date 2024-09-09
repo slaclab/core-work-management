@@ -88,13 +88,13 @@ public class BucketServiceTest {
     @Test
     public void testFieldReferenceToFindLOV(){
         var allPossibleBucketType = assertDoesNotThrow(
-                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, "bucket", "type")
+                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "type")
         );
         assertThat(allPossibleBucketType).isNotEmpty();
         assertThat(allPossibleBucketType).allMatch(lov->bucketTypeLOVIds.contains(lov.id()));
 
         var allPossibleBucketStatus = assertDoesNotThrow(
-                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, "bucket", "status")
+                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "status")
         );
         assertThat(allPossibleBucketStatus).isNotEmpty();
         assertThat(allPossibleBucketStatus).allMatch(lov->bucketStatusLOVIds.contains(lov.id()));

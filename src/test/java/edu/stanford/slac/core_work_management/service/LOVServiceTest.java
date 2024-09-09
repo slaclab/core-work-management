@@ -232,13 +232,14 @@ public class LOVServiceTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workActivityIds.get(1),
                         "field1",
                         "field1_group"
                 )
         );
         var listOfAllLOV = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, workActivityIds.get(1), "field1")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, domainId, workActivityIds.get(1), "field1")
         );
         assertThat(listOfAllLOV).hasSize(2);
         assertThat(listOfAllLOV).extracting(LOVElementDTO::value).contains("field1 value1", "field1 value2");
@@ -251,6 +252,7 @@ public class LOVServiceTest {
                 LOVFieldReferenceNotFound.class,
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workActivityIds.get(1),
                         "wrong field",
                         "field1_group"
@@ -275,6 +277,7 @@ public class LOVServiceTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workActivityIds.get(1),
                         "field1",
                         "field1_group"
@@ -297,7 +300,7 @@ public class LOVServiceTest {
         AssertionsForClassTypes.assertThat(newWorkId).isNotEmpty();
 
         var listOfAllLOVField1 = assertDoesNotThrow(
-                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, workActivityIds.get(1), "field1")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, domainId, workActivityIds.get(1), "field1")
         );
 
         // find the full activity type

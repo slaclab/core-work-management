@@ -87,6 +87,7 @@ public class M1003_InitBucketTypeLOV {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Bucket,
+                            null,
                             "bucket",
                             "type",
                             "BucketType"
@@ -99,6 +100,7 @@ public class M1003_InitBucketTypeLOV {
                 () -> {
                     lovService.associateDomainFieldToGroupName(
                             LOVDomainTypeDTO.Bucket,
+                            null,
                             "bucket",
                             "status",
                             "BucketStatus"

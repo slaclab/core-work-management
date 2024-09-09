@@ -3,11 +3,9 @@ package edu.stanford.slac.core_work_management.controller.domain;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
+import edu.stanford.slac.core_work_management.migration.M1000_InitLOV;
 import edu.stanford.slac.core_work_management.migration.M1001_InitTECDomain;
-import edu.stanford.slac.core_work_management.model.Domain;
-import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +63,12 @@ public class TecHardwareReportTest {
         mongoTemplate.remove(Domain.class).all();
         mongoTemplate.remove(WorkType.class).all();
         mongoTemplate.remove(LOVElement.class).all();
+        mongoTemplate.remove(Location.class).all();
+        mongoTemplate.remove(ShopGroup.class).all();
+
+        M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
+        assertDoesNotThrow(initLOV::initLOV);
+
         M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(lovService, domainService);
         tecDomain = assertDoesNotThrow(initWorkType::initTECDomain);
         assertThat(tecDomain).isNotNull();
@@ -211,13 +215,13 @@ public class TecHardwareReportTest {
     public void checkSAssignedToState() {
         // custom field id for subsystem
         var subsystemCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "subsystem");
-        var subsystemLovValuesList = lovService.findAllByDomainAndFieldName(    LOVDomainTypeDTO.Work, workTypes.getFirst().id(), "subsystem");
+        var subsystemLovValuesList = lovService.findAllByDomainAndFieldName(    LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "subsystem");
         // get the custom field for the group
         var groupCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "group");
-        var groupLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, workTypes.getFirst().id(), "group");
+        var groupLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "group");
         // get the custom field for the urgency
         var urgencyCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "urgency");
-        var urgencyLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, workTypes.getFirst().id(), "urgency");
+        var urgencyLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "urgency");
 
         // create a new work
         var newWorkResult = assertDoesNotThrow(

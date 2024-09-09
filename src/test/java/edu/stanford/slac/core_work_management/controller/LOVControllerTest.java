@@ -97,7 +97,7 @@ public class LOVControllerTest {
     }
 
     @Test
-    public void fetchAllLOVFieldForActivity() {
+    public void fetchAllLOVFieldForWork() {
         var lovIds = assertDoesNotThrow(
                 () -> lovService.createNew(
                         "field1_group",
@@ -110,6 +110,7 @@ public class LOVControllerTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0),
                         "field1",
                         "field1_group"
@@ -122,6 +123,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0)
                 )
         );
@@ -145,6 +147,7 @@ public class LOVControllerTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0),
                         "fieldWithSpace",
                         "field_with_space_group"
@@ -157,6 +160,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0)
                 )
         );
@@ -170,6 +174,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0),
                         "fieldWithSpace"
                 )
@@ -199,6 +204,7 @@ public class LOVControllerTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0),
                         "fieldWithSpace",
                         "field_with_space_group"
@@ -211,6 +217,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
+                        domainId,
                         workIds.get(0)
                 )
         );

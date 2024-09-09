@@ -75,11 +75,12 @@ public class LOVService {
      */
     public void associateDomainFieldToGroupName(
             @NotNull LOVDomainTypeDTO lovDomainDTO,
+            @NotNull String domainId,
             String subtypeId,
             @NotEmpty String fieldName,
             @NotEmpty String groupName
     ) {
-        var fieldReferences = getLOVFieldReference(lovDomainDTO, subtypeId);
+        var fieldReferences = getLOVFieldReference(lovDomainDTO, domainId, subtypeId);
         assertion(
                 LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
                 () -> fieldReferences.containsKey(fieldName)
@@ -97,8 +98,8 @@ public class LOVService {
      * @param fieldName    the field name
      * @return the list of LOV elements
      */
-    public List<LOVElementDTO> findAllByDomainAndFieldName(LOVDomainTypeDTO lovDomainDTO, String subtypeId, String fieldName) {
-        var fieldReferences = getLOVFieldReference(lovDomainDTO, subtypeId);
+    public List<LOVElementDTO> findAllByDomainAndFieldName(LOVDomainTypeDTO lovDomainDTO, String domainId, String subtypeId, String fieldName) {
+        var fieldReferences = getLOVFieldReference(lovDomainDTO, domainId, subtypeId);
         assertion(
                 LOVFieldReferenceNotFound.byFieldName().errorCode(-1).fieldName(fieldName).build(),
                 () -> fieldReferences.containsKey(fieldName)
@@ -116,6 +117,7 @@ public class LOVService {
     /**
      * Find all the LOV elements by field reference
      * return all the possible value that a field identified by field reference can use
+     *
      * @param fieldReference the field reference
      * @return the list of LOV elements
      */
@@ -223,8 +225,8 @@ public class LOVService {
      * @param lovDomainTypeDTO the domain for which the field reference is needed
      * @return the field reference of the LOV element
      */
-    public List<String> findAllLOVField(LOVDomainTypeDTO lovDomainTypeDTO, String subtypeId) {
-        var allFieldReference = getLOVFieldReference(lovDomainTypeDTO, subtypeId);
+    public List<String> findAllLOVField(LOVDomainTypeDTO lovDomainTypeDTO, String domainId, String subtypeId) {
+        var allFieldReference = getLOVFieldReference(lovDomainTypeDTO, domainId, subtypeId);
         // check if field reference is attached to some lov
         var onlyLOVMap = allFieldReference.entrySet().stream()
                 .filter(entry -> lovElementRepository.existsByFieldReferenceContains(entry.getValue()))
@@ -252,10 +254,9 @@ public class LOVService {
      * @param lovDomainDTO the domain for which the field reference is needed
      * @return the field reference of the LOV element
      */
-    public HashMap<String, String> getLOVFieldReference(LOVDomainTypeDTO lovDomainDTO, String subtypeId) {
+    public HashMap<String, String> getLOVFieldReference(LOVDomainTypeDTO lovDomainDTO, String domainId, String subtypeId) {
         return switch (lovDomainDTO) {
-            case LOVDomainTypeDTO.Work ->
-            {
+            case LOVDomainTypeDTO.Work -> {
                 var resultHash = Arrays.stream(Work.class.getDeclaredFields())
                         .filter(field -> field.isAnnotationPresent(LOVField.class))
                         .collect(Collectors.toMap(
@@ -264,7 +265,7 @@ public class LOVService {
                                 (existing, replacement) -> existing,
                                 HashMap::new
                         ));
-                if(subtypeId!=null)resultHash.putAll(getLOVFieldReferenceFromWorkType(subtypeId));
+                if (subtypeId != null) resultHash.putAll(getLOVFieldReferenceFromWorkType(domainId, subtypeId));
                 yield resultHash;
             }
             case Bucket -> {
@@ -287,38 +288,24 @@ public class LOVService {
      * @param workTypeId the id of the work type
      * @return the field reference of the LOV element
      */
-    private Map<String, String> getLOVFieldReferenceFromWorkType(String workTypeId) {
+    private Map<String, String> getLOVFieldReferenceFromWorkType(String domainId, String workTypeId) {
         HashMap<String, String> result = new HashMap<>();
-        if (workTypeId == null)
-            workTypeRepository.findAll().forEach(
-                    activityType -> {
-                        if (activityType.getCustomFields() != null) {
-                            activityType.getCustomFields().forEach(
-                                    customField -> {
-                                        if (customField.getLovFieldReference() != null) {
-                                            result.put(customField.getName(), customField.getLovFieldReference());
-                                        }
-                                    }
-                            );
-                        }
-                    }
-            );
-        else
-            workTypeRepository
-                    .findById(workTypeId)
-                    .ifPresent(
-                            activityType -> {
-                                if (activityType.getCustomFields() != null) {
-                                    activityType.getCustomFields().forEach(
-                                            customField -> {
-                                                if (customField.getLovFieldReference() != null) {
-                                                    result.put(customField.getName(), customField.getLovFieldReference());
-                                                }
+        if (workTypeId == null) return result;
+        workTypeRepository
+                .findByDomainIdAndId(domainId, workTypeId)
+                .ifPresent(
+                        activityType -> {
+                            if (activityType.getCustomFields() != null) {
+                                activityType.getCustomFields().forEach(
+                                        customField -> {
+                                            if (customField.getLovFieldReference() != null) {
+                                                result.put(customField.getName(), customField.getLovFieldReference());
                                             }
-                                    );
-                                }
+                                        }
+                                );
                             }
-                    );
+                        }
+                );
         return result;
     }
 }
