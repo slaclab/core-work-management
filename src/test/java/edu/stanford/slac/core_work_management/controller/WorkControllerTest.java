@@ -371,6 +371,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
                 )
@@ -499,6 +500,7 @@ public class WorkControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
                 )
@@ -518,6 +520,7 @@ public class WorkControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user3@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
                 )

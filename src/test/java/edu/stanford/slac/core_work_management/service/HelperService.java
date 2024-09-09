@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -14,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 public class HelperService {
     @Autowired
     WorkService workService;
+    @Autowired
+    LOVService lovService;
     @Autowired
     DomainService domainService;
 
@@ -28,6 +31,15 @@ public class HelperService {
         assertThat(newWorkTypeId).isNotNull();
         listIds.add(newWorkTypeId);
         return listIds;
+    }
+
+    /**
+     * Get custom field by name
+     */
+    public WATypeCustomFieldDTO getCustomFiledByName(WorkTypeDTO workTypeDTO, String customFieldName) {
+        return workTypeDTO.customFields().stream()
+                .filter(customField -> customField.name().compareToIgnoreCase(customFieldName) == 0)
+                .findFirst().orElseThrow();
     }
 
     /**
@@ -68,5 +80,12 @@ public class HelperService {
         } else
             return false;
         return true;
+    }
+
+    /**
+     * Get custom field by name
+     */
+    public List<LOVElementDTO> getCustomFiledLOVValue(LOVDomainTypeDTO lovDomainDTO, String subtypeId, String fieldName) {
+        return lovService.findAllByDomainAndFieldName(lovDomainDTO, subtypeId, fieldName);
     }
 }

@@ -99,6 +99,48 @@ public class DomainController {
     }
 
 
+    @PostMapping(
+            path = "/{domainId}/location",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new root location")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
+    public ApiResultResponse<String> createNewRootLocation(
+            Authentication authentication,
+            @Parameter(description = "The domain id")
+            @PathVariable @NotEmpty String domainId,
+            @Parameter(description = "The new location to create")
+            @Valid @RequestBody NewLocationDTO newLocationDTO
+    ) {
+        return ApiResultResponse.of(
+                locationService.createNew(domainId, newLocationDTO)
+        );
+    }
+
+    @PostMapping(
+            path = "/{domainId}/location/{locationId}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new child location")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
+    public ApiResultResponse<String> createNewChildLocation(
+            Authentication authentication,
+            @Parameter(description = "The domain id")
+            @PathVariable @NotEmpty String domainId,
+            @Parameter(description = "The id of the parent location")
+            @PathVariable @NotEmpty String locationId,
+            @Parameter(description = "The new location to create")
+            @Valid @RequestBody NewLocationDTO newLocationDTO
+    ) {
+        return ApiResultResponse.of(
+                locationService.createNewChild(domainId, locationId, newLocationDTO)
+        );
+    }
+
     @GetMapping(
             path = "/{domainId}/location/{locationId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}

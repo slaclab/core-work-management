@@ -28,9 +28,9 @@ public class ReportWorkflow extends BaseWorkflow {
     public ReportWorkflow() {
         validTransitions = Map.of(
                 // Rule: AssignedTo != null
-                WorkflowState.Created, Set.of(WorkflowState.PendingAssignment),
+                WorkflowState.Created, Set.of(WorkflowState.Assigned),
                 // Rule: if one or more safety forms were required, those forms must be attached. if no safety forms are required, move on to next state
-                WorkflowState.PendingAssignment, Set.of(WorkflowState.PendingPaperwork, WorkflowState.PendingApproval),
+                WorkflowState.Assigned, Set.of(WorkflowState.PendingPaperwork, WorkflowState.PendingApproval),
                 // Rule: when admin changes field of workStatus = "Approve"
                 WorkflowState.PendingApproval, Set.of(WorkflowState.ReadyForWork),
                 // Rule: all required paperwork attached and admin set directly the status to "Approved"

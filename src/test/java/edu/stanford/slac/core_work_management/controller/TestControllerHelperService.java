@@ -492,10 +492,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String workId,
             WorkDetailsOptionDTO workDetailsOptionDTO
     ) throws Exception {
-        var requestBuilder = get("/v1/work/{workId}", workId)
+        var requestBuilder = get("/v1/domain/{domainId}/work/{workId}", domainId, workId)
                 .contentType(MediaType.APPLICATION_JSON);
         if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes()!=null) {
            requestBuilder.param("changes", String.valueOf(workDetailsOptionDTO.changes()));
