@@ -352,6 +352,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .title("work 1 updated")
@@ -807,6 +808,7 @@ public class WorkControllerTest {
                         mockMvc,
                         status().isUnauthorized(),
                         Optional.of("user3@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .locationId(testLocationIds.get(1))
@@ -866,6 +868,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user2@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .locationId(testLocationIds.getFirst())
@@ -946,6 +949,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user2@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .locationId(testLocationIds.getFirst())
@@ -1007,6 +1011,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .locationId(testLocationIds.getFirst())
@@ -1024,6 +1029,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user3@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 // group leader cannot update the location
@@ -1043,6 +1049,7 @@ public class WorkControllerTest {
                         status().isUnauthorized(),
                         // this is the admin fo the location 2
                         Optional.of("user2@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 // group leader cannot update the location
@@ -1294,6 +1301,7 @@ public class WorkControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .title("work 1 updated")

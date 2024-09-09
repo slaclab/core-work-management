@@ -461,10 +461,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String workId,
             UpdateWorkDTO updateWorkDTO
     ) throws Exception {
-        var requestBuilder = put("/v1/work/{workId}", workId)
+        var requestBuilder = put("/v1/domain/{domainId}/work/{workId}", domainId, workId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateWorkDTO));

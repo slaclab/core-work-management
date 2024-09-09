@@ -268,23 +268,6 @@ public class WorkService {
                         .build()
         );
 
-        // check that all the user in the assignedTo are listed into the shop group
-        if (updateWorkDTO.assignedTo() != null) {
-            updateWorkDTO.assignedTo().forEach(
-                    (user) -> {
-                        assertion(
-                                () -> shopGroupService.checkContainsAUserEmail(foundWork.getDomainId(), foundWork.getShopGroupId(), user),
-                                ControllerLogicException
-                                        .builder()
-                                        .errorCode(-3)
-                                        .errorMessage("The user is not part of the shop group")
-                                        .errorDomain("WorkService::update")
-                                        .build()
-                        );
-                    }
-            );
-        }
-
         // update the model
         workMapper.updateModel(updateWorkDTO, foundWork);
 
@@ -384,7 +367,7 @@ public class WorkService {
      * <p>
      * it takes care of updating the workflow of the work
      *
-     * @param newWorkValidation  the id of the domain
+     * @param newWorkValidation the id of the domain
      */
     public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
@@ -401,7 +384,7 @@ public class WorkService {
             throw ControllerLogicException.builder()
                     .errorCode(-1)
                     .errorMessage(violations.stream()
-                            .map(e->"[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
+                            .map(e -> "[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
                             .collect(Collectors.joining(", ")))
                     .errorDomain("WorkService::isValidForWorkflow")
                     .build();
@@ -413,7 +396,7 @@ public class WorkService {
      * <p>
      * it takes care of updating the workflow of the work
      *
-     * @param updateWorkValidation  the information to validate
+     * @param updateWorkValidation the information to validate
      */
     public void isValidForWorkflow(UpdateWorkValidation updateWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<UpdateWorkValidation>>> violations = null;
@@ -430,7 +413,7 @@ public class WorkService {
             throw ControllerLogicException.builder()
                     .errorCode(-1)
                     .errorMessage(violations.stream()
-                            .map(e->"[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
+                            .map(e -> "[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
                             .collect(Collectors.joining(", ")))
                     .errorDomain("WorkService::isValidForWorkflow")
                     .build();

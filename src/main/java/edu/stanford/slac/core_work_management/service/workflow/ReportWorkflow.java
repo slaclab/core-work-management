@@ -7,25 +7,37 @@ import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorContextImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
+
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 
 @Workflow(
         name = "Report",
         description = "The workflow for a report"
 )
 @Component("ReportWorkflow")
+@AllArgsConstructor
 public class ReportWorkflow extends BaseWorkflow {
+    private final ShopGroupService shopGroupService;
+
     // This map defines the valid transitions for each state
-    public ReportWorkflow() {
+    @PostConstruct
+    public void init() {
         validTransitions = Map.of(
                 // Rule: AssignedTo != null
                 WorkflowState.Created, Set.of(WorkflowState.Assigned),
@@ -47,8 +59,43 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void update(Work Work, UpdateWorkflowState updateWorkflowState) {
+    public void update(Work work, UpdateWorkflowState updateWorkflowState) {
+        // assigned to can be empty only in created state
+        checkAssignedTo(work);
 
+        // get current state
+        var currentStatus = work.getCurrentStatus().getStatus();
+        switch (currentStatus) {
+            case Created -> {
+                if(work.getAssignedTo() != null) {
+                   moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Assigned).build());
+                }
+            }
+            case Submitted -> {
+            }
+            case PendingAssignment -> {
+            }
+            case Assigned -> {
+            }
+            case ReadyForWork -> {
+            }
+            case InProgress -> {
+            }
+            case PendingApproval -> {
+            }
+            case PendingPaperwork -> {
+            }
+            case Approved -> {
+            }
+            case WorkComplete -> {
+            }
+            case ReviewToClose -> {
+            }
+            case Closed -> {
+            }
+            case None -> {
+            }
+        }
     }
 
     @Override
@@ -107,5 +154,35 @@ public class ReportWorkflow extends BaseWorkflow {
     @Override
     public Set<WorkflowState> permittedStatus(Work work) {
         return Set.of();
+    }
+
+    /**
+     * Check if the string field is not null or empty
+     *
+     * @param work the work to check
+     * @throws  ControllerLogicException if the field is null or empty or with unalloyed user
+     */
+    private void checkAssignedTo(Work work) {
+        // the assignedTo can be null or empty only if we are in created state
+        if(work.getCurrentStatus().getStatus()!=WorkflowState.Created &&(work.getAssignedTo() == null || work.getAssignedTo().isEmpty())) {
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("The assignedTo field is required in the current state")
+                    .errorDomain("ReportWorkflow::checkAssignedTo")
+                    .build();
+        }
+
+        for (String user : work.getAssignedTo()) {
+            assertion(
+                    () -> shopGroupService.checkContainsAUserEmail(work.getDomainId(), work.getShopGroupId(), user),
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-3)
+                            .errorMessage("The user is not part of the shop group")
+                            .errorDomain("WorkService::update")
+                            .build()
+            );
+        }
     }
 }

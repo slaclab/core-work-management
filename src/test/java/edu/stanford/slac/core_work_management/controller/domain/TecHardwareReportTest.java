@@ -212,7 +212,7 @@ public class TecHardwareReportTest {
     }
 
     @Test
-    public void checkSAssignedToState() {
+    public void createNewGoesInCreated() {
         // custom field id for subsystem
         var subsystemCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "subsystem");
         var subsystemLovValuesList = lovService.findAllByDomainAndFieldName(    LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "subsystem");
@@ -257,20 +257,69 @@ public class TecHardwareReportTest {
                 )
         );
         assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
-        // check fi the workflow is in the 'created' state
-//        var workResult = assertDoesNotThrow(
-//                ()->testControllerHelperService.workControllerFindWorkById(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user1@slac.stanford.edu"),
-//                        tecDomain.id(),
-//                        newWorkResult.getPayload(),
-//                        WorkDetailsOptionDTO.builder().build()
-//                )
-//        );
-//        assertThat(workResult).isNotNull();
-//        assertThat(workResult.getPayload()).isNotNull();
-//        assertThat(workResult.getPayload().currentStatus().status()).isEqualTo(WorkflowStateDTO.Created);
+    }
 
+    @Test
+    public void moveToAssigned() {
+        // custom field id for subsystem
+        var subsystemCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "subsystem");
+        var subsystemLovValuesList = lovService.findAllByDomainAndFieldName(    LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "subsystem");
+        // get the custom field for the group
+        var groupCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "group");
+        var groupLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "group");
+        // get the custom field for the urgency
+        var urgencyCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "urgency");
+        var urgencyLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "urgency");
+
+        // create a new work
+        var newWorkResult = assertDoesNotThrow(
+                ()->testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(workTypes.getFirst().id())
+                                .title("Work 1")
+                                .description("Work 1 description")
+                                .locationId(location10)
+                                .shopGroupId(shopGroup15)
+                                .customFieldValues(
+                                        List.of(
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(subsystemCustomField.id())
+                                                        .value(ValueDTO.builder().type(ValueTypeDTO.String).value(subsystemLovValuesList.getFirst().id()).build())
+                                                        .build(),
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(groupCustomField.id())
+                                                        .value(ValueDTO.builder().type(ValueTypeDTO.String).value(groupLovValuesList.getFirst().id()).build())
+                                                        .build(),
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(urgencyCustomField.id())
+                                                        .value(ValueDTO.builder().type(ValueTypeDTO.String).value(urgencyLovValuesList.getFirst().id()).build())
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        // with assigned to the work should be in assigned
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+        // update work with assignedToUser
+        assertDoesNotThrow(
+                ()->testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO.builder()
+                                .assignedTo(List.of("user15@slac.stanford.edu"))
+                                .build()
+                )
+        );
+        // with assigned to the work should be in assigned
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Assigned)).isTrue();
     }
 }

@@ -93,7 +93,7 @@ public class DomainWorkController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("@workAuthorizationService.checkUpdate(authentication, domainId, workId, updateWorkDTO)")
+    @PreAuthorize("@workAuthorizationService.checkUpdate(#authentication, #domainId, #workId, #updateWorkDTO)")
     public ApiResultResponse<Boolean> updateWork(
             Authentication authentication,
             @Parameter(description = "Is the domain id that own the work", required = true)
