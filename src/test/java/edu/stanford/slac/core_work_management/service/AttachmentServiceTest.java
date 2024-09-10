@@ -6,6 +6,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.StorageObjectDTO;
 import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.model.Attachment;
 import edu.stanford.slac.core_work_management.repository.AttachmentRepository;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.bson.Document;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -28,6 +30,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
@@ -51,6 +56,8 @@ public class AttachmentServiceTest {
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired
+    private KafkaAdmin kafkaAdmin;
+    @Autowired
     private CWMAppProperties cwmAppProperties;
 
     @BeforeEach
@@ -58,6 +65,27 @@ public class AttachmentServiceTest {
         mongoTemplate.remove(Attachment.class).all();
         mongoTemplate.getCollection("fs.files").deleteMany(new Document());
         mongoTemplate.getCollection("fs.chunks").deleteMany(new Document());
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    cwmAppProperties.getImagePreviewTopic(),
+                    String.format("%s-retry-2000", cwmAppProperties.getImagePreviewTopic()),
+                    String.format("%s-retry-4000", cwmAppProperties.getImagePreviewTopic())
+            );
+
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to recreate Kafka topic", e);
+        }
     }
 
     @Test

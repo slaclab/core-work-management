@@ -32,7 +32,7 @@ public abstract class BaseWorkflow {
      * @param updateState the state to move to, this is optional and can be null
      * @throws ControllerLogicException if the transition is not valid
      */
-    abstract public void update(Work work, UpdateWorkflowState updateState);
+    abstract public void update(Work work, WorkType workType, UpdateWorkflowState updateState);
 
     /**
      * Check if the work is valid

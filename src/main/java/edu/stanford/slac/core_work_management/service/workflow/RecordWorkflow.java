@@ -5,6 +5,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class RecordWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void update(Work work, UpdateWorkflowState updateWorkflowState) {
+    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
 
     }
 

@@ -7,6 +7,7 @@ import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ConstraintViolation;
@@ -33,6 +34,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 @Component("ReportWorkflow")
 @AllArgsConstructor
 public class ReportWorkflow extends BaseWorkflow {
+    private final WorkRepository workRepository;
     private final ShopGroupService shopGroupService;
 
     // This map defines the valid transitions for each state
@@ -59,7 +61,7 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void update(Work work, UpdateWorkflowState updateWorkflowState) {
+    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
         // assigned to can be empty only in created state
         checkAssignedTo(work);
 
@@ -76,6 +78,11 @@ public class ReportWorkflow extends BaseWorkflow {
             case PendingAssignment -> {
             }
             case Assigned -> {
+//                var subsystemAttribute = checkFiledPresence(
+//                        work.getDomainId().getCustomFields(),
+//                        newWorkValidation.getNewWorkDTO().customFieldValues(),
+//                        "radiationControlForm",
+//                        context);
             }
             case ReadyForWork -> {
             }

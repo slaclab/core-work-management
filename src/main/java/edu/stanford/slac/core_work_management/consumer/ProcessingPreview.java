@@ -1,10 +1,8 @@
 package edu.stanford.slac.core_work_management.consumer;
 
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.StorageObjectDTO;
 import edu.stanford.slac.core_work_management.model.Attachment;
-import edu.stanford.slac.core_work_management.model.FileObjectDescription;
 import edu.stanford.slac.core_work_management.model.StorageObject;
 import edu.stanford.slac.core_work_management.repository.StorageRepository;
 import edu.stanford.slac.core_work_management.service.AttachmentService;
@@ -46,6 +44,7 @@ public class ProcessingPreview {
     final private StorageRepository storageRepository;
     final private Counter previewProcessedCounter;
     final private Counter previewErrorsCounter;
+    final private Counter previewRetrySubmitted;
 
     @RetryableTopic(
             attempts = "3",
@@ -115,7 +114,7 @@ public class ProcessingPreview {
         } catch (Throwable e) {
             attachmentService.setPreviewProcessingState(attachment.getId(), Attachment.PreviewProcessingState.Error);
             log.error("Error during preview generation for the attachment {} with error with message '{}' - [{}]", attachment, e.getMessage(), e);
-            previewErrorsCounter.increment();
+            previewRetrySubmitted.increment();
             throw new RuntimeException(e);
         }
     }

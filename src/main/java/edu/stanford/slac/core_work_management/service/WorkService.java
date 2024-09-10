@@ -108,7 +108,7 @@ public class WorkService {
 //    )
     public String createNew(String domainId, Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
         // point, if the work is a sub work, to the parent work
-        Work parentWork = null;
+        Work parentWork;
 
         //check if the domain exists
         assertion(
@@ -142,6 +142,8 @@ public class WorkService {
         if (newWorkDTO.parentWorkId() != null) {
             // now check if the parent permit to have children
             parentWork = checkParentWorkflowForChild(domainId, newWorkDTO.parentWorkId());
+        } else {
+            parentWork = null;
         }
 
         // check the work type against the domain
@@ -189,7 +191,14 @@ public class WorkService {
         // after this work is update we need to update all the
         // tree up to the ancestor
         if (parentWork != null) {
-            updateParentWorkWorkflow(domainId, parentWork);
+            workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
+                    .ifPresentOrElse(
+                            wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
+                            () -> {throw WorkTypeNotFound.notFoundById()
+                                    .workId(parentWork.getWorkTypeId())
+                                    .build();}
+                    );
+//            updateParentWorkWorkflow(domainId, parentWork);
         }
 
         log.info("Update domain statistic");
@@ -286,7 +295,7 @@ public class WorkService {
         }
 
         // lastly we need to update the workflow
-        updateWorkWorkflow(domainId, foundWork, domainMapper.toModel(updateWorkDTO.workflowStateUpdate()));
+        updateWorkWorkflow(domainId, foundWork, workType, domainMapper.toModel(updateWorkDTO.workflowStateUpdate()));
 
         // save the work
         var updatedWork = wrapCatch(
@@ -308,7 +317,13 @@ public class WorkService {
                     ),
                     -7
             );
-            updateParentWorkWorkflow(domainId, parentWork);
+            workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
+                    .ifPresentOrElse(
+                            wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
+                            () -> {throw WorkTypeNotFound.notFoundById()
+                                    .workId(parentWork.getWorkTypeId())
+                                    .build();}
+                    );
         }
 
         // update all authorization
@@ -428,13 +443,13 @@ public class WorkService {
      * @param domainId the id of the domain
      * @param work     the work to update
      */
-    public void updateWorkWorkflow(String domainId, Work work, UpdateWorkflowState updateState) {
+    public void updateWorkWorkflow(String domainId, Work work, WorkType workType, UpdateWorkflowState updateState) {
         if (work == null) {
             return;
         }
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
         // update workflow
-        wInstance.update(work, updateState);
+        wInstance.update(work, workType, updateState);
     }
 
     /**
@@ -443,14 +458,14 @@ public class WorkService {
      * @param domainId    the id of the domain
      * @param parentWWork the parent work
      */
-    public void updateParentWorkWorkflow(String domainId, Work parentWWork) {
+    public void updateParentWorkWorkflow(String domainId, Work parentWWork, WorkType workType) {
         if (domainId == null || parentWWork == null) {
             return;
         }
 
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, parentWWork.getWorkTypeId());
         // update workflow
-        wInstance.update(parentWWork, null);
+        wInstance.update(parentWWork, workType, null);
         // save parent work with updated workflow
         wrapCatch(
                 () -> workRepository.save(parentWWork),
@@ -468,8 +483,17 @@ public class WorkService {
                     ),
                     -3
             );
-            // update ancestor workflow recursively
-            updateParentWorkWorkflow(domainId, parentWork);
+
+            // find work type of the parent and if found update the parent workflow
+            workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
+                    .ifPresentOrElse(
+                            wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
+                            () -> {throw WorkTypeNotFound.notFoundById()
+                                    .workId(parentWork.getWorkTypeId())
+                                    .build();}
+                    );
+//            // update ancestor workflow recursively
+//            updateParentWorkWorkflow(domainId, parentWork);
         }
     }
 

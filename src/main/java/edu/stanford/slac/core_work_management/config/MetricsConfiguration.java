@@ -39,4 +39,14 @@ public class MetricsConfiguration {
                 .description("The number of preview request submitted")
                 .register(meterRegistry);
     }
+
+    @Bean
+    public Counter previewRetrySubmitted() {
+        return Counter
+                .builder("cwm_preview_retry_event")
+                .tag("operation", "retry")
+                .tag("state", "failed")
+                .description("The number of retry resubmission")
+                .register(meterRegistry);
+    }
 }

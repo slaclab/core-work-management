@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockPart;
@@ -21,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 @Service()
@@ -36,6 +39,89 @@ public class TestControllerHelperService {
 
     }
 
+    public ApiResultResponse<String> attachmentControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            MockMultipartFile file) throws Exception {
+        var requestBuilder = multipart("/v1/attachment").file(file);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result_upload = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result_upload.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        ApiResultResponse<String> res = new ObjectMapper().readValue(result_upload.getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(res.getErrorCode()).isEqualTo(0);
+        return res;
+    }
+
+    /**
+     * Check if the file is correctly downloaded
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param attachmentID
+     * @param mediaType
+     * @throws Exception
+     */
+    public void checkDownloadedFile(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String attachmentID,
+            String mediaType) throws Exception {
+        var requestBuilder = get("/v1/attachment/{id}/download", attachmentID)
+                .contentType(mediaType);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0);
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
+    }
+
+    /**
+     * Check if the file is correctly downloaded
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param attachmentID
+     * @param mediaType
+     * @throws Exception
+     */
+    public void checkDownloadedPreview(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String attachmentID,
+            String mediaType) throws Exception {
+        var requestBuilder = get("/v1/attachment/{id}/preview.jpg", attachmentID)
+                .contentType(mediaType);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0);
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
+    }
 
     /**
      * Create new domain

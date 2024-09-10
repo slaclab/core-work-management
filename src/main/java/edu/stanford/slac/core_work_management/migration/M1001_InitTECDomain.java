@@ -92,12 +92,14 @@ public class M1001_InitTECDomain {
                                                 .description("Subsystem Group")
                                                 .valueType(ValueTypeDTO.String)
                                                 .group("General Information")
+                                                .isMandatory(true)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
                                                 .label("Group")
                                                 .description("Group")
                                                 .valueType(ValueTypeDTO.String)
                                                 .group("General Information")
+                                                .isMandatory(true)
                                                 .build(),
                                         //Estimated Hrs
                                         WATypeCustomFieldDTO.builder()
@@ -257,6 +259,7 @@ public class M1001_InitTECDomain {
                                                 .description("Urgency of the issue")
                                                 .group("Other")
                                                 .valueType(ValueTypeDTO.String)
+                                                .isMandatory(true)
                                                 .build(),
                                         WATypeCustomFieldDTO.builder()
                                                 .label("Micro")
@@ -287,6 +290,14 @@ public class M1001_InitTECDomain {
                                                 .description("Issue priority")
                                                 .group("Other")
                                                 .valueType(ValueTypeDTO.String)
+                                                .build(),
+                                        // add Radiation Safety Work Control Forms needed form
+                                        WATypeCustomFieldDTO.builder()
+                                                .label("radiationControlForm")
+                                                .description("Radiation Safety Work Control Forms needed")
+                                                .group("Action")
+                                                .valueType(ValueTypeDTO.Boolean)
+                                                .isMandatory(false)
                                                 .build()
                                 )
                         )

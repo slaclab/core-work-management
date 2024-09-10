@@ -6,6 +6,7 @@ import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdat
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkStatusLog;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class DummyParentWorkflow extends BaseWorkflow {
      * @param updateWorkflowState the state to move to, this is optional and can be null
      */
     @Override
-    public void update(Work work, UpdateWorkflowState updateWorkflowState) {
+    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
         if (work == null) return;
         // check when is possible to force the state:
         if (updateWorkflowState != null && updateWorkflowState.getNewState() != null && work.getCurrentStatus().getStatus() != ReviewToClose) {
