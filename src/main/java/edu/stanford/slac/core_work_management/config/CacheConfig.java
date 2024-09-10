@@ -1,7 +1,9 @@
 package edu.stanford.slac.core_work_management.config;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.JoinConfig;
 import com.hazelcast.config.MapConfig;
+import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
@@ -15,12 +17,18 @@ import org.springframework.context.annotation.Configuration;
 public class CacheConfig {
     @Bean
     public HazelcastInstance hazelcastInstance() {
-        Config config = Config.loadDefault();
+        Config config = new Config();
         config.setInstanceName("hazelcast-instance");
-        config.getNetworkConfig().setPort(5701);
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setName("default");
-        mapConfig.setTimeToLiveSeconds(60); // Set TTL to 1 hour
+
+        // Configure network and clustering
+        NetworkConfig network = config.getNetworkConfig();
+        network.setPort(5701).setPortAutoIncrement(true);
+
+        JoinConfig join = network.getJoin();
+        // Multicast configuration for automatic cluster discovery
+        join.getMulticastConfig().setEnabled(true);
+        join.getTcpIpConfig().setEnabled(false); // Disable TCP/IP for this example
+
         return Hazelcast.newHazelcastInstance(config);
     }
 

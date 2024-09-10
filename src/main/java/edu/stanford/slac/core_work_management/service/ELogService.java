@@ -11,7 +11,7 @@ import edu.stanford.slac.core_work_management.elog_api.dto.EntryImportDTO;
 import edu.stanford.slac.core_work_management.elog_api.dto.ImportEntryDTO;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.model.LogEntry;
-import edu.stanford.slac.core_work_management.repository.AttachmentRepository;
+import edu.stanford.slac.core_work_management.repository.StorageRepository;
 import edu.stanford.slac.core_work_management.repository.LogEntryRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class ELogService implements LogService{
     private final LogEntryMapper logEntryMapper;
     private final ShopGroupService shopGroupService;
     private final LogEntryRepository logEntryRepository;
-    private final AttachmentRepository attachmentRepository;
+    private final StorageRepository attachmentRepository;
     private final KafkaTemplate<String, ImportEntryDTO> importEntryDTOKafkaTemplate;
     private final JWTHelper jwtHelper;
     private final ObjectMapper objectMapper;

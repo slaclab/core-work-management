@@ -69,6 +69,7 @@ dependencies {
             'org.springframework.boot:spring-boot-starter-data-ldap',
             'org.springframework.boot:spring-boot-starter-validation',
             'org.springframework.kafka:spring-kafka:3.1.4',
+            'net.coobird:thumbnailator:0.4.20',
             'com.unboundid:unboundid-ldapsdk:7.0.1',
             'io.micrometer:micrometer-registry-prometheus',
             'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0',
@@ -77,6 +78,14 @@ dependencies {
             'org.mapstruct:mapstruct:1.5.5.Final'
 
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
+    // pdfbox
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+
+    // tika
+    implementation 'org.overviewproject:mime-types:2.0.0'
+    implementation 'org.apache.tika:tika-core:2.9.2'
+    implementation 'org.apache.tika:tika-parsers-standard-package:2.9.2'
 
     // hazelcast
     implementation 'com.hazelcast:hazelcast-spring:5.3.8'
