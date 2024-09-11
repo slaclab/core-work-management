@@ -113,6 +113,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .title("Test work type")
                                 .description("Test work type description")
                                 .workflowId(fullDomain.workflows().stream().findFirst().get().id())
+                                .validatorName("DummyParentValidation")
                                 .build()
                 )
         );
@@ -160,6 +161,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .title("Test work type")
                                 .description("Test work type description")
                                 .workflowId(UUID.randomUUID().toString())
+                                .validatorName("DummyParentValidation")
                                 .build()
                 )
         );
@@ -199,6 +201,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                                 () -> domainService.findById(domainId)
                                         ).workflows().stream().findFirst().get().id()
                                 )
+                                .validatorName("DummyParentValidation")
                                 .childWorkTypeIds(Set.of(UUID.randomUUID().toString()))
                                 .build()
                 )
@@ -239,6 +242,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .title("Child work type")
                                 .description("Child work type description")
                                 .workflowId(fullDomain.workflows().stream().findFirst().get().id())
+                                .validatorName("DummyChildValidation")
                                 .build()
                 )
         );
@@ -253,6 +257,7 @@ public class DomainServiceForWorkflowAndChildTest {
                                 .description("Parent work type description")
                                 .childWorkTypeIds(Set.of(newChildWorkId))
                                 .workflowId(fullDomain.workflows().stream().findFirst().get().id())
+                                .validatorName("DummyParentValidation")
                                 .build()
                 )
         );

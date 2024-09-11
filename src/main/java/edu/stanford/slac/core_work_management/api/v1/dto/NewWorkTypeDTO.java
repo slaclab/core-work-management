@@ -31,7 +31,10 @@ public record NewWorkTypeDTO (
         Set<String> childWorkTypeIds,
         @NotNull(message = "The id of the workflow cannot be null")
         @Schema(description = "The id of the workflow that rule the life cycle of the work that refer to this type")
-        String workflowId
+        String workflowId,
+        @NotNull
+        @Schema(description = "The name of the validator to use for this work type")
+        String validatorName
 ){
         public NewWorkTypeDTO {
                 if(customFields == null){

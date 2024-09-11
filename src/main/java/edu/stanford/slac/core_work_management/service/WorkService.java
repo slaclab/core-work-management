@@ -13,6 +13,7 @@ import edu.stanford.slac.core_work_management.exception.*;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation;
 import edu.stanford.slac.core_work_management.service.workflow.*;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
@@ -30,7 +31,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -50,6 +53,7 @@ public class WorkService {
     private final WorkMapper workMapper;
     private final DomainMapper domainMapper;
 
+    private final ScriptService scriptService;
     private final DomainService domainService;
     private final AuthService authService;
 
@@ -194,9 +198,11 @@ public class WorkService {
             workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
                     .ifPresentOrElse(
                             wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
-                            () -> {throw WorkTypeNotFound.notFoundById()
-                                    .workId(parentWork.getWorkTypeId())
-                                    .build();}
+                            () -> {
+                                throw WorkTypeNotFound.notFoundById()
+                                        .workId(parentWork.getWorkTypeId())
+                                        .build();
+                            }
                     );
 //            updateParentWorkWorkflow(domainId, parentWork);
         }
@@ -320,9 +326,11 @@ public class WorkService {
             workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
                     .ifPresentOrElse(
                             wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
-                            () -> {throw WorkTypeNotFound.notFoundById()
-                                    .workId(parentWork.getWorkTypeId())
-                                    .build();}
+                            () -> {
+                                throw WorkTypeNotFound.notFoundById()
+                                        .workId(parentWork.getWorkTypeId())
+                                        .build();
+                            }
                     );
         }
 
@@ -387,23 +395,12 @@ public class WorkService {
     public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, newWorkValidation.getNewWorkDTO().workTypeId());
-        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-            Validator validator = factory.getValidator();
-            var toValidate = WorkflowValidation.<NewWorkValidation>builder()
-                    .value(newWorkValidation)
-                    .workflow(wInstance)
-                    .build();
-            violations = validator.validate(toValidate);
-        }
-        if (violations != null && !violations.isEmpty()) {
-            throw ControllerLogicException.builder()
-                    .errorCode(-1)
-                    .errorMessage(violations.stream()
-                            .map(e -> "[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
-                            .collect(Collectors.joining(", ")))
-                    .errorDomain("WorkService::isValidForWorkflow")
-                    .build();
-        }
+        CompletableFuture<Void> scriptResult = scriptService.executeScriptFile(
+                newWorkValidation.getWorkType().getValidatorName(),
+                WorkTypeValidation.class,
+                "checkValid",
+                newWorkValidation);
+        scriptResult.join();
     }
 
     /**
@@ -416,23 +413,12 @@ public class WorkService {
     public void isValidForWorkflow(UpdateWorkValidation updateWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<UpdateWorkValidation>>> violations = null;
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(updateWorkValidation.getExistingWork().getDomainId(), updateWorkValidation.getExistingWork().getWorkTypeId());
-        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-            Validator validator = factory.getValidator();
-            var toValidate = WorkflowValidation.<UpdateWorkValidation>builder()
-                    .value(updateWorkValidation)
-                    .workflow(wInstance)
-                    .build();
-            violations = validator.validate(toValidate);
-        }
-        if (violations != null && !violations.isEmpty()) {
-            throw ControllerLogicException.builder()
-                    .errorCode(-1)
-                    .errorMessage(violations.stream()
-                            .map(e -> "[%s] %s".formatted(e.getPropertyPath(), e.getMessage())) // Get the message for each violation
-                            .collect(Collectors.joining(", ")))
-                    .errorDomain("WorkService::isValidForWorkflow")
-                    .build();
-        }
+        CompletableFuture<Void> scriptResult = scriptService.executeScriptFile(
+                updateWorkValidation.getWorkType().getValidatorName(),
+                WorkTypeValidation.class,
+                "checkValid",
+                updateWorkValidation);
+        scriptResult.join();
     }
 
     /**
@@ -449,7 +435,11 @@ public class WorkService {
         }
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
         // update workflow
-        wInstance.update(work, workType, updateState);
+        scriptService.executeScriptFile(
+                workType.getValidatorName(),
+                WorkTypeValidation.class,
+                "updateWorkflow",
+                WorkflowWorkUpdate.builder().work(work).workType(workType).workflow(wInstance).updateWorkflowState(updateState).build()).join();
     }
 
     /**
@@ -465,7 +455,12 @@ public class WorkService {
 
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, parentWWork.getWorkTypeId());
         // update workflow
-        wInstance.update(parentWWork, workType, null);
+        scriptService.executeScriptFile(
+                    workType.getValidatorName(),
+                    WorkTypeValidation.class,
+                    "updateWorkflow",
+                    WorkflowWorkUpdate.builder().work(parentWWork).workType(workType).workflow(wInstance).build()).join();
+
         // save parent work with updated workflow
         wrapCatch(
                 () -> workRepository.save(parentWWork),
@@ -488,9 +483,11 @@ public class WorkService {
             workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
                     .ifPresentOrElse(
                             wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
-                            () -> {throw WorkTypeNotFound.notFoundById()
-                                    .workId(parentWork.getWorkTypeId())
-                                    .build();}
+                            () -> {
+                                throw WorkTypeNotFound.notFoundById()
+                                        .workId(parentWork.getWorkTypeId())
+                                        .build();
+                            }
                     );
 //            // update ancestor workflow recursively
 //            updateParentWorkWorkflow(domainId, parentWork);

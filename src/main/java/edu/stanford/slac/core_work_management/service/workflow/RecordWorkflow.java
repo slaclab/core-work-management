@@ -36,21 +36,6 @@ public class RecordWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
-
-    }
-
-    @Override
-    public boolean isValid(NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
-    @Override
-    public boolean isValid(UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
-    @Override
     public void canUpdate(String identityId, Work work) {
     }
 

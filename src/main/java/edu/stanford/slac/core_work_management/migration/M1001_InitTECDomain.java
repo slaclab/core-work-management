@@ -85,6 +85,7 @@ public class M1001_InitTECDomain {
                         .title("Hardware Report")
                         .description("It is used to report a problem")
                         .workflowId(workflow.id())
+                        .validatorName("TECHardwareReportValidation")
                         .customFields(
                                 List.of(
                                         WATypeCustomFieldDTO.builder()

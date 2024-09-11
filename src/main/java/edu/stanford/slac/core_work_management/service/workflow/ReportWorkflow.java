@@ -61,90 +61,6 @@ public class ReportWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
-        // assigned to can be empty only in created state
-        checkAssignedTo(work);
-
-        // get current state
-        var currentStatus = work.getCurrentStatus().getStatus();
-        switch (currentStatus) {
-            case Created -> {
-                if(work.getAssignedTo() != null) {
-                   moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Assigned).build());
-                }
-            }
-            case Submitted -> {
-            }
-            case PendingAssignment -> {
-            }
-            case Assigned -> {
-//                var subsystemAttribute = checkFiledPresence(
-//                        work.getDomainId().getCustomFields(),
-//                        newWorkValidation.getNewWorkDTO().customFieldValues(),
-//                        "radiationControlForm",
-//                        context);
-            }
-            case ReadyForWork -> {
-            }
-            case InProgress -> {
-            }
-            case PendingApproval -> {
-            }
-            case PendingPaperwork -> {
-            }
-            case Approved -> {
-            }
-            case WorkComplete -> {
-            }
-            case ReviewToClose -> {
-            }
-            case Closed -> {
-            }
-            case None -> {
-            }
-        }
-    }
-
-    @Override
-    public boolean isValid(@NotNull NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
-        List<Boolean> validationResult = new ArrayList<>();
-        context.disableDefaultConstraintViolation();
-
-        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().title(), "title", context));
-        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().description(), "description", context));
-        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().locationId(),"locationId", context));
-        validationResult.add(checkStringField(newWorkValidation.getNewWorkDTO().shopGroupId(),"shopGroupId", context));
-        // Find attribute into custom attribute values
-        // find subsystem custom attribute
-        var subsystemAttribute = checkFiledPresence(
-                newWorkValidation.getWorkType().getCustomFields(),
-                newWorkValidation.getNewWorkDTO().customFieldValues(),
-                "subsystem",
-                context);
-        validationResult.add(subsystemAttribute.isPresent());
-        // group custom attribute
-        var groupAttribute = checkFiledPresence(
-                newWorkValidation.getWorkType().getCustomFields(),
-                newWorkValidation.getNewWorkDTO().customFieldValues(),
-                "group",
-                context);
-        validationResult.add(groupAttribute.isPresent());
-        // urgency custom attribute
-        var urgencyAttribute = checkFiledPresence(
-                newWorkValidation.getWorkType().getCustomFields(),
-                newWorkValidation.getNewWorkDTO().customFieldValues(),
-                "urgency",
-                context);
-        validationResult.add(urgencyAttribute.isPresent());
-        return validationResult.stream().anyMatch(b -> b);
-    }
-
-    @Override
-    public boolean isValid(@NotNull UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
-    @Override
     public void canUpdate(String identityId, Work work) {
     }
 
@@ -161,35 +77,5 @@ public class ReportWorkflow extends BaseWorkflow {
     @Override
     public Set<WorkflowState> permittedStatus(Work work) {
         return Set.of();
-    }
-
-    /**
-     * Check if the string field is not null or empty
-     *
-     * @param work the work to check
-     * @throws  ControllerLogicException if the field is null or empty or with unalloyed user
-     */
-    private void checkAssignedTo(Work work) {
-        // the assignedTo can be null or empty only if we are in created state
-        if(work.getCurrentStatus().getStatus()!=WorkflowState.Created &&(work.getAssignedTo() == null || work.getAssignedTo().isEmpty())) {
-            throw ControllerLogicException
-                    .builder()
-                    .errorCode(-1)
-                    .errorMessage("The assignedTo field is required in the current state")
-                    .errorDomain("ReportWorkflow::checkAssignedTo")
-                    .build();
-        }
-
-        for (String user : work.getAssignedTo()) {
-            assertion(
-                    () -> shopGroupService.checkContainsAUserEmail(work.getDomainId(), work.getShopGroupId(), user),
-                    ControllerLogicException
-                            .builder()
-                            .errorCode(-3)
-                            .errorMessage("The user is not part of the shop group")
-                            .errorDomain("WorkService::update")
-                            .build()
-            );
-        }
     }
 }

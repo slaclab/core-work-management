@@ -35,21 +35,6 @@ public class RequestWorkflow extends BaseWorkflow {
                 WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed)
         );
     }
-    @Override
-    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
-
-    }
-
-    @Override
-    public boolean isValid(@NotNull NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
-    @Override
-    public boolean isValid(@NotNull UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
 
     @Override
     public void canUpdate(String identityId, Work work) {

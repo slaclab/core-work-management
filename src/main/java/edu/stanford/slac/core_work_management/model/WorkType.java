@@ -57,6 +57,11 @@ public class WorkType {
     private String workflowId;
 
     /**
+     * The name of the validator that validate the work that refer to this type
+     */
+    private String validatorName;
+
+    /**
      * The creation date of the activity type.
      */
     @CreatedDate

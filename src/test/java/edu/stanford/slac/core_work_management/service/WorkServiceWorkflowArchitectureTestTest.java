@@ -104,6 +104,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
                                 .title("Parent work type")
                                 .description("Parent work type description")
                                 .workflowId(parentWorkflow.get().id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
@@ -120,6 +121,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
                                 .title("Child work type")
                                 .description("Child work type description")
                                 .workflowId(childWorkflow.get().id())
+                                .validatorName("validation/DummyChildValidation.groovy")
                                 .build()
                 )
         );

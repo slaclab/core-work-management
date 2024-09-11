@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 @Builder
-@ValidateOnWorkflow
 public class WorkflowValidation<T>{
     private T value;
     private BaseWorkflow workflow;

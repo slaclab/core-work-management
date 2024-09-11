@@ -44,38 +44,6 @@ public class DummyChildWorkflow extends BaseWorkflow {
         );
     }
 
-    /**
-     * if works contains one or more children, it could be closed when
-     * all the children are closed
-     *
-     * @param work                the work to update
-     * @param updateWorkflowState the state to move to, this is optional and can be null
-     */
-    @Override
-    public void update(Work work, WorkType workType, UpdateWorkflowState updateWorkflowState) {
-        if (work == null) return;
-        if (updateWorkflowState != null && work.getCurrentStatus().getStatus() != Created) {
-            throw WorkflowNotManuallyUpdatable.of()
-                    .errorCode(-1)
-                    .build();
-        }
-        // return if it is closed
-        if (work.getCurrentStatus().getStatus() == WorkflowState.Closed) return;
-
-        if (updateWorkflowState == null) return;
-        moveToState(work, updateWorkflowState);
-    }
-
-    @Override
-    public boolean isValid(NewWorkValidation newWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
-    @Override
-    public boolean isValid(UpdateWorkValidation updateWorkValidation, ConstraintValidatorContext context) {
-        return true;
-    }
-
     @Override
     public void canUpdate(String identityId, Work work) {
 
