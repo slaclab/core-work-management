@@ -133,7 +133,7 @@ public class WorkAuthorizationService {
         // check if the current user can update the work
         // according to the workflow
         // load work
-        workService.checkWorkflowForUpdate(authentication.getCredentials().toString(), domainId, workId, updateWorkDTO);
+//        workService.checkWorkflowForUpdate(authentication.getCredentials().toString(), domainId, workId, updateWorkDTO);
 
         return true;
     }

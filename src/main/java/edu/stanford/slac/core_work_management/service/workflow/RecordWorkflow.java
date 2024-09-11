@@ -40,11 +40,6 @@ public class RecordWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public boolean canCreateChild(Work work) {
-        return false;
-    }
-
-    @Override
     public boolean isCompleted(Work work) {
         return true;
     }

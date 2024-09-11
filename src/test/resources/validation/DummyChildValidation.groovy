@@ -1,11 +1,14 @@
 package validation
 
+import edu.stanford.slac.core_work_management.exception.WorkCannotHaveChildren
 import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdatable
 import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation
+import edu.stanford.slac.core_work_management.service.workflow.AdminChildrenValidation
 import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation
 import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowWorkUpdate
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowState
+
 class DummyChildValidation extends WorkTypeValidation {
     @Override
     void updateWorkflow(WorkflowWorkUpdate workflowWorkUpdate) {
@@ -35,4 +38,15 @@ class DummyChildValidation extends WorkTypeValidation {
     void checkValid(UpdateWorkValidation updateWorkValidation) {
         println "DummyChildValidation checkValid"
     }
+
+    @Override
+    void adminChildren(AdminChildrenValidation adminChildrenValidation) {
+        throw WorkCannotHaveChildren.builder()
+                .errorCode(-1)
+                .errorMessage("Work cannot have children")
+                .errorDomain("DummyChildValidation")
+                .build();
+
+    }
+
 }

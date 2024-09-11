@@ -40,10 +40,6 @@ public class RequestWorkflow extends BaseWorkflow {
     public void canUpdate(String identityId, Work work) {
     }
 
-    @Override
-    public boolean canCreateChild(Work work) {
-        return false;
-    }
 
     @Override
     public boolean isCompleted(Work work) {

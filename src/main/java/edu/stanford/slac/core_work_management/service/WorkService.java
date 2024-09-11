@@ -31,12 +31,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationOwnerTypeDTO.User;
 import static edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO.Admin;
@@ -145,7 +143,7 @@ public class WorkService {
         // check if the parent id exists, in case new work is a sub work
         if (newWorkDTO.parentWorkId() != null) {
             // now check if the parent permit to have children
-            parentWork = checkParentWorkflowForChild(domainId, newWorkDTO.parentWorkId());
+            parentWork = checkParentWorkflowForChild(domainId, newWorkDTO);
         } else {
             parentWork = null;
         }
@@ -323,9 +321,12 @@ public class WorkService {
                     ),
                     -7
             );
+            // try to find parent work type
             workTypeRepository.findByDomainIdAndId(domainId, parentWork.getWorkTypeId())
                     .ifPresentOrElse(
+                            // and recurse if found
                             wt -> updateParentWorkWorkflow(domainId, parentWork, wt),
+                            // or fails if not found
                             () -> {
                                 throw WorkTypeNotFound.notFoundById()
                                         .workId(parentWork.getWorkTypeId())
@@ -452,9 +453,9 @@ public class WorkService {
         if (domainId == null || parentWWork == null) {
             return;
         }
-
+        // retrieve workflow instance
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, parentWWork.getWorkTypeId());
-        // update workflow
+        // update workflow with the script associated to the work type
         scriptService.executeScriptFile(
                     workType.getValidatorName(),
                     WorkTypeValidation.class,
@@ -489,8 +490,6 @@ public class WorkService {
                                         .build();
                             }
                     );
-//            // update ancestor workflow recursively
-//            updateParentWorkWorkflow(domainId, parentWork);
         }
     }
 
@@ -502,53 +501,77 @@ public class WorkService {
      * @param workId        the id of the work
      * @param updateWorkDTO the DTO to update the work
      */
-    public void checkWorkflowForUpdate(String userId, String domainId, String workId, UpdateWorkDTO updateWorkDTO) {
-        var work = workRepository
-                .findByDomainIdAndId(domainId, workId)
-                .orElseThrow(
-                        () -> WorkNotFound
-                                .notFoundById()
-                                .errorCode(-1)
-                                .workId(workId)
-                                .build()
-                );
-        var workflowInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
-        workflowInstance.canUpdate(userId, work);
-    }
+//    public void checkWorkflowForUpdate(String userId, String domainId, String workId, UpdateWorkDTO updateWorkDTO) {
+//        var work = workRepository
+//                .findByDomainIdAndId(domainId, workId)
+//                .orElseThrow(
+//                        () -> WorkNotFound
+//                                .notFoundById()
+//                                .errorCode(-1)
+//                                .workId(workId)
+//                                .build()
+//                );
+//        var workflowInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
+//        workflowInstance.canUpdate(userId, work);
+//        // retrieve workflow instance
+//        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, parentWWork.getWorkTypeId());
+//
+//    }
 
     /**
      * Check if the user can create a new work
      *
      * @param domainId     the id of the domain
-     * @param parentWorkId the id of the parent work
+     * @param newWorkDTO the dto to create the work
      * @return the parent work
      */
-    public Work checkParentWorkflowForChild(String domainId, String parentWorkId) {
-        if (domainId == null || parentWorkId == null) {
+    public Work checkParentWorkflowForChild(String domainId, @Valid NewWorkDTO newWorkDTO) {
+        if (domainId == null || newWorkDTO == null) {
             return null;
         }
         // get parent work
         var foundParentWork = wrapCatch(
                 () -> workRepository
-                        .findByDomainIdAndId(domainId, parentWorkId)
+                        .findByDomainIdAndId(domainId, newWorkDTO.parentWorkId())
                         .orElseThrow(
                                 () -> WorkNotFound
                                         .notFoundById()
                                         .errorCode(-1)
-                                        .workId(parentWorkId)
+                                        .workId(newWorkDTO.parentWorkId())
                                         .build()
                         ),
                 -1
         );
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, foundParentWork.getWorkTypeId());
-        // update workflow
-        assertion(
-                WorkCannotHaveChildren
-                        .byId()
-                        .errorCode(-2)
-                        .build(),
-                () -> wInstance.canCreateChild(foundParentWork)
-        );
+        // find work type of the parent and if found update the parent workflow
+        workTypeRepository.findByDomainIdAndId(domainId, foundParentWork.getWorkTypeId())
+                .ifPresentOrElse(
+                        parentWorkType -> {
+                            // check if parent work type admin the child WorkType id
+                            assertion(
+                                    WorkCannotHaveChildren
+                                            .byId()
+                                            .errorCode(-2)
+                                            .workId(foundParentWork.getId())
+                                            .build(),
+                                    () -> all(
+                                            ()->parentWorkType.getChildWorkTypeIds() != null,
+                                            ()->parentWorkType.getChildWorkTypeIds().contains(newWorkDTO.workTypeId())
+                                    )
+                            );
+                            var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, foundParentWork.getWorkTypeId());
+                            // update workflow with the script associated to the work type
+                            scriptService.executeScriptFile(
+                                    parentWorkType.getValidatorName(),
+                                    WorkTypeValidation.class,
+                                    "adminChildren",
+                                    AdminChildrenValidation.builder().work(foundParentWork).workType(parentWorkType).workflow(wInstance).build()).join();
+                        },
+                        () -> {
+                            throw WorkTypeNotFound.notFoundById()
+                                    .workId(foundParentWork.getWorkTypeId())
+                                    .build();
+                        }
+                );
         return foundParentWork;
     }
 

@@ -1,30 +1,23 @@
-package edu.stanford.slac.core_work_management.service.validation
+package validation
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState
 import edu.stanford.slac.core_work_management.model.Work
-import edu.stanford.slac.core_work_management.model.WorkType
 import edu.stanford.slac.core_work_management.repository.WorkRepository
 import edu.stanford.slac.core_work_management.service.ShopGroupService
-import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow
-import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation
-import edu.stanford.slac.core_work_management.service.workflow.ReportWorkflow
-import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation
-import edu.stanford.slac.core_work_management.service.workflow.WorkflowState
-import edu.stanford.slac.core_work_management.service.workflow.WorkflowWorkUpdate
-import jakarta.validation.ConstraintValidatorContext
-import lombok.AllArgsConstructor
-import lombok.extern.log4j.Log4j2
+import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation
+import edu.stanford.slac.core_work_management.service.workflow.*
+import org.springframework.beans.factory.annotation.Autowired
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion
 
 /**
  * Validation for the TECHardwareReport work type.
  */
-@Log4j2
-@AllArgsConstructor
 class TECHardwareReportValidation extends WorkTypeValidation {
+    @Autowired
     private final WorkRepository workRepository;
+    @Autowired
     private final ShopGroupService shopGroupService;
 
     @Override

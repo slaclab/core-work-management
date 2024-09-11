@@ -48,11 +48,6 @@ public class DummyParentWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public boolean canCreateChild(Work work) {
-        return isStatusEqualTo(work, Set.of(Created, InProgress));
-    }
-
-    @Override
     public boolean isCompleted(Work work) {
         if (work == null) return false;
         return work.getCurrentStatus().getStatus() == Closed;

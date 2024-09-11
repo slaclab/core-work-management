@@ -286,8 +286,6 @@ public abstract class WorkMapper {
      */
     public AbstractValue toAbstractValue(ValueDTO value) {
         try {
-
-
             switch (value.type()) {
                 case String -> {
                     return StringValue

@@ -42,10 +42,8 @@ public class ReportWorkflow extends BaseWorkflow {
     public void init() {
         validTransitions = Map.of(
                 // Rule: AssignedTo != null
-                WorkflowState.Created, Set.of(WorkflowState.Assigned),
-                // Rule: if one or more safety forms were required, those forms must be attached. if no safety forms are required, move on to next state
-                WorkflowState.Assigned, Set.of(WorkflowState.PendingPaperwork, WorkflowState.PendingApproval),
-                // Rule: when admin changes field of workStatus = "Approve"
+                WorkflowState.Created, Set.of(WorkflowState.ReadyForWork),
+                // Rule: (wait for attachment on radiation control form if it is required) and when admin set workflow to = "Ready to work"
                 WorkflowState.PendingApproval, Set.of(WorkflowState.ReadyForWork),
                 // Rule: all required paperwork attached and admin set directly the status to "Approved"
                 WorkflowState.ReadyForWork, Set.of(WorkflowState.Approved),
@@ -64,10 +62,6 @@ public class ReportWorkflow extends BaseWorkflow {
     public void canUpdate(String identityId, Work work) {
     }
 
-    @Override
-    public boolean canCreateChild(Work work) {
-        return false;
-    }
 
     @Override
     public boolean isCompleted(Work work) {

@@ -48,6 +48,8 @@ public class WorkServiceTest {
     LOVService lovService;
 
     private DomainDTO fullDomain;
+    private WorkflowDTO parentWorkflow;
+    private WorkflowDTO childWorkflow;
     private String shopGroupId;
     private String alternateShopGroupId;
     private String locationId;
@@ -66,7 +68,8 @@ public class WorkServiceTest {
                                 .description("Test Domain Description")
                                 .workflowImplementations(
                                         Set.of(
-                                                "DummyParentWorkflow"
+                                                "DummyParentWorkflow",
+                                                "DummyChildWorkflow"
                                         )
                                 )
                                 .build()
@@ -78,7 +81,8 @@ public class WorkServiceTest {
         fullDomain = assertDoesNotThrow(
                 () -> domainService.findById(domainId)
         );
-
+        parentWorkflow = fullDomain.workflows().stream().filter(w -> w.implementation().equals("DummyParentWorkflow")).findFirst().get();
+        childWorkflow = fullDomain.workflows().stream().filter(w -> w.implementation().equals("DummyChildWorkflow")).findFirst().get();
 
         alternateDomainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -446,47 +450,74 @@ public class WorkServiceTest {
     }
 
     @Test
-    public void createNewSubworkOK() {
-        //create work type
-        String newWorkTypeId = assertDoesNotThrow(
+    public void createNewSubWorkOK() {
+        // create work type for children
+        String newChildrenWorkTypeId = assertDoesNotThrow(
                 () -> domainService.ensureWorkType(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
-                                .title("Update the documentation")
+                                .title("Children work type")
                                 .description("Update the documentation description")
+                                .workflowId(childWorkflow.id())
+                                .validatorName("validation/DummyChildValidation.groovy")
                                 .build()
                 )
         );
-        assertThat(newWorkTypeId).isNotNull();
+        //create work type
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Parent work type")
+                                .description("Update the documentation description")
+                                .childWorkTypeIds(Set.of(newChildrenWorkTypeId))
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .workflowId(parentWorkflow.id())
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
         // create work plan
-        var newWorkId = assertDoesNotThrow(
+        var newParentWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
                         domainId,
                         NewWorkDTO
                                 .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
+                                .title("Parent work")
+                                .description("Parent work description")
+                                .workTypeId(newParentWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
                                 .build()
                 )
         );
-        assertThat(newWorkId).isNotEmpty();
-  //todo fix this with subwork
-//
-//        // fetch activity and check field
-//        var newlyCreatedActivity = assertDoesNotThrow(
-//                () -> workService.findActivityById(newActivityId)
-//        );
-//        assertThat(newlyCreatedActivity).isNotNull();
-//        assertThat(newlyCreatedActivity.id()).isNotNull();
-//        assertThat(newlyCreatedActivity.domain().id()).isEqualTo(domainId);
-//        assertThat(newlyCreatedActivity.title()).isEqualTo("Activity 1");
-//        assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
-//        assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
-//        assertThat(newlyCreatedActivity.activityTypeSubtype()).isEqualTo(ActivityTypeSubtypeDTO.Other);
+        assertThat(newParentWorkId).isNotEmpty();
+        // now create children
+        var newChildrenWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Child work")
+                                .description("Child work description")
+                                .workTypeId(newChildrenWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .parentWorkId(newParentWorkId)
+                                .build()
+                )
+        );
+        assertThat(newChildrenWorkId).isNotEmpty();
+        // get full children
+        var fullChildrenWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newChildrenWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(fullChildrenWork).isNotNull();
+        assertThat(fullChildrenWork.id()).isNotNull();
+        assertThat(fullChildrenWork.domain().id()).isEqualTo(domainId);
+        assertThat(fullChildrenWork.parentWorkId()).isEqualTo(newParentWorkId);
     }
 
     @Test

@@ -24,13 +24,6 @@ public abstract class BaseWorkflow {
     protected Map<WorkflowState, Set<WorkflowState>> validTransitions;
 
     /**
-     * Check if the work can have children
-     *
-     * @param work the work to create a child for
-     */
-    abstract public boolean canCreateChild(Work work);
-
-    /**
      * Check if the work is completed
      *
      * @param work the work to check

@@ -50,11 +50,6 @@ public class DummyChildWorkflow extends BaseWorkflow {
     }
 
     @Override
-    public boolean canCreateChild(Work work) {
-        return false;
-    }
-
-    @Override
     public boolean isCompleted(Work work) {
         if (work == null) return false;
         return work.getCurrentStatus().getStatus() == WorkflowState.Closed;
