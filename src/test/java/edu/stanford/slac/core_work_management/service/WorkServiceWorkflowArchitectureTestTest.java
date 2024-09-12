@@ -91,24 +91,6 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 () -> domainService.findById(domainId)
         );
 
-
-        // create parent work type
-        // //find parent test workflow
-        var parentWorkflow = fullDomain.workflows().stream().filter(workflowDTO -> workflowDTO.implementation().equals("DummyParentWorkflow")).findFirst();
-        assertThat(parentWorkflow).isPresent();
-        newParentWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
-                        domainId,
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Parent work type")
-                                .description("Parent work type description")
-                                .workflowId(parentWorkflow.get().id())
-                                .validatorName("validation/DummyParentValidation.groovy")
-                                .build()
-                )
-        );
-        assertThat(newParentWorkTypeId).isNotNull();
         // create child work type
         // //find child test workflow
         var childWorkflow = fullDomain.workflows().stream().filter(workflowDTO -> workflowDTO.implementation().equals("DummyChildWorkflow")).findFirst();
@@ -126,6 +108,25 @@ public class WorkServiceWorkflowArchitectureTestTest {
                 )
         );
         assertThat(newChildWorkType).isNotNull();
+
+        // create parent work type
+        // //find parent test workflow
+        var parentWorkflow = fullDomain.workflows().stream().filter(workflowDTO -> workflowDTO.implementation().equals("DummyParentWorkflow")).findFirst();
+        assertThat(parentWorkflow).isPresent();
+        newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.ensureWorkType(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Parent work type")
+                                .description("Parent work type description")
+                                .workflowId(parentWorkflow.get().id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .childWorkTypeIds(of(newChildWorkType))
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
 
         // crate shop groups
         shopGroupId =
@@ -229,7 +230,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
 
         // now try to add another children should give exception
         var parentWorkCannotHaveChildren = assertThrows(
-                WorkCannotHaveChildren.class,
+                ControllerLogicException.class,
                 () -> workService.createNew(domainId, newChildWorkDTO)
         );
         assertThat(parentWorkCannotHaveChildren).isNotNull();

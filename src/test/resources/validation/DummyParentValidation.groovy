@@ -86,7 +86,7 @@ class DummyParentValidation extends WorkTypeValidation{
             throw WorkCannotHaveChildren.builder()
                     .errorCode(-1)
                     .errorMessage("Work cannot have children")
-                    .errorDomain("DummyChildValidation")
+                    .errorDomain("DummyParentValidation")
                     .build();
         }
     }

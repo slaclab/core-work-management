@@ -57,7 +57,7 @@ public class ScriptService {
             }
         } catch (InvocationTargetException e) {
             if (e.getTargetException() instanceof ControllerLogicException) {
-                throw (ControllerLogicException)e.getTargetException();// Throw the actual exception thrown by the script
+                throw (ControllerLogicException)e.getCause();// Throw the actual exception thrown by the script
             } else {
                 throw ControllerLogicException.builder()
                         .errorMessage("Failed to execute script: " + e.getTargetException().getMessage())
