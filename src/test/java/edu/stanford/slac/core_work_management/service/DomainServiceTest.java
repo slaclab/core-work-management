@@ -68,6 +68,11 @@ public class DomainServiceTest {
                         NewDomainDTO.builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -81,6 +86,11 @@ public class DomainServiceTest {
                         NewDomainDTO.builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -113,6 +123,12 @@ public class DomainServiceTest {
                     () -> domainService.createNew(
                             NewDomainDTO.builder()
                                     .name("TEST domain %s".formatted(finalI))
+                                    .description("Test domain description")
+                                    .workflowImplementations(
+                                            Set.of(
+                                                    "DummyParentWorkflow"
+                                            )
+                                    )
                                     .build()
                     )
             );
@@ -134,6 +150,11 @@ public class DomainServiceTest {
                         NewDomainDTO.builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -145,6 +166,11 @@ public class DomainServiceTest {
                         NewDomainDTO.builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
@@ -161,7 +187,7 @@ public class DomainServiceTest {
                                 .build()
                 )
         );
-        assertThat(exception.getConstraintViolations()).hasSize(1);
+        assertThat(exception.getConstraintViolations()).hasSize(3);
     }
 
     @Test
@@ -276,22 +302,29 @@ public class DomainServiceTest {
 
     @Test
     public void createNewWorkType() {
-        String domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        DomainDTO domain = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("dom1")
                                 .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
-        assertThat(domainId).isNotNull();
+        assertThat(domain).isNotNull();
         String newWorkTypeId = assertDoesNotThrow(
                 () -> domainService.ensureWorkType(
-                        domainId,
+                        domain.id(),
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(domain.workflows().stream().findFirst().get().id())
+                                .validatorName("validator/DummyParentValidation.groovy")
                                 .build()
                 )
         );
@@ -299,32 +332,39 @@ public class DomainServiceTest {
 
         // retrieve created work type
         var foundWorkType = assertDoesNotThrow(
-                () -> domainService.findWorkTypeById(domainId, newWorkTypeId)
+                () -> domainService.findWorkTypeById(domain.id(), newWorkTypeId)
         );
         assertThat(foundWorkType).isNotNull();
         assertThat(foundWorkType.id()).isEqualTo(newWorkTypeId);
-        assertThat(foundWorkType.domainId()).isEqualTo(domainId);
+        assertThat(foundWorkType.domainId()).isEqualTo(domain.id());
 
     }
 
     @Test
     public void updateActivityType() {
-        String domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        DomainDTO domain = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("dom1")
                                 .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
-        assertThat(domainId).isNotNull();
+        assertThat(domain).isNotNull();
         String newWorkTypeId = assertDoesNotThrow(
                 () -> domainService.ensureWorkType(
-                        domainId,
+                        domain.id(),
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .validatorName("validator/DummyParentValidation.groovy")
+                                .workflowId(domain.workflows().stream().findFirst().get().id())
                                 .build()
                 )
         );
@@ -333,7 +373,7 @@ public class DomainServiceTest {
         //update activity type
         assertDoesNotThrow(
                 () -> domainService.updateWorkType(
-                        domainId,
+                        domain.id(),
                         newWorkTypeId,
                         UpdateWorkTypeDTO
                                 .builder()
@@ -362,7 +402,7 @@ public class DomainServiceTest {
         );
         // retrieve and check the full activity type
         var fullUpdatedWorkType = assertDoesNotThrow(
-                () -> domainService.findWorkTypeById(domainId, newWorkTypeId)
+                () -> domainService.findWorkTypeById(domain.id(), newWorkTypeId)
         );
         assertThat(fullUpdatedWorkType).isNotNull();
         assertThat(fullUpdatedWorkType.id()).isEqualTo(newWorkTypeId);
@@ -385,7 +425,7 @@ public class DomainServiceTest {
         WorkTypeDTO finalFullUpdatedActivityType = fullUpdatedWorkType;
         assertDoesNotThrow(
                 () -> domainService.updateWorkType(
-                        domainId,
+                        domain.id(),
                         newWorkTypeId,
                         UpdateWorkTypeDTO
                                 .builder()
@@ -418,7 +458,7 @@ public class DomainServiceTest {
                 )
         );
         fullUpdatedWorkType = assertDoesNotThrow(
-                () -> domainService.findWorkTypeById(domainId, newWorkTypeId)
+                () -> domainService.findWorkTypeById(domain.id(), newWorkTypeId)
         );
         assertThat(fullUpdatedWorkType).isNotNull();
         assertThat(fullUpdatedWorkType.id()).isEqualTo(newWorkTypeId);
@@ -445,7 +485,7 @@ public class DomainServiceTest {
         //update activity type removing an attribute
         assertDoesNotThrow(
                 () -> domainService.updateWorkType(
-                        domainId,
+                        domain.id(),
                         newWorkTypeId,
                         UpdateWorkTypeDTO
                                 .builder()
@@ -472,7 +512,7 @@ public class DomainServiceTest {
                 )
         );
         fullUpdatedWorkType = assertDoesNotThrow(
-                () -> domainService.findWorkTypeById(domainId, newWorkTypeId)
+                () -> domainService.findWorkTypeById(domain.id(), newWorkTypeId)
         );
         assertThat(fullUpdatedWorkType).isNotNull();
         assertThat(fullUpdatedWorkType.id()).isEqualTo(newWorkTypeId);
@@ -576,5 +616,10 @@ public class DomainServiceTest {
         assertThat(workType.customFields().get(0).label()).isEqualTo("group one filed");
         assertThat(workType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.LOV);
         assertThat(workType.customFields().get(0).lovValues()).isNotNull();
+        assertThat(workType.customFields().get(0).lovValues().size()).isEqualTo(2);
+        assertThat(workType.customFields().get(0).lovValues().get(0).value()).isEqualTo("LovGroup1::Value1");
+        assertThat(workType.customFields().get(0).lovValues().get(0).description()).isEqualTo("LovGroup1::Value1 description");
+        assertThat(workType.customFields().get(0).lovValues().get(1).value()).isEqualTo("LovGroup1::Value2");
+        assertThat(workType.customFields().get(0).lovValues().get(1).description()).isEqualTo("LovGroup1::Value2 description");
     }
 }

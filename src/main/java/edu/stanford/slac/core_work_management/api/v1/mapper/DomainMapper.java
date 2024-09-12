@@ -151,16 +151,7 @@ public abstract class DomainMapper {
      * @param customField the entity to convert
      * @return the converted DTO
      */
-    public WATypeCustomFieldDTO map(ReadWATypeCustomFieldDTO customField) {
-        return WATypeCustomFieldDTO.builder()
-                .id(customField.id())
-                .name(customField.name())
-                .label(customField.label())
-                .group(customField.group())
-                .description(customField.description())
-                .valueType(customField.valueType())
-                .build();
-    }
+    abstract public WATypeCustomFieldDTO map(ReadWATypeCustomFieldDTO customField);
 
     /**
      * Convert a WorkflowState to a WorkflowStateDTO
@@ -176,13 +167,10 @@ public abstract class DomainMapper {
                 .group(customField.getGroup())
                 .description(customField.getDescription())
                 .valueType(toDTO(customField.getValueType()))
-//                .lovGroup(customField.getLovGroup())
                 .lovValues(customField.getValueType()==ValueType.LOV?lovService.findAllByFieldReference(customField.getLovFieldReference()):emptyList())
                 .isMandatory(customField.getIsMandatory())
                 .build();
     }
-
-
 
     /**
      * Convert a WorkType model to a WorkTypeSummaryDTO
