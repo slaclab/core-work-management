@@ -26,8 +26,8 @@ public record WATypeCustomFieldDTO(
         @NotNull
         @Schema(description = "The type of the custom field.")
         ValueTypeDTO valueType,
-        @Schema(description = "Specify is the value of the custom field is a list of values.")
-        Boolean isLov,
+        @Schema(description = "The lov group represent the list of the possible values for the custom field the is for type LOV")
+        String lovGroup,
         @Schema(description = "Specify is the custom field is mandatory.")
         Boolean isMandatory) {
         public WATypeCustomFieldDTO {

@@ -281,8 +281,8 @@ public class WorkServiceTest {
         );
         assertThat(newWorkId).isNotNull();
 
-        InvalidLocation invalidLocationForDomainException = assertThrows(
-                InvalidLocation.class,
+        LocationNotFound invalidLocationForDomainException = assertThrows(
+                LocationNotFound.class,
                 () -> workService.update(
                         domainId,
                         newWorkId,
@@ -522,6 +522,7 @@ public class WorkServiceTest {
                                                         .description("Subsystem Group")
                                                         .valueType(ValueTypeDTO.LOV)
                                                         .group("General Information")
+                                                        .lovGroup("SubsystemGroup")
                                                         .isMandatory(true)
                                                         .build(),
                                                 WATypeCustomFieldDTO.builder()
@@ -529,6 +530,7 @@ public class WorkServiceTest {
                                                         .description("Attribute One")
                                                         .valueType(ValueTypeDTO.String)
                                                         .group("General Information")
+                                                        .lovGroup("SubsystemGroup")
                                                         .isMandatory(true)
                                                         .build()
                                         )

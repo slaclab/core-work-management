@@ -45,6 +45,10 @@ public class WATypeCustomField {
      */
     private ValueType valueType;
     /**
+     * The list of the possible values for the custom field. This field provides a list of the possible values for the custom field.
+     */
+    private String lovGroup;
+    /**
      * Specify is the custom field is mandatory.
      */
     @Builder.Default

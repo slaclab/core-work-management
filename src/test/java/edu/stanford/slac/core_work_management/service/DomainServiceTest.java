@@ -390,14 +390,12 @@ public class DomainServiceTest {
                                                         .label("custom field1 updated")
                                                         .description("custom field1 description updated")
                                                         .valueType(ValueTypeDTO.String)
-                                                        .isLov(false)
                                                         .isMandatory(false)
                                                         .build(),
                                                 finalFullUpdatedActivityType.customFields().get(1).toBuilder()
                                                         .label("custom field2 updated")
                                                         .description("custom field2 description updated")
                                                         .valueType(ValueTypeDTO.Number)
-                                                        .isLov(true)
                                                         .isMandatory(true)
                                                         .build(),
                                                 WATypeCustomFieldDTO
@@ -405,7 +403,6 @@ public class DomainServiceTest {
                                                         .label("custom field3")
                                                         .description("custom field3 description")
                                                         .valueType(ValueTypeDTO.Boolean)
-                                                        .isLov(false)
                                                         .isMandatory(false)
                                                         .build()
                                         )
@@ -453,7 +450,6 @@ public class DomainServiceTest {
                                                         .label("custom field1 updated")
                                                         .description("custom field1 description updated")
                                                         .valueType(ValueTypeDTO.String)
-                                                        .isLov(false)
                                                         .isMandatory(false)
                                                         .build(),
                                                 WATypeCustomFieldDTO
@@ -461,7 +457,6 @@ public class DomainServiceTest {
                                                         .label("custom field3")
                                                         .description("custom field3 description")
                                                         .valueType(ValueTypeDTO.Boolean)
-                                                        .isLov(false)
                                                         .isMandatory(false)
                                                         .build()
                                         )

@@ -93,7 +93,6 @@ public abstract class DomainMapper {
      * @param customField the entity to convert
      * @return the converted DTO
      */
-    @Mapping(target = "isLov", expression = "java(checkIsLOV(customField))")
     abstract public WATypeCustomFieldDTO toDTO(WATypeCustomField customField);
 
     /**

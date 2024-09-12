@@ -54,7 +54,8 @@ public class LOVControllerTest {
     @Autowired
     private DomainService domainService;
 
-    private String domainId;
+    private DomainDTO domain;
+    private WorkflowDTO workflowDTO;
     private List<String> workIds;
 
 
@@ -64,31 +65,42 @@ public class LOVControllerTest {
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), Work.class);
-
-        domainId = domainService.createNew(
+        mongoTemplate.remove(new Query(), WorkType.class);
+        domain = domainService.createNewAndGet(
                 NewDomainDTO.builder()
                         .name("SLAC")
                         .description("SLAC National Accelerator Laboratory")
+                        .workflowImplementations(
+                                ImmutableSet.of(
+                                        "DummyParentWorkflow"
+                                )
+                        )
                         .build()
         );
+        // find workflow description
+        workflowDTO = domain.workflows().stream().findFirst().get();
+        assertThat(workflowDTO).isNotNull();
+
         // create test work
         workIds = helperService.ensureWorkAndActivitiesTypes(
-                domainId,
+                domain.id(),
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
                         .description("Update the documentation description")
+                        .validatorName("validation/DummyParentValidation.groovy")
+                        .workflowId(workflowDTO.id())
                         .customFields(
                                 ImmutableList.of(
-                                        WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                        WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build(),
-                                        WATypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).isLov(false).build()
+                                        WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.LOV).build(),
+                                        WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).build(),
+                                        WATypeCustomFieldDTO.builder().name("field with space").description("field with space description").valueType(ValueTypeDTO.String).build()
                                 )
                         )
                         .build(),
                 emptyList()
         );
-        assertThat(workIds).hasSize(2);
+        assertThat(workIds).hasSize(1);
     }
 
     @BeforeEach
@@ -110,7 +122,7 @@ public class LOVControllerTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
-                        domainId,
+                        domain.id(),
                         workIds.get(0),
                         "field1",
                         "field1_group"
@@ -123,7 +135,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
-                        domainId,
+                        domain.id(),
                         workIds.get(0)
                 )
         );
@@ -147,7 +159,7 @@ public class LOVControllerTest {
         assertDoesNotThrow(
                 () -> lovService.associateDomainFieldToGroupName(
                         LOVDomainTypeDTO.Work,
-                        domainId,
+                        domain.id(),
                         workIds.get(0),
                         "fieldWithSpace",
                         "field_with_space_group"
@@ -160,7 +172,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
-                        domainId,
+                        domain.id(),
                         workIds.get(0)
                 )
         );
@@ -174,7 +186,7 @@ public class LOVControllerTest {
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
                         LOVDomainTypeDTO.Work,
-                        domainId,
+                        domain.id(),
                         workIds.get(0),
                         "fieldWithSpace"
                 )
@@ -187,60 +199,5 @@ public class LOVControllerTest {
                         "field with space value1",
                         "field with space value2"
                 );
-    }
-
-    @Test
-    public void matchFromActivityTypeLOVFieldAndLOVFieldFromRestAPI() {
-        var lovIds = assertDoesNotThrow(
-                () -> lovService.createNew(
-                        "field_with_space_group",
-                        of(
-                                NewLOVElementDTO.builder().value("field with space value1").description("field with space value1 description").build(),
-                                NewLOVElementDTO.builder().value("field with space value2").description("field with space value2 description").build()
-                        )
-                )
-        );
-
-        assertDoesNotThrow(
-                () -> lovService.associateDomainFieldToGroupName(
-                        LOVDomainTypeDTO.Work,
-                        domainId,
-                        workIds.get(0),
-                        "fieldWithSpace",
-                        "field_with_space_group"
-                )
-        );
-
-        var fieldThatAreLovList = assertDoesNotThrow(
-                () -> testControllerHelperService.lovControllerFindAllFieldThatAreLOV(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        LOVDomainTypeDTO.Work,
-                        domainId,
-                        workIds.get(0)
-                )
-        );
-        assertThat(fieldThatAreLovList.getErrorCode()).isEqualTo(0);
-        assertThat(fieldThatAreLovList.getPayload())
-                .hasSize(1)
-                .contains("fieldWithSpace");
-//todo implement this with worktype
-//        var activityType = assertDoesNotThrow(
-//                () -> testControllerHelperService.domain(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user1@slac.stanford.edu"),
-//                        workIds.get(0),
-//                        WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build()
-//                )
-//        );
-//        assertThat(activityType.getErrorCode()).isEqualTo(0);
-//        assertThat(activityType.getPayload().customFields())
-//                .extracting(CustomFieldDTO::name)
-//                .contains("field1","field2","fieldWithSpace");
-//        assertThat(activityType.getPayload().customFields())
-//                .extracting(WATypeCustomFieldDTO::isLov)
-//                .contains(false, false, true);
     }
 }

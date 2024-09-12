@@ -43,6 +43,7 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
                 .setOnInsert("workflowId", workType.getWorkflowId())
                 .setOnInsert("validatorName", workType.getValidatorName())
                 .setOnInsert("childWorkTypeIds", workType.getChildWorkTypeIds())
+                .setOnInsert("customFields", workType.getCustomFields())
                 .setOnInsert("createdBy", auditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("lastModifiedBy", auditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())

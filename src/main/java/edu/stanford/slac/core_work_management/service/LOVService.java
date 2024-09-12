@@ -294,9 +294,9 @@ public class LOVService {
         workTypeRepository
                 .findByDomainIdAndId(domainId, workTypeId)
                 .ifPresent(
-                        activityType -> {
-                            if (activityType.getCustomFields() != null) {
-                                activityType.getCustomFields().forEach(
+                        wt -> {
+                            if (wt.getCustomFields() != null) {
+                                wt.getCustomFields().forEach(
                                         customField -> {
                                             if (customField.getLovFieldReference() != null) {
                                                 result.put(customField.getName(), customField.getLovFieldReference());

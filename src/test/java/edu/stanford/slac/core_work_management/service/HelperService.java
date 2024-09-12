@@ -23,7 +23,7 @@ public class HelperService {
     public List<String> ensureWorkAndActivitiesTypes(String domainId, NewWorkTypeDTO newWorkTypeDTO, List<NewWorkTypeDTO> subWork) {
         List<String> listIds = new ArrayList<>();
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         newWorkTypeDTO
                 )

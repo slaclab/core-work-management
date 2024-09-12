@@ -9,10 +9,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
-import edu.stanford.slac.core_work_management.model.CustomField;
-import edu.stanford.slac.core_work_management.model.WATypeCustomField;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkQueryParameter;
+import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.DomainService;
@@ -433,6 +430,7 @@ public abstract class WorkMapper {
                                     .id(lValue.getValue())
                                     .build()
                     );
+            List<LOVElementDTO> allLov = lovService.findAllByGroupName(lovElementFound.getGroupName());
             newAttributeValue = ValueDTO
                     .builder()
                     .type(ValueTypeDTO.LOV)
