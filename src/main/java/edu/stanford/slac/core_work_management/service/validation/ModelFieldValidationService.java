@@ -134,9 +134,10 @@ public class ModelFieldValidationService {
         );
 
         // check that all the id are valid
-        customFieldValues.forEach(
+        customFieldValues
+                .forEach(
                 cv -> {
-                    var foundField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.getId()) == 0).findFirst();
+                    var waTypeCustomField = customFields.stream().filter(cf -> cf.getId().compareTo(cv.getId()) == 0).findFirst();
                     // check if id is valid
                     assertion(
                             ControllerLogicException.builder()
@@ -144,18 +145,36 @@ public class ModelFieldValidationService {
                                     .errorMessage("The field id %s has not been found".formatted(cv.getId()))
                                     .errorDomain("WorkService::validateCustomField")
                                     .build(),
-                            foundField::isPresent
+                            waTypeCustomField::isPresent
                     );
 
                     // check the type
                     assertion(
                             ControllerLogicException.builder()
                                     .errorCode(-3)
-                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.getId(), getType(cv.getValue()), foundField.get().getValueType()))
+                                    .errorMessage("The field id %s has wrong type %s(%s)".formatted(cv.getId(), getType(cv.getValue()), waTypeCustomField.get().getValueType()))
                                     .errorDomain("WorkService::validateCustomField")
                                     .build(),
-                            () -> getType(cv.getValue()) == foundField.get().getValueType()
+                            () -> getType(cv.getValue()) == waTypeCustomField.get().getValueType()
                     );
+
+                    // check the value (could be no more needed)
+                    if(waTypeCustomField.get().getValueType() == ValueType.LOV) {
+                        // if the custom attribute is a LOV
+                        // check if the value is consistent with the list of possible values
+                        String lovValueId = ((LOVValue)cv.getValue()).getValue();
+                        assertion(
+                                LOVValueNotFound.byId()
+                                        .errorCode(-2)
+                                        .id(lovValueId)
+                                        .build(),
+                                ()->lovElementRepository.existsByIdAndFieldReferenceContains
+                                        (
+                                                lovValueId,
+                                                waTypeCustomField.get().getLovFieldReference()
+                                        )
+                        );
+                    }
                 }
 
         );
@@ -184,9 +203,9 @@ public class ModelFieldValidationService {
                 validateField(source, field, annotation);
             }
         }
-
-        //validate the dynamic fields
-        verifyDynamicField(customFieldValues, customFields);
+//
+//        //validate the dynamic fields
+//        verifyDynamicField(customFieldValues, customFields);
     }
 
     /**
@@ -207,6 +226,10 @@ public class ModelFieldValidationService {
             return ValueType.Double;
         } else if(value.getClass().isAssignableFrom(StringValue.class)) {
             return ValueType.String;
+        } else if(value.getClass().isAssignableFrom(LOVValue.class)) {
+            return ValueType.LOV;
+        } else if (value.getClass().isAssignableFrom(AttachmentsValue.class)) {
+            return ValueType.Attachments;
         } else {
             return null;
         }
@@ -217,47 +240,47 @@ public class ModelFieldValidationService {
      * @param customFieldValues the custom field values
      * @param customFields the custom fields
      */
-    private void verifyDynamicField(List<CustomField> customFieldValues, List<WATypeCustomField> customFields) {
-        if(customFieldValues == null || customFields == null) return;
-        //find relative field
-        customFieldValues.forEach(
-                customField -> {
-                    WATypeCustomField waTypeCustomField = customFields.stream()
-                            .filter(customField1 -> customField1.getId().equals(customField.getId()))
-                            .findFirst()
-                            .orElseThrow(
-                                    () -> CustomAttributeNotFound.notFoundById()
-                                            .id(customField.getId())
-                                            .build()
-                            );
-
-                    boolean isLOV = lovElementRepository.existsByFieldReferenceContains(waTypeCustomField.getLovFieldReference());
-                    if(!isLOV) return;
-
-                    assertion(
-                            ControllerLogicException.builder()
-                                    .errorCode(-1)
-                                    .errorMessage("The custom field %s need to use the string value".formatted(customField.getId()))
-                                    .errorDomain("LOVValidation::verifyDynamicField")
-                                    .build(),
-                            ()->getType(customField.getValue())==ValueType.String
-                    );
-
-                    // check if the value is consistent with the list of possible values
-                    String lovValueId = ((StringValue)customField.getValue()).getValue();
-                    assertion(
-                            LOVValueNotFound.byId()
-                                    .errorCode(-2)
-                                    .id(lovValueId)
-                                    .build(),
-                            ()->lovElementRepository.existsByIdAndFieldReferenceContains
-                                    (
-                                            lovValueId,
-                                            waTypeCustomField.getLovFieldReference()
-                                    )
-                    );
-                });
-    }
+//    private void verifyDynamicField(List<CustomField> customFieldValues, List<WATypeCustomField> customFields) {
+//        if(customFieldValues == null || customFields == null) return;
+//        //find relative field
+//        customFieldValues.forEach(
+//                customField -> {
+//                    WATypeCustomField waTypeCustomField = customFields.stream()
+//                            .filter(customField1 -> customField1.getId().equals(customField.getId()))
+//                            .findFirst()
+//                            .orElseThrow(
+//                                    () -> CustomAttributeNotFound.notFoundById()
+//                                            .id(customField.getId())
+//                                            .build()
+//                            );
+//
+//                    boolean isLOV = lovElementRepository.existsByFieldReferenceContains(waTypeCustomField.getLovFieldReference());
+//                    if(!isLOV) return;
+//
+//                    assertion(
+//                            ControllerLogicException.builder()
+//                                    .errorCode(-1)
+//                                    .errorMessage("The custom field %s need to use the LOV value".formatted(customField.getId()))
+//                                    .errorDomain("LOVValidation::verifyDynamicField")
+//                                    .build(),
+//                            ()->getType(customField.getValue())==ValueType.LOV
+//                    );
+//
+//                    // check if the value is consistent with the list of possible values
+//                    String lovValueId = ((LOVValue)customField.getValue()).getValue();
+//                    assertion(
+//                            LOVValueNotFound.byId()
+//                                    .errorCode(-2)
+//                                    .id(lovValueId)
+//                                    .build(),
+//                            ()->lovElementRepository.existsByIdAndFieldReferenceContains
+//                                    (
+//                                            lovValueId,
+//                                            waTypeCustomField.getLovFieldReference()
+//                                    )
+//                    );
+//                });
+//    }
 
     /**
      * Validate the field

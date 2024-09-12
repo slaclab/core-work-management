@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
+import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
@@ -163,9 +164,7 @@ public abstract class WorkMapper {
                                         )
                         )
                         .value(
-                                toValueDTO(
-                                        tryToLOV(customAttribute.getValue())
-                                )
+                                toValueDTO(customAttribute.getValue())
                         )
                         .build()
         ).toList();
@@ -198,10 +197,10 @@ public abstract class WorkMapper {
      * @return the value from lov if found
      */
     private AbstractValue tryToLOV(AbstractValue value) {
-        if (value.getClass().isAssignableFrom(StringValue.class)) {
-            var lovElementFound = lovService.findLovValueByIdNoException(((StringValue) value).getValue());
+        if (value.getClass().isAssignableFrom(LOVValue.class)) {
+            var lovElementFound = lovService.findLovValueByIdNoException(((LOVValue) value).getValue());
             if (lovElementFound.isPresent()) {
-                return StringValue.builder().value(lovElementFound.get().getValue()).build();
+                return LOVValue.builder().value(lovElementFound.get().getValue()).build();
             }
         }
         return value;
@@ -350,6 +349,20 @@ public abstract class WorkMapper {
                                 .build();
                     }
                 }
+                case LOV -> {
+                    return LOVValue
+                            .builder()
+                            .value(value.value())
+                            .build();
+                }
+                case Attachments -> {
+                    List<String> attachmentIds = Arrays.asList(value.value().split(","));
+                    return AttachmentsValue
+                            .builder()
+                            .value(attachmentIds)
+                            .build();
+                }
+
                 default -> throw ControllerLogicException.builder()
                         .errorCode(-4)
                         .errorMessage("Invalid attribute type")
@@ -409,6 +422,28 @@ public abstract class WorkMapper {
                     .builder()
                     .type(ValueTypeDTO.DateTime)
                     .value(((DateTimeValue) abstractValue).getValue().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                    .build();
+        } else if (valueType.isAssignableFrom(LOVValue.class)) {
+            LOVValue lValue =  (LOVValue) abstractValue;
+            // get the real lov value
+            var lovElementFound = lovService.findLovValueByIdNoException(lValue.getValue())
+                    .orElseThrow(
+                            ()->LOVValueNotFound.byId()
+                                    .errorCode(-1)
+                                    .id(lValue.getValue())
+                                    .build()
+                    );
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.LOV)
+                    .value(lovElementFound.getValue())
+                    .build();
+        } else if (valueType.isAssignableFrom(AttachmentsValue.class)) {
+            //TODO: test with attachment ids
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Attachments)
+                    .value(String.join(",", ((AttachmentsValue) abstractValue).getValue()))
                     .build();
         } else {
             throw ControllerLogicException.builder()

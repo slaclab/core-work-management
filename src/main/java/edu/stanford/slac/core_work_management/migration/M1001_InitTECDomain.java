@@ -2,7 +2,6 @@ package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import io.mongock.api.annotations.ChangeUnit;
@@ -12,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Profile;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -393,109 +391,69 @@ public class M1001_InitTECDomain {
         );
 
         // associate lov to custom fields
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "subsystem",
-                            "SubsystemGroup"
-                    );
-                    return null;
-                },
-                -2
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "subsystem",
+                "SubsystemGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "group",
-                            "ProjectGroup"
-                    );
-                    return null;
-                },
-                -3
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "group",
+                "ProjectGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "urgency",
-                            "UrgencyGroup"
-                    );
-                    return null;
-                },
-                -4
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "urgency",
+                "UrgencyGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "micro",
-                            "MicroGroup"
-                    );
-                    return null;
-                },
-                -5
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "micro",
+                "MicroGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "primary",
-                            "PrimaryGroup"
-                    );
-                    return null;
-                },
-                -6
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "primary",
+                "PrimaryGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "unit",
-                            "UnitGroup"
-                    );
-                    return null;
-                },
-                -7
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "unit",
+                "UnitGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "facility",
-                            "FacilityGroup"
-                    );
-                    return null;
-                },
-                -8
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "facility",
+                "FacilityGroup"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Work,
-                            domain.id(),
-                            newHardwareReportId,
-                            "issuePriority",
-                            "IssuePriorityGroup"
-                    );
-                    return null;
-                },
-                -9
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newHardwareReportId,
+                "issuePriority",
+                "IssuePriorityGroup"
         );
+
     }
 }

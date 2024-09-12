@@ -10,7 +10,7 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Describe the custom field associated with the activity type. The custom fields are used to store additional information about the activity.")
+@Schema(description = "Describe the custom field associated with the work type. The custom fields are used to store additional information about the work.")
 public record WATypeCustomFieldDTO(
         @Schema(description = "The unique identifier for the custom field.")
         String id,
