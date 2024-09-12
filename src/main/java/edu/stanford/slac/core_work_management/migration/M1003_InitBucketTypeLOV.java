@@ -83,31 +83,23 @@ public class M1003_InitBucketTypeLOV {
                                 .build()
                 )
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Bucket,
-                            null,
-                            "bucket",
-                            "type",
-                            "BucketType"
-                    );
-                    return null;
-                },
-                -2
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Bucket,
+                null,
+                "bucket",
+                "type",
+                "BucketType"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Bucket,
-                            null,
-                            "bucket",
-                            "status",
-                            "BucketStatus"
-                    );
-                    return null;
-                },
-                -3
+
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Bucket,
+                null,
+                "bucket",
+                "status",
+                "BucketStatus"
         );
+
     }
 }

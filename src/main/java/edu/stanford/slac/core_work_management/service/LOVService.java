@@ -75,7 +75,7 @@ public class LOVService {
      */
     public void associateDomainFieldToGroupName(
             @NotNull LOVDomainTypeDTO lovDomainDTO,
-            @NotNull String domainId,
+            String domainId,
             String subtypeId,
             @NotEmpty String fieldName,
             @NotEmpty String groupName

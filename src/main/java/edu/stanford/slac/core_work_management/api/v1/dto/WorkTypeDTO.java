@@ -24,7 +24,7 @@ public record WorkTypeDTO(
         @Schema(description = "The description of when can be used ths work type")
         String description,
         @Schema(description = "The list of the custom fields associated with the activity type. The custom fields are used to store additional information about the activity.")
-        List<WATypeCustomFieldDTO> customFields,
+        List<ReadWATypeCustomFieldDTO> customFields,
         @Schema(description = "The list of the work types that can be child of this one")
         Set<String> childWorkTypeIds,
         @Schema(description = "The id of the workflow that rule the life cycle of the work that refer to this type")

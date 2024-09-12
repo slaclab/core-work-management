@@ -22,13 +22,11 @@ public class BucketSlot {
      * The description of the bucket slot
      */
     private String description;
-    /**
-     * The id of the lov value used to define the bucket type
-     */
-    @LOVField(fieldReference = "type", isMandatory = true)
+
     /**
      * The id of the lov value used to define the bucket status
      */
+    @LOVField(fieldReference = "type", isMandatory = true)
     private String type;
     /**
      * The id of the lov value used to define the bucket status

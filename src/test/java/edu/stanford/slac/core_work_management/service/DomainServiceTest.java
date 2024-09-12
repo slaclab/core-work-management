@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
@@ -23,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -35,23 +37,28 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles({"test",  "async-ops"})
+@ActiveProfiles({"test", "async-ops"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class DomainServiceTest {
     @Autowired
-    DomainService domainService;
+    private DomainMapper domainMapper;
     @Autowired
-    MongoTemplate mongoTemplate;
+    private DomainService domainService;
     @Autowired
-    WorkRepository workRepository;
+    private LOVService lovService;
     @Autowired
-    WorkTypeRepository workTypeRepository;
+    private MongoTemplate mongoTemplate;
+    @Autowired
+    private WorkRepository workRepository;
+    @Autowired
+    private WorkTypeRepository workTypeRepository;
 
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), WorkType.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
     }
 
     @Test
@@ -80,7 +87,7 @@ public class DomainServiceTest {
         assertThat(domainId).isNotNull().isNotEmpty();
 
         DomainDTO domainDTO = assertDoesNotThrow(
-                ()-> domainService.findById(domainId)
+                () -> domainService.findById(domainId)
         );
         assertThat(domainDTO).isNotNull();
         assertThat(domainDTO.id()).isEqualTo(domainId);
@@ -92,7 +99,7 @@ public class DomainServiceTest {
     public void testFetchDomainByWrongId() {
         DomainNotFound domainNotFoundException = assertThrows(
                 DomainNotFound.class,
-                ()-> domainService.findById("wrong id")
+                () -> domainService.findById("wrong id")
         );
         assertThat(domainNotFoundException).isNotNull();
         assertThat(domainNotFoundException.getErrorCode()).isEqualTo(-1);
@@ -113,7 +120,7 @@ public class DomainServiceTest {
         }
 
         List<DomainDTO> domainDTOList = assertDoesNotThrow(
-                ()-> domainService.finAll()
+                () -> domainService.finAll()
         );
         for (int i = 0; i < 10; i++) {
             assertThat(domainDTOList.get(i).name()).isEqualTo("test-domain-%s".formatted(i));
@@ -134,7 +141,7 @@ public class DomainServiceTest {
 
         ControllerLogicException exception = assertThrows(
                 ControllerLogicException.class,
-                ()-> domainService.createNew(
+                () -> domainService.createNew(
                         NewDomainDTO.builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
@@ -149,7 +156,7 @@ public class DomainServiceTest {
     public void failToCreateDomainWithoutMandatoryField() {
         ConstraintViolationException exception = assertThrows(
                 ConstraintViolationException.class,
-                ()-> domainService.createNew(
+                () -> domainService.createNew(
                         NewDomainDTO.builder()
                                 .build()
                 )
@@ -386,18 +393,18 @@ public class DomainServiceTest {
                                 .description("work 1 description re-updated")
                                 .customFields(
                                         List.of(
-                                                finalFullUpdatedActivityType.customFields().get(0).toBuilder()
+                                                domainMapper.map(finalFullUpdatedActivityType.customFields().get(0).toBuilder()
                                                         .label("custom field1 updated")
                                                         .description("custom field1 description updated")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isMandatory(false)
-                                                        .build(),
-                                                finalFullUpdatedActivityType.customFields().get(1).toBuilder()
+                                                        .build()),
+                                                domainMapper.map(finalFullUpdatedActivityType.customFields().get(1).toBuilder()
                                                         .label("custom field2 updated")
                                                         .description("custom field2 description updated")
                                                         .valueType(ValueTypeDTO.Number)
                                                         .isMandatory(true)
-                                                        .build(),
+                                                        .build()),
                                                 WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field3")
@@ -446,12 +453,12 @@ public class DomainServiceTest {
                                 .description("work 1 description re-updated")
                                 .customFields(
                                         List.of(
-                                                finalFullUpdatedActivityType.customFields().get(0).toBuilder()
+                                                domainMapper.map(finalFullUpdatedActivityType.customFields().get(0).toBuilder()
                                                         .label("custom field1 updated")
                                                         .description("custom field1 description updated")
                                                         .valueType(ValueTypeDTO.String)
                                                         .isMandatory(false)
-                                                        .build(),
+                                                        .build()),
                                                 WATypeCustomFieldDTO
                                                         .builder()
                                                         .label("custom field3")
@@ -483,5 +490,91 @@ public class DomainServiceTest {
         assertThat(fullUpdatedWorkType.customFields().get(1).description()).isEqualTo("custom field3 description");
         assertThat(fullUpdatedWorkType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
         assertThat(fullUpdatedWorkType.customFields().get(1).isMandatory()).isFalse();
+    }
+
+    /**
+     * Test that the work type read out has a list of custom fields
+     */
+    @Test
+    public void testWorkTypeReadOutHasLOVElementList() {
+        List<String> lovElementIds = lovService.createNew(
+                "LovGroup1",
+                List.of(
+                        NewLOVElementDTO.builder()
+                                .value("LovGroup1::Value1")
+                                .description("LovGroup1::Value1 description")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("LovGroup1::Value2")
+                                .description("LovGroup1::Value2 description")
+                                .build()
+                )
+        );
+        // create domain
+        DomainDTO domain = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
+                        NewDomainDTO.builder()
+                                .name("dom1")
+                                .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(domain).isNotNull();
+        //update activity type removing an attribute
+        String newWorkId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domain.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("work 1")
+                                .description("work 1 description")
+                                .workflowId(domain.workflows().stream().findFirst().get().id())
+                                .validatorName("validator/DummyParentValidation.groovy")
+                                .customFields(
+                                        List.of(
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("group one filed")
+                                                        .description("custom field with lov description")
+                                                        .valueType(ValueTypeDTO.LOV)
+                                                        .isMandatory(false)
+                                                        .build(),
+                                                WATypeCustomFieldDTO
+                                                        .builder()
+                                                        .label("custom field3")
+                                                        .description("custom field3 description")
+                                                        .valueType(ValueTypeDTO.Boolean)
+                                                        .isMandatory(false)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        // associate the lov element to the custom field
+        // associate LOV with the custom field
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Work,
+                domain.id(),
+                newWorkId,
+                "groupOneFiled",
+                "LovGroup1"
+        );
+
+        // retrieve the work type
+        WorkTypeDTO workType = assertDoesNotThrow(
+                () -> domainService.findWorkTypeById(domain.id(), newWorkId)
+        );
+        assertThat(workType).isNotNull();
+        assertThat(workType.customFields()).isNotNull();
+        assertThat(workType.customFields().size()).isEqualTo(2);
+        assertThat(workType.customFields().get(0).label()).isEqualTo("group one filed");
+        assertThat(workType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.LOV);
+        assertThat(workType.customFields().get(0).lovValues()).isNotNull();
     }
 }

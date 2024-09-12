@@ -36,7 +36,7 @@ public class HelperService {
     /**
      * Get custom field by name
      */
-    public WATypeCustomFieldDTO getCustomFiledByName(WorkTypeDTO workTypeDTO, String customFieldName) {
+    public ReadWATypeCustomFieldDTO getCustomFiledByName(WorkTypeDTO workTypeDTO, String customFieldName) {
         return workTypeDTO.customFields().stream()
                 .filter(customField -> customField.name().compareToIgnoreCase(customFieldName) == 0)
                 .findFirst().orElseThrow();

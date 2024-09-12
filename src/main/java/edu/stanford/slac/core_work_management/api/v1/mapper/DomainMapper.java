@@ -1,23 +1,23 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
+import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.value.ValueType;
+import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import edu.stanford.slac.core_work_management.service.LOVService;
+import edu.stanford.slac.core_work_management.service.StringUtility;
+import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow;
+import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow;
-import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
-import edu.stanford.slac.core_work_management.service.LOVService;
-import edu.stanford.slac.core_work_management.service.StringUtility;
-import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
-import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import org.springframework.context.ApplicationContext;
-
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
+import static java.util.Collections.emptyList;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -67,6 +67,12 @@ public abstract class DomainMapper {
      */
     abstract public WorkTypeDTO toDTO(WorkType workType);
 
+    /**
+     * Convert the {@link WorkType} to a {@link WorkTypeDTO}
+     *
+     * @param workType the entity to convert
+     * @return the converted DTO
+     */
     @Mapping(target = "customFields", expression = "java(updateModelCustomField(dto.customFields(), workType.getCustomFields()))")
     abstract public WorkType updateModel(UpdateWorkTypeDTO dto, @MappingTarget WorkType workType);
 
@@ -86,6 +92,22 @@ public abstract class DomainMapper {
      * @return the converted entity
      */
     abstract public WorkType toModel(String domainId, NewWorkTypeDTO newWorkTypeDTO);
+
+    /**
+     * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
+     *
+     * @param valueType       the value type
+     * @return the converted entity
+     */
+    abstract public  ValueTypeDTO toDTO(ValueType valueType);
+
+    /**
+     * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
+     *
+     * @param valueType       the value type
+     * @return the converted entity
+     */
+    abstract public  ValueType toModel(ValueTypeDTO valueType);
 
     /**
      * Convert the {@link WATypeCustomField} to a {@link WATypeCustomFieldDTO}
@@ -124,24 +146,49 @@ public abstract class DomainMapper {
     abstract public UpdateWorkflowState toModel(UpdateWorkflowStateDTO state);
 
     /**
-     * Check if the custom field is a LOV
+     * Convert a WorkflowState to a WorkflowStateDTO
      *
-     * @param customField the custom field to check
-     * @return true if the custom field is a LOV
+     * @param customField the entity to convert
+     * @return the converted DTO
      */
-    public boolean checkIsLOV(WATypeCustomField customField) {
-        if (customField.getLovFieldReference() == null) return false;
-        return wrapCatch(
-                () -> lovService.checkIfFieldReferenceIsInUse(customField.getLovFieldReference()),
-                -1
-        );
+    public WATypeCustomFieldDTO map(ReadWATypeCustomFieldDTO customField) {
+        return WATypeCustomFieldDTO.builder()
+                .id(customField.id())
+                .name(customField.name())
+                .label(customField.label())
+                .group(customField.group())
+                .description(customField.description())
+                .valueType(customField.valueType())
+                .build();
     }
+
+    /**
+     * Convert a WorkflowState to a WorkflowStateDTO
+     *
+     * @param customField the entity to convert
+     * @return the converted DTO
+     */
+    public ReadWATypeCustomFieldDTO map(WATypeCustomField customField) {
+        return ReadWATypeCustomFieldDTO.builder()
+                .id(customField.getId())
+                .name(customField.getName())
+                .label(customField.getLabel())
+                .group(customField.getGroup())
+                .description(customField.getDescription())
+                .valueType(toDTO(customField.getValueType()))
+//                .lovGroup(customField.getLovGroup())
+                .lovValues(customField.getValueType()==ValueType.LOV?lovService.findAllByFieldReference(customField.getLovFieldReference()):emptyList())
+                .isMandatory(customField.getIsMandatory())
+                .build();
+    }
+
+
 
     /**
      * Convert a WorkType model to a WorkTypeSummaryDTO
      *
      * @param workflowImplementations the implementations of the workflows for a new domain
-     * @return the list of workflow dtos
+     * @return the Set of workflow DTOs
      */
     @Named("toWorkflowModel")
     public Set<Workflow> toWorkflowModel(Set<String> workflowImplementations) {
