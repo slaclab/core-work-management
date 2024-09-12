@@ -104,6 +104,20 @@ public class LocationService {
     }
 
     /**
+     * Check if a location exists by domain id and id
+     *
+     * @param domainId the domain id
+     * @param locationId the id
+     * @return true if the location exists, false otherwise
+     */
+    public boolean existsByDomainIdAndId(String domainId, String locationId) {
+        return  wrapCatch(
+                () -> locationRepository.existsByDomainIdAndId(domainId, locationId),
+                -1
+        );
+    }
+
+    /**
      * Find a location by id
      *
      * @param locationId the id of the location

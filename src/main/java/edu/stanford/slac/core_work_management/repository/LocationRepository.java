@@ -10,6 +10,14 @@ import java.util.Optional;
 public interface LocationRepository extends MongoRepository<Location, String>, LocationRepositoryCustom {
 
     /**
+     * Check if a location exists by domain id and id.
+     * @param domainId the domain id
+     * @param id the id
+     * @return true if the location exists, false otherwise
+     */
+    boolean existsByDomainIdAndId(String domainId, String id);
+
+    /**
      * Find a location by domain id and id.
      *
      * @param domainId the domain id

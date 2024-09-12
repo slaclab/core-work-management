@@ -104,10 +104,6 @@ public class WorkService {
      * @return the id of the created work
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-//    @Retryable(
-//            maxAttempts = 8,
-//            backoff = @Backoff(delay = 100, multiplier = 2)
-//    )
     public String createNew(String domainId, Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
         // point, if the work is a sub work, to the parent work
         Work parentWork;
@@ -126,7 +122,7 @@ public class WorkService {
         // about the custom fields
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
-                        .findById(newWorkDTO.workTypeId())
+                        .findByDomainIdAndId(domainId, newWorkDTO.workTypeId())
                         .orElseThrow(
                                 () -> WorkTypeNotFound
                                         .notFoundById()
@@ -147,17 +143,6 @@ public class WorkService {
         } else {
             parentWork = null;
         }
-
-        // check the work type against the domain
-        assertion(
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-3)
-                        .errorMessage("The work type is not part of the domain")
-                        .errorDomain("WorkService::createNew")
-                        .build(),
-                () -> workType.getDomainId().compareTo(domainId) == 0
-        );
 
         // contain the set of all user that will become admin for this new work
         Work workToSave = workMapper.toModel(
@@ -245,17 +230,6 @@ public class WorkService {
                 -2
         );
 
-        // check domain match
-        assertion(
-                ControllerLogicException
-                        .builder()
-                        .errorCode(-2)
-                        .errorMessage("The work is not part of the domain")
-                        .errorDomain("WorkService::update")
-                        .build(),
-                () -> foundWork.getDomainId().compareTo(domainId) == 0
-        );
-
         // fetch work type for custom field validation
         WorkType workType = wrapCatch(
                 () -> workTypeRepository
@@ -269,7 +243,6 @@ public class WorkService {
                         ),
                 -4
         );
-
 
         // check if the new work that is being created is valid for the workflow
         isValidForWorkflow(
@@ -353,15 +326,14 @@ public class WorkService {
      * @param errorCode  the error code
      */
     private void validateLocationForDomain(String domainId, String locationId, int errorCode) {
-        var location = wrapCatch(() -> locationService.findById(domainId, locationId), errorCode);
+        var locationFound = wrapCatch(() -> locationService.existsByDomainIdAndId(domainId, locationId), errorCode);
         assertion(
-                InvalidLocation
-                        .byLocationNameDomainId()
+                LocationNotFound
+                        .notFoundById()
                         .errorCode(errorCode)
-                        .locationName(location.name())
-                        .domainId(domainId)
+                        .locationId(locationId)
                         .build(),
-                () -> (location.domain().id().compareTo(domainId) == 0)
+                () -> locationFound
         );
     }
 
@@ -374,15 +346,14 @@ public class WorkService {
      * @param errorCode   the error code
      */
     private void validateShopGroupForDomain(String domainId, String shopGroupId, int errorCode) {
-        var shopGroup = wrapCatch(() -> shopGroupService.findByDomainIdAndId(domainId, shopGroupId), errorCode);
+        var shopGroupExists = wrapCatch(() -> shopGroupService.existsByDomainIdAndId(domainId, shopGroupId),errorCode);
         assertion(
-                InvalidShopGroup
-                        .byShopGroupNameDomainId()
+                ShopGroupNotFound
+                        .notFoundById()
                         .errorCode(errorCode)
-                        .shopGroupName(shopGroup.name())
-                        .domainId(domainId)
+                        .shopGroupId(shopGroupId)
                         .build(),
-                () -> (shopGroup.domain().id().compareTo(domainId) == 0)
+                () -> shopGroupExists
         );
     }
 

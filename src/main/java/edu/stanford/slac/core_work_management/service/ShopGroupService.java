@@ -130,9 +130,9 @@ public class ShopGroupService {
      * @param shopGroupId the id of the shop group
      * @return true if the shop group exists, false otherwise
      */
-    public Boolean exists(String shopGroupId) {
+    public Boolean existsByDomainIdAndId(String domainId, String shopGroupId) {
         return wrapCatch(
-                () -> shopGroupRepository.existsById(shopGroupId),
+                () -> shopGroupRepository.existsByDomainIdAndId(domainId, shopGroupId),
                 -1
         );
     }
