@@ -69,6 +69,7 @@ public abstract class DomainMapper {
      * @return the converted DTO
      */
     @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromWorkType(workType))")
+    @Mapping(target = "childWorkType", expression = "java(toSummaryDTO(workType.getChildWorkTypeIds()))")
     abstract public WorkTypeDTO toDTO(WorkType workType);
 
     /**
@@ -179,6 +180,25 @@ public abstract class DomainMapper {
     /**
      * Convert a WorkType model to a WorkTypeSummaryDTO
      *
+     * @param childWorkTypeIds the ids of the child work types
+     * @return the Set of work type DTOs
+     */
+    public Set<WorkTypeSummaryDTO> toSummaryDTO(Set<String> childWorkTypeIds) {
+        Set<WorkTypeSummaryDTO> result = new HashSet<>();
+        if (childWorkTypeIds == null) return result;
+        childWorkTypeIds.forEach(
+                workTypeId -> {
+                    WorkType workType = workTypeRepository.findById(workTypeId)
+                            .orElseThrow(() -> WorkTypeNotFound.notFoundById().errorCode(-1).workId(workTypeId).build());
+                    result.add(toSummaryDTO(workType));
+                }
+        );
+        return result;
+    }
+
+    /**
+     * Convert a WorkType model to a WorkTypeSummaryDTO
+     *
      * @param workflowImplementations the implementations of the workflows for a new domain
      * @return the Set of workflow DTOs
      */
@@ -235,6 +255,12 @@ public abstract class DomainMapper {
                 .build();
     }
 
+    /**
+     * Convert a set of Workflow to a set of WorkflowDTO
+     *
+     * @param workflows the set to convert
+     * @return the converted set
+     */
     @Named("toWorkflowDTO")
     public Set<WorkflowDTO> toWorkflowDTO(Set<Workflow> workflows) {
         Set<WorkflowDTO> result = new HashSet<>();

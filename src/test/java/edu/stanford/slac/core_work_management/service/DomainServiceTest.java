@@ -337,7 +337,64 @@ public class DomainServiceTest {
         assertThat(foundWorkType).isNotNull();
         assertThat(foundWorkType.id()).isEqualTo(newWorkTypeId);
         assertThat(foundWorkType.domainId()).isEqualTo(domain.id());
+    }
 
+    @Test
+    public void createNewWorkTypeWithChild() {
+        DomainDTO domain = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
+                        NewDomainDTO.builder()
+                                .name("dom1")
+                                .description("Test domain description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(domain).isNotNull();
+        String newChildWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domain.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Child work type")
+                                .description("Child work type description")
+                                .workflowId(domain.workflows().stream().findFirst().get().id())
+                                .validatorName("validator/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newChildWorkTypeId).isNotNull();
+
+        // now create the parent work type
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domain.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Parent work type")
+                                .description("Parent work type description")
+                                .workflowId(domain.workflows().stream().findFirst().get().id())
+                                .validatorName("validator/DummyParentValidation.groovy")
+                                .childWorkTypeIds(Set.of(newChildWorkTypeId))
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
+
+        // retrieve created parent work type and check for child dto
+        var foundParentWorkType = assertDoesNotThrow(
+                () -> domainService.findWorkTypeById(domain.id(), newParentWorkTypeId)
+        );
+        assertThat(foundParentWorkType).isNotNull();
+        assertThat(foundParentWorkType.id()).isEqualTo(newParentWorkTypeId);
+        assertThat(foundParentWorkType.domainId()).isEqualTo(domain.id());
+        assertThat(foundParentWorkType.childWorkType()).isNotNull().isNotEmpty();
+        assertThat(foundParentWorkType.childWorkType().size()).isEqualTo(1);
+        assertThat(foundParentWorkType.childWorkType().stream().findFirst().get().id()).isEqualTo(newChildWorkTypeId);
     }
 
     @Test
