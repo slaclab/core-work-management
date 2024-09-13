@@ -5,11 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
+
 @Data
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
-public class Workflow {
+public class Workflow implements Serializable {
     String id;
     String implementation;
 }

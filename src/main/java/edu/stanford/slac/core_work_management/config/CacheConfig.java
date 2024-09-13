@@ -1,12 +1,10 @@
 package edu.stanford.slac.core_work_management.config;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
+import edu.stanford.slac.core_work_management.model.Domain;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +17,12 @@ public class CacheConfig {
     public HazelcastInstance hazelcastInstance() {
         Config config = new Config();
         config.setInstanceName("hazelcast-instance");
-
+//        config.getSerializationConfig()
+//                .addSerializerConfig(
+//                        new SerializerConfig()
+//                                .setTypeClass(Domain.class)
+//                                .setImplementation(new JacksonS())
+//                );
         // Configure network and clustering
         NetworkConfig network = config.getNetworkConfig();
         network.setPort(5701).setPortAutoIncrement(true);

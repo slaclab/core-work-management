@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.Serializable;
+
 
 /**
  * Define the statistics of the work status count
@@ -13,7 +15,7 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class WorkStatusCountStatistics {
+public class WorkStatusCountStatistics implements Serializable {
     /**
      * The status of the work for the statistic
      */

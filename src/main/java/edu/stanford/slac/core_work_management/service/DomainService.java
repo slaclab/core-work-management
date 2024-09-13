@@ -309,13 +309,13 @@ public class DomainService {
 
         var workflow = domain.workflows()
                 .stream()
-                .filter(w -> w.id().compareTo(workType.workflowId()) == 0)
+                .filter(w -> w.id().compareTo(workType.workflow().id()) == 0)
                 .findFirst()
                 .orElseThrow(
                         () -> WorkflowNotFound
                                 .notFoundById()
                                 .errorCode(-1)
-                                .workflowId(workType.workflowId())
+                                .workflowId(workType.workflow().id())
                                 .build()
                 );
         return (BaseWorkflow) applicationContext.getBean(workflow.implementation());

@@ -9,7 +9,7 @@ spring:
   application:
     name: 'cwm'
   cache:
-    cache-names: workflow
+    cache-names: workflow,domains
     type: hazelcast
   ldap:
     urls: ${CWM_LDAP_URI:ldap://localhost:8389}

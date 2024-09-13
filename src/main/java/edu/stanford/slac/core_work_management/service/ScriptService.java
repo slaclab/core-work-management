@@ -25,6 +25,16 @@ public class ScriptService {
     private final GroovyClassLoader classLoader = new GroovyClassLoader();
     private final Map<String, Class<?>> scriptCache = new ConcurrentHashMap<>();
 
+    /**
+     * Execute a script content
+     * @param scriptContent the content of the script
+     * @param interfaceClass the interface class
+     * @param methodName method name
+     * @param args method arguments
+     * @return the result of the script
+     * @param <T> the type of the interface
+     * @param <R> the type of the return value
+     */
     @Async("taskExecutor")
     public <T, R> CompletableFuture<R> executeScriptContent(String scriptContent, Class<T> interfaceClass, String methodName, Object... args){
         try {
@@ -74,10 +84,80 @@ public class ScriptService {
         }
     }
 
+    /**
+     * Execute a script file
+     * @param scriptFileName the name of the script file
+     * @param interfaceClass the interface class
+     * @param methodName the method name
+     * @param args the method arguments
+     * @param <T> the type of the interface
+     * @param <R> the type of the return value
+     * @return the result of the script
+     */
     @Async("taskExecutor")
     public <T, R> CompletableFuture<R> executeScriptFile(String scriptFileName, Class<T> interfaceClass, String methodName, Object... args) {
         try {
             return executeScriptContent(ResourceUtility.loadFileFromResource(scriptFileName), interfaceClass, methodName, args);
+        } catch (IOException e) {
+            throw ControllerLogicException.builder()
+                    .errorMessage("Failed to load script file: " + e.getMessage())
+                    .errorCode(-1)
+                    .errorDomain("ScriptService::executeScriptFile")
+                    .build();
+        }
+    }
+
+    /**
+     * Get an interface implementation from a script content
+     * @param scriptContent the content of the script
+     * @param interfaceClass    the interface class
+     * @param methodName   the method name
+     * @param args the method arguments
+     * @return the interface implementation
+     * @param <T> the type of the interface
+     */
+    public <T> T getInterfaceImplementation(String scriptContent, Class<?> interfaceClass, String methodName, Object... args) {
+        T instance = null;
+        try {
+            // Generate a unique key for the script using a hash of the script content
+            String scriptKey = hashScript(scriptContent);
+
+            // Check if the script has already been compiled and cached
+            Class<?> groovyClass = scriptCache.computeIfAbsent(scriptKey, key -> compileScript(scriptContent));
+
+            // Ensure the loaded class implements the provided interface
+            if (!interfaceClass.isAssignableFrom(groovyClass)) {
+                throw new IllegalArgumentException("The script does not implement the required interface: " + interfaceClass.getName());
+            }
+            // Create an instance of the Groovy class
+            // noinspection unchecked
+            instance = (T) groovyClass.getDeclaredConstructor().newInstance();
+
+            // Autowire dependencies into the instance using Spring's AutowireCapableBeanFactory
+            AutowireCapableBeanFactory factory = applicationContext.getAutowireCapableBeanFactory();
+            factory.autowireBean(instance);  // Injects @Autowired dependencies into the script
+        } catch (Exception e) {
+            throw ControllerLogicException.builder()
+                    .errorMessage("Failed to create script instances: " + e.getMessage())
+                    .errorCode(-2)
+                    .errorDomain("ScriptService::executeScriptContent")
+                    .build();
+        }
+        return instance;
+    }
+
+    /**
+     * Get an interface implementation from a script file
+     * @param scriptFileName the name of the script file
+     * @param interfaceClass the interface class
+     * @param methodName the method name
+     * @param args the method arguments
+     * @return the interface implementation
+     * @param <T> the type of the interface
+     */
+    public <T> T getInterfaceImplementationFromFile(String scriptFileName, Class<?> interfaceClass, String methodName, Object... args) {
+        try {
+            return getInterfaceImplementation(ResourceUtility.loadFileFromResource(scriptFileName), interfaceClass, methodName, args);
         } catch (IOException e) {
             throw ControllerLogicException.builder()
                     .errorMessage("Failed to load script file: " + e.getMessage())

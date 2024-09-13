@@ -124,7 +124,7 @@ public class DomainServiceForWorkflowAndChildTest {
                 () -> domainService.findWorkTypeById(domainId, workTypeId)
         );
         assertThat(fullWorkType).isNotNull();
-        assertThat(fullWorkType.workflowId()).isNotNull().isNotEmpty().isEqualTo(fullDomain.workflows().stream().findFirst().get().id());
+        assertThat(fullWorkType.workflow().id()).isNotNull().isNotEmpty().isEqualTo(fullDomain.workflows().stream().findFirst().get().id());
     }
 
     @Test

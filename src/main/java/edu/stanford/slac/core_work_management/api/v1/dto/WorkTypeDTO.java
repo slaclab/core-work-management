@@ -27,8 +27,8 @@ public record WorkTypeDTO(
         List<ReadWATypeCustomFieldDTO> customFields,
         @Schema(description = "The list of the work types that can be child of this one")
         Set<String> childWorkTypeIds,
-        @Schema(description = "The id of the workflow that rule the life cycle of the work that refer to this type")
-        String workflowId,
+        @Schema(description = "The workflow that rule the life cycle of the work that refer to this type")
+        WorkflowDTO workflow,
         @Schema(description = "The date when the work type was created")
         LocalDateTime createdDate,
         @Schema(description = "The user that created the work type")
