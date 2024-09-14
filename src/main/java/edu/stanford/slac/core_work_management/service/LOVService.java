@@ -211,12 +211,11 @@ public class LOVService {
      * @param id the id of the love to retrieve
      * @return the list of LOV elements
      */
-    public Optional<LOVElement> findLovValueByIdNoException(String id) {
+    public Optional<LOVElementDTO> findLovValueByIdNoException(String id) {
         return wrapCatch(
-                () -> lovElementRepository.
-                        findById(id),
+                () -> lovElementRepository.findById(id),
                 -1
-        );
+        ).map(lovMapper::toDTO);
     }
 
     /**

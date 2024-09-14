@@ -28,11 +28,13 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Describe a value for a specific type")
-public record ValueDTO (
+public record ValueDTO<T> (
     @NotNull(message = "Type is mandatory field")
     @Schema(description = "The type of the attribute")
     ValueTypeDTO type,
     @NotEmpty(message = "The value is mandatory field")
     @Schema(description = "The string representation of the value")
-    String value
+    String value,
+    @Schema(description = "The original value of the attribute")
+    T originalValue
 ){}

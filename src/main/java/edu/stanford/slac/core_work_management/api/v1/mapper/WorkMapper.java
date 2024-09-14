@@ -197,7 +197,7 @@ public abstract class WorkMapper {
         if (value.getClass().isAssignableFrom(LOVValue.class)) {
             var lovElementFound = lovService.findLovValueByIdNoException(((LOVValue) value).getValue());
             if (lovElementFound.isPresent()) {
-                return LOVValue.builder().value(lovElementFound.get().getValue()).build();
+                return LOVValue.builder().value(lovElementFound.get().value()).build();
             }
         }
         return value;
@@ -430,11 +430,11 @@ public abstract class WorkMapper {
                                     .id(lValue.getValue())
                                     .build()
                     );
-            List<LOVElementDTO> allLov = lovService.findAllByGroupName(lovElementFound.getGroupName());
             newAttributeValue = ValueDTO
                     .builder()
                     .type(ValueTypeDTO.LOV)
-                    .value(lovElementFound.getValue())
+                    .value(lovElementFound.value())
+                    .originalValue(lovElementFound)
                     .build();
         } else if (valueType.isAssignableFrom(AttachmentsValue.class)) {
             //TODO: test with attachment ids
@@ -442,6 +442,7 @@ public abstract class WorkMapper {
                     .builder()
                     .type(ValueTypeDTO.Attachments)
                     .value(String.join(",", ((AttachmentsValue) abstractValue).getValue()))
+                    .originalValue(abstractValue)
                     .build();
         } else {
             throw ControllerLogicException.builder()

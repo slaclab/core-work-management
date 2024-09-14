@@ -592,7 +592,7 @@ public class WorkServiceTest {
         assertThat(fullWork.id()).isNotNull();
         assertThat(fullWork.domain().id()).isEqualTo(domainId);
         assertThat(fullWork.customFields()).isNotNull().hasSize(2);
-        assertThat(fullWork.customFields().getFirst().value().value()).isEqualTo(lovElementIds.getFirst());
+        assertThat(((LOVElementDTO)fullWork.customFields().getFirst().value().originalValue()).id()).isEqualTo(lovElementIds.getFirst());
         assertThat(fullWork.customFields().getLast().value().value()).isEqualTo("a good string value");
 
     }
