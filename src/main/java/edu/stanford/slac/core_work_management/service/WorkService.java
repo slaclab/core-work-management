@@ -366,13 +366,11 @@ public class WorkService {
      */
     public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, newWorkValidation.getNewWorkDTO().workTypeId());
-        CompletableFuture<Void> scriptResult = scriptService.executeScriptFile(
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
                 newWorkValidation.getWorkType().getValidatorName(),
-                WorkTypeValidation.class,
-                "checkValid",
-                newWorkValidation);
-        scriptResult.join();
+                WorkTypeValidation.class
+        );
+        wtv.checkValid(newWorkValidation);
     }
 
     /**
@@ -384,13 +382,11 @@ public class WorkService {
      */
     public void isValidForWorkflow(UpdateWorkValidation updateWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<UpdateWorkValidation>>> violations = null;
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(updateWorkValidation.getExistingWork().getDomainId(), updateWorkValidation.getExistingWork().getWorkTypeId());
-        CompletableFuture<Void> scriptResult = scriptService.executeScriptFile(
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
                 updateWorkValidation.getWorkType().getValidatorName(),
-                WorkTypeValidation.class,
-                "checkValid",
-                updateWorkValidation);
-        scriptResult.join();
+                WorkTypeValidation.class
+        );
+        wtv.checkValid(updateWorkValidation);
     }
 
     /**
@@ -402,16 +398,16 @@ public class WorkService {
      * @param work     the work to update
      */
     public void updateWorkWorkflow(String domainId, Work work, WorkType workType, UpdateWorkflowState updateState) {
-        if (work == null) {
+        if (work == null || workType == null || workType.getValidatorName() == null || updateState == null) {
             return;
         }
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
-        // update workflow
-        scriptService.executeScriptFile(
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
                 workType.getValidatorName(),
-                WorkTypeValidation.class,
-                "updateWorkflow",
-                WorkflowWorkUpdate.builder().work(work).workType(workType).workflow(wInstance).updateWorkflowState(updateState).build()).join();
+                WorkTypeValidation.class
+        );
+        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
+
+        wtv.updateWorkflow(WorkflowWorkUpdate.builder().work(work).workType(workType).workflow(wInstance).updateWorkflowState(updateState).build());
     }
 
     /**
@@ -424,14 +420,16 @@ public class WorkService {
         if (domainId == null || parentWWork == null) {
             return;
         }
+        // get validator for the work type
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
+                workType.getValidatorName(),
+                WorkTypeValidation.class
+        );
         // retrieve workflow instance
         var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, parentWWork.getWorkTypeId());
+
         // update workflow with the script associated to the work type
-        scriptService.executeScriptFile(
-                    workType.getValidatorName(),
-                    WorkTypeValidation.class,
-                    "updateWorkflow",
-                    WorkflowWorkUpdate.builder().work(parentWWork).workType(workType).workflow(wInstance).build()).join();
+        wtv.updateWorkflow(WorkflowWorkUpdate.builder().work(parentWWork).workType(workType).workflow(wInstance).build());
 
         // save parent work with updated workflow
         wrapCatch(
