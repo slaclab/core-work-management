@@ -96,7 +96,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
         var childWorkflow = fullDomain.workflows().stream().filter(workflowDTO -> workflowDTO.implementation().equals("DummyChildWorkflow")).findFirst();
         assertThat(childWorkflow).isPresent();
         newChildWorkType = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -114,7 +114,7 @@ public class WorkServiceWorkflowArchitectureTestTest {
         var parentWorkflow = fullDomain.workflows().stream().filter(workflowDTO -> workflowDTO.implementation().equals("DummyParentWorkflow")).findFirst();
         assertThat(parentWorkflow).isPresent();
         newParentWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()

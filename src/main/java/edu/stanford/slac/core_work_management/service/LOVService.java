@@ -308,4 +308,17 @@ public class LOVService {
                 );
         return result;
     }
+
+    /**
+     * Check if a group name exists
+     *
+     * @param groupName the group name to check
+     * @return true if the group name exists, false otherwise
+     */
+    public Boolean existsByGroupName(String groupName) {
+        return wrapCatch(
+                () -> lovElementRepository.existsByGroupNameIs(groupName),
+                -1
+        );
+    }
 }

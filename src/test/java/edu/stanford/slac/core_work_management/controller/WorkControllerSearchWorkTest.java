@@ -233,7 +233,7 @@ public class WorkControllerSearchWorkTest {
         // create work 1
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> domainService.ensureWorkType(
+                        () -> domainService.createNew(
                                 domainId,
                                 NewWorkTypeDTO
                                         .builder()
@@ -246,7 +246,7 @@ public class WorkControllerSearchWorkTest {
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> domainService.ensureWorkType(
+                        () -> domainService.createNew(
                                 domainId,
                                 NewWorkTypeDTO
                                         .builder()

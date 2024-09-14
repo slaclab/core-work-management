@@ -317,7 +317,7 @@ public class DomainServiceTest {
         );
         assertThat(domain).isNotNull();
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domain.id(),
                         NewWorkTypeDTO
                                 .builder()
@@ -414,7 +414,7 @@ public class DomainServiceTest {
         );
         assertThat(domain).isNotNull();
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domain.id(),
                         NewWorkTypeDTO
                                 .builder()

@@ -28,8 +28,8 @@ public record WATypeCustomFieldDTO(
         @NotNull
         @Schema(description = "The type of the custom field.")
         ValueTypeDTO valueType,
-        @Schema(description = "The possible value of the custom field, in case it is of type LOV")
-        String lovGroup,
+        @Schema(description = "An additional mapping information for the custom field. IN case the type is LOV it need to be associated to the LOV group")
+        String additionalMappingInfo,
         @Schema(description = "Specify is the custom field is mandatory.")
         Boolean isMandatory) {
         public WATypeCustomFieldDTO {

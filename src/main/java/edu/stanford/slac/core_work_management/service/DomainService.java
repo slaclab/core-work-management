@@ -4,24 +4,26 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
+import edu.stanford.slac.core_work_management.exception.LOVGroupNameNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkflowNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.WorkStatusCountStatistics;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.model.WorkTypeStatusStatistics;
+import edu.stanford.slac.core_work_management.model.value.ValueType;
 import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
@@ -41,6 +43,7 @@ public class DomainService {
 
     private final DomainMapper domainMapper;
 
+    private final LOVService lovService;
     private final WorkRepository workRepository;
     private final DomainRepository domainRepository;
     private final WorkTypeRepository workTypeRepository;
@@ -131,40 +134,12 @@ public class DomainService {
     }
 
     /**
-     * Create a new work type
-     *
-     * @param newWorkTypeDTO the DTO to create the work type
-     * @return the id of the created work type
-     */
-    public String ensureWorkType(@NotEmpty String domainId, @Valid NewWorkTypeDTO newWorkTypeDTO) {
-        List<WATypeCustomFieldDTO> normalizedCustomField = new ArrayList<>();
-        newWorkTypeDTO.customFields().forEach(
-                (customField) -> {
-                    var tmpName = customField.name();
-                    normalizedCustomField.add(
-                            customField.toBuilder()
-                                    .id(UUID.randomUUID().toString())
-                                    .label(tmpName)
-                                    .name(StringUtility.toCamelCase(tmpName))
-                                    .build()
-                    );
-                }
-        );
-        var normalizedActivityDTO = newWorkTypeDTO.toBuilder().customFields(normalizedCustomField).build();
-        return wrapCatch(
-                () -> workTypeRepository.ensureWorkType(
-                        domainMapper.toModel(domainId, newWorkTypeDTO)
-                ),
-                -1
-        );
-    }
-
-    /**
      * create a new activity type
      *
      * @param newWorkTypeDTO the new work type to create
      * @return the activity id
      */
+    @Transactional
     public String createNew(@NotEmpty String domainId, @Valid NewWorkTypeDTO newWorkTypeDTO) {
         // set the id of the custom attributes
         var toSave = domainMapper.toModel(domainId, newWorkTypeDTO);
@@ -222,8 +197,30 @@ public class DomainService {
                                     StringUtility.toCamelCase(customField.getLabel())
                     );
                     customField.setLabel(customField.getLabel());
+
+                    if(customField.getValueType()== ValueType.LOV &&
+                            customField.getAdditionalMappingInfo()!=null &&
+                            !customField.getAdditionalMappingInfo().isEmpty()) {
+                        // check for group name existence
+                        assertion(
+                                LOVGroupNameNotFound
+                                        .byName()
+                                        .errorCode(-6)
+                                        .name(customField.getAdditionalMappingInfo())
+                                        .build(),
+                                () -> lovService.existsByGroupName(customField.getAdditionalMappingInfo())
+                        );
+                        // for each custom field that is LOV we need to associate it to right LOV field
+                        lovService.addFieldReferenceToGroupName(
+                                customField.getAdditionalMappingInfo(),
+                                List.of(customField.getLovFieldReference())
+                        );
+                    }
                 }
         );
+
+
+        // save the work type
         return wrapCatch(
                 () -> workTypeRepository.save(toSave),
                 -16

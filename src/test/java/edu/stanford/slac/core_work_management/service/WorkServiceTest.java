@@ -178,7 +178,7 @@ public class WorkServiceTest {
     @Test
     public void createNewWork() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -209,7 +209,7 @@ public class WorkServiceTest {
     @Test
     public void updateWorkOK() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -254,7 +254,7 @@ public class WorkServiceTest {
     @Test
     public void updateWorkFailOnInvalidLocationForDomainId() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -302,7 +302,7 @@ public class WorkServiceTest {
     @Test
     public void createNewWorkFailWithLocationInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -337,7 +337,7 @@ public class WorkServiceTest {
     @Test
     public void createNewWorkFailWithShopGroupInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -372,7 +372,7 @@ public class WorkServiceTest {
     @Test
     public void createNewWorkAndGetIt() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -421,7 +421,7 @@ public class WorkServiceTest {
     public void createNewSubWorkOK() {
         // create work type for children
         String newChildrenWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -434,7 +434,7 @@ public class WorkServiceTest {
         );
         //create work type
         String newParentWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -522,7 +522,7 @@ public class WorkServiceTest {
                                                         .description("Subsystem Group")
                                                         .valueType(ValueTypeDTO.LOV)
                                                         .group("General Information")
-                                                        .lovGroup("SubsystemGroup")
+                                                        .additionalMappingInfo("SubsystemGroup")
                                                         .isMandatory(true)
                                                         .build(),
                                                 WATypeCustomFieldDTO.builder()
@@ -530,7 +530,7 @@ public class WorkServiceTest {
                                                         .description("Attribute One")
                                                         .valueType(ValueTypeDTO.String)
                                                         .group("General Information")
-                                                        .lovGroup("SubsystemGroup")
+                                                        .additionalMappingInfo("SubsystemGroup")
                                                         .isMandatory(true)
                                                         .build()
                                         )
@@ -539,15 +539,6 @@ public class WorkServiceTest {
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
-
-        // associate LOV with the custom field
-        lovService.associateDomainFieldToGroupName(
-                LOVDomainTypeDTO.Work,
-                domainId,
-                newWorkTypeId,
-                "subsystem",
-                "SubsystemGroup"
-        );
 
         // retrieve the full work type
         var workType = assertDoesNotThrow(
@@ -610,7 +601,7 @@ public class WorkServiceTest {
     public void testWorkChanges() {
         // create base work
         String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -656,7 +647,7 @@ public class WorkServiceTest {
     public void savingWorkFailsWithWrongParentId() {
         // create base work type
         String newChildWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
@@ -670,7 +661,7 @@ public class WorkServiceTest {
         assertThat(newChildWorkTypeId).isNotNull();
 
         String newParentWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()

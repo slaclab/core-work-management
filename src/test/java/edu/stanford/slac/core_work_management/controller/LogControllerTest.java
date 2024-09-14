@@ -153,7 +153,7 @@ public class LogControllerTest {
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
 
         newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.ensureWorkType(
+                () -> domainService.createNew(
                         domainId,
                         NewWorkTypeDTO
                                 .builder()
