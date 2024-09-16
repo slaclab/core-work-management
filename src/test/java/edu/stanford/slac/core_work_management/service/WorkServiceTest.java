@@ -207,6 +207,45 @@ public class WorkServiceTest {
     }
 
     @Test
+    public void createNewWorkAndGetIt() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        var foundWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(foundWork).isNotNull();
+        assertThat(foundWork.id()).isNotNull();
+        assertThat(foundWork.domain().id()).isEqualTo(domainId);
+        assertThat(foundWork.workType().id()).isEqualTo(newWorkTypeId);
+    }
+
+    @Test
     public void updateWorkOK() {
         String newWorkTypeId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -367,44 +406,6 @@ public class WorkServiceTest {
         );
         assertThat(invalidLocationException).isNotNull();
         assertThat(invalidLocationException.getErrorCode()).isEqualTo(-4);
-    }
-
-    @Test
-    public void createNewWorkAndGetIt() {
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> domainService.createNew(
-                        domainId,
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workflowId(parentWorkflow.id())
-                                .validatorName("validation/DummyParentValidation.groovy")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        domainId,
-                        NewWorkDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotNull();
-
-        var foundWork = assertDoesNotThrow(
-                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
-        );
-        assertThat(foundWork).isNotNull();
-        assertThat(foundWork.id()).isNotNull();
-        assertThat(foundWork.domain().id()).isEqualTo(domainId);
     }
 
     @Test

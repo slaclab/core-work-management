@@ -50,7 +50,7 @@ public class Work {
      * The type of the work.
      * This field categorizes the work into a specific type
      */
-    private String workTypeId;
+    private EmbeddableWorkType workType;
     /**
      * The name of the work.
      * This field stores the name or title of the work.

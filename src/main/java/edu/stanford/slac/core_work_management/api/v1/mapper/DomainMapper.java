@@ -50,7 +50,7 @@ public abstract class DomainMapper {
      * @param domain the model to convert
      * @return the DTO
      */
-    @Mapping(target="workflows", source="workflows", qualifiedByName="toWorkflowDTO")
+    @Mapping(target = "workflows", source = "workflows", qualifiedByName = "toWorkflowDTO")
     @Mapping(target = "workTypeStatusStatistics", source = "workTypeStatusStatistics", qualifiedByName = "convertStatistic")
     public abstract DomainDTO toDTO(Domain domain);
 
@@ -68,9 +68,13 @@ public abstract class DomainMapper {
      * @param workType the entity to convert
      * @return the converted DTO
      */
-    @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromWorkType(workType))")
+    @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromDomainIdAndWorkflowId(workType.getDomainId(), workType.getWorkflowId()))")
     @Mapping(target = "childWorkType", expression = "java(toSummaryDTO(workType.getChildWorkTypeIds()))")
     abstract public WorkTypeDTO toDTO(WorkType workType);
+
+    @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromDomainIdAndWorkflowId(domainId, workType.getWorkflowId()))")
+    @Mapping(target = "childWorkType", expression = "java(toSummaryDTO(workType.getChildWorkTypeIds()))")
+    abstract public EmbeddableWorkTypeDTO toDTO(String domainId, EmbeddableWorkType workType);
 
     /**
      * Convert the {@link WorkType} to a {@link WorkTypeDTO}
@@ -99,20 +103,28 @@ public abstract class DomainMapper {
     abstract public WorkType toModel(String domainId, NewWorkTypeDTO newWorkTypeDTO);
 
     /**
-     * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
+     * Convert the {@link WorkType} to a {@link EmbeddableWorkType}
      *
-     * @param valueType       the value type
+     * @param workType the entity to convert
      * @return the converted entity
      */
-    abstract public  ValueTypeDTO toDTO(ValueType valueType);
+    abstract public EmbeddableWorkType toEmbeddable(WorkType workType);
 
     /**
      * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
      *
-     * @param valueType       the value type
+     * @param valueType the value type
      * @return the converted entity
      */
-    abstract public  ValueType toModel(ValueTypeDTO valueType);
+    abstract public ValueTypeDTO toDTO(ValueType valueType);
+
+    /**
+     * Convert the {@link NewWorkTypeDTO} to a {@link WorkType}
+     *
+     * @param valueType the value type
+     * @return the converted entity
+     */
+    abstract public ValueType toModel(ValueTypeDTO valueType);
 
     /**
      * Convert the {@link WATypeCustomField} to a {@link WATypeCustomFieldDTO}
@@ -172,7 +184,7 @@ public abstract class DomainMapper {
                 .group(customField.getGroup())
                 .description(customField.getDescription())
                 .valueType(toDTO(customField.getValueType()))
-                .lovValues(customField.getValueType()==ValueType.LOV?lovService.findAllByFieldReference(customField.getLovFieldReference()):emptyList())
+                .lovValues(customField.getValueType() == ValueType.LOV ? lovService.findAllByFieldReference(customField.getLovFieldReference()) : emptyList())
                 .isMandatory(customField.getIsMandatory())
                 .build();
     }
@@ -220,20 +232,22 @@ public abstract class DomainMapper {
     }
 
     /**
-     * Convert a WorkType model to a WorkTypeSummaryDTO
-     * @param workType the domain
+     * Convert a WorkflowStateDTO to a WorkflowState
+     *
+     * @param domainId   the id of the domain
+     * @param workflowId the id of the workflow
      * @return the DTO
      */
-    public WorkflowDTO toWorkflowDTOFromWorkType(WorkType workType) {
-        Domain domain = domainRepository.findById(workType.getDomainId())
+    public WorkflowDTO toWorkflowDTOFromDomainIdAndWorkflowId(String domainId, String workflowId) {
+        Domain domain = domainRepository.findById(domainId)
                 .orElseThrow(() -> ControllerLogicException.builder()
                         .errorCode(-1)
-                        .errorMessage("The domain with id '%s' is not available".formatted(workType.getDomainId()))
+                        .errorMessage("The domain with id '%s' is not available".formatted(domainId))
                         .errorDomain("DomainMapper::toWorkflowDTO")
                         .build());
-        var workflowFound = domain.getWorkflows().stream().filter(w -> w.getId().equals(workType.getWorkflowId())).findFirst().orElseThrow(() -> ControllerLogicException.builder()
+        var workflowFound = domain.getWorkflows().stream().filter(w -> w.getId().equals(workflowId)).findFirst().orElseThrow(() -> ControllerLogicException.builder()
                 .errorCode(-1)
-                .errorMessage("The workflow with id '%s' is not available".formatted(workType.getWorkflowId()))
+                .errorMessage("The workflow with id '%s' is not available".formatted(workflowId))
                 .errorDomain("DomainMapper::toWorkflowDTOById")
                 .build());
         BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(workflowFound.getImplementation());
@@ -266,7 +280,8 @@ public abstract class DomainMapper {
         Set<WorkflowDTO> result = new HashSet<>();
         if (workflows == null) return result;
         workflows.forEach(
-                w -> {;
+                w -> {
+                    ;
                     BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(w.getImplementation());
                     var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
                     if (!isPresent) {

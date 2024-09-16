@@ -31,7 +31,7 @@ public record WorkDTO(
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
         @Schema(description = "The type of the work")
-        WorkTypeDTO workType,
+        EmbeddableWorkTypeDTO workType,
         @Schema(description = "The current status of the work")
         WorkStatusLogDTO currentStatus,
         @Schema(description = "The full work status history")

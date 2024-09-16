@@ -65,8 +65,11 @@ public abstract class WorkMapper {
      * @param newWorkDTO the DTO to convert
      * @return the converted entity
      */
+    @Mapping(target = "id",ignore = true)
     @Mapping(target = "customFields", expression = "java(toCustomFieldValues(newWorkDTO.customFieldValues()))")
-    abstract public Work toModel(String domainId, Long workNumber, NewWorkDTO newWorkDTO);
+    @Mapping(target = "title", source = "newWorkDTO.title")
+    @Mapping(target = "workType", source="workType")
+    abstract public Work toModel(String domainId, Long workNumber, EmbeddableWorkType workType, NewWorkDTO newWorkDTO);
 
 
 
@@ -87,10 +90,10 @@ public abstract class WorkMapper {
      * @param work the entity to convert
      * @return the converted DTO
      */
-    @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getWorkTypeId()))")
+    @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getDomainId(), work.getWorkType()))")
     @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getDomainId(), work.getShopGroupId()))")
     @Mapping(target = "location", expression = "java(toLocationDTOById(work.getDomainId(), work.getLocationId()))")
-    @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkTypeId(), work.getCustomFields()))")
+    @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkType().getId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
     abstract public WorkDTO toDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
@@ -256,21 +259,12 @@ public abstract class WorkMapper {
     }
 
     /**
-     * Convert the {@link String} work type id to a {@link WorkTypeDTO}
-     *
-     * @param workTypeId the id of the work type
+     * Convert the {@link EmbeddableWorkType} work type id to a {@link EmbeddableWorkTypeDTO}
+     * @param workType the type to convert
      * @return the converted DTO
      */
-    public WorkTypeDTO toWorkTypeDTOFromWorkTypeId(String workTypeId) {
-        return wrapCatch(
-                () -> workTypeRepository.findById(workTypeId).map(domainMapper::toDTO).orElseThrow(
-                        () -> WorkTypeNotFound.notFoundById()
-                                .errorCode(-1)
-                                .workId(workTypeId)
-                                .build()
-                ),
-                -1
-        );
+    public EmbeddableWorkTypeDTO toWorkTypeDTOFromWorkTypeId(String domainId, EmbeddableWorkType workType) {
+        return domainMapper.toDTO(domainId, workType);
     }
 
 
@@ -456,7 +450,7 @@ public abstract class WorkMapper {
 
     @AfterMapping
     protected void afterMapping(@MappingTarget final WorkDTO.WorkDTOBuilder target, Work source) {
-        var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Work, source.getDomainId(), source.getWorkTypeId()).keySet();
+        var listOfReferenced = lovService.getLOVFieldReference(LOVDomainTypeDTO.Work, source.getDomainId(), source.getWorkType().getId()).keySet();
         var targetFields = target.getClass().getDeclaredFields();
         var sourceFields = source.getClass().getDeclaredFields();
         listOfReferenced.forEach(
