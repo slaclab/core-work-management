@@ -45,7 +45,7 @@ public class EmbeddableWorkType {
     /**
      * The id of the workflow that rule the life cycle of the work that refer to this type
      */
-    private String workflowId;
+    private EmbeddableWorkflow workflow;
 
     /**
      * The name of the validator that validate the work that refer to this type

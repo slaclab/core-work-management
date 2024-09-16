@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class AdminChildrenValidation {
+public class AdmitChildrenValidation {
     private Work work;
     private WorkType workType;
     private BaseWorkflow workflow;

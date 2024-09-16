@@ -3,7 +3,7 @@ package edu.stanford.slac.core_work_management.service.validation;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
-import edu.stanford.slac.core_work_management.service.workflow.AdminChildrenValidation;
+import edu.stanford.slac.core_work_management.service.workflow.AdmitChildrenValidation;
 import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation;
 import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation;
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowWorkUpdate;
@@ -45,7 +45,7 @@ public abstract class WorkTypeValidation {
      *
      * @param canHaveChildValidation the information to check if the work can have child
      */
-    abstract public void adminChildren(AdminChildrenValidation canHaveChildValidation);
+    abstract public void admitChildren(AdmitChildrenValidation canHaveChildValidation);
 
     /**
      * Check if the status of the work is equal to any provided states

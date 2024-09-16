@@ -109,11 +109,11 @@ class TECHardwareReportValidation extends WorkTypeValidation {
     }
 
     @Override
-    void checkValid(UpdateWorkValidation updateWorkValidation) {
+    void checkValid(UpdateWorkValidation updateWorkValidation) {}
 
-    }
-
-    /**
+    @Override
+    void admitChildren(AdmitChildrenValidation canHaveChildValidation) {}
+/**
      * Check if the string field is not null or empty
      *
      * @param work the work to check

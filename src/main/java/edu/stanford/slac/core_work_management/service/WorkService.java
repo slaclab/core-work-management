@@ -3,7 +3,6 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
@@ -32,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 
@@ -371,8 +369,8 @@ public class WorkService {
                 work.getWorkType().getValidatorName(),
                 WorkTypeValidation.class
         );
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(work.getDomainId(), work.getWorkType().getId());
-
+        // fetch the workflow
+        var wInstance = (BaseWorkflow) applicationContext.getBean(work.getWorkType().getWorkflow().getImplementation());
         wtv.updateWorkflow(WorkflowWorkUpdate.builder().work(work).workflow(wInstance).updateWorkflowState(updateState).build());
     }
 
@@ -391,7 +389,7 @@ public class WorkService {
                 WorkTypeValidation.class
         );
         // retrieve workflow instance
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(parentWWork.getDomainId(), parentWWork.getWorkType().getId());
+        var wInstance = (BaseWorkflow) applicationContext.getBean(parentWWork.getWorkType().getWorkflow().getImplementation());
 
         // update workflow with the script associated to the work type
         wtv.updateWorkflow(WorkflowWorkUpdate.builder().work(parentWWork).workflow(wInstance).build());
@@ -452,7 +450,7 @@ public class WorkService {
      * @return the parent work
      */
     public Work checkParentWorkflowForChild(String domainId, @Valid NewWorkDTO newWorkDTO) {
-        if (domainId == null || newWorkDTO == null) {
+        if (domainId == null || newWorkDTO == null || newWorkDTO.parentWorkId() == null) {
             return null;
         }
         // get parent work
@@ -480,13 +478,14 @@ public class WorkService {
                         ()->foundParentWork.getWorkType().getChildWorkTypeIds().contains(newWorkDTO.workTypeId())
                 )
         );
-        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, foundParentWork.getWorkType().getId());
-        // update workflow with the script associated to the work type
-        scriptService.executeScriptFile(
+        // fetch the workflow
+        var wInstance =(BaseWorkflow) applicationContext.getBean(foundParentWork.getWorkType().getWorkflow().getImplementation());
+        var validationInstance = scriptService.getInterfaceImplementationFromFile(
                 foundParentWork.getWorkType().getValidatorName(),
-                WorkTypeValidation.class,
-                "adminChildren",
-                AdminChildrenValidation.builder().work(foundParentWork).workflow(wInstance).build()).join();
+                WorkTypeValidation.class
+        );
+        // validate the child admission
+        validationInstance.admitChildren(AdmitChildrenValidation.builder().work(foundParentWork).workflow(wInstance).build());
         return foundParentWork;
     }
 

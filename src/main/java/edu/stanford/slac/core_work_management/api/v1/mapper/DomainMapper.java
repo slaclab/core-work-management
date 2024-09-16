@@ -68,11 +68,11 @@ public abstract class DomainMapper {
      * @param workType the entity to convert
      * @return the converted DTO
      */
-    @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromDomainIdAndWorkflowId(workType.getDomainId(), workType.getWorkflowId()))")
+//    @Mapping(target = "workflow", expression = "java(toEmbeddableFromDomainIdAndId(workType.getDomainId(), workType.getWorkflowId()))")
     @Mapping(target = "childWorkType", expression = "java(toSummaryDTO(workType.getChildWorkTypeIds()))")
     abstract public WorkTypeDTO toDTO(WorkType workType);
 
-    @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromDomainIdAndWorkflowId(domainId, workType.getWorkflowId()))")
+//    @Mapping(target = "workflow", expression = "java(toWorkflowDTOFromWorkflow(workType.getWorkflow()))")
     @Mapping(target = "childWorkType", expression = "java(toSummaryDTO(workType.getChildWorkTypeIds()))")
     abstract public EmbeddableWorkTypeDTO toDTO(String domainId, EmbeddableWorkType workType);
 
@@ -105,9 +105,10 @@ public abstract class DomainMapper {
     /**
      * Convert the {@link WorkType} to a {@link EmbeddableWorkType}
      *
-     * @param workType the entity to convert
+     * @param workType the work type
      * @return the converted entity
      */
+    @Mapping(target = "workflow", expression = "java(toEmbeddableFromDomainIdAndId(workType.getDomainId(), workType.getWorkflowId()))")
     abstract public EmbeddableWorkType toEmbeddable(WorkType workType);
 
     /**
@@ -232,13 +233,13 @@ public abstract class DomainMapper {
     }
 
     /**
-     * Convert a WorkflowStateDTO to a WorkflowState
+     * Convert a Workflow to a WorkflowDTO
      *
-     * @param domainId   the id of the domain
-     * @param workflowId the id of the workflow
-     * @return the DTO
+     * @param domainId the id of the domain
+     *                 * @param workflowId the id of the workflow
+     * @return the converted DTO
      */
-    public WorkflowDTO toWorkflowDTOFromDomainIdAndWorkflowId(String domainId, String workflowId) {
+    public EmbeddableWorkflow toEmbeddableFromDomainIdAndId(String domainId, String workflowId) {
         Domain domain = domainRepository.findById(domainId)
                 .orElseThrow(() -> ControllerLogicException.builder()
                         .errorCode(-1)
@@ -260,11 +261,36 @@ public abstract class DomainMapper {
                     .build();
         }
         var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
-        return WorkflowDTO.builder()
+        return EmbeddableWorkflow.builder()
                 .id(workflowFound.getId())
                 .name(annot.name())
-                .description(annot.description())
                 .implementation(workflowFound.getImplementation())
+                .validTransitions(toDTO(workFlowInstance.getValidTransitions()))
+                .build();
+    }
+
+    /**
+     * Convert a Workflow to a WorkflowDTO
+     *
+     * @param workflow the workflow to convert
+     * @return the converted DTO
+     */
+    public WorkflowDTO toWorkflowDTOFromWorkflow(Workflow workflow) {
+        BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(workflow.getImplementation());
+        var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
+        if (!isPresent) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage("The workflow class with name '%s' is not available".formatted(workflow.getImplementation()))
+                    .errorDomain("DomainMapper::toWorkflowDTO")
+                    .build();
+        }
+        var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
+        return WorkflowDTO.builder()
+                .id(workflow.getId())
+                .name(annot.name())
+                .description(annot.description())
+                .implementation(workflow.getImplementation())
                 .validTransitions(toDTO(workFlowInstance.getValidTransitions()))
                 .build();
     }
@@ -312,7 +338,8 @@ public abstract class DomainMapper {
      * @param validTransitions the map to convert
      * @return the converted map
      */
-    private Map<WorkflowStateDTO, Set<WorkflowStateDTO>> toDTO(Map<WorkflowState, Set<WorkflowState>> validTransitions) {
+    private Map<WorkflowStateDTO, Set<WorkflowStateDTO>> toDTO
+    (Map<WorkflowState, Set<WorkflowState>> validTransitions) {
         Map<WorkflowStateDTO, Set<WorkflowStateDTO>> result = new HashMap<>();
         if (validTransitions == null) return result;
         validTransitions.forEach(
@@ -371,7 +398,8 @@ public abstract class DomainMapper {
      * @param customFields    the list of the old custom fields
      * @return the converted entity
      */
-    public List<WATypeCustomField> updateModelCustomField(List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
+    public List<WATypeCustomField> updateModelCustomField
+    (List<WATypeCustomFieldDTO> customFieldsDTO, List<WATypeCustomField> customFields) {
         List<WATypeCustomField> updatedCustomAttributesList = new ArrayList<>();
         customFieldsDTO.forEach(
                 customFieldDTO -> {

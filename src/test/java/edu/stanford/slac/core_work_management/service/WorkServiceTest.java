@@ -242,7 +242,10 @@ public class WorkServiceTest {
         assertThat(foundWork).isNotNull();
         assertThat(foundWork.id()).isNotNull();
         assertThat(foundWork.domain().id()).isEqualTo(domainId);
+        // check the work type
         assertThat(foundWork.workType().id()).isEqualTo(newWorkTypeId);
+        // check the workflow
+        assertThat(foundWork.workType().workflow().id()).isEqualTo(parentWorkflow.id());
     }
 
     @Test
