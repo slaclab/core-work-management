@@ -62,14 +62,13 @@ public class Work {
      */
     private String description;
     /**
-     * The identifier of the location associated with the work.
-     * This field links the work to a specific location, identified by its ID.
+     * The location where the work is performed.
      */
-    private String locationId;
+    private EmbeddableLocation location;
     /**
      * The shop group that perform the work in the location
      */
-    private String shopGroupId;
+    private EmbeddableShopGroup shopGroup;
     /**
      * The identifier of the user assigned to the work.
      * This field links the work to a specific user, identified by its ID.

@@ -1,10 +1,9 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryElementDTO;
+import edu.stanford.slac.core_work_management.model.EmbeddableLocation;
+import edu.stanford.slac.core_work_management.model.EmbeddableShopGroup;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.LocationFilter;
 import edu.stanford.slac.core_work_management.service.DomainService;
@@ -27,6 +26,7 @@ public abstract class LocationMapper {
     @Mapping(target = "domain", expression = "java(toDomainDTO(location.getDomainId()))")
     public abstract LocationDTO toDTO(Location location);
 
+    abstract public EmbeddableLocation toEmbeddable(LocationDTO location);
 
     @Mapping(target = "parentId", source = "parentId")
     @Mapping(target = "name", expression = "java(choiceName(newLocationDTO, externalLocationDTO))")
@@ -44,4 +44,5 @@ public abstract class LocationMapper {
         if(domainId == null) return null;
         return domainService.findById(domainId);
     }
+;
 }

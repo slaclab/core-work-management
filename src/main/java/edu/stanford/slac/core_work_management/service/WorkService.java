@@ -6,9 +6,9 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
-import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
+import edu.stanford.slac.core_work_management.api.v1.mapper.*;
 import edu.stanford.slac.core_work_management.exception.*;
+import edu.stanford.slac.core_work_management.model.EmbeddableLocation;
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
@@ -48,6 +48,8 @@ import static java.util.Collections.emptyList;
 public class WorkService {
     private final WorkMapper workMapper;
     private final DomainMapper domainMapper;
+    private final LocationMapper locationMapper;
+    private final ShopGroupMapper shopGroupMapper;
 
     private final ScriptService scriptService;
     private final DomainService domainService;
@@ -62,6 +64,7 @@ public class WorkService {
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final ModelHistoryService modelHistoryService;
     private final ApplicationContext applicationContext;
+    private final LocationMapperImpl locationMapperImpl;
 
     /**
      * Create a new work automatically creating the sequence
@@ -157,11 +160,15 @@ public class WorkService {
         );
 
         // validate location and group shop against the domain
-        if (workToSave.getLocationId() != null) {
-            validateLocationForDomain(workToSave.getDomainId(), workToSave.getLocationId(), -3);
+        if (newWorkDTO.locationId() != null) {
+            workToSave.setLocation(
+                    locationMapper.toEmbeddable(locationService.findById(domainId, newWorkDTO.locationId()))
+            );
         }
-        if (workToSave.getShopGroupId() != null) {
-            validateShopGroupForDomain(workToSave.getDomainId(), workToSave.getShopGroupId(), -4);
+        if (newWorkDTO.shopGroupId() != null) {
+            workToSave.setShopGroup(
+                    shopGroupMapper.toEmbeddable(shopGroupService.findByDomainIdAndId(domainId, newWorkDTO.shopGroupId()))
+            );
         }
 
 
@@ -239,11 +246,17 @@ public class WorkService {
         );
 
         // validate location and group shop against the domain
-        if (foundWork.getLocationId() != null) {
-            validateLocationForDomain(foundWork.getDomainId(), foundWork.getLocationId(), -4);
+        if (updateWorkDTO.locationId() != null) {
+            foundWork.setLocation(
+                    locationMapper.toEmbeddable(locationService.findById(domainId, updateWorkDTO.locationId()))
+            );
         }
-        if (foundWork.getShopGroupId() != null) {
-            validateShopGroupForDomain(foundWork.getDomainId(), foundWork.getShopGroupId(), -5);
+
+        // validate shop group against the domain
+        if (updateWorkDTO.shopGroupId() != null) {
+            shopGroupMapper.toEmbeddable(
+                    shopGroupService.findByDomainIdAndId(domainId, updateWorkDTO.shopGroupId())
+            );
         }
 
         // lastly we need to update the workflow
@@ -281,27 +294,6 @@ public class WorkService {
         log.info("Work '{}' has been updated by '{}'", updatedWork.getId(), updatedWork.getLastModifiedBy());
     }
 
-
-    /**
-     * Validate the location for the domain
-     * check if the location belong to the source domain
-     *
-     * @param domainId   the domain id
-     * @param locationId the id of the location
-     * @param errorCode  the error code
-     */
-    private void validateLocationForDomain(String domainId, String locationId, int errorCode) {
-        var locationFound = wrapCatch(() -> locationService.existsByDomainIdAndId(domainId, locationId), errorCode);
-        assertion(
-                LocationNotFound
-                        .notFoundById()
-                        .errorCode(errorCode)
-                        .locationId(locationId)
-                        .build(),
-                () -> locationFound
-        );
-    }
-
     /**
      * Validate shop group for the domain
      * check if the shop group belong to the source domain
@@ -311,7 +303,7 @@ public class WorkService {
      * @param errorCode   the error code
      */
     private void validateShopGroupForDomain(String domainId, String shopGroupId, int errorCode) {
-        var shopGroupExists = wrapCatch(() -> shopGroupService.existsByDomainIdAndId(domainId, shopGroupId),errorCode);
+        var shopGroupExists = wrapCatch(() -> shopGroupService.existsByDomainIdAndId(domainId, shopGroupId), errorCode);
         assertion(
                 ShopGroupNotFound
                         .notFoundById()
@@ -359,7 +351,7 @@ public class WorkService {
      * <p>
      * it takes care of updating the workflow of the work
      *
-     * @param work     the work to update
+     * @param work the work to update
      */
     public void updateWorkWorkflow(Work work, UpdateWorkflowState updateState) {
         if (work == null || updateState == null) {
@@ -445,7 +437,7 @@ public class WorkService {
     /**
      * Check if the user can create a new work
      *
-     * @param domainId     the id of the domain
+     * @param domainId   the id of the domain
      * @param newWorkDTO the dto to create the work
      * @return the parent work
      */
@@ -474,12 +466,12 @@ public class WorkService {
                         .workId(foundParentWork.getId())
                         .build(),
                 () -> all(
-                        ()->foundParentWork.getWorkType().getChildWorkTypeIds() != null,
-                        ()->foundParentWork.getWorkType().getChildWorkTypeIds().contains(newWorkDTO.workTypeId())
+                        () -> foundParentWork.getWorkType().getChildWorkTypeIds() != null,
+                        () -> foundParentWork.getWorkType().getChildWorkTypeIds().contains(newWorkDTO.workTypeId())
                 )
         );
         // fetch the workflow
-        var wInstance =(BaseWorkflow) applicationContext.getBean(foundParentWork.getWorkType().getWorkflow().getImplementation());
+        var wInstance = (BaseWorkflow) applicationContext.getBean(foundParentWork.getWorkType().getWorkflow().getImplementation());
         var validationInstance = scriptService.getInterfaceImplementationFromFile(
                 foundParentWork.getWorkType().getValidatorName(),
                 WorkTypeValidation.class
@@ -503,8 +495,9 @@ public class WorkService {
         authService.deleteAuthorizationForResourcePrefix(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()));
 
         // this will fire exception in case the location has not been found
-        LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocationId());
-        if (authentication != null) {
+        LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocation().getId());
+
+        if (work.getCreatedBy() != null) {
             // the creator is a writer
             writerUserList.add(work.getCreatedBy());
         }
@@ -512,7 +505,7 @@ public class WorkService {
         // authorize location manager as admin
         adminUserList.add(locationDTO.locationManagerUserId());
         // add shop group as writer in the form of virtual user
-        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroupId()));
+        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroup().getId()));
         // add assigned to users
         if (work.getAssignedTo() != null) {
             writerUserList.addAll(work.getAssignedTo());
@@ -621,7 +614,7 @@ public class WorkService {
      */
     public String getShopGroupIdByWorkId(String workId) {
         return wrapCatch(
-                () -> workRepository.findById(workId).map(Work::getShopGroupId).orElseThrow(
+                () -> workRepository.findById(workId).map(w -> w.getShopGroup().getId()).orElseThrow(
                         () -> WorkNotFound
                                 .notFoundById()
                                 .errorCode(-1)

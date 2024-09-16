@@ -125,7 +125,7 @@ public class LocationService {
      */
     public LocationDTO findById(String domainId, String locationId) {
         return wrapCatch(
-                () -> locationRepository.findById(locationId),
+                () -> locationRepository.findByDomainIdAndId(domainId, locationId),
                 -1
         )
                 .map(locationMapper::toDTO)

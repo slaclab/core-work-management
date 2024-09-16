@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.api.v1.mapper;
 
+import edu.stanford.slac.core_work_management.model.EmbeddableShopGroup;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -64,6 +65,14 @@ public abstract class ShopGroupMapper {
     public abstract ShopGroupUser toModel(ShopGroupUserInputDTO shopGroupUserInputDTO);
 
     /**
+     * Map a shop group user to a model
+     *
+     * @param shopGroupDTO the shop group user
+     * @return the model
+     */
+    abstract public EmbeddableShopGroup toEmbeddable(ShopGroupDTO shopGroupDTO);
+
+    /**
      * Fill a person DTO by the user id
      *
      * @param userId the shop group user
@@ -83,4 +92,5 @@ public abstract class ShopGroupMapper {
         if(domainId == null) return null;
         return domainService.findById(domainId);
     }
+
 }

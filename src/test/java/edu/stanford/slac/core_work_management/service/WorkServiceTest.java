@@ -246,6 +246,10 @@ public class WorkServiceTest {
         assertThat(foundWork.workType().id()).isEqualTo(newWorkTypeId);
         // check the workflow
         assertThat(foundWork.workType().workflow().id()).isEqualTo(parentWorkflow.id());
+        // check the location
+        assertThat(foundWork.location().id()).isEqualTo(locationId);
+        // check the shop group
+        assertThat(foundWork.shopGroup().id()).isEqualTo(shopGroupId);
     }
 
     @Test
@@ -338,7 +342,6 @@ public class WorkServiceTest {
                 )
         );
         assertThat(invalidLocationForDomainException).isNotNull();
-        assertThat(invalidLocationForDomainException.getErrorCode()).isEqualTo(-4);
     }
 
     @Test
@@ -373,7 +376,6 @@ public class WorkServiceTest {
                 )
         );
         assertThat(invalidLocationException).isNotNull();
-        assertThat(invalidLocationException.getErrorCode()).isEqualTo(-3);
     }
 
     @Test
@@ -408,7 +410,6 @@ public class WorkServiceTest {
                 )
         );
         assertThat(invalidLocationException).isNotNull();
-        assertThat(invalidLocationException.getErrorCode()).isEqualTo(-4);
     }
 
     @Test
