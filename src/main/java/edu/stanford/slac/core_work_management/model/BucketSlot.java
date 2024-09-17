@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @ToString
@@ -18,11 +19,16 @@ public class BucketSlot {
      */
     @Id
     private String id;
+
+    /**
+     * The list of domain that can use this bucket slot
+     */
+    private Set<String> domainIds;
+
     /**
      * The description of the bucket slot
      */
     private String description;
-
     /**
      * The id of the lov value used to define the bucket status
      */
@@ -42,28 +48,32 @@ public class BucketSlot {
      */
     private LocalDateTime to;
     /**
+     * The id of the work type admitted to the bucket slot
+     */
+    private Set<BucketSlotWorkType> admittedWorkTypeIds;
+    /**
      * The created date of the bucket slot
      */
     @CreatedDate
-    LocalDateTime createdDate;
+    private LocalDateTime createdDate;
     /**
      * The created by of the bucket slot
      */
     @CreatedBy
-    String createdBy;
+    private String createdBy;
     /**
      * The last modified date of the bucket slot
      */
     @LastModifiedDate
-    LocalDateTime lastModifiedDate;
+    private LocalDateTime lastModifiedDate;
     /**
      * The last modified by of the bucket slot
      */
     @LastModifiedBy
-    String lastModifiedBy;
+    private String lastModifiedBy;
     /**
      * The version of the bucket slot
      */
     @Version
-    Long version;
+    private Long version;
 }

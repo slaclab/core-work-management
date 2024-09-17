@@ -1,12 +1,14 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.BucketSlotMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityAlreadyAssociatedToSlot;
 import edu.stanford.slac.core_work_management.exception.BucketSlotNotFound;
+import edu.stanford.slac.core_work_management.exception.DomainNotFound;
+import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotActivityStatus;
 import edu.stanford.slac.core_work_management.repository.BucketActivityRepository;
@@ -30,6 +32,7 @@ public class BucketService {
     private final BucketActivityRepository bucketSlotActivityRepository;
     private final BucketSlotMapper bucketSlotMapper;
     private final BucketValidationService bucketValidationService;
+    private final DomainService domainService;
 
     /**
      * This method is used to create a new bucket slot
@@ -38,14 +41,40 @@ public class BucketService {
      * @return the id of the new bucket slot
      */
     public String createNew(@Valid NewBucketDTO newBucketSlotDTO) {
+        // check if the domains exists
+        newBucketSlotDTO.domainIds().forEach(
+                id->
+               assertion(
+                       DomainNotFound
+                               .notFoundById()
+                               .id(id)
+                               .errorCode(-1)
+                               .build(),
+                       () -> domainService.existsById(id)
+               )
+        );
+
+        // check if work type exists
+        newBucketSlotDTO.admittedWorkTypeIds().forEach(
+                idBundle->
+                assertion(
+                        WorkTypeNotFound
+                                .notFoundById()
+                                .workId(idBundle.workTypeId())
+                                .errorCode(-1)
+                                .build(),
+                        () -> domainService.existsWrkTypeByDomainIdAndId(idBundle.domainId(), idBundle.workTypeId())
+                )
+        );
+
+        // validate the bucket slot
         BucketSlot bs = bucketSlotMapper.toModel(newBucketSlotDTO);
-        BucketSlot finalBs = bs;
         assertion(
                 ControllerLogicException.builder().build(),
-                () -> bucketValidationService.verify(finalBs)
+                () -> bucketValidationService.verify(bs)
         );
-        bs = bucketSlotRepository.save(bs);
-        return bs.getId();
+        var savedBucketSlot = bucketSlotRepository.save(bs);
+        return savedBucketSlot.getId();
     }
 
     /**
@@ -54,7 +83,7 @@ public class BucketService {
      * @param id the id of the bucket slot
      * @return the bucket slot DTO
      */
-    public BucketDTO findById(String id) {
+    public BucketSlotDTO findById(String id) {
         return bucketSlotMapper.toDTO(
                 wrapCatch(
                         () -> bucketSlotRepository
@@ -73,7 +102,7 @@ public class BucketService {
      * @param queryParameterDTO the query parameter DTO
      * @return the list of bucket slot DTOs
      */
-    public List<BucketDTO> findAll(BucketQueryParameterDTO queryParameterDTO) {
+    public List<BucketSlotDTO> findAll(BucketQueryParameterDTO queryParameterDTO) {
         return bucketSlotRepository
                 .searchAll
                         (

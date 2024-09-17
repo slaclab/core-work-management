@@ -11,7 +11,6 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.mock.web.MockPart;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -19,7 +18,6 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -859,7 +857,7 @@ public class TestControllerHelperService {
      * @return the bucket dto
      * @throws Exception the exception
      */
-    public ApiResultResponse<BucketDTO> maintenanceControllerFindBucketById(
+    public ApiResultResponse<BucketSlotDTO> maintenanceControllerFindBucketById(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -890,7 +888,7 @@ public class TestControllerHelperService {
      * @return the list of bucket dto
      * @throws Exception the exception
      */
-    public ApiResultResponse<List<BucketDTO>> maintenanceControllerFindAllBuckets(
+    public ApiResultResponse<List<BucketSlotDTO>> maintenanceControllerFindAllBuckets(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,

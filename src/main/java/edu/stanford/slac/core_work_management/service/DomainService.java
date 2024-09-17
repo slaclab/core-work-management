@@ -228,6 +228,20 @@ public class DomainService {
     }
 
     /**
+     * Check if a work type exists by domain id and id
+     *
+     * @param domainId   the id of the domain
+     * @param workTypeId the id of the work type
+     * @return true if the work type exists, false otherwise
+     */
+    public boolean existsWrkTypeByDomainIdAndId(String domainId, String workTypeId) {
+        return wrapCatch(
+                () -> workTypeRepository.existsByDomainIdAndId(domainId, workTypeId),
+                -1
+        );
+    }
+
+    /**
      * Return the work type  by his id
      *
      * @param domainId the id of the domain

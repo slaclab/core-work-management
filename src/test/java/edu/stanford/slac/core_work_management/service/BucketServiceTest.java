@@ -3,7 +3,9 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
+import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.LOVElement;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -31,17 +34,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest()
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles({"test",  "async-ops"})
+@ActiveProfiles({"test", "async-ops"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class BucketServiceTest {
     @Autowired
     private LOVService lovService;
+    @Autowired
+    private DomainService domainService;
     @Autowired
     private BucketService bucketSlotService;
     @Autowired
     private MongoTemplate mongoTemplate;
     private List<String> bucketTypeLOVIds = null;
     private List<String> bucketStatusLOVIds = null;
+    private DomainDTO domainDTO;
+    private String newWorkTypeId;
 
     @BeforeAll
     public void initLOV() {
@@ -55,26 +62,64 @@ public class BucketServiceTest {
 
     @BeforeEach
     public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Domain.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), BucketSlot.class);
+
+        domainDTO = domainService.createNewAndGet(
+                NewDomainDTO.builder()
+                        .name("TEST domain")
+                        .description("Test domain description")
+                        .workflowImplementations(
+                                Set.of(
+                                        "DummyParentWorkflow"
+                                )
+                        )
+                        .build()
+        );
+        assertThat(domainDTO).isNotNull();
+
+        newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainDTO.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(domainDTO.workflows().stream().findFirst().get().id())
+                                .validatorName("validator/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
     }
 
     @Test
     public void createNewBucketAndFindIt() {
         var newBucketId = assertDoesNotThrow(
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .description("bucket-1")
                                 .type(bucketTypeLOVIds.get(0))
                                 .status(bucketStatusLOVIds.get(0))
+                                .domainIds(Set.of(domainDTO.id()))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                .admittedWorkTypeIds(
+                                        Set.of(
+                                                BucketSlotWorkTypeDTO.builder()
+                                                        .domainId(domainDTO.id())
+                                                        .workTypeId(newWorkTypeId)
+                                                        .build()
+                                        )
+                                )
                                 .build()
                 )
         );
         assertThat(newBucketId).isNotNull();
 
         var fullBucketFound = assertDoesNotThrow(
-                ()->bucketSlotService.findById(newBucketId)
+                () -> bucketSlotService.findById(newBucketId)
         );
         assertThat(fullBucketFound).isNotNull();
         assertThat(fullBucketFound.id()).isEqualTo(newBucketId);
@@ -83,28 +128,32 @@ public class BucketServiceTest {
         assertThat(fullBucketFound.status().id()).isEqualTo(bucketStatusLOVIds.get(0));
         assertThat(fullBucketFound.from()).isEqualTo(LocalDateTime.of(2021, 1, 1, 0, 0));
         assertThat(fullBucketFound.to()).isEqualTo(LocalDateTime.of(2021, 1, 3, 23, 0));
+        assertThat(fullBucketFound.admittedWorkType()).hasSize(1);
+        assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(newWorkTypeId);
+        assertThat(fullBucketFound.admittedWorkType().iterator().next().domainId()).isEqualTo(domainDTO.id());
+
     }
 
     @Test
-    public void testFieldReferenceToFindLOV(){
+    public void testFieldReferenceToFindLOV() {
         var allPossibleBucketType = assertDoesNotThrow(
-                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "type")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "type")
         );
         assertThat(allPossibleBucketType).isNotEmpty();
-        assertThat(allPossibleBucketType).allMatch(lov->bucketTypeLOVIds.contains(lov.id()));
+        assertThat(allPossibleBucketType).allMatch(lov -> bucketTypeLOVIds.contains(lov.id()));
 
         var allPossibleBucketStatus = assertDoesNotThrow(
-                ()->lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "status")
+                () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "status")
         );
         assertThat(allPossibleBucketStatus).isNotEmpty();
-        assertThat(allPossibleBucketStatus).allMatch(lov->bucketStatusLOVIds.contains(lov.id()));
+        assertThat(allPossibleBucketStatus).allMatch(lov -> bucketStatusLOVIds.contains(lov.id()));
     }
 
     @Test
     public void failedCreateBucketWithWrongData() {
         var failed1 = assertThrows(
                 ConstraintViolationException.class,
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .build()
                 )
@@ -113,7 +162,7 @@ public class BucketServiceTest {
         assertThat(failed1.getConstraintViolations()).hasSize(5);
         var failed2 = assertThrows(
                 ConstraintViolationException.class,
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .type(bucketTypeLOVIds.get(0))
                                 .build()
@@ -124,7 +173,7 @@ public class BucketServiceTest {
 
         var failed3 = assertThrows(
                 ConstraintViolationException.class,
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .type(bucketTypeLOVIds.get(0))
                                 .status(bucketStatusLOVIds.get(0))
@@ -136,7 +185,7 @@ public class BucketServiceTest {
 
         var failed4 = assertThrows(
                 ConstraintViolationException.class,
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .type(bucketTypeLOVIds.get(0))
                                 .status(bucketStatusLOVIds.get(0))
@@ -149,7 +198,7 @@ public class BucketServiceTest {
 
         var failed5 = assertThrows(
                 ConstraintViolationException.class,
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .type(bucketTypeLOVIds.get(0))
                                 .status(bucketStatusLOVIds.get(0))
@@ -163,7 +212,7 @@ public class BucketServiceTest {
 
         var failed6 = assertThrows(
                 ConstraintViolationException.class,
-                ()->bucketSlotService.createNew(
+                () -> bucketSlotService.createNew(
                         NewBucketDTO.builder()
                                 .description("bucket-1")
                                 .status(bucketStatusLOVIds.get(0))
@@ -181,7 +230,7 @@ public class BucketServiceTest {
         for (int i = 0; i < 100; i++) {
             int finalI = i;
             var newBucketId = assertDoesNotThrow(
-                    ()->bucketSlotService.createNew(
+                    () -> bucketSlotService.createNew(
                             NewBucketDTO.builder()
                                     .description("bucket-%d".formatted(finalI))
                                     .type(bucketTypeLOVIds.getFirst())
@@ -195,7 +244,7 @@ public class BucketServiceTest {
         }
 
         var first10Bucket = assertDoesNotThrow(
-                ()->bucketSlotService.findAll(
+                () -> bucketSlotService.findAll(
                         BucketQueryParameterDTO
                                 .builder()
                                 .limit(10)
@@ -205,13 +254,13 @@ public class BucketServiceTest {
         // check if i received the last element in decreasing order
         assertThat(first10Bucket).isNotNull();
         assertThat(first10Bucket).hasSize(10);
-        for(int i = 0; i < 10; i++){
-            assertThat(first10Bucket.get(i)).extracting(BucketDTO::description).isEqualTo("bucket-%d".formatted(99-i));
+        for (int i = 0; i < 10; i++) {
+            assertThat(first10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(99 - i));
         }
 
         // find next page
         var next10Bucket = assertDoesNotThrow(
-                ()->bucketSlotService.findAll(
+                () -> bucketSlotService.findAll(
                         BucketQueryParameterDTO
                                 .builder()
                                 .limit(10)
@@ -222,13 +271,13 @@ public class BucketServiceTest {
         // check next page
         assertThat(next10Bucket).isNotNull();
         assertThat(next10Bucket).hasSize(10);
-        for(int i = 0; i < 10; i++){
-            assertThat(next10Bucket.get(i)).extracting(BucketDTO::description).isEqualTo("bucket-%d".formatted(89-i));
+        for (int i = 0; i < 10; i++) {
+            assertThat(next10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(89 - i));
         }
 
         // check previous page
         var previous10Bucket = assertDoesNotThrow(
-                ()->bucketSlotService.findAll(
+                () -> bucketSlotService.findAll(
                         BucketQueryParameterDTO
                                 .builder()
                                 .contextSize(10)
@@ -238,8 +287,8 @@ public class BucketServiceTest {
         );
         assertThat(previous10Bucket).isNotNull();
         assertThat(previous10Bucket).hasSize(10);
-        for(int i = 0; i < 10; i++){
-            assertThat(previous10Bucket.get(i)).extracting(BucketDTO::description).isEqualTo("bucket-%d".formatted(98-i));
+        for (int i = 0; i < 10; i++) {
+            assertThat(previous10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(98 - i));
         }
     }
 }

@@ -68,7 +68,7 @@ public abstract class DomainMapper {
      * @param workType the entity to convert
      * @return the converted DTO
      */
-//    @Mapping(target = "workflow", expression = "java(toEmbeddableFromDomainIdAndId(workType.getDomainId(), workType.getWorkflowId()))")
+    @Mapping(target = "workflow", expression = "java(toWorkflowFromDomainIdAndId(workType.getDomainId(), workType.getWorkflowId()))")
     @Mapping(target = "childWorkType", expression = "java(toSummaryDTO(workType.getChildWorkTypeIds()))")
     abstract public WorkTypeDTO toDTO(WorkType workType);
 
@@ -262,6 +262,43 @@ public abstract class DomainMapper {
         }
         var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
         return EmbeddableWorkflow.builder()
+                .id(workflowFound.getId())
+                .name(annot.name())
+                .implementation(workflowFound.getImplementation())
+                .validTransitions(toDTO(workFlowInstance.getValidTransitions()))
+                .build();
+    }
+
+    /**
+     * Convert a Workflow to a WorkflowDTO
+     *
+     * @param domainId the id of the domain
+     * @param workflowId the id of the workflow
+     * @return the converted DTO
+     */
+    public WorkflowDTO toWorkflowFromDomainIdAndId(String domainId, String workflowId) {
+        Domain domain = domainRepository.findById(domainId)
+                .orElseThrow(() -> ControllerLogicException.builder()
+                        .errorCode(-1)
+                        .errorMessage("The domain with id '%s' is not available".formatted(domainId))
+                        .errorDomain("DomainMapper::toWorkflowDTO")
+                        .build());
+        var workflowFound = domain.getWorkflows().stream().filter(w -> w.getId().equals(workflowId)).findFirst().orElseThrow(() -> ControllerLogicException.builder()
+                .errorCode(-1)
+                .errorMessage("The workflow with id '%s' is not available".formatted(workflowId))
+                .errorDomain("DomainMapper::toWorkflowDTOById")
+                .build());
+        BaseWorkflow workFlowInstance = (BaseWorkflow) context.getBean(workflowFound.getImplementation());
+        var isPresent = workFlowInstance.getClass().isAnnotationPresent(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
+        if (!isPresent) {
+            throw ControllerLogicException.builder()
+                    .errorCode(-1)
+                    .errorMessage("The workflow class with name '%s' is not available".formatted(workflowFound.getImplementation()))
+                    .errorDomain("DomainMapper::toWorkflowDTO")
+                    .build();
+        }
+        var annot = workFlowInstance.getClass().getAnnotation(edu.stanford.slac.core_work_management.service.workflow.Workflow.class);
+        return WorkflowDTO.builder()
                 .id(workflowFound.getId())
                 .name(annot.name())
                 .implementation(workflowFound.getImplementation())

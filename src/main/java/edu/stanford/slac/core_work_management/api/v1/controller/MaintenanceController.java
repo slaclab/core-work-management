@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
 import edu.stanford.slac.core_work_management.service.BucketService;
@@ -57,7 +57,7 @@ public class MaintenanceController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Find a bucket slot by id", description = "This method is used to find a bucket slot by id")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
-    public ApiResultResponse<BucketDTO> findById(
+    public ApiResultResponse<BucketSlotDTO> findById(
             Authentication authentication,
             @PathVariable("id") String id
     ) {
@@ -73,7 +73,7 @@ public class MaintenanceController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Find all bucket slots", description = "This method is used to find all bucket slots")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
-    public ApiResultResponse<List<BucketDTO>> findAll
+    public ApiResultResponse<List<BucketSlotDTO>> findAll
             (
                     Authentication authentication,
                     @Parameter(description = "The maximum number of bucket slots to return")
