@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.api.v1.dto;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
+import edu.stanford.slac.core_work_management.model.WorkBucketAssociation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -52,6 +54,10 @@ public record WorkDTO(
         List<String> attachments,
         @Schema(description = "The list of changes on the work, each element represent a change on the work for a single save operation")
         List<ModelChangesHistoryDTO> changesHistory,
+        @Schema(description = "The list of the bucket association for the work")
+        WorkBucketAssociationDTO currentBucketAssociation,
+        @Schema(description = "The list of the bucket association for the work")
+        List<WorkBucketAssociationDTO> bucketAssociationsHistory,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)

@@ -11,8 +11,8 @@ import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotActivityStatus;
-import edu.stanford.slac.core_work_management.repository.BucketActivityRepository;
 import edu.stanford.slac.core_work_management.repository.BucketRepository;
+import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.service.validation.BucketValidationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -29,11 +29,11 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @AllArgsConstructor
 public class BucketService {
     private final BucketRepository bucketSlotRepository;
-    private final BucketActivityRepository bucketSlotActivityRepository;
     private final BucketSlotMapper bucketSlotMapper;
     private final BucketValidationService bucketValidationService;
     private final DomainService domainService;
 
+    private final WorkRepository workRepository;
     /**
      * This method is used to create a new bucket slot
      *
@@ -97,6 +97,29 @@ public class BucketService {
     }
 
     /**
+     * Delete a bucket slot by id
+     * Before delete the bucket it, should be checked if it is associated with any activity
+     * @param id the id of the bucket slot
+     */
+    public void deleteById(String id) {
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .build(),
+                ()->wrapCatch(
+                        ()->workRepository.existsByCurrentBucketAssociationBucketId(id),
+                        -1
+                )
+        );
+
+        // now we can delete
+        wrapCatch(
+                ()->{bucketSlotRepository.deleteById(id); return null;},
+                -2
+        );
+    }
+
+    /**
      * This method is used to find all bucket slots
      *
      * @param queryParameterDTO the query parameter DTO
@@ -111,40 +134,5 @@ public class BucketService {
                 .stream()
                 .map(bucketSlotMapper::toDTO)
                 .toList();
-    }
-
-    /**
-     * This method is used to associate an activity to a bucket slot
-     *
-     * @param bucketSlotId the id of the bucket slot
-     * @param activityId   the id of the activity
-     */
-    public void associateActivityToSlot(String bucketSlotId, String activityId) {
-        // check if the activity is already associated in the slot
-        assertion(
-                ActivityAlreadyAssociatedToSlot
-                        .byActivityIdAndSlotId()
-                        .slotId(bucketSlotId)
-                        .activityId(activityId)
-                        .build(),
-                () -> !bucketSlotActivityRepository.existsByBucketSlotIdAndActivityId(bucketSlotId, activityId)
-        );
-
-        // check if the activity exists in a status that is not rolled (other statuses are only permitted to one slot)
-        assertion(
-                ActivityAlreadyAssociatedToSlot
-                        .byActivityIdAndSlotId()
-                        .slotId(bucketSlotId)
-                        .activityId(activityId)
-                        .build(),
-                () -> !bucketSlotActivityRepository.existsByActivityIdAndStatusIn(
-                        activityId,
-                        List.of
-                                (
-                                        BucketSlotActivityStatus.ACCEPTED,
-                                        BucketSlotActivityStatus.REJECTED
-                                )
-                )
-        );
     }
 }

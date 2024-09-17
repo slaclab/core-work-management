@@ -17,6 +17,8 @@ public record BucketSlotDTO(
         String id,
         @Schema(description = "The description of the bucket slot")
         String description,
+        @Schema(description = "The list of domain that can use this bucket slot")
+        Set<String> domainIds,
         @Schema(description = "The the lov value that represent the type")
         LOVValueDTO type,
         @Schema(description = "The the lov value that represent the status")

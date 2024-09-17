@@ -1,12 +1,11 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
-import edu.stanford.slac.core_work_management.model.BucketSlot;
-import edu.stanford.slac.core_work_management.model.Domain;
-import edu.stanford.slac.core_work_management.model.LOVElement;
-import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.*;
 import jakarta.validation.ConstraintViolationException;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +23,10 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,11 +45,19 @@ public class BucketServiceTest {
     @Autowired
     private BucketService bucketSlotService;
     @Autowired
+    private WorkService workService;
+    @Autowired
+    private ShopGroupService shopGroupService;
+    @Autowired
+    private LocationService locationService;
+    @Autowired
     private MongoTemplate mongoTemplate;
     private List<String> bucketTypeLOVIds = null;
     private List<String> bucketStatusLOVIds = null;
     private DomainDTO domainDTO;
     private String newWorkTypeId;
+    private String shopGroupId;
+    private String locationId;
 
     @BeforeAll
     public void initLOV() {
@@ -65,6 +74,9 @@ public class BucketServiceTest {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), BucketSlot.class);
+        mongoTemplate.remove(new Query(), ShopGroup.class);
+        mongoTemplate.remove(new Query(), Location.class);
+        mongoTemplate.remove(new Query(), Work.class);
 
         domainDTO = domainService.createNewAndGet(
                 NewDomainDTO.builder()
@@ -87,11 +99,45 @@ public class BucketServiceTest {
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workflowId(domainDTO.workflows().stream().findFirst().get().id())
-                                .validatorName("validator/DummyParentValidation.groovy")
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+
+        shopGroupId =
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                domainDTO.id(),
+                                NewShopGroupDTO.builder()
+                                        .name("shop1")
+                                        .description("shop1 user[2-3]")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                );
+        AssertionsForClassTypes.assertThat(shopGroupId).isNotEmpty();
+
+        locationId = assertDoesNotThrow(
+                () -> locationService.createNew(
+                        domainDTO.id(),
+                        NewLocationDTO.builder()
+                                .name("SLAC")
+                                .description("SLAC National Accelerator Laboratory")
+                                .locationManagerUserId("user1@slac.stanford.edu")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
     }
 
     @Test
@@ -298,5 +344,95 @@ public class BucketServiceTest {
         for (int i = 0; i < 10; i++) {
             assertThat(previous10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(98 - i));
         }
+    }
+
+    @Test
+    public void testWorkAssociationToABucket() {
+        var newBucketId = assertDoesNotThrow(
+                () -> bucketSlotService.createNew(
+                        NewBucketDTO.builder()
+                                .description("bucket-1")
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
+                                .from(LocalDateTime.of(2021, 1, 1, 0, 0))
+                                .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                .domainIds(Set.of(domainDTO.id()))
+                                .admittedWorkTypeIds(
+                                        Set.of(
+                                                BucketSlotWorkTypeDTO.builder()
+                                                        .domainId(domainDTO.id())
+                                                        .workTypeId(newWorkTypeId)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newBucketId).isNotNull();
+
+        // create a new work
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainDTO.id(),
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        // now try to add to the bucket
+        assertDoesNotThrow(
+                () -> workService.associateWorkToBucketSlot(
+                        domainDTO.id(),
+                        newWorkId,
+                        newBucketId,
+                        Optional.empty()
+                )
+        );
+
+        // get full work
+        var fullWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainDTO.id(), newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.currentBucketAssociation()).isNotNull();
+        assertThat(fullWork.currentBucketAssociation().bucketId()).isEqualTo(newBucketId);
+        assertThat(fullWork.currentBucketAssociation().rolled()).isEqualTo(false);
+
+        // try to add to the same bucket should trow an exception
+        assertThrows(
+                ControllerLogicException.class,
+                () -> workService.associateWorkToBucketSlot(
+                        domainDTO.id(),
+                        newWorkId,
+                        newBucketId,
+                        Optional.empty()
+                )
+        );
+
+        // try to remove the work from the bucket
+        assertDoesNotThrow(
+                () -> workService.removeWorkFromBucketSlot(
+                        domainDTO.id(),
+                        newWorkId,
+                        newBucketId
+                )
+        );
+
+        // now try to add to the bucket
+        assertDoesNotThrow(
+                () -> workService.associateWorkToBucketSlot(
+                        domainDTO.id(),
+                        newWorkId,
+                        newBucketId,
+                        Optional.empty()
+                )
+        );
     }
 }

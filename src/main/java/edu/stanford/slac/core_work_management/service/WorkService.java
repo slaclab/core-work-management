@@ -3,15 +3,13 @@ package edu.stanford.slac.core_work_management.service;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.*;
 import edu.stanford.slac.core_work_management.exception.*;
-import edu.stanford.slac.core_work_management.model.EmbeddableLocation;
-import edu.stanford.slac.core_work_management.model.UpdateWorkflowState;
-import edu.stanford.slac.core_work_management.model.Work;
-import edu.stanford.slac.core_work_management.model.WorkType;
+import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation;
 import edu.stanford.slac.core_work_management.service.workflow.*;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
@@ -53,6 +51,7 @@ public class WorkService {
 
     private final ScriptService scriptService;
     private final DomainService domainService;
+    private final BucketService bucketService;
     private final AuthService authService;
 
     private final WorkRepository workRepository;
@@ -552,6 +551,156 @@ public class WorkService {
     }
 
     /**
+     * Associate a work to a bucket slot
+     *
+     * @param domainId     the id of the domain
+     * @param workId       the id of the work
+     * @param bucketSlotId the id of the bucket slot
+     */
+    @Transactional
+    public void associateWorkToBucketSlot(String domainId, String workId, String bucketSlotId, Optional<Boolean> move) {
+        // check if bucket is present and get it
+        BucketSlotDTO bucketFound = bucketService.findById(bucketSlotId);
+        // check for domain
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-1)
+                        .errorMessage("Bucket not admin the domainId")
+                        .errorDomain("WorkService::associateWorkToBucketSlot")
+                        .build(),
+                // check if the domain admin the domain
+                () -> bucketFound.domainIds().contains(domainId)
+        );
+
+
+        // check if the work exists
+        var work = wrapCatch(
+                () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .workId(workId)
+                                .build()
+                ),
+                -2
+        );
+
+        // check for work type admission
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-3)
+                        .errorMessage("Bucket not admin the domainId")
+                        .errorDomain("WorkService::associateWorkToBucketSlot")
+                        .build(),
+                // check if the domain admin the domain
+                () -> bucketFound.admittedWorkType().stream().anyMatch(
+                        wt -> wt.id().compareTo(work.getWorkType().getId()) == 0 && wt.domainId().compareTo(work.getDomainId()) == 0)
+        );
+
+        // check if we need to force the api to move to another bucket
+        if(move.isEmpty() || !move.get()) {
+            // check work is not already associated to other bucket
+            assertion(
+                    ControllerLogicException
+                            .builder()
+                            .errorCode(-4)
+                            .errorMessage("Work already associated to a bucket")
+                            .errorDomain("WorkService::associateWorkToBucketSlot")
+                            .build(),
+                    () -> any(
+                            // check if work is already associated to some bucket
+                            () -> work.getCurrentBucketAssociation() == null
+                    )
+            );
+        }
+
+        // check if work is active into another bucket
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-5)
+                        .errorMessage("Work is already associated to the bucket")
+                        .errorDomain("WorkService::associateWorkToBucketSlot")
+                        .build(),
+                () -> any(
+                        // check if work is already associated to the target bucket
+                        () -> any(
+                                ()-> work.getCurrentBucketAssociation() == null,
+                                ()->work.getCurrentBucketAssociation().getBucketId().compareTo(bucketSlotId) != 0
+                        )
+                )
+        );
+
+        // at this point work is valid for the bucket ad we can associate them
+        if (work.getCurrentBucketAssociation() != null) {
+            work.getBucketAssociationsHistory().add(
+                    work.getCurrentBucketAssociation().toBuilder().rolled(true).build()
+            );
+        }
+        work.setCurrentBucketAssociation(
+                WorkBucketAssociation
+                        .builder()
+                        .bucketId(bucketSlotId)
+                        .rolled(false)
+                        .build()
+        );
+
+        // save the bucket slot
+        wrapCatch(
+                () -> workRepository.save(work),
+                -6
+        );
+    }
+
+    /**
+     * Remove a work from a bucket slot
+     *
+     * @param domainId     the id of the domain
+     * @param workId       the id of the work
+     * @param bucketSlotId the id of the bucket slot
+     */
+    @Transactional
+    public void removeWorkFromBucketSlot(String domainId, String workId, String bucketSlotId) {
+        // check if the work exists
+        var work = wrapCatch(
+                () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-2)
+                                .workId(workId)
+                                .build()
+                ),
+                -2
+        );
+
+        // check if the work is associated to the bucket
+        assertion(
+                ControllerLogicException
+                        .builder()
+                        .errorCode(-4)
+                        .errorMessage("Work is not associated to the bucket")
+                        .errorDomain("WorkService::removeWorkFromBucketSlot")
+                        .build(),
+                // the work can be only removed if it's associated to the bucket
+                () -> work.getCurrentBucketAssociation().getBucketId().compareTo(bucketSlotId) == 0
+        );
+
+        // remove the association
+        work.getBucketAssociationsHistory().add(
+                work.getCurrentBucketAssociation()
+        );
+        // clear current association
+        work.setCurrentBucketAssociation(null);
+        // save the work
+        wrapCatch(
+                () -> workRepository.save(work),
+                -5
+        );
+    }
+
+    /**
      * Return the work by his id
      *
      * @param id the id of the work
@@ -715,5 +864,18 @@ public class WorkService {
                 .build());
 
         return accessList;
+    }
+
+    /**
+     * Check if a work is associated to a bucket slot
+     *
+     * @param bucketId the id of the bucket
+     * @return true if the work is associated to the bucket slot
+     */
+    public boolean existByBucketSlotId(String bucketId) {
+        return wrapCatch(
+                () -> workRepository.existsByCurrentBucketAssociationBucketId(bucketId),
+                -1
+        );
     }
 }

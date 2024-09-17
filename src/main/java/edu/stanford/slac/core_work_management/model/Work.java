@@ -74,18 +74,15 @@ public class Work {
      * This field links the work to a specific user, identified by its ID.
      */
     private List<String> assignedTo;
-
     /**
      * The list of the custom fields associated with the activity.
      * The custom fields are used to store additional information about the activity.
      */
     private List<CustomField> customFields;
-
     /**
      * The list of the attachments associated with the work.
      */
     private List<String> attachments;
-
     /**
      * Is the actual status of the work.
      */
@@ -97,13 +94,20 @@ public class Work {
      */
     @Builder.Default
     private List<Notification> notificationsHistory = new ArrayList<>();
-
+    /**
+     * The list of the bucket association for the work
+     */
+    private WorkBucketAssociation currentBucketAssociation;
+    /**
+     * The list of the notifications associated with the work.
+     */
+    @Builder.Default
+    private List<WorkBucketAssociation> bucketAssociationsHistory = new ArrayList<>();
     /**
      * Is the full work status history
      */
     @Builder.Default
     private List<WorkStatusLog> statusHistory = new ArrayList<>();
-
     /**
      * The date and time when the work was created.
      * This field is automatically populated with the date and time of creation, using @CreatedDate annotation.
