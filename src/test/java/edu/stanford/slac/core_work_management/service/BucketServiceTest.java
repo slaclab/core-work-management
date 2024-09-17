@@ -102,9 +102,9 @@ public class BucketServiceTest {
                                 .description("bucket-1")
                                 .type(bucketTypeLOVIds.get(0))
                                 .status(bucketStatusLOVIds.get(0))
-                                .domainIds(Set.of(domainDTO.id()))
                                 .from(LocalDateTime.of(2021, 1, 1, 0, 0))
                                 .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                .domainIds(Set.of(domainDTO.id()))
                                 .admittedWorkTypeIds(
                                         Set.of(
                                                 BucketSlotWorkTypeDTO.builder()
@@ -131,7 +131,6 @@ public class BucketServiceTest {
         assertThat(fullBucketFound.admittedWorkType()).hasSize(1);
         assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(newWorkTypeId);
         assertThat(fullBucketFound.admittedWorkType().iterator().next().domainId()).isEqualTo(domainDTO.id());
-
     }
 
     @Test
@@ -159,7 +158,7 @@ public class BucketServiceTest {
                 )
         );
         assertThat(failed1).isNotNull();
-        assertThat(failed1.getConstraintViolations()).hasSize(5);
+        assertThat(failed1.getConstraintViolations()).hasSize(7);
         var failed2 = assertThrows(
                 ConstraintViolationException.class,
                 () -> bucketSlotService.createNew(
@@ -169,7 +168,7 @@ public class BucketServiceTest {
                 )
         );
         assertThat(failed2).isNotNull();
-        assertThat(failed2.getConstraintViolations()).hasSize(4);
+        assertThat(failed2.getConstraintViolations()).hasSize(6);
 
         var failed3 = assertThrows(
                 ConstraintViolationException.class,
@@ -181,7 +180,7 @@ public class BucketServiceTest {
                 )
         );
         assertThat(failed3).isNotNull();
-        assertThat(failed3.getConstraintViolations()).hasSize(3);
+        assertThat(failed3.getConstraintViolations()).hasSize(5);
 
         var failed4 = assertThrows(
                 ConstraintViolationException.class,
@@ -194,7 +193,7 @@ public class BucketServiceTest {
                 )
         );
         assertThat(failed4).isNotNull();
-        assertThat(failed4.getConstraintViolations()).hasSize(2);
+        assertThat(failed4.getConstraintViolations()).hasSize(4);
 
         var failed5 = assertThrows(
                 ConstraintViolationException.class,
@@ -208,7 +207,7 @@ public class BucketServiceTest {
                 )
         );
         assertThat(failed5).isNotNull();
-        assertThat(failed5.getConstraintViolations()).hasSize(1);
+        assertThat(failed5.getConstraintViolations()).hasSize(3);
 
         var failed6 = assertThrows(
                 ConstraintViolationException.class,
@@ -222,7 +221,7 @@ public class BucketServiceTest {
                 )
         );
         assertThat(failed6).isNotNull();
-        assertThat(failed6.getConstraintViolations()).hasSize(1);
+        assertThat(failed6.getConstraintViolations()).hasSize(3);
     }
 
     @Test
@@ -237,6 +236,15 @@ public class BucketServiceTest {
                                     .status(bucketStatusLOVIds.getFirst())
                                     .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
                                     .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                    .domainIds(Set.of(domainDTO.id()))
+                                    .admittedWorkTypeIds(
+                                            Set.of(
+                                                    BucketSlotWorkTypeDTO.builder()
+                                                            .domainId(domainDTO.id())
+                                                            .workTypeId(newWorkTypeId)
+                                                            .build()
+                                            )
+                                    )
                                     .build()
                     )
             );
