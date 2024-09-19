@@ -21,6 +21,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 import edu.stanford.slac.core_work_management.model.BucketSlotWorkType;
+import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import org.mapstruct.*;
@@ -31,7 +32,9 @@ import java.util.Set;
 
 @Mapper(
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        componentModel = MappingConstants.ComponentModel.SPRING
+        componentModel = MappingConstants.ComponentModel.SPRING,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
 public abstract class BucketSlotMapper {
     @Autowired
@@ -46,6 +49,14 @@ public abstract class BucketSlotMapper {
      * @return the bucket slot model
      */
     public abstract BucketSlot toModel(NewBucketDTO dto);
+
+    /**
+     * Convert a bucket slot model to a bucket slot DTO
+     *
+     * @param work the bucket slot model
+     * @return the bucket slot DTO
+     */
+    abstract public BucketSlot updateModel(UpdateBucketDTO dto, @MappingTarget BucketSlot work);
 
     /**
      * Convert a bucket slot query parameter DTO to a bucket slot query parameter model

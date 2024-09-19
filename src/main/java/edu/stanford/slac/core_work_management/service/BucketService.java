@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateBucketDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.BucketSlotMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityAlreadyAssociatedToSlot;
 import edu.stanford.slac.core_work_management.exception.BucketSlotNotFound;
@@ -75,6 +76,62 @@ public class BucketService {
         );
         // save and return id
         return  wrapCatch(()->bucketSlotRepository.save(bs), -3).getId();
+    }
+
+    /**
+     * This method is used to update a bucket slot
+     *
+     * @param id the id of the bucket slot
+     * @param updateBucketDTO the update bucket DTO
+     */
+    public void update(String id, UpdateBucketDTO updateBucketDTO) {
+        var foundBucket = wrapCatch(
+                ()->bucketSlotRepository
+                .findById(id)
+                .orElseThrow(
+                        () -> BucketSlotNotFound.byId().id(id).build()
+                ),
+                -1
+        );
+        // check if the domains exists
+        if(updateBucketDTO.domainIds()!=null){
+            updateBucketDTO.domainIds().forEach(
+                    did->
+                            assertion(
+                                    DomainNotFound
+                                            .notFoundById()
+                                            .id(did)
+                                            .errorCode(-2)
+                                            .build(),
+                                    () -> domainService.existsById(did)
+                            )
+            );
+        }
+
+
+        // check if work type exists
+        if(updateBucketDTO.admittedWorkTypeIds()!=null){
+            updateBucketDTO.admittedWorkTypeIds().forEach(
+                    idBundle->
+                            assertion(
+                                    WorkTypeNotFound
+                                            .notFoundById()
+                                            .workId(idBundle.workTypeId())
+                                            .errorCode(-3)
+                                            .build(),
+                                    () -> domainService.existsWrkTypeByDomainIdAndId(idBundle.domainId(), idBundle.workTypeId())
+                            )
+            );
+        }
+
+        // validate the bucket slot
+        BucketSlot updatedBucket = bucketSlotMapper.updateModel(updateBucketDTO, foundBucket);
+        assertion(
+                ControllerLogicException.builder().build(),
+                () -> bucketValidationService.verify(updatedBucket)
+        );
+        // save and return id
+        wrapCatch(()->bucketSlotRepository.save(updatedBucket), -4);
     }
 
     /**

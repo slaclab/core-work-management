@@ -180,6 +180,68 @@ public class BucketServiceTest {
     }
 
     @Test
+    public void updateBucketAndFindIt() {
+        var newBucketId = assertDoesNotThrow(
+                () -> bucketSlotService.createNew(
+                        NewBucketDTO.builder()
+                                .description("bucket-1")
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
+                                .from(LocalDateTime.of(2021, 1, 1, 0, 0))
+                                .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                .domainIds(Set.of(domainDTO.id()))
+                                .admittedWorkTypeIds(
+                                        Set.of(
+                                                BucketSlotWorkTypeDTO.builder()
+                                                        .domainId(domainDTO.id())
+                                                        .workTypeId(newWorkTypeId)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newBucketId).isNotNull();
+
+        // update bucket
+        assertDoesNotThrow(
+                () -> bucketSlotService.update(
+                        newBucketId,
+                        UpdateBucketDTO.builder()
+                                .description("bucket-1 updated")
+                                .type(bucketTypeLOVIds.get(1))
+                                .from(LocalDateTime.of(2022, 1, 1, 0, 0))
+                                .to(LocalDateTime.of(2022, 1, 3, 23, 0))
+                                .admittedWorkTypeIds(
+                                        Set.of(
+                                                BucketSlotWorkTypeDTO.builder()
+                                                        .domainId(domainDTO.id())
+                                                        .workTypeId(newWorkTypeId)
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+
+        var fullBucketFound = assertDoesNotThrow(
+                () -> bucketSlotService.findById(newBucketId)
+        );
+        assertThat(fullBucketFound).isNotNull();
+        assertThat(fullBucketFound.id()).isEqualTo(newBucketId);
+        assertThat(fullBucketFound.description()).isEqualTo("bucket-1 updated");
+        assertThat(fullBucketFound.type().id()).isEqualTo(bucketTypeLOVIds.get(1));
+        assertThat(fullBucketFound.status().id()).isEqualTo(bucketStatusLOVIds.get(0));
+        assertThat(fullBucketFound.from()).isEqualTo(LocalDateTime.of(2022, 1, 1, 0, 0));
+        assertThat(fullBucketFound.to()).isEqualTo(LocalDateTime.of(2022, 1, 3, 23, 0));
+        assertThat(fullBucketFound.admittedWorkType()).hasSize(1);
+        assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(newWorkTypeId);
+        assertThat(fullBucketFound.admittedWorkType().iterator().next().domainId()).isEqualTo(domainDTO.id());
+
+    }
+
+    @Test
     public void testFieldReferenceToFindLOV() {
         var allPossibleBucketType = assertDoesNotThrow(
                 () -> lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Bucket, null, "bucket", "type")

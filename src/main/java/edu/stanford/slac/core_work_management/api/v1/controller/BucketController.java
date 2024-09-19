@@ -89,7 +89,7 @@ public class BucketController {
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a bucket by id")
-    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @bucketAuthorizationService.canDeleteById(#authentication,#id)")
     public ApiResultResponse<Boolean> deleteById(
             Authentication authentication,
             @PathVariable("id") String id
