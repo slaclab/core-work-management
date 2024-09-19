@@ -8,5 +8,6 @@ public enum ValueType {
     Date,
     DateTime,
     LOV,
-    Attachments
+    Attachments,
+    Bucket
 }

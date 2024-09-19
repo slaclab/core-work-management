@@ -8,14 +8,10 @@ import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
-import edu.stanford.slac.core_work_management.exception.WorkTypeNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.model.value.*;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
-import edu.stanford.slac.core_work_management.service.DomainService;
-import edu.stanford.slac.core_work_management.service.LOVService;
-import edu.stanford.slac.core_work_management.service.LocationService;
-import edu.stanford.slac.core_work_management.service.ShopGroupService;
+import edu.stanford.slac.core_work_management.service.*;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -29,7 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 /**
@@ -52,6 +47,8 @@ public abstract class WorkMapper {
     LOVService lovService;
     @Autowired
     DomainService domainService;
+    @Autowired
+    BucketService bucketService;
     @Autowired
     WorkTypeRepository workTypeRepository;
     @Autowired
@@ -351,6 +348,12 @@ public abstract class WorkMapper {
                             .value(attachmentIds)
                             .build();
                 }
+                case Bucket -> {
+                    return BucketValue
+                            .builder()
+                            .value(value.value())
+                            .build();
+                }
 
                 default -> throw ControllerLogicException.builder()
                         .errorCode(-4)
@@ -429,12 +432,19 @@ public abstract class WorkMapper {
                     .originalValue(lovElementFound)
                     .build();
         } else if (valueType.isAssignableFrom(AttachmentsValue.class)) {
-            //TODO: test with attachment ids
             newAttributeValue = ValueDTO
                     .builder()
                     .type(ValueTypeDTO.Attachments)
                     .value(String.join(",", ((AttachmentsValue) abstractValue).getValue()))
                     .originalValue(abstractValue)
+                    .build();
+        } else if (valueType.isAssignableFrom(BucketValue.class)) {
+             var bucketSlotDTO = bucketService.findById(((BucketValue) abstractValue).getValue());
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Bucket)
+                    .value("%s[%s]".formatted(bucketSlotDTO.type().value(), bucketSlotDTO.description()!=null?bucketSlotDTO.description():""))
+                    .originalValue(bucketSlotDTO)
                     .build();
         } else {
             throw ControllerLogicException.builder()

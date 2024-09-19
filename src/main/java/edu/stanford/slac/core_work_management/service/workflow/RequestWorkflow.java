@@ -23,16 +23,20 @@ import java.util.Set;
 public class RequestWorkflow extends BaseWorkflow {
     public RequestWorkflow() {
         validTransitions = Map.of(
-                // Rule: workStatus = "Approved"
-                WorkflowState.Submitted, Set.of(WorkflowState.Approved),
-                // Rule: becomes active when startDate starts
-                WorkflowState.Approved, Set.of(WorkflowState.InProgress),
-                // Rule: becomes active when endDate reaches or user tag completed the work
+                // Rule: Work gets put into a bucket
+                WorkflowState.Created, Set.of(WorkflowState.PendingApproval),
+
+                // Rule: Area manager approves, if a safety form = true, then it needs to be attached
+                WorkflowState.PendingApproval, Set.of(WorkflowState.ReadyForWork),
+
+                // Rule: Start date has begun
+                WorkflowState.ReadyForWork, Set.of(WorkflowState.InProgress),
+
+                // Rule: Work is marked as complete by user, admin gets notified
                 WorkflowState.InProgress, Set.of(WorkflowState.WorkComplete),
-                // user/admin automatically close the work
-                WorkflowState.WorkComplete, Set.of(WorkflowState.ReviewToClose),
-                // Rule: the area manager close the work
-                WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed)
+
+                // Rule: Admin manually closes
+                WorkflowState.WorkComplete, Set.of(WorkflowState.Closed)
         );
     }
 

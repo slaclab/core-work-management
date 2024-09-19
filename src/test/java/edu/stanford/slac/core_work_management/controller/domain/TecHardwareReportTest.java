@@ -65,6 +65,7 @@ public class TecHardwareReportTest {
         mongoTemplate.remove(LOVElement.class).all();
         mongoTemplate.remove(Location.class).all();
         mongoTemplate.remove(ShopGroup.class).all();
+        mongoTemplate.remove(BucketSlot.class).all();
 
         M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
         assertDoesNotThrow(initLOV::initLOV);

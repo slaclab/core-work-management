@@ -22,7 +22,8 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = DoubleValue.class, name = "double-value"),
         @JsonSubTypes.Type(value = StringValue.class, name = "string-value"),
         @JsonSubTypes.Type(value = LOVValue.class, name = "lov-value"),
-        @JsonSubTypes.Type(value = AttachmentsValue.class, name = "attachments-value")
+        @JsonSubTypes.Type(value = AttachmentsValue.class, name = "attachments-value"),
+        @JsonSubTypes.Type(value = BucketValue.class, name = "bucket-value")
 })
 
 public class AbstractValue {}

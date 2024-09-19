@@ -61,7 +61,7 @@ public class BucketService {
                         WorkTypeNotFound
                                 .notFoundById()
                                 .workId(idBundle.workTypeId())
-                                .errorCode(-1)
+                                .errorCode(-2)
                                 .build(),
                         () -> domainService.existsWrkTypeByDomainIdAndId(idBundle.domainId(), idBundle.workTypeId())
                 )
@@ -73,8 +73,8 @@ public class BucketService {
                 ControllerLogicException.builder().build(),
                 () -> bucketValidationService.verify(bs)
         );
-        var savedBucketSlot = bucketSlotRepository.save(bs);
-        return savedBucketSlot.getId();
+        // save and return id
+        return  wrapCatch(()->bucketSlotRepository.save(bs), -3).getId();
     }
 
     /**
@@ -93,6 +93,19 @@ public class BucketService {
                                 ),
                         -1
                 )
+        );
+    }
+
+    /**
+     * This method is used to update a bucket slot
+     *
+     * @param id the id of the bucket slot
+     * @return the updated bucket slot DTO
+     */
+    public boolean existsById(String id) {
+        return wrapCatch(
+                ()->bucketSlotRepository.existsById(id),
+                -1
         );
     }
 

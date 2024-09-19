@@ -1033,5 +1033,124 @@ public class M1000_InitLOV {
                                 .build()
                 )
         );
+        lovService.createNew(
+                "SchedulingPriorityGroup",
+                List.of(
+                        NewLOVElementDTO.builder()
+                                .value("Benign")
+                                .description("Benign")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Downtime")
+                                .description("Downtime")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("POMM")
+                                .description("POMM")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("PAMM")
+                                .description("PAMM")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("SML")
+                                .description("SML")
+                                .build()
+                )
+        );
+        lovService.createNew(
+                "AccessRequirementsGroup",
+                List.of(
+                        NewLOVElementDTO.builder()
+                                .value("Any Access")
+                                .description("Any Access")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Controlled Access")
+                                .description("Controlled Access")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("No Access")
+                                .description("No Access")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Permitted Access")
+                                .description("Permitted Access")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Restricted Access")
+                                .description("Restricted Access")
+                                .build()
+                )
+        );
+
+        lovService.createNew(
+                "PPSZoneGroup",
+                List.of(
+                        NewLOVElementDTO.builder().value("ANY").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("All").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("BDE").description("Beam Dump East").build(),
+                        NewLOVElementDTO.builder().value("BSY and BTHW").description("Beam Switch Yard").build(),
+                        NewLOVElementDTO.builder().value("BTH (LTU and UND)").description("This Zone includes the Linac To Undulator (LTU) and the UND").build(),
+                        NewLOVElementDTO.builder().value("CID").description("CID").build(),
+                        NewLOVElementDTO.builder().value("DMP (EBD)").description("Electron Beam Dump is East of the BTH PPS zone and West of the Front End Enclosure (FEE) PPS zone").build(),
+                        NewLOVElementDTO.builder().value("DRIP").description("DRIP").build(),
+                        NewLOVElementDTO.builder().value("E+ Vault").description("Positron Vault").build(),
+                        NewLOVElementDTO.builder().value("EBD-FEE").description("Electron Beam Dump - Front End Enclosure").build(),
+                        NewLOVElementDTO.builder().value("ESA").description("End Station A").build(),
+                        NewLOVElementDTO.builder().value("FEE").description("Front End Enclosure").build(),
+                        NewLOVElementDTO.builder().value("FEH").description("Far Experimental Hall B999 (XCS CXI MEC)").build(),
+                        NewLOVElementDTO.builder().value("FFTB").description("FFTB").build(),
+                        NewLOVElementDTO.builder().value("GTL").description("Gun Test Lab B006").build(),
+                        NewLOVElementDTO.builder().value("HX-2").description("The HX-2 (Heat Exchanger 2) enclosure").build(),
+                        NewLOVElementDTO.builder().value("Injector West").description("LCLS2 Injector PPS Zone").build(),
+                        NewLOVElementDTO.builder().value("LCLS-INJ").description("LCLS injector vault at sector 20").build(),
+                        NewLOVElementDTO.builder().value("LI00/LI01").description("Linac Sector 00 & 01").build(),
+                        NewLOVElementDTO.builder().value("LI01-LI07").description("Linac West Sectors").build(),
+                        NewLOVElementDTO.builder().value("LI02/LI03").description("Linac Sector 02 & 03").build(),
+                        NewLOVElementDTO.builder().value("LI04/LI05").description("Linac Sector 04 & 05").build(),
+                        NewLOVElementDTO.builder().value("LI04/Li07").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("LI06/LI07").description("Linac Sector 06 & 07").build(),
+                        NewLOVElementDTO.builder().value("LI08-LI10A").description("Linac West Sectors").build(),
+                        NewLOVElementDTO.builder().value("LI08/LI09").description("Linac Sector 08 & 09").build(),
+                        NewLOVElementDTO.builder().value("LI10/LI11").description("Linac Sector 10 & 11").build(),
+                        NewLOVElementDTO.builder().value("LI12/LI13").description("Linac Sector 12 & 13").build(),
+                        NewLOVElementDTO.builder().value("LI14/LI15").description("Linac Sector 14 & 15").build(),
+                        NewLOVElementDTO.builder().value("LI16/17/18").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("LI16/LI17").description("Linac Sector 16 & 17").build(),
+                        NewLOVElementDTO.builder().value("LI18").description("New zone").build(),
+                        NewLOVElementDTO.builder().value("LI18/LI19").description("Linac Sector 18 & 19").build(),
+                        NewLOVElementDTO.builder().value("LI19/LI20").description("New Zone").build(),
+                        NewLOVElementDTO.builder().value("LI20/LI21").description("Linac Sector 20 & 21").build(),
+                        NewLOVElementDTO.builder().value("LI20/LI25").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("LI21").description("New zone").build(),
+                        NewLOVElementDTO.builder().value("LI21-LI23").description("New Linac East PPS Zone 21-23").build(),
+                        NewLOVElementDTO.builder().value("LI22/LI23").description("Linac Sector 22 & 23").build(),
+                        NewLOVElementDTO.builder().value("LI24/LI25").description("Linac Sector 24 & 25").build(),
+                        NewLOVElementDTO.builder().value("LI26-LI29").description("Linac East Sectors 26, 27, 28, 29").build(),
+                        NewLOVElementDTO.builder().value("LI26/LI27").description("Linac Sector 26 & 27").build(),
+                        NewLOVElementDTO.builder().value("LI28/LI29").description("Linac Sector 28 & 29").build(),
+                        NewLOVElementDTO.builder().value("LI30").description("Linac Sector 30").build(),
+                        NewLOVElementDTO.builder().value("NA").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("NARC").description("North SLC Arc").build(),
+                        NewLOVElementDTO.builder().value("NDR").description("North Damping Ring").build(),
+                        NewLOVElementDTO.builder().value("NEH").description("Near Experimental Hall/Cup B950 (AMO SXR XPP)").build(),
+                        NewLOVElementDTO.builder().value("NFF").description("North Final Focus").build(),
+                        NewLOVElementDTO.builder().value("NIT").description("NIT").build(),
+                        NewLOVElementDTO.builder().value("PEP Z02").description("PEP Zone 02").build(),
+                        NewLOVElementDTO.builder().value("PEP Z04").description("PEP Zone 04").build(),
+                        NewLOVElementDTO.builder().value("PEP Z08").description("PEP II ring, PPS Zone 8").build(),
+                        NewLOVElementDTO.builder().value("PEP Z08/12").description("Unknown").build(),
+                        NewLOVElementDTO.builder().value("PEP Z12").description("PEP Zone 12").build(),
+                        NewLOVElementDTO.builder().value("Research Yard").description("Research Yard Fenced Area").build(),
+                        NewLOVElementDTO.builder().value("S10 Injector").description("FACET2 Injector").build(),
+                        NewLOVElementDTO.builder().value("SARC").description("South SLC Arc").build(),
+                        NewLOVElementDTO.builder().value("SDR").description("South Damping Ring").build(),
+                        NewLOVElementDTO.builder().value("SFF").description("South Final Focus").build(),
+                        NewLOVElementDTO.builder().value("SIT").description("SIT").build(),
+                        NewLOVElementDTO.builder().value("XRT").description("X-ray Transport Tunnel B960").build(),
+                        NewLOVElementDTO.builder().value("li06-li09").description("Unknown").build()
+                )
+        );
     }
 }
