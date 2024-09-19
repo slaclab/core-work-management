@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateBucketDTO;
 import edu.stanford.slac.core_work_management.service.BucketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -83,11 +84,28 @@ public class BucketController {
         return ApiResultResponse.of(bucketService.findById(id));
     }
 
+    @PutMapping(
+            value = "/{id}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Update a bucket by id")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @bucketAuthorizationService.canUpdateById(#authentication,#id)")
+    public ApiResultResponse<Boolean> updateById(
+            Authentication authentication,
+            @PathVariable("id") String id,
+            @RequestBody @Valid UpdateBucketDTO updateBucketDTO
+    ) {
+        bucketService.update(id, updateBucketDTO);
+        return ApiResultResponse.of(true);
+    }
+
     @DeleteMapping(
             value = "/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Delete a bucket by id")
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @bucketAuthorizationService.canDeleteById(#authentication,#id)")
     public ApiResultResponse<Boolean> deleteById(

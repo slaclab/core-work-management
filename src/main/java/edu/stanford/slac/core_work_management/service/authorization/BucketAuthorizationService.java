@@ -61,4 +61,14 @@ public class BucketAuthorizationService {
      * @return true if the user can find all buckets, false otherwise
      */
     public boolean getCanDeleteById(Authentication authentication, String bucketId) {return true;}
+
+    /**
+     * This method is used to check if the user can update a bucket by id
+     *
+     * @param authentication the authentication object
+     * @param bucketId the bucket id
+     * @return true if the user can update a bucket by id, false otherwise
+     */
+    public boolean getCanUpdateById(Authentication authentication, String bucketId) {return true;}
+
 }
