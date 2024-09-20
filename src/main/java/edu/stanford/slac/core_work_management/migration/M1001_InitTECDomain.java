@@ -84,7 +84,7 @@ public class M1001_InitTECDomain {
                         .title("Hardware Request")
                         .description("It is used to request a new hardware job intervention")
                         .workflowId(requestWorkflow.id())
-                        .validatorName("TECHardwareRequestValidation")
+                        .validatorName("validation/TECHardwareRequestValidation.groovy")
                         .customFields(
                                 List.of(
                                         WATypeCustomFieldDTO.builder().label("schedulingPriority").description("Scheduling Priority").valueType(ValueTypeDTO.LOV).additionalMappingInfo("SchedulingPriorityGroup").group("Scheduling").isMandatory(true).build(),
@@ -92,7 +92,7 @@ public class M1001_InitTECDomain {
                                         WATypeCustomFieldDTO.builder().label("timeHrs").description("Time (hrs)").valueType(ValueTypeDTO.Double).group("Scheduling").isMandatory(true).build(),
                                         WATypeCustomFieldDTO.builder().label("plannedStartDateTime").description("Planned Start Date & Time").valueType(ValueTypeDTO.DateTime).group("Scheduling").isMandatory(true).build(),
                                         WATypeCustomFieldDTO.builder().label("plannedStopDateTime").description("Planned Stop Date & Time").valueType(ValueTypeDTO.DateTime).group("Scheduling").isMandatory(false).build(),
-                                        WATypeCustomFieldDTO.builder().label("accessRequirements").description("Access Requirements").valueType(ValueTypeDTO.LOV).additionalMappingInfo("AccessRequirementGroup").group("Special Instructions and Dependencies").isMandatory(true).build(),
+                                        WATypeCustomFieldDTO.builder().label("accessRequirements").description("Access Requirements").valueType(ValueTypeDTO.LOV).additionalMappingInfo("AccessRequirementsGroup").group("Special Instructions and Dependencies").isMandatory(true).build(),
                                         WATypeCustomFieldDTO.builder().label("ppsZone").description("PPS Zone").valueType(ValueTypeDTO.LOV).additionalMappingInfo("PPSZoneGroup").group("Special Instructions and Dependencies").isMandatory(true).build(),
                                         WATypeCustomFieldDTO.builder().label("rpfoSurvey").description("RPFO Survey").valueType(ValueTypeDTO.Boolean).group("Special Instructions and Dependencies").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("radiationRemovalSurvey").description("Radiation Removal Survey").valueType(ValueTypeDTO.Boolean).group("Special Instructions and Dependencies").isMandatory(false).build(),
@@ -147,7 +147,8 @@ public class M1001_InitTECDomain {
                         .title("Hardware Report")
                         .description("It is used to report an hardware issue")
                         .workflowId(reportWorkflow.id())
-                        .validatorName("TECHardwareReportValidation")
+                        .validatorName("validation/TECHardwareReportValidation.groovy")
+                        .childWorkTypeIds(Set.of(newHardwareRequestId))
                         .customFields(
                                 List.of(
                                         WATypeCustomFieldDTO.builder().label("Group").description("Group").valueType(ValueTypeDTO.LOV).additionalMappingInfo("ProjectGroup").group("General Information").isMandatory(true).build(),

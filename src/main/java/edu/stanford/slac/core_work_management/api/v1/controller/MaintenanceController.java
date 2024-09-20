@@ -1,6 +1,7 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -77,20 +78,20 @@ public class MaintenanceController {
             (
                     Authentication authentication,
                     @Parameter(description = "The maximum number of bucket slots to return")
-                    @RequestParam(value = "limit", required = false, defaultValue = "0") int limit,
+                    @RequestParam(value = "limit", required = false, defaultValue = "10") Optional<Integer> limit,
                     @Parameter(description = "The size of the context to return")
-                    @RequestParam(value = "contextSize", required = false, defaultValue = "0") int contextSize,
+                    @RequestParam(value = "contextSize", required = false, defaultValue = "0") Optional<Integer> contextSize,
                     @Parameter(description = "The id of the anchor to use for pagination")
-                    @RequestParam(value = "anchorId", required = false) String anchorId
+                    @RequestParam(value = "anchorId", required = false) Optional<String> anchorId
 
             ) {
         return ApiResultResponse.of(
                 bucketService.findAll(
                         BucketQueryParameterDTO
                                 .builder()
-                                .limit(limit)
-                                .contextSize(contextSize)
-                                .anchorID(anchorId)
+                                .limit(limit.orElse(10))
+                                .contextSize(contextSize.orElse(0))
+                                .anchorID(anchorId.orElse(null))
                                 .build()
                 )
         );
