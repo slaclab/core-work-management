@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.service.validation;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
+import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.service.workflow.AdmitChildrenValidation;
 import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation;
@@ -80,6 +81,36 @@ public abstract class WorkTypeValidation {
     /**
      * Check if the status of the work is equal to any provided states
      *
+     * @param workTypeCustomField the list of the custom field associated to the work type
+     * @param workCustomField     the list of the custom field associated to the work
+     * @param customFieldName     the name of the custom field to check
+     */
+    protected ValidationResult<CustomField> checkWorkFiledPresence(List<WATypeCustomField> workTypeCustomField, List<CustomField> workCustomField, String customFieldName) {
+        var filedToCheck = workTypeCustomField.stream()
+                .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName) == 0)
+                .findFirst();
+
+        if (filedToCheck.isPresent() && workCustomField != null) {
+            var customFieldFound = workCustomField.stream()
+                    .filter(customField -> customField.getId().compareTo(filedToCheck.get().getId()) == 0)
+                    .findFirst();
+
+            if (customFieldFound.isEmpty()) {
+                // Return a failure validation result if the custom field is required but not found
+                return ValidationResult.failure("The custom field '%s' is required".formatted(customFieldName));
+            }
+
+            // Return success if the custom field is found
+            return ValidationResult.success(customFieldFound.get());
+        }
+
+        // Return failure if the field was not found in the list of custom fields
+        return ValidationResult.failure("The custom field '%s' is not present".formatted(customFieldName));
+    }
+
+    /**
+     * Check if the status of the work is equal to any provided states
+     *
      * @param fieldValue the value of the field to check
      * @param fieldName  the name of the field to check
      */
@@ -92,4 +123,6 @@ public abstract class WorkTypeValidation {
         // Return success with the field name as payload
         return ValidationResult.success(fieldName);
     }
+
+
 }

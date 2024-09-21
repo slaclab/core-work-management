@@ -573,9 +573,8 @@ public class WorkService {
                 () -> bucketFound.domainIds().contains(domainId)
         );
 
-
         // check if the work exists
-        var work = wrapCatch(
+        var foundWork = wrapCatch(
                 () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
                         () -> WorkNotFound
                                 .notFoundById()
@@ -596,11 +595,11 @@ public class WorkService {
                         .build(),
                 // check if the domain admin the domain
                 () -> bucketFound.admittedWorkType().stream().anyMatch(
-                        wt -> wt.id().compareTo(work.getWorkType().getId()) == 0 && wt.domainId().compareTo(work.getDomainId()) == 0)
+                        wt -> wt.id().compareTo(foundWork.getWorkType().getId()) == 0 && wt.domainId().compareTo(foundWork.getDomainId()) == 0)
         );
 
         // check if we need to force the api to move to another bucket
-        if(move.isEmpty() || !move.get()) {
+        if (move.isEmpty() || !move.get()) {
             // check work is not already associated to other bucket
             assertion(
                     ControllerLogicException
@@ -611,7 +610,7 @@ public class WorkService {
                             .build(),
                     () -> any(
                             // check if work is already associated to some bucket
-                            () -> work.getCurrentBucketAssociation() == null
+                            () -> foundWork.getCurrentBucketAssociation() == null
                     )
             );
         }
@@ -627,19 +626,19 @@ public class WorkService {
                 () -> any(
                         // check if work is already associated to the target bucket
                         () -> any(
-                                ()-> work.getCurrentBucketAssociation() == null,
-                                ()->work.getCurrentBucketAssociation().getBucketId().compareTo(bucketSlotId) != 0
+                                () -> foundWork.getCurrentBucketAssociation() == null,
+                                () -> foundWork.getCurrentBucketAssociation().getBucketId().compareTo(bucketSlotId) != 0
                         )
                 )
         );
 
         // at this point work is valid for the bucket ad we can associate them
-        if (work.getCurrentBucketAssociation() != null) {
-            work.getBucketAssociationsHistory().add(
-                    work.getCurrentBucketAssociation().toBuilder().rolled(true).build()
+        if (foundWork.getCurrentBucketAssociation() != null) {
+            foundWork.getBucketAssociationsHistory().add(
+                    foundWork.getCurrentBucketAssociation().toBuilder().rolled(true).build()
             );
         }
-        work.setCurrentBucketAssociation(
+        foundWork.setCurrentBucketAssociation(
                 WorkBucketAssociation
                         .builder()
                         .bucketId(bucketSlotId)
@@ -647,9 +646,14 @@ public class WorkService {
                         .build()
         );
 
+        // lastly we need to update the workflow
+        updateWorkWorkflow(
+                foundWork,
+                null);
+
         // save the bucket slot
         wrapCatch(
-                () -> workRepository.save(work),
+                () -> workRepository.save(foundWork),
                 -6
         );
     }

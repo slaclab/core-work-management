@@ -12,15 +12,15 @@ public class ValidationResult<T> {
     private final String errorMessage;
     private final T payload;
 
-    static ValidationResult<Object> success() {
+    static public ValidationResult<Object> success() {
         return ValidationResult.builder().isValid(true).build();
     }
 
-    static <T> ValidationResult<T> success(T payload) {
+    static public <T> ValidationResult<T> success(T payload) {
         return ValidationResult.<T>builder().isValid(true).payload(payload).build();
     }
 
-    static <T> ValidationResult<T> failure(String errorMessage) {
+    static public <T> ValidationResult<T> failure(String errorMessage) {
         return ValidationResult.<T>builder().isValid(false).errorMessage(errorMessage).build();
     }
 }
