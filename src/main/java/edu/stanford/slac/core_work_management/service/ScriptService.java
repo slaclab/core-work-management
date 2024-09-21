@@ -116,6 +116,7 @@ public class ScriptService {
     public <T> T getInterfaceImplementation(String scriptContent, Class<T> expectedType) {
         T instance = null;
         try {
+            AutowireCapableBeanFactory factory = applicationContext.getAutowireCapableBeanFactory();
             // Generate a unique key for the script using a hash of the script content
             String scriptKey = hashScript(scriptContent);
 
@@ -131,11 +132,7 @@ public class ScriptService {
             }
             // Create an instance of the Groovy class
             // noinspection unchecked
-            instance = (T) groovyClass.getDeclaredConstructor().newInstance();
-
-            // Autowire dependencies into the instance using Spring's AutowireCapableBeanFactory
-            AutowireCapableBeanFactory factory = applicationContext.getAutowireCapableBeanFactory();
-            factory.autowireBean(instance);  // Injects @Autowired dependencies into the script
+            instance = (T) factory.createBean(groovyClass);  // Create a new instance of the script
         } catch (Exception e) {
             throw ControllerLogicException.builder()
                     .errorMessage("Failed to create script instances: " + e.getMessage())

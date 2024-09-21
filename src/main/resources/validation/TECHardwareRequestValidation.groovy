@@ -124,7 +124,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         ]
 
         // in case the safety form is needed i need to check if the user has uploaded the file
-        if(radiationSafetyWorkControlForm.valid && ((BooleanValue)radiationSafetyWorkControlForm.payload.getValue()).value) {
+        if(radiationSafetyWorkControlForm.valid && (radiationSafetyWorkControlForm.payload.value as BooleanValue).value) {
             // check for safety attachment
             ValidationResult<CustomField> rswcfAttachments = null;
             validationResults.add(rswcfAttachments = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "rswcfAttachments"));
@@ -156,18 +156,16 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
  */
     private List<ValidationResult<String>> checkAssignedTo(Work work) {
         List<ValidationResult<String>> result = new ArrayList<>();
+        def assignedUsers = work.getAssignedTo() ?: []
         // the assignedTo can be null or empty only if we are in created state
-        if(result) {
-            for (String user : work.getAssignedTo()) {
-                try{
-                    peopleGroupService.findPersonByEMail(user);
-                } catch (PersonNotFound e) {
-                    result.add(ValidationResult.failure("The user '%s' does not exist".formatted(user)));
-                }
+        assignedUsers.each { user ->
+            try {
+                peopleGroupService.findPersonByEMail(user)
+            } catch (PersonNotFound e) {
+                result.add(ValidationResult.failure("The user '${user}' does not exist"))
             }
-
         }
-        return List.of(ValidationResult.success("assignedTo"));
+        return result.isEmpty() ? [ValidationResult.success("assignedTo")] : result
     }
 
 }
