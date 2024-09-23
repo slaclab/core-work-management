@@ -18,7 +18,6 @@
 package edu.stanford.slac.core_work_management.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.stanford.slac.core_work_management.api.v1.dto.ValueDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.WorkMapper;
 import org.junit.jupiter.api.Test;

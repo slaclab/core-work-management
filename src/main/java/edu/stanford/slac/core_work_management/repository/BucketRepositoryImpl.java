@@ -18,24 +18,28 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.BucketSlot;
+import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 @Repository
 @AllArgsConstructor
 public class BucketRepositoryImpl implements BucketRepositoryCustom {
     private final MongoTemplate mongoTemplate;
+
     /**
      * Search all the work
+     *
      * @param queryParameter the query parameter
      * @return the list of work
      */
@@ -43,7 +47,7 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
     public List<BucketSlot> searchAll(BucketSlotQueryParameter queryParameter) {
         if (
                 queryParameter.getContextSize() != null &&
-                        queryParameter.getContextSize() >0 &&
+                        queryParameter.getContextSize() > 0 &&
                         queryParameter.getAnchorID() == null
         ) {
             throw ControllerLogicException
@@ -56,15 +60,108 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
 
         // all the criteria
         List<Criteria> allCriteria = new ArrayList<>();
-        LocalDateTime anchorCreatedDate = queryParameter.getAnchorID() != null?getAnchorCreatedDate(queryParameter.getAnchorID()):null;
+        LocalDateTime anchorCreatedDate = queryParameter.getAnchorID() != null ? getAnchorCreatedDate(queryParameter.getAnchorID()) : null;
         List<BucketSlot> elementsBeforeAnchor = contextSearch(queryParameter, anchorCreatedDate, allCriteria);
-        List<BucketSlot> elementsAfterAnchor =  limitSearch(queryParameter, anchorCreatedDate, allCriteria);
+        List<BucketSlot> elementsAfterAnchor = limitSearch(queryParameter, anchorCreatedDate, allCriteria);
         elementsBeforeAnchor.addAll(elementsAfterAnchor);
         return elementsBeforeAnchor;
     }
 
     /**
+     * Find all the bucket that contains the date
+     */
+    @Override
+    public List<BucketSlot> findAllThatContainsDate(LocalDateTime date) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("from").lte(date).and("to").gte(date));
+        return mongoTemplate.find(query, BucketSlot.class);
+    }
+
+    @Override
+    public BucketSlot findNextBucketToStart(LocalDateTime currentDate, LocalDateTime timeoutDate) {
+        // Build the criteria
+        Criteria criteria = new Criteria().andOperator(
+                Criteria.where("from").lte(currentDate),
+                Criteria.where("startEventManaged").is(false),
+                new Criteria().orOperator(
+                        Criteria.where("processingId").is(null),
+                        Criteria.where("processingTimestamp").lt(timeoutDate)
+                )
+        );
+
+        Query query = new Query(criteria);
+        query.limit(1); // Limit to one document
+
+        // Update to set the processingId and processingTimestamp
+        Update update = new Update()
+                .set("processingId", UUID.randomUUID().toString())
+                .set("processingTimestamp", timeoutDate);
+
+        // Options to return the new document after update
+        FindAndModifyOptions options = new FindAndModifyOptions()
+                .returnNew(true)
+                .upsert(false);
+
+        return mongoTemplate.findAndModify(query, update, options, BucketSlot.class);
+    }
+
+    @Override
+    public BucketSlot findNextBucketToStop(LocalDateTime currentDate, LocalDateTime timeoutDate) {
+        // Build the criteria
+        Criteria criteria = new Criteria().andOperator(
+                Criteria.where("to").lte(currentDate),
+                Criteria.where("stopEventManaged").is(false),
+                new Criteria().orOperator(
+                        Criteria.where("processingId").is(null),
+                        Criteria.where("processingTimestamp").lt(timeoutDate)
+                )
+        );
+
+        Query query = new Query(criteria);
+        query.limit(1); // Limit to one document
+
+        // Update to set the processingId and processingTimestamp
+        Update update = new Update()
+                .set("processingId", UUID.randomUUID().toString())
+                .set("processingTimestamp", timeoutDate);
+
+        // Options to return the new document after update
+        FindAndModifyOptions options = new FindAndModifyOptions()
+                .returnNew(true)
+                .upsert(false);
+
+        return mongoTemplate.findAndModify(query, update, options, BucketSlot.class);
+    }
+
+    @Override
+    public void completeStartEventProcessing(String bucketSlotId) {
+        Criteria criteria = new Criteria().andOperator(
+                Criteria.where("id").is(bucketSlotId)
+        );
+        // Update to set the processingId and processingTimestamp
+        Update update = new Update()
+                .unset("processingId")
+                .unset("processingTimestamp")
+                .set("startEventManaged", true);
+        mongoTemplate.updateFirst(new Query(criteria), update, BucketSlot.class);
+    }
+
+    @Override
+    public void completeStopEventProcessing(String bucketSlotId) {
+        Criteria criteria = new Criteria().andOperator(
+                Criteria.where("id").is(bucketSlotId)
+        );
+        // Update to set the processingId and processingTimestamp
+        Update update = new Update()
+                .unset("processingId")
+                .unset("processingTimestamp")
+                .set("stopEventManaged", true);
+        mongoTemplate.updateFirst(new Query(criteria), update, BucketSlot.class);
+    }
+
+    /**
      * Get the query to search the work
+     *
      * @param anchorId the query parameter
      * @return the query
      */
@@ -72,12 +169,13 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
         Query q = new Query();
         q.addCriteria(Criteria.where("id").is(anchorId));
         q.fields().include("createdDate");
-        var slotFound =  mongoTemplate.findOne(q, BucketSlot.class);
-        return (slotFound!=null)?slotFound.getCreatedDate():null;
+        var slotFound = mongoTemplate.findOne(q, BucketSlot.class);
+        return (slotFound != null) ? slotFound.getCreatedDate() : null;
     }
 
     /**
      * Get the default query
+     *
      * @param queryParameter is the query parameter class
      * @return return the mongodb query
      */
@@ -95,9 +193,10 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
 
     /**
      * Limit the search
-     * @param queryParameter the query parameter
+     *
+     * @param queryParameter    the query parameter
      * @param anchorCreatedDate the anchor created date
-     * @param allCriteria the criteria
+     * @param allCriteria       the criteria
      * @return the list of work
      */
     private List<BucketSlot> limitSearch(BucketSlotQueryParameter queryParameter, LocalDateTime anchorCreatedDate, List<Criteria> allCriteria) {
@@ -109,7 +208,12 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
                         Criteria.where("createdDate").lt(anchorCreatedDate)
                 );
             }
-            if(!allCriteria.isEmpty()) {
+            if (queryParameter.getFrom() != null) {
+                allCriteria.add(
+                        Criteria.where("from").gte(queryParameter.getFrom())
+                );
+            }
+            if (!allCriteria.isEmpty()) {
                 query.addCriteria(
                         new Criteria().andOperator(
                                 allCriteria
@@ -117,10 +221,12 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
                 );
             }
 
-            query.with(
-                    Sort.by(
-                            Sort.Direction.DESC, "from")
-            ).limit(queryParameter.getLimit());
+            query
+                    .with(
+                            Sort.by(
+                                    Sort.Direction.ASC, "from")
+                    )
+                    .limit(queryParameter.getLimit());
             elementsAfterAnchor.addAll(
                     mongoTemplate.find(
                             query,
@@ -133,9 +239,10 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
 
     /**
      * Search the context
-     * @param queryParameter the query parameter
+     *
+     * @param queryParameter    the query parameter
      * @param anchorCreatedDate the anchor created date
-     * @param allCriteria the criteria
+     * @param allCriteria       the criteria
      * @return the list of work
      */
     private List<BucketSlot> contextSearch(BucketSlotQueryParameter queryParameter, LocalDateTime anchorCreatedDate, List<Criteria> allCriteria) {
@@ -148,10 +255,14 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
             allCriteria.add(
                     Criteria.where("createdDate").gte(anchorCreatedDate)
             );
-
+            if (queryParameter.getFrom() != null) {
+                allCriteria.add(
+                        Criteria.where("from").lte(queryParameter.getFrom())
+                );
+            }
             // at this point the anchor id is not null
             Query query = getQuery(queryParameter);
-            if(!allCriteria.isEmpty()) {
+            if (!allCriteria.isEmpty()) {
                 query.addCriteria(
                         new Criteria().andOperator(
                                 allCriteria

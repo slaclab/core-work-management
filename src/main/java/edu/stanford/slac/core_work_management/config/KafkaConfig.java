@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.config;
 
 import edu.stanford.slac.core_work_management.elog_api.dto.ImportEntryDTO;
 import edu.stanford.slac.core_work_management.model.Attachment;
+import edu.stanford.slac.core_work_management.model.ProcessWorkflowInfo;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -111,5 +112,48 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, Attachment> attachmentKafkaTemplate() {
         return new KafkaTemplate<>(attachementProducerFactory());
+    }
+
+    // workflow processing consumer and producer
+    @Bean
+    public ConsumerFactory<String, ProcessWorkflowInfo> workflowProcessingKafkaListenerConsumerFactory() {
+        Map<String, Object> props = kafkaProperties.buildConsumerProperties();
+
+        // Calculate max poll records based on concurrency level
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 2 * concurrencyLevel);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class.getName());  // Replace JsonDeserializer with your key deserializer if different
+        props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class.getName());
+        DefaultKafkaConsumerFactory<String, ProcessWorkflowInfo> cf = new DefaultKafkaConsumerFactory<>(
+                props,
+                new StringDeserializer(),
+                new JsonDeserializer<>(ProcessWorkflowInfo.class, false)
+        );
+        cf.addListener(new MicrometerConsumerListener<>(meterRegistry));
+        return cf;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ProcessWorkflowInfo> workflowProcessingKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, ProcessWorkflowInfo> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(workflowProcessingKafkaListenerConsumerFactory());
+        factory.setConcurrency(concurrencyLevel);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);  // Set AckMode to MANUAL
+        return factory;
+    }
+
+    @Bean
+    public ProducerFactory<String, ProcessWorkflowInfo> workflowProcessingProducerFactory() {
+        Map<String, Object> props = kafkaProperties.buildProducerProperties();
+        DefaultKafkaProducerFactory<String, ProcessWorkflowInfo> pf = new DefaultKafkaProducerFactory<>(props);
+        pf.addListener(new MicrometerProducerListener<>(meterRegistry));
+        return pf;
+    }
+
+    @Bean
+    public KafkaTemplate<String, ProcessWorkflowInfo> workflowProcessingKafkaTemplate() {
+        return new KafkaTemplate<>(workflowProcessingProducerFactory());
     }
 }

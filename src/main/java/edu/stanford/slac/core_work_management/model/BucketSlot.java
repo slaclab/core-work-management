@@ -76,4 +76,24 @@ public class BucketSlot {
      */
     @Version
     private Long version;
+    /**
+     * The processing id of the bucket slot
+     */
+    private String processingId;
+    /**
+     * The processing time of the bucket slot
+     */
+    private LocalDateTime processingTimestamp;
+    /**
+     * Sign that the bucket slot has been managed for the started
+     * event, typically workflow are updated for each work associated to it
+     */
+    @Builder.Default
+    private Boolean startEventManaged = false;
+    /**
+     * Sign that the bucket slot has been managed for the stop
+     * event, typically workflow are updated for each work associated to it
+     */
+    @Builder.Default
+    private Boolean stopEventManaged = false;
 }

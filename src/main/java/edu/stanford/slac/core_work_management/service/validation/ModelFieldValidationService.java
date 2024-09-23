@@ -75,6 +75,7 @@ import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.value.*;
+import edu.stanford.slac.core_work_management.repository.AttachmentRepository;
 import edu.stanford.slac.core_work_management.repository.LOVElementRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -98,6 +99,7 @@ import static java.util.Collections.emptyList;
 @Validated
 @AllArgsConstructor
 public class ModelFieldValidationService {
+    AttachmentRepository attachmentsRepository;
     LOVElementRepository lovElementRepository;
 
     /**
@@ -159,21 +161,40 @@ public class ModelFieldValidationService {
                     );
 
                     // check the value (could be no more needed)
-                    if(waTypeCustomField.get().getValueType() == ValueType.LOV) {
-                        // if the custom attribute is a LOV
-                        // check if the value is consistent with the list of possible values
-                        String lovValueId = ((LOVValue)cv.getValue()).getValue();
-                        assertion(
-                                LOVValueNotFound.byId()
-                                        .errorCode(-2)
-                                        .id(lovValueId)
-                                        .build(),
-                                ()->lovElementRepository.existsByIdAndFieldReferenceContains
-                                        (
-                                                lovValueId,
-                                                waTypeCustomField.get().getLovFieldReference()
-                                        )
-                        );
+                    switch(waTypeCustomField.get().getValueType()) {
+                        case ValueType.LOV -> {
+                            // if the custom attribute is a LOV
+                            // check if the value is consistent with the list of possible values
+                            String lovValueId = ((LOVValue)cv.getValue()).getValue();
+                            assertion(
+                                    LOVValueNotFound.byId()
+                                            .errorCode(-2)
+                                            .id(lovValueId)
+                                            .build(),
+                                    ()->lovElementRepository.existsByIdAndFieldReferenceContains
+                                            (
+                                                    lovValueId,
+                                                    waTypeCustomField.get().getLovFieldReference()
+                                            )
+                            );
+                        }
+                        case ValueType.Attachments -> {
+                            // if the custom attribute is a LOV
+                            // check if the value is consistent with the list of possible values
+                            List<String> attachmentsIds = ((AttachmentsValue)cv.getValue()).getValue();
+                            if(attachmentsIds!=null && !attachmentsIds.isEmpty()) {
+                                assertion(
+                                        ControllerLogicException.builder()
+                                                .errorCode(-2)
+                                                .errorMessage("The attachments value is empty")
+                                                .errorDomain("WorkService::validateCustomField")
+                                                .build(),
+                                        ()->attachmentsRepository.existsAllByIdIn(attachmentsIds)
+                                );
+                            }
+
+                        }
+                        default -> {}
                     }
                 }
 

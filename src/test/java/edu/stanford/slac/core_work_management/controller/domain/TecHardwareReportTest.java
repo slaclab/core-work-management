@@ -2,12 +2,15 @@ package edu.stanford.slac.core_work_management.controller.domain;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
 import edu.stanford.slac.core_work_management.migration.M1000_InitLOV;
 import edu.stanford.slac.core_work_management.migration.M1001_InitTECDomain;
 import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
+import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,15 +22,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -54,6 +55,12 @@ public class TecHardwareReportTest {
     private MongoTemplate mongoTemplate;
     @Autowired
     private TestControllerHelperService testControllerHelperService;
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
+    @Autowired
+    private CWMAppProperties cwmAppProperties;
+    @Autowired
+    private ManageBucketWorkflowUpdate manageBucketWorkflowUpdate;
 
     // bucket lov
     private List<LOVElementDTO> bucketTypeLOVIds = null;
@@ -227,6 +234,28 @@ public class TecHardwareReportTest {
                 )
         );
         assertThat(bucketSlotResult).isNotNull();
+
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    cwmAppProperties.getImagePreviewTopic(),
+                    String.format("%s-retry-2000", cwmAppProperties.getImagePreviewTopic()),
+                    String.format("%s-retry-4000", cwmAppProperties.getImagePreviewTopic())
+            );
+
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to recreate Kafka topic", e);
+        }
     }
 
     @BeforeEach
@@ -263,18 +292,8 @@ public class TecHardwareReportTest {
     }
 
     @Test
-    public void createNewGoesInCreated() {
-        // custom field id for subsystem
-        var subsystemCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "subsystem");
-        var subsystemLovValuesList = lovService.findAllByDomainAndFieldName(    LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "subsystem");
-        // get the custom field for the group
-        var groupCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "group");
-        var groupLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "group");
-        // get the custom field for the urgency
-        var urgencyCustomField = helperService.getCustomFiledByName(workTypes.getFirst(), "urgency");
-        var urgencyLovValuesList = lovService.findAllByDomainAndFieldName(LOVDomainTypeDTO.Work, tecDomain.id(), workTypes.getFirst().id(), "urgency");
-
-        // create a new work
+    public void hardwareRequestCreateNewGoesInCreated() {
+        // create a new hardware request with minimal fields
         var newWorkResult = assertDoesNotThrow(
                 ()->testControllerHelperService.workControllerCreateNew(
                         mockMvc,
@@ -288,22 +307,6 @@ public class TecHardwareReportTest {
                                 .description("Work 1 description")
                                 .locationId(location10)
                                 .shopGroupId(shopGroup15)
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO.builder()
-                                                        .id(subsystemCustomField.id())
-                                                        .value(ValueDTO.builder().type(ValueTypeDTO.String).value(subsystemLovValuesList.getFirst().id()).build())
-                                                        .build(),
-                                                WriteCustomFieldDTO.builder()
-                                                        .id(groupCustomField.id())
-                                                        .value(ValueDTO.builder().type(ValueTypeDTO.String).value(groupLovValuesList.getFirst().id()).build())
-                                                        .build(),
-                                                WriteCustomFieldDTO.builder()
-                                                        .id(urgencyCustomField.id())
-                                                        .value(ValueDTO.builder().type(ValueTypeDTO.String).value(urgencyLovValuesList.getFirst().id()).build())
-                                                        .build()
-                                        )
-                                )
                                 .build()
                 )
         );

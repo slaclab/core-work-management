@@ -13,5 +13,6 @@ public class CWMAppProperties {
     private String cisBackendUrl;
     private String elogBackendUrl;
     private String imagePreviewTopic;
+    private String workflowProcessingTopic;
     private Integer kafkaConsumerConcurrency;
 }

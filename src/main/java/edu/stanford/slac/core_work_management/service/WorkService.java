@@ -871,6 +871,22 @@ public class WorkService {
     }
 
     /**
+     * Return all the work that belong to the bucket
+     *
+     * @param id the id of the work
+     * @return the work
+     */
+    public List<WorkDTO> findAllByBucketId(String id) {
+        return wrapCatch(
+                () -> workRepository.findAllByCurrentBucketAssociationBucketIdIs(id)
+                        .stream()
+                        .map(w-> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                        .toList(),
+                -1
+        );
+    }
+
+    /**
      * Check if a work is associated to a bucket slot
      *
      * @param bucketId the id of the bucket
@@ -882,4 +898,5 @@ public class WorkService {
                 -1
         );
     }
+
 }

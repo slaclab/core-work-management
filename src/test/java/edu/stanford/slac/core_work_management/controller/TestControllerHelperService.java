@@ -921,12 +921,12 @@ public class TestControllerHelperService {
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 
         MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(resultMatcher)
                 .andReturn();
-
         if (result.getResolvedException() != null) {
             throw result.getResolvedException();
         }
+        // check fi ti matches the expected result
+        resultMatcher.match(result);
         return objectMapper.readValue(result.getResponse().getContentAsString(), typeRef);
     }
 

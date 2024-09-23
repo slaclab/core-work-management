@@ -1,5 +1,6 @@
 package edu.stanford.slac.core_work_management.api.v1.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,7 +83,9 @@ public class MaintenanceController {
                     @Parameter(description = "The size of the context to return")
                     @RequestParam(value = "contextSize", required = false, defaultValue = "0") Optional<Integer> contextSize,
                     @Parameter(description = "The id of the anchor to use for pagination")
-                    @RequestParam(value = "anchorId", required = false) Optional<String> anchorId
+                    @RequestParam(value = "anchorId", required = false) Optional<String> anchorId,
+                    @Parameter(description = "The from date to use for the search")
+                    @RequestParam(value = "from", required = false) Optional<LocalDateTime> from
 
             ) {
         return ApiResultResponse.of(
@@ -92,6 +95,7 @@ public class MaintenanceController {
                                 .limit(limit.orElse(10))
                                 .contextSize(contextSize.orElse(0))
                                 .anchorID(anchorId.orElse(null))
+                                .from(from.orElse(null))
                                 .build()
                 )
         );

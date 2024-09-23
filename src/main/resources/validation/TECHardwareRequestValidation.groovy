@@ -60,6 +60,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 }
             }
             case ReadyForWork -> {
+                // here we need to
             }
             case InProgress -> {
 

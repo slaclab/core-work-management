@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
@@ -204,5 +205,85 @@ public class BucketService {
                 .stream()
                 .map(bucketSlotMapper::toDTO)
                 .toList();
+    }
+
+    /**
+     * This method is used to find all bucket slots that contains a given date
+     *
+     * @param date the date to check
+     * @return the list of bucket slot DTOs
+     */
+    public List<BucketSlotDTO> findAllThatContainsDate(LocalDateTime date) {
+        return bucketSlotRepository
+                .findAllThatContainsDate(date)
+                .stream()
+                .map(bucketSlotMapper::toDTO)
+                .toList();
+    }
+
+    /**
+     * This method is used to find the next bucket slot that need to manage to be started up
+     *
+     * @param currentDate the current date
+     * @param timeoutDate the date when the bucket need to be considered as timeout for processing
+     * @return the bucket slot DTO to startup
+     */
+    public BucketSlotDTO findNextBucketToStart(LocalDateTime currentDate, LocalDateTime timeoutDate) {
+        return bucketSlotMapper.toDTO(
+                wrapCatch(
+                        ()->bucketSlotRepository
+                                .findNextBucketToStart(currentDate, timeoutDate),
+                        -1
+                )
+        );
+    }
+
+    /**
+     * This method is used to find the next bucket slot that need to manage to be stopped
+     *
+     * @param currentDate the current date
+     * @param timeoutDate the date when the bucket need to be considered as timeout for processing
+     * @return the bucket slot DTO to stop
+     */
+    public BucketSlotDTO findNextBucketToStop(LocalDateTime currentDate, LocalDateTime timeoutDate) {
+        return bucketSlotMapper.toDTO(
+                wrapCatch(
+                        ()->bucketSlotRepository
+                                .findNextBucketToStop(currentDate, timeoutDate),
+                        -1
+                )
+        );
+    }
+
+    /**
+     * This method is used to complete the start event processing
+     *
+     * @param id the id of the bucket slot
+     */
+    public void completeStartEventProcessing(String id) {
+        wrapCatch(
+                ()->{
+                    bucketSlotRepository
+                            .completeStartEventProcessing(id);
+                    return null;
+                },
+                -1
+        );
+    }
+
+    /**
+     * This method is used to complete the stop event processing
+     *
+     * @param id the id of the bucket slot
+     */
+    public void completeStopEventProcessing(String id) {
+        wrapCatch(
+                ()->{
+                    bucketSlotRepository
+                            .completeStopEventProcessing(id);
+                    return null;
+                },
+                -1
+        );
     }
 }

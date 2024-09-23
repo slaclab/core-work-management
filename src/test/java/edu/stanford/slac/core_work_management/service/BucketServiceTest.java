@@ -22,12 +22,15 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -496,5 +499,364 @@ public class BucketServiceTest {
                         Optional.empty()
                 )
         );
+    }
+
+    @Test
+    public void findAllThatContainASpecificDate() {
+        // List to store created bucket IDs for verification
+        List<String> createdBucketIds = new ArrayList<>();
+
+        // Create 100 buckets with incremental 'from' dates
+        for (int i = 0; i < 10; i++) {
+            int finalI = i;
+            LocalDateTime fromDate = LocalDateTime.of(2021, 1, 1, 0, 0).plusMinutes(finalI);
+            LocalDateTime toDate = LocalDateTime.of(2021, 1, 3, 23, 0);
+
+            // Create a new bucket
+            var newBucketId = assertDoesNotThrow(
+                    () -> bucketSlotService.createNew(
+                            NewBucketDTO.builder()
+                                    .description("bucket-%d".formatted(finalI))
+                                    .type(bucketTypeLOVIds.getFirst())
+                                    .status(bucketStatusLOVIds.getFirst())
+                                    .from(fromDate)
+                                    .to(toDate)
+                                    .domainIds(Set.of(domainDTO.id()))
+                                    .admittedWorkTypeIds(
+                                            Set.of(
+                                                    BucketSlotWorkTypeDTO.builder()
+                                                            .domainId(domainDTO.id())
+                                                            .workTypeId(newWorkTypeId)
+                                                            .build()
+                                            )
+                                    )
+                                    .build()
+                    )
+            );
+
+            assertThat(newBucketId).isNotNull();
+            createdBucketIds.add(newBucketId);
+
+            // Use the 'fromDate' as the test date to find buckets containing this date
+            List<BucketSlotDTO> bucketsContainingDate = bucketSlotService.findAllThatContainsDate(fromDate);
+
+            // Verify that the buckets returned are not empty
+            assertThat(bucketsContainingDate).isNotEmpty();
+
+            // Verify that the newly created bucket is among the buckets returned
+            boolean bucketFound = bucketsContainingDate.stream()
+                    .anyMatch(bucket -> bucket.id().equals(newBucketId));
+            assertThat(bucketFound)
+                    .withFailMessage("Bucket with ID %s should contain the date %s", newBucketId, fromDate)
+                    .isTrue();
+
+            // Verify that all buckets returned actually contain the test date
+            for (BucketSlotDTO bucket : bucketsContainingDate) {
+                assertThat(bucket.from())
+                        .withFailMessage("Bucket 'from' date %s should be before or equal to %s", bucket.from(), fromDate)
+                        .isBeforeOrEqualTo(fromDate);
+                assertThat(bucket.to())
+                        .withFailMessage("Bucket 'to' date %s should be after or equal to %s", bucket.to(), fromDate)
+                        .isAfterOrEqualTo(fromDate);
+            }
+        }
+
+        // Additional test: Use a specific date to find all buckets containing it
+        LocalDateTime specificTestDate = LocalDateTime.of(2021, 1, 2, 12, 0);
+        List<BucketSlotDTO> bucketsAtSpecificDate = bucketSlotService.findAllThatContainsDate(specificTestDate);
+
+        // Verify that the buckets returned are not empty
+        assertThat(bucketsAtSpecificDate)
+                .withFailMessage("No buckets found containing the date %s", specificTestDate)
+                .isNotEmpty();
+
+        // Verify that all buckets returned contain the specific test date
+        for (BucketSlotDTO bucket : bucketsAtSpecificDate) {
+            assertThat(bucket.from())
+                    .withFailMessage("Bucket 'from' date %s should be before or equal to %s", bucket.from(), specificTestDate)
+                    .isBeforeOrEqualTo(specificTestDate);
+            assertThat(bucket.to())
+                    .withFailMessage("Bucket 'to' date %s should be after or equal to %s", bucket.to(), specificTestDate)
+                    .isAfterOrEqualTo(specificTestDate);
+        }
+    }
+
+    // create test for the bucket start event
+    @Test
+    public void processBucketStartEvent() {
+        // Step 1: Create buckets with specific 'from' and 'to' dates
+        int processingTimeoutSeconds = 10;
+        LocalDateTime bucket1From = LocalDateTime.of(2021, 1, 1, 8, 0);
+        LocalDateTime bucket1To = LocalDateTime.of(2021, 1, 1, 12, 0);
+
+        LocalDateTime bucket2From = LocalDateTime.of(2021, 1, 1, 13, 0);
+        LocalDateTime bucket2To = LocalDateTime.of(2021, 1, 1, 17, 0);
+
+        String bucket1Id = bucketSlotService.createNew(
+                NewBucketDTO.builder()
+                        .description("Bucket 1")
+                        .type(bucketTypeLOVIds.getFirst())
+                        .status(bucketStatusLOVIds.getFirst())
+                        .from(bucket1From)
+                        .to(bucket1To)
+                        .domainIds(Set.of(domainDTO.id()))
+                        .admittedWorkTypeIds(Set.of(
+                                BucketSlotWorkTypeDTO.builder()
+                                        .domainId(domainDTO.id())
+                                        .workTypeId(newWorkTypeId)
+                                        .build()
+                        ))
+                        .build()
+        );
+
+        String bucket2Id = bucketSlotService.createNew(
+                NewBucketDTO.builder()
+                        .description("Bucket 2")
+                        .type(bucketTypeLOVIds.getFirst())
+                        .status(bucketStatusLOVIds.getFirst())
+                        .from(bucket2From)
+                        .to(bucket2To)
+                        .domainIds(Set.of(domainDTO.id()))
+                        .admittedWorkTypeIds(Set.of(
+                                BucketSlotWorkTypeDTO.builder()
+                                        .domainId(domainDTO.id())
+                                        .workTypeId(newWorkTypeId)
+                                        .build()
+                        ))
+                        .build()
+        );
+
+        assertThat(bucket1Id).isNotNull();
+        assertThat(bucket2Id).isNotNull();
+
+        // Step 2: Define 'currentDate' and 'processingTimeoutMinutes'
+        LocalDateTime currentDate = LocalDateTime.of(2021, 1, 1, 11, 0);
+
+        // Step 3: Invoke the function under test
+        BucketSlotDTO bucketToStart = bucketSlotService.findNextBucketToStart(currentDate, currentDate.plusSeconds(processingTimeoutSeconds));
+
+        // Step 4: Assert the results
+        assertThat(bucketToStart).isNotNull();
+        assertThat(bucketToStart.id()).isEqualTo(bucket1Id);
+
+        // get wit the same date should return false
+        bucketToStart = bucketSlotService.findNextBucketToStart(currentDate, currentDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStart).isNull();
+
+        /// advance to a date that is after the bucket expired for processing
+        var currentCheckDate = currentDate.plusSeconds(processingTimeoutSeconds);
+        BucketSlotDTO bucketToStartAgain = bucketSlotService.findNextBucketToStart(currentCheckDate, currentCheckDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStartAgain).isNotNull();
+
+        // now tag as completed
+        assertDoesNotThrow(()->bucketSlotService.completeStartEventProcessing(bucket1Id));
+
+        // now it doesn't need to be selected again
+        bucketToStartAgain = bucketSlotService.findNextBucketToStart(currentDate, currentCheckDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStartAgain).isNull();
+    }
+
+    @Test
+    public void processBucketStopEvent() {
+        // Step 1: Create buckets with specific 'from' and 'to' dates
+        int processingTimeoutSeconds = 10;
+        LocalDateTime bucket1From = LocalDateTime.of(2021, 1, 1, 8, 0);
+        LocalDateTime bucket1To = LocalDateTime.of(2021, 1, 1, 12, 0);
+
+        LocalDateTime bucket2From = LocalDateTime.of(2021, 1, 1, 13, 0);
+        LocalDateTime bucket2To = LocalDateTime.of(2021, 1, 1, 17, 0);
+
+        String bucket1Id = bucketSlotService.createNew(
+                NewBucketDTO.builder()
+                        .description("Bucket 1")
+                        .type(bucketTypeLOVIds.getFirst())
+                        .status(bucketStatusLOVIds.getFirst())
+                        .from(bucket1From)
+                        .to(bucket1To)
+                        .domainIds(Set.of(domainDTO.id()))
+                        .admittedWorkTypeIds(Set.of(
+                                BucketSlotWorkTypeDTO.builder()
+                                        .domainId(domainDTO.id())
+                                        .workTypeId(newWorkTypeId)
+                                        .build()
+                        ))
+                        .build()
+        );
+
+        String bucket2Id = bucketSlotService.createNew(
+                NewBucketDTO.builder()
+                        .description("Bucket 2")
+                        .type(bucketTypeLOVIds.getFirst())
+                        .status(bucketStatusLOVIds.getFirst())
+                        .from(bucket2From)
+                        .to(bucket2To)
+                        .domainIds(Set.of(domainDTO.id()))
+                        .admittedWorkTypeIds(Set.of(
+                                BucketSlotWorkTypeDTO.builder()
+                                        .domainId(domainDTO.id())
+                                        .workTypeId(newWorkTypeId)
+                                        .build()
+                        ))
+                        .build()
+        );
+
+        assertThat(bucket1Id).isNotNull();
+        assertThat(bucket2Id).isNotNull();
+
+        // Step 2: Define 'currentDate' and 'processingTimeoutSeconds' for stop event
+        LocalDateTime currentDate = LocalDateTime.of(2021, 1, 1, 12, 0);
+
+        // Step 3: Invoke the function under test to find the next bucket to stop
+        BucketSlotDTO bucketToStop = bucketSlotService.findNextBucketToStop(currentDate, currentDate.plusSeconds(processingTimeoutSeconds));
+
+        // Step 4: Assert the results
+        assertThat(bucketToStop).isNotNull();
+        assertThat(bucketToStop.id()).isEqualTo(bucket1Id);
+
+        // Attempt to get the same bucket again should return null
+        bucketToStop = bucketSlotService.findNextBucketToStop(currentDate, currentDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStop).isNull();
+
+        // Advance to a date after the processing timeout
+        var currentCheckDate = currentDate.plusSeconds(processingTimeoutSeconds);
+        BucketSlotDTO bucketToStopAgain = bucketSlotService.findNextBucketToStop(currentCheckDate, currentCheckDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStopAgain).isNotNull();
+
+        // Now mark the stop event as completed
+        assertDoesNotThrow(() -> bucketSlotService.completeStopEventProcessing(bucket1Id));
+
+        // The bucket should not be selected again after completion
+        bucketToStopAgain = bucketSlotService.findNextBucketToStop(currentDate, currentCheckDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStopAgain).isNull();
+    }
+
+    @Test
+    public void processBucketStartAndStopEvents() {
+        // Step 1: Create buckets with specific 'from' and 'to' dates
+        int processingTimeoutSeconds = 10;
+        LocalDateTime bucket1From = LocalDateTime.of(2021, 1, 1, 8, 0);
+        LocalDateTime bucket1To = LocalDateTime.of(2021, 1, 1, 12, 0);
+
+        LocalDateTime bucket2From = LocalDateTime.of(2021, 1, 1, 13, 0);
+        LocalDateTime bucket2To = LocalDateTime.of(2021, 1, 1, 17, 0);
+
+        String bucket1Id = bucketSlotService.createNew(
+                NewBucketDTO.builder()
+                        .description("Bucket 1")
+                        .type(bucketTypeLOVIds.getFirst())
+                        .status(bucketStatusLOVIds.getFirst())
+                        .from(bucket1From)
+                        .to(bucket1To)
+                        .domainIds(Set.of(domainDTO.id()))
+                        .admittedWorkTypeIds(Set.of(
+                                BucketSlotWorkTypeDTO.builder()
+                                        .domainId(domainDTO.id())
+                                        .workTypeId(newWorkTypeId)
+                                        .build()
+                        ))
+                        .build()
+        );
+
+        String bucket2Id = bucketSlotService.createNew(
+                NewBucketDTO.builder()
+                        .description("Bucket 2")
+                        .type(bucketTypeLOVIds.getFirst())
+                        .status(bucketStatusLOVIds.getFirst())
+                        .from(bucket2From)
+                        .to(bucket2To)
+                        .domainIds(Set.of(domainDTO.id()))
+                        .admittedWorkTypeIds(Set.of(
+                                BucketSlotWorkTypeDTO.builder()
+                                        .domainId(domainDTO.id())
+                                        .workTypeId(newWorkTypeId)
+                                        .build()
+                        ))
+                        .build()
+        );
+
+        assertThat(bucket1Id).isNotNull();
+        assertThat(bucket2Id).isNotNull();
+
+        // Step 2: Process Start Event for Bucket 1
+        LocalDateTime startEventDate = LocalDateTime.of(2021, 1, 1, 7, 59);
+        BucketSlotDTO bucketToStart = bucketSlotService.findNextBucketToStart(startEventDate, startEventDate.plusSeconds(processingTimeoutSeconds));
+
+        // Assert that no bucket is ready to start yet
+        assertThat(bucketToStart).isNull();
+
+        // Move to time when bucket 1 should start
+        startEventDate = LocalDateTime.of(2021, 1, 1, 8, 0);
+        bucketToStart = bucketSlotService.findNextBucketToStart(startEventDate, startEventDate.plusSeconds(processingTimeoutSeconds));
+
+        // Assert that bucket 1 is ready to start
+        assertThat(bucketToStart).isNotNull();
+        assertThat(bucketToStart.id()).isEqualTo(bucket1Id);
+
+        // Attempt to start the same bucket again should return null
+        BucketSlotDTO duplicateStartAttempt = bucketSlotService.findNextBucketToStart(startEventDate, startEventDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(duplicateStartAttempt).isNull();
+
+        // Simulate processing timeout by moving time forward
+        LocalDateTime processingExpiredDate = startEventDate.plusSeconds(processingTimeoutSeconds);
+        BucketSlotDTO bucketToStartAgain = bucketSlotService.findNextBucketToStart(processingExpiredDate, processingExpiredDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStartAgain).isNotNull();
+        assertThat(bucketToStartAgain.id()).isEqualTo(bucket1Id);
+
+        // Mark the start event as completed
+        assertDoesNotThrow(() -> bucketSlotService.completeStartEventProcessing(bucket1Id));
+
+        // Attempt to start again after completion should return null
+        BucketSlotDTO afterCompletionStartAttempt = bucketSlotService.findNextBucketToStart(startEventDate, processingExpiredDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(afterCompletionStartAttempt).isNull();
+
+        // Step 3: Process Stop Event for Bucket 1
+        LocalDateTime stopEventDate = bucket1To; // The 'to' date when the bucket is supposed to stop
+
+        // Find the bucket to stop
+        BucketSlotDTO bucketToStop = bucketSlotService.findNextBucketToStop(stopEventDate, stopEventDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStop).isNotNull();
+        assertThat(bucketToStop.id()).isEqualTo(bucket1Id);
+
+        // Attempt to stop the same bucket again should return null
+        BucketSlotDTO duplicateStopAttempt = bucketSlotService.findNextBucketToStop(stopEventDate, stopEventDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(duplicateStopAttempt).isNull();
+
+        // Simulate processing timeout by moving time forward
+        LocalDateTime stopProcessingExpiredDate = stopEventDate.plusSeconds(processingTimeoutSeconds);
+        BucketSlotDTO bucketToStopAgain = bucketSlotService.findNextBucketToStop(stopProcessingExpiredDate, stopProcessingExpiredDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucketToStopAgain).isNotNull();
+        assertThat(bucketToStopAgain.id()).isEqualTo(bucket1Id);
+
+        // Mark the stop event as completed
+        assertDoesNotThrow(() -> bucketSlotService.completeStopEventProcessing(bucket1Id));
+
+        // Attempt to stop again after completion should return null
+        BucketSlotDTO afterCompletionStopAttempt = bucketSlotService.findNextBucketToStop(stopEventDate, stopProcessingExpiredDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(afterCompletionStopAttempt).isNull();
+
+        // Step 4: Process Start Event for Bucket 2
+        LocalDateTime bucket2StartEventDate = bucket2From;
+        BucketSlotDTO bucket2ToStart = bucketSlotService.findNextBucketToStart(bucket2StartEventDate, bucket2StartEventDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucket2ToStart).isNotNull();
+        assertThat(bucket2ToStart.id()).isEqualTo(bucket2Id);
+
+        // Mark the start event as completed for Bucket 2
+        assertDoesNotThrow(() -> bucketSlotService.completeStartEventProcessing(bucket2Id));
+
+        // Step 5: Process Stop Event for Bucket 2
+        LocalDateTime bucket2StopEventDate = bucket2To;
+        BucketSlotDTO bucket2ToStop = bucketSlotService.findNextBucketToStop(bucket2StopEventDate, bucket2StopEventDate.plusSeconds(processingTimeoutSeconds));
+        assertThat(bucket2ToStop).isNotNull();
+        assertThat(bucket2ToStop.id()).isEqualTo(bucket2Id);
+
+        // Mark the stop event as completed for Bucket 2
+        assertDoesNotThrow(() -> bucketSlotService.completeStopEventProcessing(bucket2Id));
+
+        // Final Assertions: Ensure no buckets are pending for start or stop
+        BucketSlotDTO noBucketToStart = bucketSlotService.findNextBucketToStart(LocalDateTime.now(), LocalDateTime.now().plusSeconds(processingTimeoutSeconds));
+        assertThat(noBucketToStart).isNull();
+
+        BucketSlotDTO noBucketToStop = bucketSlotService.findNextBucketToStop(LocalDateTime.now(), LocalDateTime.now().plusSeconds(processingTimeoutSeconds));
+        assertThat(noBucketToStop).isNull();
     }
 }

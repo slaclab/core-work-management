@@ -87,4 +87,12 @@ public interface WorkRepository extends MongoRepository<Work, String>, WorkRepos
      * @return true if the work exists
      */
     boolean existsByCurrentBucketAssociationBucketId(String bucketSlotId);
+
+    /**
+     * Find all works that belong to the bucket
+     *
+     * @param bucketId the bucket id
+     * @return the list of works that belong to the bucket
+     */
+    List<Work> findAllByCurrentBucketAssociationBucketIdIs(String bucketId);
 }

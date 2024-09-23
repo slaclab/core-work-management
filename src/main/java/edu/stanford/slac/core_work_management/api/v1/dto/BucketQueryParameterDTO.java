@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.time.LocalDateTime;
+
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -35,4 +37,6 @@ public record BucketQueryParameterDTO(
         @Schema(description = "The limit of the query")
         Integer limit,
         @Schema(description = "The search string")
-        String search) {}
+        String search,
+        @Schema(description = "Select all the bucket slot since from to future")
+        LocalDateTime from) {}
