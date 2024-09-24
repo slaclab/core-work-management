@@ -363,5 +363,68 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
         assertThat(updateWorkResult.getPayload()).isTrue();
         // we still are in created state
         assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // update adding planned start date
+        var updateWorkResult2 = assertDoesNotThrow(
+                ()->testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .customFieldValues(
+                                        List.of(
+                                                // add plannedStartDateTime
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "plannedStartDateTime"))
+                                                        .value(ValueDTO.builder().value("2024-06-01T00:00:00").type(ValueTypeDTO.DateTime).build())
+                                                        .build(),
+                                                // set attachmentsAndFiles
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "attachmentsAndFiles"))
+                                                        .value(ValueDTO.builder().value(pdfAttachmentId).type(ValueTypeDTO.Attachments).build())
+                                                        .build(),
+                                                // set timeHrs
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "timeHrs"))
+                                                        .value(ValueDTO.builder().value("10.5").type(ValueTypeDTO.Double).build())
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult2).isNotNull();
+        assertThat(updateWorkResult2.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkResult2.getPayload()).isTrue();
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.PendingApproval)).isTrue();
+
+        // try to put to a ready for work state but should fail by error validations
+        var validationErrorOnChangeState = assertThrows(
+                ControllerLogicException.class,
+                ()->testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.ReadyForWork)
+                                                .comment("Ready for work from REST API")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(validationErrorOnChangeState).isNotNull();
     }
 }

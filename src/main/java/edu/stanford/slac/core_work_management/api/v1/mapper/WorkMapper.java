@@ -77,8 +77,21 @@ public abstract class WorkMapper {
      * @param work the entity to update
      */
 //    @Mapping(target = "currentStatus", expression = "java(toWorkStatusLog(dto.workflowStateUpdate()))")
-    @Mapping(target = "customFields", expression = "java(toCustomFieldValues(dto.customFieldValues()))")
+    @Mapping(target = "customFields", ignore = true)
     abstract public void updateModel(UpdateWorkDTO dto, @MappingTarget Work work);
+
+    /**
+     * Update complete the fill for the {@link Work} with the data from the {@link UpdateWorkDTO}
+     *
+     * @param dto  the DTO with the data to update
+     * @param work the entity to update
+     */
+    @AfterMapping
+    protected void updateCustomFields(UpdateWorkDTO dto, @MappingTarget Work work) {
+        if (dto.customFieldValues() != null) {
+            work.setCustomFields(toCustomFieldValues(dto.customFieldValues()));
+        }
+    }
 
     /**
      * Convert the {@link Work} to a {@link WorkDTO}

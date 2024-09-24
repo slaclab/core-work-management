@@ -32,9 +32,9 @@ public class CustomField {
      * The identifier of the custom attribute.
      * This field is used to uniquely identify the custom attribute.
      */
-    String id;
+    private String id;
     /**
      * The value of the attribute
      */
-    AbstractValue value;
+    private AbstractValue value;
 }

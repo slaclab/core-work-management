@@ -42,10 +42,9 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     @Override
     void updateWorkflow(WorkflowWorkUpdate workflowWorkUpdate) {
         var work = workflowWorkUpdate.getWork();
-        var workType = workflowWorkUpdate.getWorkType();
-        var workflow = workflowWorkUpdate.getWorkflow();
+        var workflowInstance = workflowWorkUpdate.getWorkflow();
         var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
-        if (!ReportWorkflow.isAssignableFrom(workflow)) {
+        if (!workflowInstance.getClass().isAssignableFrom(RequestWorkflow.class)) {
             throw ControllerLogicException.builder()
                     .errorCode(-1)
                     .errorMessage("Invalid workflow type")
@@ -53,30 +52,27 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                     .build()
         }
 
-        // assigned to can be empty only in created state
-        checkAssignedTo(work);
-
         // get current state
         var currentStatus = work.getCurrentStatus().getStatus();
         switch (currentStatus) {
-            case Created -> {
+            case WorkflowState.Created -> {
                 var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
-                var bucketId = work.getCurrentBucketAssociation().getBucketId() != null;
+                var bucketId = work.getCurrentBucketAssociation()?.getBucketId();
 
                 if (plannedStartDate.valid || bucketId != null) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.PendingApproval).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.PendingApproval).build());
                 }
             }
-            case PendingApproval -> {
+            case WorkflowState.PendingApproval -> {
                 if (updateWorkflowState.getNewState() == WorkflowState.ReadyForWork) {
                     // if all mandatory field have been filled
                     // the work can be approved
                     canMoveToReadyForWork(work);
                     // attempt to move to the next state
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReadyForWork).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReadyForWork).build());
                 }
             }
-            case ReadyForWork -> {
+            case WorkflowState.ReadyForWork -> {
                 // check if work has a planning date or a bucket
                 LocalDateTime inProgressStarDate = null;
                 boolean haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
@@ -102,13 +98,20 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                     }
                     inProgressStarDate = (plannedStartDate.payload.getValue() as DateTimeValue).value;
                 }
+
+                // check if current date is before the inProgressStarDate
+                var now = LocalDateTime.now();
+                if (now.isBefore(inProgressStarDate) || now.isEqual(inProgressStarDate)) {
+                   // move to in progress
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+                }
             }
-            case InProgress -> {
+            case WorkflowState.InProgress -> {
 
             }
-            case WorkComplete -> {
+            case WorkflowState.WorkComplete -> {
             }
-            case Closed -> {
+            case WorkflowState.Closed -> {
             }
         }
     }
@@ -173,7 +176,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 "rswcfAttachments",
                 Optional.empty()
         )).valid) {
-            validationResults.add(validateAttachment(attachment.payload.value() as AttachmentsValue, "RSWCF Attachments"))
+            validateAttachment(attachment.payload.getValue() as AttachmentsValue, "RSWCF Attachments", validationResults)
         }
 
         if ((attachment = checkWorkFiledPresence(
@@ -181,7 +184,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 "attachmentsAndFiles",
                 Optional.empty()
         )).valid) {
-            validationResults.add(validateAttachment(attachment.payload.value() as AttachmentsValue, "Attachments and Files"))
+            validateAttachment(attachment.payload.getValue() as AttachmentsValue, "Attachments and Files", validationResults)
         }
     }
 
@@ -194,7 +197,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     private void canMoveToReadyForWork(Work work) {
         ValidationResult<CustomField> radiationSafetyWorkControlForm = null;
         def validationResults = [
-                checkAssignedTo(work),
                 checkWorkFiledPresence(work, "schedulingPriority", Optional.empty()),
                 checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty()),
                 checkWorkFiledPresence(work, "accessRequirements", Optional.empty()),
@@ -206,14 +208,25 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
 
         ]
 
-        var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
-        var haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
-        //verify
-        if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null && haveABucket) {
-            validationResults.add(ValidationResult.failure("The work cannot have a planned start date and a bucket at the same time"));
+        checkPlannedDataAgainstBucket(work, validationResults)
+
+        // in case the safety form is needed i need to check if the user has uploaded the file
+        if (radiationSafetyWorkControlForm.valid && (radiationSafetyWorkControlForm.payload.getValue() as BooleanValue).value) {
+            // check for safety attachment
+            ValidationResult<CustomField> rswcfAttachments = null;
+            validationResults.add(rswcfAttachments = checkWorkFiledPresence(work, "rswcfAttachments", Optional.empty()));
+            if (rswcfAttachments.valid && rswcfAttachments.payload.getValue() == null) {
+                validationResults.add(ValidationResult.failure("The Radiation Safety Work Control Form attachment is required"));
+            }
         }
 
-        // check if we have a planned start date
+        // check if the work has been assigned to someone
+        checkAssignedTo(work, validationResults);
+
+        // check if we have some errors
+        checkAndFireError(validationResults)
+
+        // we haven't had any error so we can create a scheduler for the starting job date in case we have a planning start date
         if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null) {
             // we have a planned start date so i need to create a triggered event for it
             var createdEventTrigger = eventTriggerRepository.save(
@@ -224,31 +237,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                             .build()
             );
         }
-
-
-        // in case the safety form is needed i need to check if the user has uploaded the file
-        if (radiationSafetyWorkControlForm.valid && (radiationSafetyWorkControlForm.payload.value as BooleanValue).value) {
-            // check for safety attachment
-            ValidationResult<CustomField> rswcfAttachments = null;
-            validationResults.add(rswcfAttachments = checkWorkFiledPresence(work, "rswcfAttachments", Optional.empty()));
-            if (rswcfAttachments.valid && rswcfAttachments.payload.getValue() == null) {
-                validationResults.add(ValidationResult.failure("The Radiation Safety Work Control Form attachment is required"));
-            }
-        }
-
-        // check if we have some errors
-        def hasErrors = validationResults.any { !it.isValid() }
-        if (hasErrors) {
-            // collect all error messages
-            def errorMessages = validationResults.findAll { !it.isValid() }
-                    .collect { it.errorMessage }
-            throw ControllerLogicException
-                    .builder()
-                    .errorCode(-1)
-                    .errorMessage(errorMessages.join(", "))
-                    .errorDomain("TECHardwareReportValidation::canMoveToReadyForWork")
-                    .build()
-        }
     }
 
 /**
@@ -257,18 +245,20 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
  * @param work the work to check
  * @throws ControllerLogicException if the field is null or empty or with unalloyed user
  */
-    private List<ValidationResult<String>> checkAssignedTo(Work work) {
-        List<ValidationResult<String>> result = new ArrayList<>();
+    private void checkAssignedTo(Work work, ArrayList<ValidationResult<String>> validationResults) {
         def assignedUsers = work.getAssignedTo() ?: []
+        if(assignedUsers.size()==0) {
+            validationResults.add(ValidationResult.failure("The work must be assigned to someone"))
+            return;
+        }
         // the assignedTo can be null or empty only if we are in created state
         assignedUsers.each { user ->
             try {
                 peopleGroupService.findPersonByEMail(user)
             } catch (PersonNotFound e) {
-                result.add(ValidationResult.failure("The user '${user}' does not exist"))
+                validationResults.add(ValidationResult.failure("The user '${user}' does not exist"))
             }
         }
-        return result.isEmpty() ? [ValidationResult.success("assignedTo")] : result
     }
 
     /**
@@ -277,11 +267,11 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
      */
     private void checkAndFireError(ArrayList<ValidationResult<String>> validationResults) {
 // Check if any validation failed
-        def hasErrors = validationResults.any { !it.isValid() }
+        def hasErrors = validationResults.any { !it.valid}
 
 // If there are errors, throw a ControllerLogicException with all error messages
         if (hasErrors) {
-            def errorMessages = validationResults.findAll { !it.isValid() }
+            def errorMessages = validationResults.findAll { !it.valid }
                     .collect { it.errorMessage }
             throw ControllerLogicException
                     .builder()
@@ -297,15 +287,14 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
      * @param attachmentsValue the attachments to validate
      * @param errorMessage the error message to show in case of error
      */
-    private List<ValidationResult<String>> validateAttachment(AttachmentsValue attachmentsValue, String fieldName) {
+    private void validateAttachment(AttachmentsValue attachmentsValue, String fieldName, List<ValidationResult<String>> validationResult) {
         if (attachmentsValue == null || attachmentsValue.getValue() == null || attachmentsValue.getValue().isEmpty()) {
             return;
         }
-        List<ValidationResult<String>> validationError = new ArrayList<>();
         attachmentsValue.getValue().forEach { attachmentId ->
-            attachmentService.exists(attachmentId)
-                    .orElse(validationError.addFirst(ValidationResult.failure(errorMessage.orElse("The '%s' attachment %s is not valid".formatted(fieldName, attachmentId)))))
+            if(!attachmentService.exists(attachmentId)){
+                validationResult.addFirst(ValidationResult.failure("The '%s' attachment %s does not exist".formatted(fieldName, attachmentId)))
+            }
         }
-        return validationError;
     }
 }

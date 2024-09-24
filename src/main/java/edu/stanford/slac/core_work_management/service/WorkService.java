@@ -355,7 +355,7 @@ public class WorkService {
      * @param work the work to update
      */
     public void updateWorkWorkflow(Work work, UpdateWorkflowState updateState) {
-        if (work == null || updateState == null) {
+        if (work == null) {
             return;
         }
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
