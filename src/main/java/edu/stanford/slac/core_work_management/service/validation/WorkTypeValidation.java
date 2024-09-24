@@ -10,6 +10,7 @@ import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidat
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowWorkUpdate;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Define the work type validation baseclass
@@ -55,7 +56,7 @@ public abstract class WorkTypeValidation {
      * @param writeCustomFieldList the user valorized custom field
      * @param customFieldName      the name of the custom field to check
      */
-    protected ValidationResult<WriteCustomFieldDTO> checkFiledPresence(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> writeCustomFieldList, String customFieldName) {
+    protected ValidationResult<WriteCustomFieldDTO> checkFiledPresence(List<WATypeCustomField> customFields, List<WriteCustomFieldDTO> writeCustomFieldList, String customFieldName, Optional<String> error) {
         var filedToCheck = customFields.stream()
                 .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName) == 0)
                 .findFirst();
@@ -67,7 +68,7 @@ public abstract class WorkTypeValidation {
 
             if (customFieldFound.isEmpty()) {
                 // Return a failure validation result if the custom field is required but not found
-                return ValidationResult.failure("The custom field '%s' is required".formatted(customFieldName));
+                return ValidationResult.failure(error.orElse("The field '%s' is required".formatted(customFieldName)));
             }
 
             // Return success if the custom field is found
@@ -75,7 +76,7 @@ public abstract class WorkTypeValidation {
         }
 
         // Return failure if the field was not found in the list of custom fields
-        return ValidationResult.failure("The custom field '%s' is not present".formatted(customFieldName));
+        return ValidationResult.failure(error.orElse("The field '%s' is required".formatted(customFieldName)));
     }
 
     /**
@@ -85,7 +86,7 @@ public abstract class WorkTypeValidation {
      * @param workCustomField     the list of the custom field associated to the work
      * @param customFieldName     the name of the custom field to check
      */
-    protected ValidationResult<CustomField> checkWorkFiledPresence(List<WATypeCustomField> workTypeCustomField, List<CustomField> workCustomField, String customFieldName) {
+    protected ValidationResult<CustomField> checkWorkFiledPresence(List<WATypeCustomField> workTypeCustomField, List<CustomField> workCustomField, String customFieldName, Optional<String> error) {
         var filedToCheck = workTypeCustomField.stream()
                 .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName) == 0)
                 .findFirst();
@@ -97,7 +98,7 @@ public abstract class WorkTypeValidation {
 
             if (customFieldFound.isEmpty()) {
                 // Return a failure validation result if the custom field is required but not found
-                return ValidationResult.failure("The custom field '%s' is required".formatted(customFieldName));
+                return ValidationResult.failure(error.orElse("The field '%s' is required".formatted(customFieldName)));
             }
 
             // Return success if the custom field is found
@@ -105,7 +106,7 @@ public abstract class WorkTypeValidation {
         }
 
         // Return failure if the field was not found in the list of custom fields
-        return ValidationResult.failure("The custom field '%s' is not present".formatted(customFieldName));
+        return ValidationResult.failure(error.orElse("The field '%s' is required".formatted(customFieldName)));
     }
 
     /**
@@ -114,10 +115,10 @@ public abstract class WorkTypeValidation {
      * @param fieldValue the value of the field to check
      * @param fieldName  the name of the field to check
      */
-    protected ValidationResult<String> checkStringField(String fieldValue, String fieldName) {
+    protected ValidationResult<String> checkStringField(String fieldValue, String fieldName, Optional<String> error) {
         if (fieldValue == null || fieldValue.isEmpty()) {
             // Return failure with an error message
-            return ValidationResult.failure("The field '%s' is required".formatted(fieldName));
+            return ValidationResult.failure(error.orElse("The field '%s' is required".formatted(fieldName)));
         }
 
         // Return success with the field name as payload

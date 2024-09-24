@@ -23,11 +23,11 @@ public class ManageBucketWorkflowUpdate {
     private final BucketService bucketService;
 
     private final TransactionTemplate transactionTemplate;
-    private final KafkaTemplate<String, ProcessWorkflowInfo> processWorkflowInfo;
+    private final KafkaTemplate<String, ProcessWorkflowInfo> processWorkflowInfoKafkaTemplate;
 
     @Scheduled(fixedDelay = 60000)
     public void processStartAndStop() {
-        // Start transaction
+        // Start work associated to started bucket
         transactionTemplate.execute(status -> {
             processBucketStartEvent();
             return null;
@@ -94,7 +94,7 @@ public class ManageBucketWorkflowUpdate {
         allWorkToProcess.forEach(
                 work -> {
                     log.info("Processing work with id:{} and did:{}", work.domain().id(), work.id());
-                    processWorkflowInfo.send(
+                    processWorkflowInfoKafkaTemplate.send(
                             // topic
                             cwmAppProperties.getWorkflowProcessingTopic(),
                             // key

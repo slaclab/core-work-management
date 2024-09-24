@@ -170,7 +170,6 @@ public class WorkService {
             );
         }
 
-
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -226,7 +225,11 @@ public class WorkService {
                 -2
         );
 
+        // update the model
+        workMapper.updateModel(updateWorkDTO, foundWork);
+
         // check if the new work that is being created is valid for the workflow
+        // we send the updated work to the validator
         isValidForWorkflow(
                 UpdateWorkValidation
                         .builder()
@@ -235,8 +238,6 @@ public class WorkService {
                         .build()
         );
 
-        // update the model
-        workMapper.updateModel(updateWorkDTO, foundWork);
 
         // validate lov
         modelFieldValidationService.verify(
