@@ -88,7 +88,6 @@ public class M1001_InitTECDomain {
                         .customFields(
                                 List.of(
                                         WATypeCustomFieldDTO.builder().label("schedulingPriority").description("Scheduling Priority").valueType(ValueTypeDTO.LOV).additionalMappingInfo("SchedulingPriorityGroup").group("Scheduling").isMandatory(false).build(),
-                                        WATypeCustomFieldDTO.builder().label("pmmDate").description("PMM Date").valueType(ValueTypeDTO.LOV).group("Scheduling").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("timeHrs").description("Time (hrs)").valueType(ValueTypeDTO.Double).group("Scheduling").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("plannedStartDateTime").description("Planned Start Date & Time").valueType(ValueTypeDTO.DateTime).group("Scheduling").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("plannedStopDateTime").description("Planned Stop Date & Time").valueType(ValueTypeDTO.DateTime).group("Scheduling").isMandatory(false).build(),

@@ -134,7 +134,7 @@ public class WorkService {
         );
 
         // check if the new work that is being created is valid for the workflow
-        isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(newWorkDTO).workType(workType).build());
+        //isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(newWorkDTO).workType(workType).build());
 
         // check if the parent id exists, in case new work is a sub work
         if (newWorkDTO.parentWorkId() != null) {
@@ -169,6 +169,8 @@ public class WorkService {
                     shopGroupMapper.toEmbeddable(shopGroupService.findByDomainIdAndId(domainId, newWorkDTO.shopGroupId()))
             );
         }
+
+        isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(workToSave).build());
 
         // save work
         Work savedWork = wrapCatch(
@@ -237,7 +239,6 @@ public class WorkService {
                         .existingWork(foundWork)
                         .build()
         );
-
 
         // validate lov
         modelFieldValidationService.verify(
@@ -324,7 +325,7 @@ public class WorkService {
     public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
-                newWorkValidation.getWorkType().getValidatorName(),
+                newWorkValidation.getNewWorkDTO().getWorkType().getValidatorName(),
                 WorkTypeValidation.class
         );
         wtv.checkValid(newWorkValidation);

@@ -8,7 +8,9 @@ import edu.stanford.slac.core_work_management.migration.M1000_InitLOV;
 import edu.stanford.slac.core_work_management.migration.M1001_InitTECDomain;
 import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.*;
-import edu.stanford.slac.core_work_management.service.*;
+import edu.stanford.slac.core_work_management.service.DomainService;
+import edu.stanford.slac.core_work_management.service.HelperService;
+import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class TecHardwareReportTest {
+public class TecHardwareReportTest extends BaseWorkflowDomainTest{
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -83,6 +85,8 @@ public class TecHardwareReportTest {
         mongoTemplate.remove(Location.class).all();
         mongoTemplate.remove(ShopGroup.class).all();
         mongoTemplate.remove(BucketSlot.class).all();
+        mongoTemplate.remove(Work.class).all();
+        mongoTemplate.remove(Attachment.class).all();
 
         // init general lov
         M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
@@ -289,7 +293,7 @@ public class TecHardwareReportTest {
     }
 
     @Test
-    public void hardwareRequestCreateNewGoesInCreated() {
+    public void hardwareRequestWholeWorkflowWithPlannedStartDate() {
         // create a new hardware request with minimal fields
         var newWorkResult = assertDoesNotThrow(
                 ()->testControllerHelperService.workControllerCreateNew(
@@ -307,6 +311,57 @@ public class TecHardwareReportTest {
                                 .build()
                 )
         );
+        assertThat(newWorkResult).isNotNull();
+        assertThat(newWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkResult.getPayload()).isNotNull();
+        // we are in created state
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // update setting general attachments
+        var pdfAttachmentResult = assertDoesNotThrow(
+                ()->testControllerHelperService.createDummyPDFAttachment(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(pdfAttachmentResult).isNotNull();
+        assertThat(pdfAttachmentResult.getErrorCode()).isEqualTo(0);
+        var pdfAttachmentId = pdfAttachmentResult.getPayload();
+
+        // update setting general attachments and some other fields
+        var updateWorkResult = assertDoesNotThrow(
+                ()->testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .customFieldValues(
+                                        List.of(
+                                                // set attachmentsAndFiles
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "attachmentsAndFiles"))
+                                                        .value(ValueDTO.builder().value(pdfAttachmentId).type(ValueTypeDTO.Attachments).build())
+                                                        .build(),
+                                                // set timeHrs
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "timeHrs"))
+                                                        .value(ValueDTO.builder().value("10.5").type(ValueTypeDTO.Double).build())
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult).isNotNull();
+        assertThat(updateWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkResult.getPayload()).isTrue();
+        // we still are in created state
         assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
     }
 }

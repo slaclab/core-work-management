@@ -3,27 +3,38 @@ package validation
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService
+import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO
 import edu.stanford.slac.core_work_management.model.CustomField
 import edu.stanford.slac.core_work_management.model.EventTrigger
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState
 import edu.stanford.slac.core_work_management.model.Work
+import edu.stanford.slac.core_work_management.model.value.AttachmentsValue
 import edu.stanford.slac.core_work_management.model.value.BooleanValue
 import edu.stanford.slac.core_work_management.model.value.DateTimeValue
 import edu.stanford.slac.core_work_management.repository.EventTriggerRepository
 import edu.stanford.slac.core_work_management.repository.WorkRepository
+import edu.stanford.slac.core_work_management.service.AttachmentService
+import edu.stanford.slac.core_work_management.service.BucketService
 import edu.stanford.slac.core_work_management.service.validation.ValidationResult
 import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation
 import edu.stanford.slac.core_work_management.service.workflow.*
+
+import java.time.LocalDateTime
 
 /**
  * Validation for the TECHardwareReport work type.
  */
 class TECHardwareRequestValidation extends WorkTypeValidation {
     private final WorkRepository workRepository;
+    private final BucketService bucketService;
+    private final AttachmentService attachmentService;
     private final PeopleGroupService peopleGroupService;
     private final EventTriggerRepository eventTriggerRepository;
-    TECHardwareRequestValidation(WorkRepository workRepository, PeopleGroupService peopleGroupService, EventTriggerRepository eventTriggerRepository) {
+
+    TECHardwareRequestValidation(WorkRepository workRepository, BucketService bucketService, AttachmentService attachmentService, PeopleGroupService peopleGroupService, EventTriggerRepository eventTriggerRepository) {
         this.workRepository = workRepository
+        this.bucketService = bucketService
+        this.attachmentService = attachmentService
         this.peopleGroupService = peopleGroupService
         this.eventTriggerRepository = eventTriggerRepository
     }
@@ -49,8 +60,10 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         var currentStatus = work.getCurrentStatus().getStatus();
         switch (currentStatus) {
             case Created -> {
-                if (work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucket() != null) {
-                    // attempt to move to the next state
+                var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
+                var bucketId = work.getCurrentBucketAssociation().getBucketId() != null;
+
+                if (plannedStartDate.valid || bucketId != null) {
                     workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.PendingApproval).build());
                 }
             }
@@ -64,7 +77,31 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 }
             }
             case ReadyForWork -> {
-                // here we need to
+                // check if work has a planning date or a bucket
+                LocalDateTime inProgressStarDate = null;
+                boolean haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
+
+                if (haveABucket) {
+                    bucketService.findById(work.getCurrentBucketAssociation().getBucketId())
+                            .ifPresent { bucket ->
+                                inProgressStarDate = bucket.getStartDate();
+                            }
+                            .orElseThrow(() -> ControllerLogicException.builder()
+                                    .errorCode(-1)
+                                    .errorMessage("The bucket does not exist")
+                                    .errorDomain("TECHardwareReportValidation::update")
+                                    .build());
+                } else {
+                    var plannedStartDate = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty());
+                    if (!plannedStartDate.valid || plannedStartDate.payload.getValue() == null) {
+                        throw ControllerLogicException.builder()
+                                .errorCode(-1)
+                                .errorMessage("The planned start date is null")
+                                .errorDomain("TECHardwareReportValidation::update")
+                                .build();
+                    }
+                    inProgressStarDate = (plannedStartDate.payload.getValue() as DateTimeValue).value;
+                }
             }
             case InProgress -> {
 
@@ -79,38 +116,72 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     @Override
     void checkValid(NewWorkValidation newWorkValidation) {
         def validationResults = [
-                checkStringField(newWorkValidation.newWorkDTO.title(), "title", Optional.empty()),
-                checkStringField(newWorkValidation.newWorkDTO.description(), "description", Optional.empty()),
-                checkStringField(newWorkValidation.newWorkDTO.locationId(), "locationId", Optional.of("The location is mandatory")),
-                checkStringField(newWorkValidation.newWorkDTO.shopGroupId(), "shopGroupId", Optional.of("The shop group is mandatory")),
+                checkStringField(newWorkValidation.newWorkDTO.getTitle(), "title", Optional.empty()),
+                checkStringField(newWorkValidation.newWorkDTO.getDescription(), "description", Optional.empty()),
+                checkObjectField(newWorkValidation.newWorkDTO.getLocation(), "location", Optional.of("The location is mandatory")),
+                checkObjectField(newWorkValidation.newWorkDTO.getShopGroup(), "shopGroup", Optional.of("The shop group is mandatory")),
         ]
+        checkAttachments(newWorkValidation.newWorkDTO, validationResults);
+        checkPlannedDataAgainstBucket(newWorkValidation.newWorkDTO, validationResults)
         checkAndFireError(validationResults)
     }
 
     @Override
     void checkValid(UpdateWorkValidation updateWorkValidation) {
         def validationResults = []
-        var work = updateWorkValidation.getWork();
-
-        checkPlannedDataAgainstBucket(work, validationResults)
+        checkAttachments(updateWorkValidation.getExistingWork(), validationResults);
+        checkPlannedDataAgainstBucket(updateWorkValidation.getExistingWork(), validationResults)
         checkAndFireError(validationResults)
     }
 
     @Override
-    void admitChildren(AdmitChildrenValidation canHaveChildValidation) {}
+    void admitChildren(AdmitChildrenValidation canHaveChildValidation) {
+        throw ControllerLogicException.builder()
+                .errorCode(-1)
+                .errorMessage("The work type cannot have children")
+                .errorDomain("TECHardwareReportValidation::admitChildren")
+                .build()
+    }
 
     /**
      * Check if the planned start date is present and if it is present the bucket should not be present
      * @param work the work to check
      * @param validationResults the list of validation results
      */
-    private void checkPlannedDataAgainstBucket(Work work,  ArrayList<ValidationResult<String>> validationResults) {
+    private void checkPlannedDataAgainstBucket(Work work, ArrayList<ValidationResult<String>> validationResults) {
 // check that or we have a planned data or bucket or none
-        var plannedStartDate = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty());
+        var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
         var haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
         // verify that if we have a planned start date we don't have a bucket
-        if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null && haveABucket) {
+        if (plannedStartDate.valid && haveABucket) {
             validationResults.add(ValidationResult.failure("The work cannot have a planned start date and a bucket at the same time"));
+        }
+        if (plannedStartDate.valid && plannedStartDate.payload == null) {
+            validationResults.add(ValidationResult.failure("A valid planned start date is required"));
+        }
+    }
+
+    /**
+     * Validate the attachments
+     * @param newWorkDTO the new work to validate
+     * @param validationResults the list of validation results
+     */
+    private void checkAttachments(Work work, ArrayList<ValidationResult<String>> validationResults) {
+        ValidationResult<CustomField> attachment = null;
+        if ((attachment = checkWorkFiledPresence(
+                work,
+                "rswcfAttachments",
+                Optional.empty()
+        )).valid) {
+            validationResults.add(validateAttachment(attachment.payload.value() as AttachmentsValue, "RSWCF Attachments"))
+        }
+
+        if ((attachment = checkWorkFiledPresence(
+                work,
+                "attachmentsAndFiles",
+                Optional.empty()
+        )).valid) {
+            validationResults.add(validateAttachment(attachment.payload.value() as AttachmentsValue, "Attachments and Files"))
         }
     }
 
@@ -124,26 +195,26 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         ValidationResult<CustomField> radiationSafetyWorkControlForm = null;
         def validationResults = [
                 checkAssignedTo(work),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "schedulingPriority", Optional.empty()),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty()),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "accessRequirements", Optional.empty()),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "ppsZone", Optional.empty()),
-                radiationSafetyWorkControlForm = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "radiationSafetyWorkControlForm", Optional.empty()),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "lockAndTag", Optional.empty()),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "subsystem", Optional.empty()),
-                checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "group", Optional.empty()),
+                checkWorkFiledPresence(work, "schedulingPriority", Optional.empty()),
+                checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty()),
+                checkWorkFiledPresence(work, "accessRequirements", Optional.empty()),
+                checkWorkFiledPresence(work, "ppsZone", Optional.empty()),
+                radiationSafetyWorkControlForm = checkWorkFiledPresence(work, "radiationSafetyWorkControlForm", Optional.empty()),
+                checkWorkFiledPresence(work, "lockAndTag", Optional.empty()),
+                checkWorkFiledPresence(work, "subsystem", Optional.empty()),
+                checkWorkFiledPresence(work, "group", Optional.empty()),
 
         ]
 
-        var plannedStartDate = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty());
-        var haveABucket = work.getCurrentBucketAssociation()!=null && work.getCurrentBucketAssociation().getBucketId() != null;
+        var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
+        var haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
         //verify
         if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null && haveABucket) {
             validationResults.add(ValidationResult.failure("The work cannot have a planned start date and a bucket at the same time"));
         }
 
         // check if we have a planned start date
-        if(plannedStartDate.valid && plannedStartDate.payload.getValue() != null) {
+        if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null) {
             // we have a planned start date so i need to create a triggered event for it
             var createdEventTrigger = eventTriggerRepository.save(
                     EventTrigger.builder()
@@ -155,13 +226,12 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         }
 
 
-
         // in case the safety form is needed i need to check if the user has uploaded the file
-        if(radiationSafetyWorkControlForm.valid && (radiationSafetyWorkControlForm.payload.value as BooleanValue).value) {
+        if (radiationSafetyWorkControlForm.valid && (radiationSafetyWorkControlForm.payload.value as BooleanValue).value) {
             // check for safety attachment
             ValidationResult<CustomField> rswcfAttachments = null;
-            validationResults.add(rswcfAttachments = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "rswcfAttachments", Optional.empty()));
-            if(rswcfAttachments.valid && rswcfAttachments.payload.getValue() == null) {
+            validationResults.add(rswcfAttachments = checkWorkFiledPresence(work, "rswcfAttachments", Optional.empty()));
+            if (rswcfAttachments.valid && rswcfAttachments.payload.getValue() == null) {
                 validationResults.add(ValidationResult.failure("The Radiation Safety Work Control Form attachment is required"));
             }
         }
@@ -220,5 +290,22 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                     .errorDomain("TECHardwareReportValidation::checkValid")
                     .build()
         }
+    }
+
+    /**
+     * Validate the attachments
+     * @param attachmentsValue the attachments to validate
+     * @param errorMessage the error message to show in case of error
+     */
+    private List<ValidationResult<String>> validateAttachment(AttachmentsValue attachmentsValue, String fieldName) {
+        if (attachmentsValue == null || attachmentsValue.getValue() == null || attachmentsValue.getValue().isEmpty()) {
+            return;
+        }
+        List<ValidationResult<String>> validationError = new ArrayList<>();
+        attachmentsValue.getValue().forEach { attachmentId ->
+            attachmentService.exists(attachmentId)
+                    .orElse(validationError.addFirst(ValidationResult.failure(errorMessage.orElse("The '%s' attachment %s is not valid".formatted(fieldName, attachmentId)))))
+        }
+        return validationError;
     }
 }

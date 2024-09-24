@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
+import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.service.workflow.AdmitChildrenValidation;
 import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation;
 import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation;
@@ -82,17 +83,15 @@ public abstract class WorkTypeValidation {
     /**
      * Check if the status of the work is equal to any provided states
      *
-     * @param workTypeCustomField the list of the custom field associated to the work type
-     * @param workCustomField     the list of the custom field associated to the work
-     * @param customFieldName     the name of the custom field to check
+     * @param work the work to check
      */
-    protected ValidationResult<CustomField> checkWorkFiledPresence(List<WATypeCustomField> workTypeCustomField, List<CustomField> workCustomField, String customFieldName, Optional<String> error) {
-        var filedToCheck = workTypeCustomField.stream()
+    protected ValidationResult<CustomField> checkWorkFiledPresence(Work work , String customFieldName, Optional<String> error) {
+        var filedToCheck = work.getWorkType().getCustomFields().stream()
                 .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName) == 0)
                 .findFirst();
 
-        if (filedToCheck.isPresent() && workCustomField != null) {
-            var customFieldFound = workCustomField.stream()
+        if (filedToCheck.isPresent() && work.getCustomFields() != null) {
+            var customFieldFound = work.getCustomFields().stream()
                     .filter(customField -> customField.getId().compareTo(filedToCheck.get().getId()) == 0)
                     .findFirst();
 
@@ -125,5 +124,19 @@ public abstract class WorkTypeValidation {
         return ValidationResult.success(fieldName);
     }
 
+    /**
+     * Check if the status of the work is equal to any provided states
+     *
+     * @param fieldValue the value of the field to check
+     * @param fieldName  the name of the field to check
+     */
+    protected ValidationResult<String> checkObjectField(Object fieldValue, String fieldName, Optional<String> error) {
+        if (fieldValue == null) {
+            // Return failure with an error message
+            return ValidationResult.failure(error.orElse("The field '%s' is required".formatted(fieldName)));
+        }
 
+        // Return success with the field name as payload
+        return ValidationResult.success(fieldName);
+    }
 }

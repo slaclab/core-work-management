@@ -79,7 +79,12 @@ public class AttachmentService {
         return resultId;
     }
 
-    boolean exists(String id) {
+    /**
+     * Check if the attachment exists
+     * @param id the unique id of the attachment
+     * @return true if the attachment exists
+     */
+    public boolean exists(String id) {
         return wrapCatch(
                 () -> attachmentRepository.existsById(
                         id

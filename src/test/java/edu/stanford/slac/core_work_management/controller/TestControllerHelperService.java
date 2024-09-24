@@ -18,11 +18,13 @@ import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Service()
 public class TestControllerHelperService {
@@ -57,6 +59,32 @@ public class TestControllerHelperService {
         });
         assertThat(res.getErrorCode()).isEqualTo(0);
         return res;
+    }
+
+    /**
+     * Create a dummy PDF attachment
+     * @param mockMvc the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo the user info
+     * @return the id of the newly created attachment
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> createDummyPDFAttachment(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", MediaType.APPLICATION_PDF_VALUE, "test".getBytes());
+        return  attachmentControllerCreateNew(
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                new MockMultipartFile(
+                        "uploadFile",
+                        "file.pdf",
+                        MediaType.APPLICATION_PDF_VALUE,
+                        "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
+                )
+        );
     }
 
     /**
