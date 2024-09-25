@@ -15,6 +15,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Clock;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
@@ -22,8 +23,8 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @Component
 @AllArgsConstructor
 public class ProcessingWorkflowUpdate {
-    WorkRepository workRepository;
-    WorkService workService;
+    private final WorkRepository workRepository;
+    private final WorkService workService;
 
     @RetryableTopic(
             attempts = "3",
@@ -54,6 +55,9 @@ public class ProcessingWorkflowUpdate {
             log.info("Processing workflow update for work: {}", workToProcess);
             // lastly we need to update the workflow
             workService.updateWorkWorkflow(workToProcess, null);
+
+            // save the work with all the automatic update on the workflow
+            workRepository.save(workToProcess);
 
             // after this work is update we need to update all the
             // tree up to the ancestor

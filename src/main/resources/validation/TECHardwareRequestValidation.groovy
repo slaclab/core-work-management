@@ -18,20 +18,25 @@ import edu.stanford.slac.core_work_management.service.BucketService
 import edu.stanford.slac.core_work_management.service.validation.ValidationResult
 import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation
 import edu.stanford.slac.core_work_management.service.workflow.*
+import groovy.util.logging.Slf4j
 
+import java.time.Clock
 import java.time.LocalDateTime
 
 /**
  * Validation for the TECHardwareReport work type.
  */
+@Slf4j
 class TECHardwareRequestValidation extends WorkTypeValidation {
+    private final Clock clock;
     private final WorkRepository workRepository;
     private final BucketService bucketService;
     private final AttachmentService attachmentService;
     private final PeopleGroupService peopleGroupService;
     private final EventTriggerRepository eventTriggerRepository;
 
-    TECHardwareRequestValidation(WorkRepository workRepository, BucketService bucketService, AttachmentService attachmentService, PeopleGroupService peopleGroupService, EventTriggerRepository eventTriggerRepository) {
+    TECHardwareRequestValidation(Clock clock, WorkRepository workRepository, BucketService bucketService, AttachmentService attachmentService, PeopleGroupService peopleGroupService, EventTriggerRepository eventTriggerRepository) {
+        this.clock = clock
         this.workRepository = workRepository
         this.bucketService = bucketService
         this.attachmentService = attachmentService
@@ -51,7 +56,9 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                     .errorDomain("TECHardwareReportValidation::update")
                     .build()
         }
-
+        // perform update on var
+        LocalDateTime now = LocalDateTime.now(clock);
+        log.info("Updating work %s on %s".formatted(work.getId(), now));
         // get current state
         var currentStatus = work.getCurrentStatus().getStatus();
         switch (currentStatus) {
@@ -93,46 +100,84 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 }
             }
             case WorkflowState.ReadyForWork -> {
-                // check if work has a planning date or a bucket
-                LocalDateTime inProgressStarDate = null;
-                boolean haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
-
-                if (haveABucket) {
-                    bucketService.findById(work.getCurrentBucketAssociation().getBucketId())
-                            .ifPresent { bucket ->
-                                inProgressStarDate = bucket.getStartDate();
-                            }
-                            .orElseThrow(() -> ControllerLogicException.builder()
-                                    .errorCode(-1)
-                                    .errorMessage("The bucket does not exist")
-                                    .errorDomain("TECHardwareReportValidation::update")
-                                    .build());
-                } else {
-                    var plannedStartDate = checkWorkFieldPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty());
-                    if (!plannedStartDate.valid || plannedStartDate.payload.getValue() == null) {
-                        throw ControllerLogicException.builder()
-                                .errorCode(-1)
-                                .errorMessage("The planned start date is null")
-                                .errorDomain("TECHardwareReportValidation::update")
-                                .build();
-                    }
-                    inProgressStarDate = (plannedStartDate.payload.getValue() as DateTimeValue).value;
-                }
-
-                // check if current date is before the inProgressStarDate
-                var now = LocalDateTime.now();
-                if (now.isBefore(inProgressStarDate) || now.isEqual(inProgressStarDate)) {
-                   // move to in progress
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
-                }
+                manageReadyForWorkState(workflowWorkUpdate)
             }
             case WorkflowState.InProgress -> {
-
+                manageInProgressState(workflowWorkUpdate)
             }
             case WorkflowState.WorkComplete -> {
+                manageWorkCompleteState(workflowWorkUpdate)
             }
-            case WorkflowState.Closed -> {
+            case WorkflowState.Closed -> {}
+        }
+    }
+    /**
+     * Manage the WorkComplete state
+     * @param work the work to manage
+     * @param workflowInstance the workflow instance
+     */
+    private void manageWorkCompleteState(WorkflowWorkUpdate workflowWorkUpdate) {
+        var work = workflowWorkUpdate.getWork();
+        var workflowInstance = workflowWorkUpdate.getWorkflow();
+        var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
+        if(updateWorkflowState != null) {
+            workflowInstance.moveToState(work, updateWorkflowState);
+        }
+        log.info("Work %s has been moved to %s".formatted(work.getId(), updateWorkflowState.getNewState()));
+    }
+    /**
+     * Manage the InProgress state
+     * @param work the work to manage
+     * @param workflowInstance the workflow instance
+     */
+    private void manageInProgressState(WorkflowWorkUpdate workflowWorkUpdate) {
+        // user can only stop the work by hand
+        var work = workflowWorkUpdate.getWork();
+        var workflowInstance = workflowWorkUpdate.getWorkflow();
+        var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
+        if(updateWorkflowState != null) {
+            workflowInstance.moveToState(work, updateWorkflowState);
+        }
+        log.info("Work %s has been moved to %s".formatted(work.getId(), updateWorkflowState.getNewState()));
+    }
+    /**
+     * Manage the ReadyForWork state
+     * @param work the work to manage
+     * @param workflowInstance the workflow instance
+     */
+    private void manageReadyForWorkState(WorkflowWorkUpdate workflowWorkUpdate) {
+        var work = workflowWorkUpdate.getWork();
+        var workflowInstance = workflowWorkUpdate.getWorkflow();
+        LocalDateTime inProgressStarDate = null;
+        boolean haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
+
+        if (haveABucket) {
+            bucketService.findById(work.getCurrentBucketAssociation().getBucketId())
+                    .ifPresent { bucket ->
+                        inProgressStarDate = bucket.getStartDate();
+                    }
+                    .orElseThrow(() -> ControllerLogicException.builder()
+                            .errorCode(-1)
+                            .errorMessage("The bucket does not exist")
+                            .errorDomain("TECHardwareReportValidation::update")
+                            .build());
+        } else {
+            var plannedStartDate = checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty());
+            if (!plannedStartDate.valid || plannedStartDate.payload.getValue() == null) {
+                throw ControllerLogicException.builder()
+                        .errorCode(-1)
+                        .errorMessage("The planned start date is null")
+                        .errorDomain("TECHardwareReportValidation::update")
+                        .build();
             }
+            inProgressStarDate = (plannedStartDate.payload.getValue() as DateTimeValue).value;
+        }
+
+        // check if current date is before the inProgressStarDate
+        var now = LocalDateTime.now(clock);
+        if (now.isAfter(inProgressStarDate) || now.isEqual(inProgressStarDate)) {
+            // move to in progress
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
         }
     }
 

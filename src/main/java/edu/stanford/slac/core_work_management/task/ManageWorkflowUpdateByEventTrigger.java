@@ -11,12 +11,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Log4j2
 @Component
 @AllArgsConstructor
 public class ManageWorkflowUpdateByEventTrigger {
+    private final Clock clock;
     private final EventTriggerRepository eventTriggerRepository;
     private final CWMAppProperties cwmAppProperties;
     private final KafkaTemplate<String, ProcessWorkflowInfo> processWorkflowInfoKafkaTemplate;
@@ -25,7 +27,7 @@ public class ManageWorkflowUpdateByEventTrigger {
     public void processTriggeredEvent() {
         log.info("Check which bucket need to be started");
         EventTrigger selectedEvent = null;
-        var now = LocalDateTime.now();
+        var now = LocalDateTime.now(clock);
         // use the bucket service to find the next bucket to start
         while ((selectedEvent = eventTriggerRepository.findNextToProcess("workPlannedStart", now, now.minusSeconds(30))) != null) {
             if(selectedEvent.getPayload() == null || !selectedEvent.getPayload().getClass().isAssignableFrom(ProcessWorkflowInfo.class)){

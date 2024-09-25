@@ -19,11 +19,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.core.KafkaAdmin;
@@ -31,7 +33,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -40,7 +44,6 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -51,6 +54,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class TecHardwareReportTest extends BaseWorkflowDomainTest {
+    @SpyBean
+    private Clock clock; // Mock the Clock bean
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -273,6 +278,9 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
         mongoTemplate.remove(Work.class).all();
         mongoTemplate.remove(Attachment.class).all();
         mongoTemplate.remove(EventTrigger.class).all();
+
+        // reset the clock to be use to use th normal at the beginning of every test
+        Mockito.reset(clock);
     }
 
 
@@ -543,24 +551,72 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
         assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.ReadyForWork)).isTrue();
 
         // now advance the day up the planned start date expiration
-        try (MockedStatic<LocalDateTime> mockedStatic = mockStatic(LocalDateTime.class)) {
-            // jump to the planned start
-            mockedStatic.when(LocalDateTime::now).thenReturn(startPlannedDateTimeOneMothLater);
+        when(clock.instant()).thenReturn(startPlannedDateTimeOneMothLater.atZone(ZoneId.systemDefault()).toInstant());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
 
-            // Now when LocalDateTime.now() is called, it returns the fixed time
-            // simulate the event trigger scheduler
-            manageWorkflowUpdateByEventTrigger.processTriggeredEvent();
+        // Now when LocalDateTime.now() is called, it returns the fixed time
+        // simulate the event trigger scheduler
+        manageWorkflowUpdateByEventTrigger.processTriggeredEvent();
 
-            await()
-                    .atMost(20, SECONDS)
-                    .pollInterval(1, SECONDS)
-                    .until(
-                            () -> {
-                                var stateReached = helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.InProgress);
-                                return stateReached;
-                            }
-                    );
-        }
+        await()
+                .atMost(20, SECONDS)
+                .pollInterval(1, SECONDS)
+                .until(
+                        () -> {
+                            var stateReached = helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.InProgress);
+                            return stateReached;
+                        }
+                );
 
+        // now user complete the work
+        var updateWorkResult4 = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.WorkComplete)
+                                                .comment("Completed from REST API")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult4).isNotNull();
+        assertThat(updateWorkResult4.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkResult4.getPayload()).isTrue();
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.WorkComplete)).isTrue();
+
+        // now the work is completed can be closed
+        var closeWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .comment("Completed from REST API")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(closeWorkResult).isNotNull();
+        assertThat(closeWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(closeWorkResult.getPayload()).isTrue();
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Closed)).isTrue();
     }
 }
