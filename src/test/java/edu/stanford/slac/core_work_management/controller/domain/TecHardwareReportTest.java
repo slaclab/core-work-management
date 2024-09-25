@@ -12,13 +12,14 @@ import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.HelperService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
-import jakarta.validation.constraints.NotEmpty;
+import edu.stanford.slac.core_work_management.task.ManageWorkflowUpdateByEventTrigger;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,9 +35,13 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.google.common.collect.ImmutableSet.of;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -64,6 +69,8 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
     private CWMAppProperties cwmAppProperties;
     @Autowired
     private ManageBucketWorkflowUpdate manageBucketWorkflowUpdate;
+    @Autowired
+    private ManageWorkflowUpdateByEventTrigger manageWorkflowUpdateByEventTrigger;
 
     // bucket lov
     private List<LOVElementDTO> bucketTypeLOVIds = null;
@@ -86,8 +93,6 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
         mongoTemplate.remove(Location.class).all();
         mongoTemplate.remove(ShopGroup.class).all();
         mongoTemplate.remove(BucketSlot.class).all();
-        mongoTemplate.remove(Work.class).all();
-        mongoTemplate.remove(Attachment.class).all();
 
         // init general lov
         M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
@@ -266,6 +271,8 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
     @BeforeEach
     public void clear() {
         mongoTemplate.remove(Work.class).all();
+        mongoTemplate.remove(Attachment.class).all();
+        mongoTemplate.remove(EventTrigger.class).all();
     }
 
 
@@ -295,6 +302,8 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
 
     @Test
     public void hardwareRequestWholeWorkflowWithPlannedStartDate() {
+        var nowLocalDateTime = LocalDateTime.now();
+        var startPlannedDateTimeOneMothLater = nowLocalDateTime.plusMonths(1);
         // create a new hardware request with minimal fields
         var newWorkResult = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerCreateNew(
@@ -390,7 +399,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
                                                 WriteCustomFieldDTO
                                                         .builder()
                                                         .id(getCustomFileIdByName(workTypes.getFirst(), "plannedStartDateTime"))
-                                                        .value(ValueDTO.builder().value("2024-06-01T00:00:00").type(ValueTypeDTO.DateTime).build())
+                                                        .value(ValueDTO.builder().value(helperService.toString(startPlannedDateTimeOneMothLater)).type(ValueTypeDTO.DateTime).build())
                                                         .build(),
                                                 // set attachmentsAndFiles
                                                 WriteCustomFieldDTO
@@ -441,6 +450,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
                         newWorkResult.getPayload(),
                         UpdateWorkDTO
                                 .builder()
+                                .assignedTo(List.of("user2@slac.stanford.edu"))
                                 .customFieldValues
                                         (
                                                 List.of(
@@ -448,7 +458,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
                                                         WriteCustomFieldDTO
                                                                 .builder()
                                                                 .id(getCustomFileIdByName(workTypes.getFirst(), "plannedStartDateTime"))
-                                                                .value(ValueDTO.builder().value("2024-06-01T00:00:00").type(ValueTypeDTO.DateTime).build())
+                                                                .value(ValueDTO.builder().value(helperService.toString(startPlannedDateTimeOneMothLater)).type(ValueTypeDTO.DateTime).build())
                                                                 .build(),
                                                         // set attachmentsAndFiles
                                                         WriteCustomFieldDTO
@@ -503,16 +513,16 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
                                                                         ValueDTO.builder()
                                                                                 .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "subsystem", 0))
                                                                                 .type(ValueTypeDTO.LOV).build())
-                                                                .build(),
-                                                        // add group
-                                                        WriteCustomFieldDTO
-                                                                .builder()
-                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "group"))
-                                                                .value(
-                                                                        ValueDTO.builder()
-                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "group", 0))
-                                                                                .type(ValueTypeDTO.LOV).build())
                                                                 .build()
+                                                        // add group
+//                                                        WriteCustomFieldDTO
+//                                                                .builder()
+//                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "group"))
+//                                                                .value(
+//                                                                        ValueDTO.builder()
+//                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "group", 0))
+//                                                                                .type(ValueTypeDTO.LOV).build())
+//                                                                .build()
                                                 )
                                         )
                                 .workflowStateUpdate(
@@ -531,5 +541,26 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
         assertThat(updateWorkResult3.getErrorCode()).isEqualTo(0);
         assertThat(updateWorkResult3.getPayload()).isTrue();
         assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.ReadyForWork)).isTrue();
+
+        // now advance the day up the planned start date expiration
+        try (MockedStatic<LocalDateTime> mockedStatic = mockStatic(LocalDateTime.class)) {
+            // jump to the planned start
+            mockedStatic.when(LocalDateTime::now).thenReturn(startPlannedDateTimeOneMothLater);
+
+            // Now when LocalDateTime.now() is called, it returns the fixed time
+            // simulate the event trigger scheduler
+            manageWorkflowUpdateByEventTrigger.processTriggeredEvent();
+
+            await()
+                    .atMost(20, SECONDS)
+                    .pollInterval(1, SECONDS)
+                    .until(
+                            () -> {
+                                var stateReached = helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.InProgress);
+                                return stateReached;
+                            }
+                    );
+        }
+
     }
 }

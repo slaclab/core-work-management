@@ -22,13 +22,13 @@ public class ManageWorkflowUpdateByEventTrigger {
     private final KafkaTemplate<String, ProcessWorkflowInfo> processWorkflowInfoKafkaTemplate;
     @Transactional
     @Scheduled(fixedDelay = 60000)
-    public void processStartAndStop() {
+    public void processTriggeredEvent() {
         log.info("Check which bucket need to be started");
         EventTrigger selectedEvent = null;
         var now = LocalDateTime.now();
         // use the bucket service to find the next bucket to start
-        while ((selectedEvent = eventTriggerRepository.findNextToProcess("work", now, now.minusSeconds(30))) != null) {
-            if(selectedEvent.getPayload() == null || selectedEvent.getPayload().getClass().isAssignableFrom(ProcessWorkflowInfo.class)){
+        while ((selectedEvent = eventTriggerRepository.findNextToProcess("workPlannedStart", now, now.minusSeconds(30))) != null) {
+            if(selectedEvent.getPayload() == null || !selectedEvent.getPayload().getClass().isAssignableFrom(ProcessWorkflowInfo.class)){
                 log.error("Invalid payload for event trigger: {}", selectedEvent);
                 // set the bucket as completed
                 eventTriggerRepository.completeProcessing("workPlannedStart", selectedEvent.getId());

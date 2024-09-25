@@ -6,6 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO
 import edu.stanford.slac.core_work_management.model.CustomField
 import edu.stanford.slac.core_work_management.model.EventTrigger
+import edu.stanford.slac.core_work_management.model.ProcessWorkflowInfo
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState
 import edu.stanford.slac.core_work_management.model.Work
 import edu.stanford.slac.core_work_management.model.value.AttachmentsValue
@@ -68,6 +69,26 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                     // if all mandatory field have been filled
                     // the work can be approved
                     canMoveToReadyForWork(work);
+
+                    // before we move to the next state we need to check if work is using a start planned date
+                    var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
+                    if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null) {
+                        // we have a planned start date so i need to create a triggered event for it
+                        var createdEventTrigger = eventTriggerRepository.save(
+                                EventTrigger.builder()
+                                        .referenceId(work.getId())
+                                        .eventFireTimestamp((plannedStartDate.payload.getValue() as DateTimeValue).value)
+                                        .typeName("workPlannedStart")
+                                        .payload(
+                                                ProcessWorkflowInfo.builder()
+                                                        .domainId(work.getDomainId())
+                                                        .workId(work.getId())
+                                                        .build()
+                                        )
+                                        .build()
+                        );
+                    }
+
                     // attempt to move to the next state
                     workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReadyForWork).build());
                 }
@@ -204,7 +225,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 radiationSafetyWorkControlForm = checkWorkFiledPresence(work, "radiationSafetyWorkControlForm", Optional.empty()),
                 checkWorkFiledPresence(work, "lockAndTag", Optional.empty()),
                 checkWorkFiledPresence(work, "subsystem", Optional.empty()),
-                checkWorkFiledPresence(work, "group", Optional.empty()),
+//                checkWorkFiledPresence(work, "group", Optional.empty()),
 
         ]
 
@@ -225,18 +246,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
 
         // check if we have some errors
         checkAndFireError(validationResults)
-
-        // we haven't had any error so we can create a scheduler for the starting job date in case we have a planning start date
-        if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null) {
-            // we have a planned start date so i need to create a triggered event for it
-            var createdEventTrigger = eventTriggerRepository.save(
-                    EventTrigger.builder()
-                            .referenceId(work.getId())
-                            .eventFireTimestamp((plannedStartDate.payload.getValue() as DateTimeValue).value)
-                            .typeName("workPlannedStart")
-                            .build()
-            );
-        }
     }
 
 /**

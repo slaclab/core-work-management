@@ -4,6 +4,8 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -87,5 +89,13 @@ public class HelperService {
      */
     public List<LOVElementDTO> getCustomFiledLOVValue(LOVDomainTypeDTO lovDomainDTO, String domainId, String subtypeId, String fieldName) {
         return lovService.findAllByDomainAndFieldName(lovDomainDTO, domainId, subtypeId, fieldName);
+    }
+
+    /**
+     * Get custom field by name
+     */
+    public String toString(LocalDateTime localDateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        return localDateTime.format(formatter);
     }
 }
