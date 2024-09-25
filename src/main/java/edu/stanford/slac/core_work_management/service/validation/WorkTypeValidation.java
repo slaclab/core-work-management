@@ -85,7 +85,7 @@ public abstract class WorkTypeValidation {
      *
      * @param work the work to check
      */
-    protected ValidationResult<CustomField> checkWorkFiledPresence(Work work , String customFieldName, Optional<String> error) {
+    protected ValidationResult<CustomField> checkWorkFieldPresence(Work work , String customFieldName, Optional<String> error) {
         var filedToCheck = work.getWorkType().getCustomFields().stream()
                 .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName) == 0)
                 .findFirst();

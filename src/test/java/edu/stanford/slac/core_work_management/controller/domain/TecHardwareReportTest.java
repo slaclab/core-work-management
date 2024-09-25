@@ -248,9 +248,9 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest {
         try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
             Set<String> existingTopics = adminClient.listTopics().names().get();
             List<String> topicsToDelete = List.of(
-                    cwmAppProperties.getImagePreviewTopic(),
-                    String.format("%s-retry-2000", cwmAppProperties.getImagePreviewTopic()),
-                    String.format("%s-retry-4000", cwmAppProperties.getImagePreviewTopic())
+                    cwmAppProperties.getWorkflowProcessingTopic(),
+                    String.format("%s-retry-2000", cwmAppProperties.getWorkflowProcessingTopic()),
+                    String.format("%s-retry-4000", cwmAppProperties.getWorkflowProcessingTopic())
             );
 
             // Delete topics that actually exist

@@ -3,7 +3,6 @@ package validation
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService
-import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO
 import edu.stanford.slac.core_work_management.model.CustomField
 import edu.stanford.slac.core_work_management.model.EventTrigger
 import edu.stanford.slac.core_work_management.model.ProcessWorkflowInfo
@@ -57,7 +56,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         var currentStatus = work.getCurrentStatus().getStatus();
         switch (currentStatus) {
             case WorkflowState.Created -> {
-                var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
+                var plannedStartDate = checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty());
                 var bucketId = work.getCurrentBucketAssociation()?.getBucketId();
 
                 if (plannedStartDate.valid || bucketId != null) {
@@ -71,7 +70,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                     canMoveToReadyForWork(work);
 
                     // before we move to the next state we need to check if work is using a start planned date
-                    var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
+                    var plannedStartDate = checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty());
                     if (plannedStartDate.valid && plannedStartDate.payload.getValue() != null) {
                         // we have a planned start date so i need to create a triggered event for it
                         var createdEventTrigger = eventTriggerRepository.save(
@@ -109,7 +108,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                                     .errorDomain("TECHardwareReportValidation::update")
                                     .build());
                 } else {
-                    var plannedStartDate = checkWorkFiledPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty());
+                    var plannedStartDate = checkWorkFieldPresence(work.getWorkType().getCustomFields(), work.getCustomFields(), "plannedStartDateTime", Optional.empty());
                     if (!plannedStartDate.valid || plannedStartDate.payload.getValue() == null) {
                         throw ControllerLogicException.builder()
                                 .errorCode(-1)
@@ -174,7 +173,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
      */
     private void checkPlannedDataAgainstBucket(Work work, ArrayList<ValidationResult<String>> validationResults) {
 // check that or we have a planned data or bucket or none
-        var plannedStartDate = checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty());
+        var plannedStartDate = checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty());
         var haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
         // verify that if we have a planned start date we don't have a bucket
         if (plannedStartDate.valid && haveABucket) {
@@ -192,7 +191,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
      */
     private void checkAttachments(Work work, ArrayList<ValidationResult<String>> validationResults) {
         ValidationResult<CustomField> attachment = null;
-        if ((attachment = checkWorkFiledPresence(
+        if ((attachment = checkWorkFieldPresence(
                 work,
                 "rswcfAttachments",
                 Optional.empty()
@@ -200,7 +199,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
             validateAttachment(attachment.payload.getValue() as AttachmentsValue, "RSWCF Attachments", validationResults)
         }
 
-        if ((attachment = checkWorkFiledPresence(
+        if ((attachment = checkWorkFieldPresence(
                 work,
                 "attachmentsAndFiles",
                 Optional.empty()
@@ -218,13 +217,13 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     private void canMoveToReadyForWork(Work work) {
         ValidationResult<CustomField> radiationSafetyWorkControlForm = null;
         def validationResults = [
-                checkWorkFiledPresence(work, "schedulingPriority", Optional.empty()),
-                checkWorkFiledPresence(work, "plannedStartDateTime", Optional.empty()),
-                checkWorkFiledPresence(work, "accessRequirements", Optional.empty()),
-                checkWorkFiledPresence(work, "ppsZone", Optional.empty()),
-                radiationSafetyWorkControlForm = checkWorkFiledPresence(work, "radiationSafetyWorkControlForm", Optional.empty()),
-                checkWorkFiledPresence(work, "lockAndTag", Optional.empty()),
-                checkWorkFiledPresence(work, "subsystem", Optional.empty()),
+                checkWorkFieldPresence(work, "schedulingPriority", Optional.empty()),
+                checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty()),
+                checkWorkFieldPresence(work, "accessRequirements", Optional.empty()),
+                checkWorkFieldPresence(work, "ppsZone", Optional.empty()),
+                radiationSafetyWorkControlForm = checkWorkFieldPresence(work, "radiationSafetyWorkControlForm", Optional.empty()),
+                checkWorkFieldPresence(work, "lockAndTag", Optional.empty()),
+                checkWorkFieldPresence(work, "subsystem", Optional.empty()),
 //                checkWorkFiledPresence(work, "group", Optional.empty()),
 
         ]
@@ -235,7 +234,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         if (radiationSafetyWorkControlForm.valid && (radiationSafetyWorkControlForm.payload.getValue() as BooleanValue).value) {
             // check for safety attachment
             ValidationResult<CustomField> rswcfAttachments = null;
-            validationResults.add(rswcfAttachments = checkWorkFiledPresence(work, "rswcfAttachments", Optional.empty()));
+            validationResults.add(rswcfAttachments = checkWorkFieldPresence(work, "rswcfAttachments", Optional.empty()));
             if (rswcfAttachments.valid && rswcfAttachments.payload.getValue() == null) {
                 validationResults.add(ValidationResult.failure("The Radiation Safety Work Control Form attachment is required"));
             }

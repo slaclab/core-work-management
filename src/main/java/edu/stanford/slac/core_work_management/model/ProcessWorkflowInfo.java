@@ -5,6 +5,7 @@ import lombok.*;
 @Data
 @Builder
 @ToString
+@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 public class ProcessWorkflowInfo {

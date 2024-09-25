@@ -43,7 +43,14 @@ public class ManageWorkflowUpdateByEventTrigger {
                     "%s/%s".formatted(processWorkflowInfo.getDomainId(), processWorkflowInfo.getWorkId()),
                     // value
                     ProcessWorkflowInfo.builder().domainId(processWorkflowInfo.getDomainId()).workId(processWorkflowInfo.getWorkId()).build()
-            );
+            ).thenAccept(result -> {
+                // Handle successful send
+                System.out.println("Message sent successfully: " + result.getRecordMetadata());
+            }).exceptionally(ex -> {
+                // Handle exception in sending
+                System.err.println("Message send failed: " + ex.getMessage());
+                return null; // Exceptionally requires a return value, hence null
+            });;
             // set the bucket as completed
             eventTriggerRepository.completeProcessing("work", selectedEvent.getId());
         }
