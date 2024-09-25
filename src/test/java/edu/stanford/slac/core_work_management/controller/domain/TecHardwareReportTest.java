@@ -12,6 +12,7 @@ import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.HelperService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
+import jakarta.validation.constraints.NotEmpty;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class TecHardwareReportTest extends BaseWorkflowDomainTest{
+public class TecHardwareReportTest extends BaseWorkflowDomainTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -106,7 +107,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
         assertThat(tecDomain).isNotNull();
         // find all work type
         var workTypesResult = assertDoesNotThrow(
-                ()->testControllerHelperService.domainControllerFindAllWorkTypes(
+                () -> testControllerHelperService.domainControllerFindAllWorkTypes(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -122,7 +123,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
 
         // create locations
         var location10Result = assertDoesNotThrow(
-                ()->testControllerHelperService.locationControllerCreateNewRoot(
+                () -> testControllerHelperService.locationControllerCreateNewRoot(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -139,7 +140,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
         location10 = location10Result.getPayload();
 
         var location20Result = assertDoesNotThrow(
-                ()->testControllerHelperService.locationControllerCreateNewRoot(
+                () -> testControllerHelperService.locationControllerCreateNewRoot(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -157,7 +158,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
 
         // add shop group
         var shopGroup15Result = assertDoesNotThrow(
-                ()->testControllerHelperService.shopGroupControllerCreateNew(
+                () -> testControllerHelperService.shopGroupControllerCreateNew(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -185,7 +186,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
 
         // create shop group 17
         var shopGroup17Result = assertDoesNotThrow(
-                ()->testControllerHelperService.shopGroupControllerCreateNew(
+                () -> testControllerHelperService.shopGroupControllerCreateNew(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -213,7 +214,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
 
         // create test bucket
         var bucketSlotResult = assertDoesNotThrow(
-                ()->testControllerHelperService.maintenanceControllerCreateNewBucket(
+                () -> testControllerHelperService.maintenanceControllerCreateNewBucket(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user18@slac.stanford.edu"),
@@ -273,7 +274,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
         // create a new work
         var failForMandatoryField = assertThrows(
                 ControllerLogicException.class,
-                ()->testControllerHelperService.workControllerCreateNew(
+                () -> testControllerHelperService.workControllerCreateNew(
                         mockMvc,
                         status().isInternalServerError(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -296,7 +297,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
     public void hardwareRequestWholeWorkflowWithPlannedStartDate() {
         // create a new hardware request with minimal fields
         var newWorkResult = assertDoesNotThrow(
-                ()->testControllerHelperService.workControllerCreateNew(
+                () -> testControllerHelperService.workControllerCreateNew(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -317,9 +318,24 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
         // we are in created state
         assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
 
+        // retrieve full work to get the lov value to fill the custom field
+        var fullWork = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.getErrorCode()).isEqualTo(0);
+        assertThat(fullWork.getPayload()).isNotNull();
+
         // update setting general attachments
         var pdfAttachmentResult = assertDoesNotThrow(
-                ()->testControllerHelperService.createDummyPDFAttachment(
+                () -> testControllerHelperService.createDummyPDFAttachment(
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu")
@@ -331,7 +347,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
 
         // update setting general attachments and some other fields
         var updateWorkResult = assertDoesNotThrow(
-                ()->testControllerHelperService.workControllerUpdate(
+                () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -346,12 +362,6 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
                                                         .builder()
                                                         .id(getCustomFileIdByName(workTypes.getFirst(), "attachmentsAndFiles"))
                                                         .value(ValueDTO.builder().value(pdfAttachmentId).type(ValueTypeDTO.Attachments).build())
-                                                        .build(),
-                                                // set timeHrs
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "timeHrs"))
-                                                        .value(ValueDTO.builder().value("10.5").type(ValueTypeDTO.Double).build())
                                                         .build()
                                         )
                                 )
@@ -366,7 +376,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
 
         // update adding planned start date
         var updateWorkResult2 = assertDoesNotThrow(
-                ()->testControllerHelperService.workControllerUpdate(
+                () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -387,12 +397,6 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
                                                         .builder()
                                                         .id(getCustomFileIdByName(workTypes.getFirst(), "attachmentsAndFiles"))
                                                         .value(ValueDTO.builder().value(pdfAttachmentId).type(ValueTypeDTO.Attachments).build())
-                                                        .build(),
-                                                // set timeHrs
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(getCustomFileIdByName(workTypes.getFirst(), "timeHrs"))
-                                                        .value(ValueDTO.builder().value("10.5").type(ValueTypeDTO.Double).build())
                                                         .build()
                                         )
                                 )
@@ -407,7 +411,7 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
         // try to put to a ready for work state but should fail by error validations
         var validationErrorOnChangeState = assertThrows(
                 ControllerLogicException.class,
-                ()->testControllerHelperService.workControllerUpdate(
+                () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -426,5 +430,106 @@ public class TecHardwareReportTest extends BaseWorkflowDomainTest{
                 )
         );
         assertThat(validationErrorOnChangeState).isNotNull();
+
+        // complete the work with these additional custom field: schedulingPriority, accessRequirements, ppsZone, radiationSafetyWorkControlForm, lockAndTag , subsystem,group
+        var updateWorkResult3 = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        tecDomain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .customFieldValues
+                                        (
+                                                List.of(
+                                                        // set plan start date
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "plannedStartDateTime"))
+                                                                .value(ValueDTO.builder().value("2024-06-01T00:00:00").type(ValueTypeDTO.DateTime).build())
+                                                                .build(),
+                                                        // set attachmentsAndFiles
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "attachmentsAndFiles"))
+                                                                .value(ValueDTO.builder().value(pdfAttachmentId).type(ValueTypeDTO.Attachments).build())
+                                                                .build(),
+                                                        // add schedulingPriority
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "schedulingPriority"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "schedulingPriority", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add accessRequirements
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "accessRequirements"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "accessRequirements", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add ppsZone
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "ppsZone"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "ppsZone", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add radiationSafetyWorkControlForm
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "radiationSafetyWorkControlForm"))
+                                                                .value(ValueDTO.builder().value("false").type(ValueTypeDTO.Boolean).build())
+                                                                .build(),
+                                                        // add lockAndTag
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "lockAndTag"))
+                                                                .value(ValueDTO.builder().value("true").type(ValueTypeDTO.Boolean).build())
+                                                                .build(),
+                                                        // add subsystem
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "subsystem"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "subsystem", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add group
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(getCustomFileIdByName(workTypes.getFirst(), "group"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "group", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build()
+                                                )
+                                        )
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.ReadyForWork)
+                                                .comment("Ready for work from REST API")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        // now the workflow should be fallen in ready for work
+        assertThat(updateWorkResult3).isNotNull();
+        assertThat(updateWorkResult3.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkResult3.getPayload()).isTrue();
+        assertThat(helperService.checkStatusOnWork(tecDomain.id(), newWorkResult.getPayload(), WorkflowStateDTO.ReadyForWork)).isTrue();
     }
 }
