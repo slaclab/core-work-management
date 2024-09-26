@@ -230,6 +230,20 @@ public class WorkService {
         // update the model
         workMapper.updateModel(updateWorkDTO, foundWork);
 
+        // validate location and group shop against the domain
+        if (updateWorkDTO.locationId() != null) {
+            foundWork.setLocation(
+                    locationMapper.toEmbeddable(locationService.findById(domainId, updateWorkDTO.locationId()))
+            );
+        }
+
+        // validate shop group against the domain
+        if (updateWorkDTO.shopGroupId() != null) {
+            foundWork.setShopGroup(
+                    shopGroupMapper.toEmbeddable(shopGroupService.findByDomainIdAndId(domainId, updateWorkDTO.shopGroupId()))
+            );
+        }
+
         // check if the new work that is being created is valid for the workflow
         // we send the updated work to the validator
         isValidForWorkflow(
@@ -246,19 +260,6 @@ public class WorkService {
                 Objects.requireNonNullElse(foundWork.getWorkType().getCustomFields(), emptyList())
         );
 
-        // validate location and group shop against the domain
-        if (updateWorkDTO.locationId() != null) {
-            foundWork.setLocation(
-                    locationMapper.toEmbeddable(locationService.findById(domainId, updateWorkDTO.locationId()))
-            );
-        }
-
-        // validate shop group against the domain
-        if (updateWorkDTO.shopGroupId() != null) {
-            shopGroupMapper.toEmbeddable(
-                    shopGroupService.findByDomainIdAndId(domainId, updateWorkDTO.shopGroupId())
-            );
-        }
 
         // lastly we need to update the workflow
         updateWorkWorkflow(foundWork, domainMapper.toModel(updateWorkDTO.workflowStateUpdate()));

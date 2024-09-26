@@ -101,7 +101,8 @@ public class WorkControllerTest {
     private LOVService lovService;
     @Autowired
     private TestControllerHelperService testControllerHelperService;
-    private String domainId;
+    private DomainDTO domainDTO;
+    private WorkflowDTO workflowDTO;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
@@ -113,20 +114,28 @@ public class WorkControllerTest {
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
 
-        domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        domainDTO = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("domain1")
                                 .description("domain1 description")
+                                .workflowImplementations(
+                                        of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
+        assertThat(domainDTO).isNotNull();
+        workflowDTO = domainDTO.workflows().stream().findFirst().get();
+        assertThat(workflowDTO).isNotNull();
 
         // create location for test
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
                                         .name("location1")
                                         .description("location1 description")
@@ -138,7 +147,7 @@ public class WorkControllerTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
                                         .name("location2")
                                         .description("location2 description")
@@ -150,7 +159,7 @@ public class WorkControllerTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
                                         .name("location3")
                                         .description("location3 description")
@@ -164,11 +173,13 @@ public class WorkControllerTest {
         testWorkTypeIds.add(
                 assertDoesNotThrow(
                         () -> domainService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 1")
                                         .description("Work type 1 description")
+                                        .validatorName("validation/DummyParentValidation.groovy")
+                                        .workflowId(workflowDTO.id())
                                         .build()
                         )
                 )
@@ -177,11 +188,13 @@ public class WorkControllerTest {
         testWorkTypeIds.add(
                 assertDoesNotThrow(
                         () -> domainService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 2")
                                         .description("Work type 2 description")
+                                        .validatorName("validation/DummyParentValidation.groovy")
+                                        .workflowId(workflowDTO.id())
                                         .build()
                         )
                 )
@@ -204,7 +217,8 @@ public class WorkControllerTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId, NewShopGroupDTO.builder()
+                                domainDTO.id(),
+                                NewShopGroupDTO.builder()
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -225,7 +239,8 @@ public class WorkControllerTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId, NewShopGroupDTO.builder()
+                                domainDTO.id(),
+                                NewShopGroupDTO.builder()
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -245,7 +260,7 @@ public class WorkControllerTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
                                         .name("shop3")
                                         .description("shop3 user3")
@@ -263,7 +278,7 @@ public class WorkControllerTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
                                         .name("shop4")
                                         .description("shop4 user[3]")
@@ -288,7 +303,7 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isOk(),
                                 Optional.of("user1@slac.stanford.edu"),
-                                domainId
+                                domainDTO.id()
                         )
                 );
 
@@ -307,7 +322,7 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkDTO.builder()
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
@@ -330,7 +345,7 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkDTO.builder()
                                         // user1@slac.stanford.edu si the are manager
                                         .locationId(testLocationIds.get(0))
@@ -352,7 +367,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user1@slac.stanford.edu"),
-                        domainId,
+                        domainDTO.id(),
                         newWorkIdResult.getPayload(),
                         UpdateWorkDTO.builder()
                                 .title("work 1 updated")
@@ -372,7 +387,7 @@ public class WorkControllerTest {
                         status().isOk(),
                         // this is the admin fo the location 2
                         Optional.of("user1@slac.stanford.edu"),
-                        domainId,
+                        domainDTO.id(),
                         newWorkIdResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
                 )
@@ -397,7 +412,7 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isUnauthorized(),
                                 Optional.empty(),
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkDTO.builder()
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
@@ -420,7 +435,7 @@ public class WorkControllerTest {
                                 status().isCreated(),
                                 // this should be admin because is the user that created the work
                                 Optional.of("user3@slac.stanford.edu"),
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkDTO.builder()
                                         // the location manager is user2@slac.stanford.edu and also this should be admin
                                         // the group contains user1 and user2 and all of them should be reader
@@ -483,7 +498,7 @@ public class WorkControllerTest {
                                 mockMvc,
                                 status().isCreated(),
                                 Optional.of("user1@slac.stanford.edu"),
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkDTO.builder()
                                         .locationId(testLocationIds.get(0))
                                         .workTypeId(testWorkTypeIds.get(0))
@@ -501,7 +516,7 @@ public class WorkControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
-                        domainId,
+                        domainDTO.id(),
                         newWorkIdResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
                 )
@@ -521,7 +536,7 @@ public class WorkControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user3@slac.stanford.edu"),
-                        domainId,
+                        domainDTO.id(),
                         newWorkIdResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
                 )
@@ -534,800 +549,5 @@ public class WorkControllerTest {
                 .hasSize(3)
                 .extracting(AuthorizationResourceDTO::authorizationType)
                 .contains(AuthorizationTypeDTO.Write, AuthorizationTypeDTO.Read, AuthorizationTypeDTO.Admin);
-    }
-
-    @Test
-    public void testCreateActivity() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        .locationId(testLocationIds.getFirst())
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.getFirst())
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        //todo create a new subwork
-    }
-
-    @Test
-    //todo fix with subwork
-    public void testFindAllActivityForWorkId() {
-        String[] activityIds = new String[10];
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        .locationId(testLocationIds.getFirst())
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.getFirst())
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-        for (int i = 0; i < 10; i++) {
-//            var newActivityIdResult =
-//                    assertDoesNotThrow(
-//                            () -> testControllerHelperService.workControllerCreateNew(
-//                                    mockMvc,
-//                                    status().isCreated(),
-//                                    Optional.of("user1@slac.stanford.edu"),
-//                                    newWorkIdResult.getPayload(),
-//                                    NewActivityDTO.builder()
-//                                            .activityTypeId(testActivityTypeIds.getFirst())
-//                                            .title("New activity 1")
-//                                            .description("activity 1 description")
-//                                            .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                            .build()
-//                            )
-//                    );
-//            assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-//            assertThat(newActivityIdResult.getPayload()).isNotNull();
-//            activityIds[i] = newActivityIdResult.getPayload();
-        }
-    }
-
-    @Test
-    public void testCreateActivityByCreator() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                // this should be admin because is the user that created the work
-                                Optional.of("user3@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // the location manager is user2@slac.stanford.edu and also this should be admin
-                                        .locationId(testLocationIds.get(1))
-                                        // the group contains user1 and user2 and all of them should be admin
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.get(1))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-        //todo implements with subwork
-//        var newActivityIdResult =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerCreateNew(
-//                                mockMvc,
-//                                status().isCreated(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                NewActivityDTO.builder()
-//                                        .activityTypeId(testActivityTypeIds.getFirst())
-//                                        .title("New activity 1")
-//                                        .description("activity 1 description")
-//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-//        assertThat(newActivityIdResult.getPayload()).isNotNull();
-    }
-
-    @Test
-    public void testCreateActivityByLocationAreaManager() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                // this should be admin because is the user that created the work
-                                Optional.of("user3@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // the location manager is user2@slac.stanford.edu and also this should be admin
-                                        .locationId(testLocationIds.get(1))
-                                        // the group contains user1 and user2 and all of them should be admin
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.get(1))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        //todo implements with subwork
-//        var newActivityIdResult =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerCreateNew(
-//                                mockMvc,
-//                                status().isCreated(),
-//                                Optional.of("user2@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                NewActivityDTO.builder()
-//                                        .activityTypeId(testActivityTypeIds.getFirst())
-//                                        .title("New activity 1")
-//                                        .description("activity 1 description")
-//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-//        assertThat(newActivityIdResult.getPayload()).isNotNull();
-    }
-
-    @Test
-    public void testCreateActivityByShopGroupUsers() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                // this should be admin because is the user that created the work
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // the location manager is user2@slac.stanford.edu and also this should be admin
-                                        // the group contains user2 and user3 and all of them should be admin
-                                        .locationId(testLocationIds.get(2))
-                                        .workTypeId(testWorkTypeIds.get(1))
-                                        .shopGroupId(testShopGroupIds.get(2))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-        //todo implements with subwork
-//        var newActivityIdResultByUser3 =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerCreateNew(
-//                                mockMvc,
-//                                status().isCreated(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                NewActivityDTO.builder()
-//                                        .activityTypeId(testActivityTypeIds.get(2))
-//                                        .title("New activity 1")
-//                                        .description("activity 1 description")
-//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
-//        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
-    }
-
-    @Test
-    public void testCreateActivityByAssignedToUsers() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                // this should be admin because is the user that created the work
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // the location manager is user2@slac.stanford.edu and also this should be admin
-                                        // the group contains user2 and user3 and all of them should be admin
-                                        .locationId(testLocationIds.getFirst())
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.getFirst())
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-        //todo implements with subwork
-//        var newActivityIdResultByUser3 =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerCreateNew(
-//                                mockMvc,
-//                                status().isCreated(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                NewActivityDTO.builder()
-//                                        .activityTypeId(testActivityTypeIds.getFirst())
-//                                        .title("New activity 1")
-//                                        .description("activity 1 description")
-//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(newActivityIdResultByUser3.getErrorCode()).isEqualTo(0);
-//        assertThat(newActivityIdResultByUser3.getPayload()).isNotNull();
-    }
-
-    @Test
-    public void testUpdateWorkFailOnLocationIdOnNonAdmin() {
-        // create new work
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // user2@slac.stanford.edu si the are manager
-                                        // user[1-3]@slac.stanford.edu are in the shop group
-                                        .locationId(testLocationIds.get(2))
-                                        .workTypeId(testWorkTypeIds.get(0))
-                                        .shopGroupId(testShopGroupIds.get(2))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        // try to update but
-        assertThrows(
-                NotAuthorized.class,
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isUnauthorized(),
-                        Optional.of("user3@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                .locationId(testLocationIds.get(1))
-                                .build()
-                )
-        );
-    }
-
-    @Test
-    public void testUpdateWorkOkAndCheckForAdminAndGroupReader() {
-        // create new work
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // user2@slac.stanford.edu si the are manager
-                                        // user[1-3]@slac.stanford.edu are in the shop group
-                                        .locationId(testLocationIds.get(2))
-                                        .workTypeId(testWorkTypeIds.get(0))
-                                        .shopGroupId(testShopGroupIds.get(2))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        // check authorization on location manager
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        "user2@slac.stanford.edu",
-                        AuthorizationTypeDTO.Admin,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-
-        // check authorization on shop group
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(testShopGroupIds.get(2)),
-                        AuthorizationTypeDTO.Read,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-
-        // try to update but
-        assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isOk(),
-                        // this is the admin fo the location 2
-                        Optional.of("user2@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                .locationId(testLocationIds.getFirst())
-                                .shopGroupId(testShopGroupIds.getFirst())
-                                .build()
-                )
-        );
-
-        // check authorization on location manager
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        "user1@slac.stanford.edu",
-                        AuthorizationTypeDTO.Admin,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-
-        // check authorization on shop group
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(testShopGroupIds.getFirst()),
-                        AuthorizationTypeDTO.Read,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-    }
-
-    @Test
-    public void testUpdateWorkOkAndCheckForAssignedToChanges() {
-        // create new work
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // user2@slac.stanford.edu si the are manager
-                                        // user[1-3]@slac.stanford.edu are in the shop group
-                                        .locationId(testLocationIds.get(2))
-                                        .workTypeId(testWorkTypeIds.get(0))
-                                        .shopGroupId(testShopGroupIds.get(2))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-        // check authorization on location manager
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        "user2@slac.stanford.edu",
-                        AuthorizationTypeDTO.Admin,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-
-        // check authorization on shop group
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(testShopGroupIds.get(2)),
-                        AuthorizationTypeDTO.Read,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-
-        // try to update but
-        assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isOk(),
-                        // this is the admin fo the location 2
-                        Optional.of("user2@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                .locationId(testLocationIds.getFirst())
-                                .shopGroupId(testShopGroupIds.getFirst())
-                                .build()
-                )
-        );
-
-        // check authorization on location manager
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        "user1@slac.stanford.edu",
-                        AuthorizationTypeDTO.Admin,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-
-        // check authorization on shop group
-        assertThat(
-                authService.getAllAuthorizationForOwnerAndAndAuthTypeAndResourcePrefix(
-                        SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(testShopGroupIds.getFirst()),
-                        AuthorizationTypeDTO.Read,
-                        WORK_AUTHORIZATION_TEMPLATE.formatted(newWorkIdResult.getPayload()),
-                        Optional.empty()
-                )
-        ).hasSize(1);
-    }
-
-    @Test
-    public void testUpdateWorkOnAssignedToOkByRootAndShopGroupLeader() {
-        // create new work
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // user2@slac.stanford.edu si the are manager
-                                        // user[2-3(l)]@slac.stanford.edu are in the shop group
-                                        .locationId(testLocationIds.get(2))
-                                        .workTypeId(testWorkTypeIds.get(0))
-                                        .shopGroupId(testShopGroupIds.get(0))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-
-
-        // try to update by root
-        assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isOk(),
-                        // this is the admin fo the location 2
-                        Optional.of("user1@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                .locationId(testLocationIds.getFirst())
-                                .shopGroupId(testShopGroupIds.getFirst())
-                                // assign to user 2
-                                .assignedTo(List.of("user2@slac.stanford.edu"))
-                                .build()
-                )
-        );
-
-        // try to update by group leader
-        assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isOk(),
-                        // this is the admin fo the location 2
-                        Optional.of("user3@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                // group leader cannot update the location
-                                //.locationId(testLocationIds.getFirst())
-                                .shopGroupId(testShopGroupIds.getFirst())
-                                // assign to user 2
-                                .assignedTo(List.of("user2@slac.stanford.edu", "user3@slac.stanford.edu"))
-                                .build()
-                )
-        );
-
-        // failed to be updated by are manager
-        assertThrows(
-                NotAuthorized.class,
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isUnauthorized(),
-                        // this is the admin fo the location 2
-                        Optional.of("user2@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                // group leader cannot update the location
-                                //.locationId(testLocationIds.getFirst())
-                                .shopGroupId(testShopGroupIds.getFirst())
-                                // assign to user 2
-                                .assignedTo(List.of("user3@slac.stanford.edu"))
-                                .build()
-                )
-        );
-    }
-
-    @Test
-    public void testUpdateActivityByCreator() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                // this should be admin because is the user that created the work
-                                Optional.of("user3@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // the location manager is user2@slac.stanford.edu and also this should be admin
-                                        .locationId(testLocationIds.get(1))
-                                        // the group contains user1 and user2 and all of them should be admin
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.get(1)) // user1 and user2
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-        //todo implements with subwork
-//        var newActivityIdResult =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerCreateNew(
-//                                mockMvc,
-//                                status().isCreated(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                NewActivityDTO.builder()
-//                                        .activityTypeId(testActivityTypeIds.getFirst())
-//                                        .title("New activity 1")
-//                                        .description("activity 1 description")
-//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-//        assertThat(newActivityIdResult.getPayload()).isNotNull();
-//        // check saved data
-//        var fulActivityResult = assertDoesNotThrow(
-//                () -> testControllerHelperService.workControllerFindById(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user3@slac.stanford.edu"),
-//                        newWorkIdResult.getPayload(),
-//                        newActivityIdResult.getPayload()
-//                )
-//        );
-//        assertThat(fulActivityResult.getErrorCode()).isEqualTo(0);
-//        assertThat(fulActivityResult.getPayload()).isNotNull();
-//        assertThat(fulActivityResult.getPayload().title()).isEqualTo("New activity 1");
-//        assertThat(fulActivityResult.getPayload().description()).isEqualTo("activity 1 description");
-//
-//        // try to update
-//        assertDoesNotThrow(
-//                () -> testControllerHelperService.workControllerUpdate(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user3@slac.stanford.edu"),
-//                        newWorkIdResult.getPayload(),
-//                        newActivityIdResult.getPayload(),
-//                        UpdateActivityDTO.builder()
-//                                .title("New activity 1 updated")
-//                                .description("activity 1 description updated")
-//                                .project(projectLovValues.get(0).id())
-//                                .build()
-//                )
-//        );
-//
-//        var fulActivityUpdateResult = assertDoesNotThrow(
-//                () -> testControllerHelperService.workControllerFindById(
-//                        mockMvc,
-//                        status().isOk(),
-//                        Optional.of("user3@slac.stanford.edu"),
-//                        newWorkIdResult.getPayload(),
-//                        newActivityIdResult.getPayload()
-//                )
-//        );
-//        assertThat(fulActivityUpdateResult.getErrorCode()).isEqualTo(0);
-//        assertThat(fulActivityUpdateResult.getPayload()).isNotNull();
-//        assertThat(fulActivityUpdateResult.getPayload().title()).isEqualTo("New activity 1 updated");
-//        assertThat(fulActivityUpdateResult.getPayload().description()).isEqualTo("activity 1 description updated");
-    }
-
-    @Test
-    public void testUpdateActivityStatusByCreator() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                // this should be admin because is the user that created the work
-                                Optional.of("user3@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        // the location manager is user2@slac.stanford.edu and also this should be admin
-                                        .locationId(testLocationIds.get(1))
-                                        // the group contains user1 and user2 and all of them should be admin
-                                        .workTypeId(testWorkTypeIds.getFirst())
-                                        .shopGroupId(testShopGroupIds.get(1))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotEmpty();
-        //todo implements with subwork
-//        var newActivityIdResult =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerCreateNew(
-//                                mockMvc,
-//                                status().isCreated(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                NewActivityDTO.builder()
-//                                        .activityTypeId(testActivityTypeIds.getFirst())
-//                                        .title("New activity 1")
-//                                        .description("activity 1 description")
-//                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(newActivityIdResult.getErrorCode()).isEqualTo(0);
-//        assertThat(newActivityIdResult.getPayload()).isNotEmpty();
-//
-//        var updateStatusResult =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerUpdateStatus(
-//                                mockMvc,
-//                                status().isOk(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                newActivityIdResult.getPayload(),
-//                                UpdateActivityStatusDTO
-//                                        .builder()
-//                                        .newStatus(ActivityStatusDTO.Completed)
-//                                        .build()
-//                        )
-//                );
-//        assertThat(updateStatusResult.getErrorCode()).isEqualTo(0);
-//
-//        // check the workflow status
-//        assertThat(
-//                helperService.checkStatusAndHistoryOnActivity(
-//                        newActivityIdResult.getPayload(),
-//                        ImmutableList.of(
-//                                ActivityStatusDTO.Completed,
-//                                ActivityStatusDTO.New
-//                        )
-//                )
-//        ).isTrue();
-        // work latest status should be review
-//        assertThat(
-//                helperService.checkStatusAndHistoryOnWork(
-//                        newWorkIdResult.getPayload(),
-//                        ImmutableList.of(
-//                                Work.Review,
-//                                WorkStatusDTO.ScheduledJob,
-//                                WorkStatusDTO.New
-//                        )
-//                )
-//        ).isTrue();
-//
-//        // try closing the work with an unauthorized user
-//        var reviewNotAuthorizeOnCreator =
-//                assertThrows(
-//                        NotAuthorized.class,
-//                        () -> testControllerHelperService.workControllerReviewWork(
-//                                mockMvc,
-//                                status().isUnauthorized(),
-//                                Optional.of("user3@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                newActivityIdResult.getPayload(),
-//                                ReviewWorkDTO
-//                                        .builder()
-//                                        .followUpDescription("work has completely finished")
-//                                        .build()
-//                        )
-//                );
-//        assertThat(reviewNotAuthorizeOnCreator.getErrorCode()).isEqualTo(-1);
-//        // review the work with location area manager
-//        var reviewWorkResult =
-//                assertDoesNotThrow(
-//                        () -> testControllerHelperService.workControllerReviewWork(
-//                                mockMvc,
-//                                status().isOk(),
-//                                Optional.of("user2@slac.stanford.edu"),
-//                                newWorkIdResult.getPayload(),
-//                                newActivityIdResult.getPayload(),
-//                                ReviewWorkDTO
-//                                        .builder()
-//                                        .followUpDescription("work has completely finished")
-//                                        .build()
-//                        )
-//                );
-//        assertThat(reviewWorkResult.getErrorCode()).isEqualTo(0);
-        // check the updated workflow states
-//        assertThat(
-//                helperService.checkStatusAndHistoryOnWork(
-//                        newWorkIdResult.getPayload(),
-//                        ImmutableList.of(
-//                                WorkStatusDTO.Closed,
-//                                WorkStatusDTO.Review,
-//                                WorkStatusDTO.ScheduledJob,
-//                                WorkStatusDTO.New
-//                        )
-//                )
-//        ).isTrue();
-    }
-
-    @Test
-    public void getWorkHistory() {
-        var newWorkIdResult =
-                assertDoesNotThrow(
-                        () -> testControllerHelperService.workControllerCreateNew(
-                                mockMvc,
-                                status().isCreated(),
-                                Optional.of("user1@slac.stanford.edu"),
-                                domainId,
-                                NewWorkDTO.builder()
-                                        .locationId(testLocationIds.get(0))
-                                        .workTypeId(testWorkTypeIds.get(0))
-                                        .shopGroupId(testShopGroupIds.get(0))
-                                        .title("work 1")
-                                        .description("work 1 description")
-                                        .build()
-                        )
-                );
-        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkIdResult.getPayload()).isNotNull();
-        var updateResult = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerUpdate(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        domainId,
-                        newWorkIdResult.getPayload(),
-                        UpdateWorkDTO.builder()
-                                .title("work 1 updated")
-                                .description("work 1 description updated")
-                                .locationId(testLocationIds.get(1))
-                                .shopGroupId(testShopGroupIds.get(1))
-                                .assignedTo(
-                                        List.of("user2@slac.stanford.edu")
-                                )
-                                .build()
-                )
-        );
-        assertThat(updateResult.getErrorCode()).isEqualTo(0);
-        assertThat(updateResult.getPayload()).isNotNull().isTrue();
-
-        var historyResult = assertDoesNotThrow(
-                () -> testControllerHelperService.workControllerFindWorkHistoryById(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        newWorkIdResult.getPayload()
-                )
-        );
-        assertThat(historyResult.getErrorCode()).isEqualTo(0);
-        assertThat(historyResult.getPayload()).isNotNull().hasSize(2);
-        assertThat(historyResult.getPayload().get(0).description()).isEqualTo("work 1 description updated");
-        assertThat(historyResult.getPayload().get(1).description()).isEqualTo("work 1 description");
     }
 }

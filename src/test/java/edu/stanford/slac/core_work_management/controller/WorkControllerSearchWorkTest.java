@@ -94,7 +94,8 @@ public class WorkControllerSearchWorkTest {
     @Autowired
     private LOVService lovService;
 
-    private String domainId;
+    private DomainDTO domainDTO;
+    private WorkflowDTO workflowDTO;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
@@ -106,18 +107,25 @@ public class WorkControllerSearchWorkTest {
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
-        domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        domainDTO = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("domain1")
                                 .description("domain1 description")
+                                .workflowImplementations(
+                                        of("DummyParentWorkflow")
+                                )
                                 .build()
                 )
         );
+        assertThat(domainDTO).isNotNull();
+        workflowDTO = domainDTO.workflows().stream().findFirst().get();
+        assertThat(workflowDTO).isNotNull();
+
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
@@ -138,7 +146,7 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
@@ -159,7 +167,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId, NewShopGroupDTO.builder()
+                                domainDTO.id(),
+                                NewShopGroupDTO.builder()
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -176,7 +185,7 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
                                         .name("shop4")
                                         .description("shop4 user[3]")
@@ -196,7 +205,7 @@ public class WorkControllerSearchWorkTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
                                         .name("location1")
                                         .description("location1 description")
@@ -208,7 +217,7 @@ public class WorkControllerSearchWorkTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
                                         .name("location2")
                                         .description("location2 description")
@@ -220,7 +229,7 @@ public class WorkControllerSearchWorkTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
                                         .name("location3")
                                         .description("location3 description")
@@ -234,11 +243,13 @@ public class WorkControllerSearchWorkTest {
         testWorkTypeIds.add(
                 assertDoesNotThrow(
                         () -> domainService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 1")
                                         .description("Work type 1 description")
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
@@ -247,11 +258,13 @@ public class WorkControllerSearchWorkTest {
         testWorkTypeIds.add(
                 assertDoesNotThrow(
                         () -> domainService.createNew(
-                                domainId,
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 2")
                                         .description("Work type 2 description")
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
@@ -281,7 +294,7 @@ public class WorkControllerSearchWorkTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
-                                    domainId,
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
@@ -337,7 +350,7 @@ public class WorkControllerSearchWorkTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
-                                    domainId,
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
@@ -391,7 +404,7 @@ public class WorkControllerSearchWorkTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
-                                    domainId,
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
