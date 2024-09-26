@@ -14,7 +14,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @AllArgsConstructor
-@Profile({"init-default-data"})
+@Profile({"init-domain","init-default-data"})
 @ChangeUnit(id = "init-bucket-slot-lov", order = "1003", author = "bisegni")
 public class M1003_InitBucketTypeLOV {
     private final LOVService lovService;
