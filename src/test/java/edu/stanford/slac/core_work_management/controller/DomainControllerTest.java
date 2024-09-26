@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -52,6 +53,7 @@ public class DomainControllerTest {
                                 .builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
+                                .workflowImplementations(Set.of("DummyParentWorkflow"))
                                 .build()
                 )
         );
@@ -70,6 +72,7 @@ public class DomainControllerTest {
                                 .builder()
                                 .name("TEST domain")
                                 .description("Test domain description")
+                                .workflowImplementations(Set.of("DummyParentWorkflow"))
                                 .build()
                 )
         );
@@ -89,6 +92,10 @@ public class DomainControllerTest {
         assertThat(fullDomain).isNotNull();
         assertThat(fullDomain.getPayload()).isNotNull();
         assertThat(fullDomain.getPayload().id()).isEqualTo(createNewDomainResult.getPayload());
+        assertThat(fullDomain.getPayload().name()).isEqualTo("test-domain");
+        assertThat(fullDomain.getPayload().description()).isEqualTo("Test domain description");
+        assertThat(fullDomain.getPayload().workflows()).isNotNull().isEqualTo(1);
+        assertThat(fullDomain.getPayload().workflows().iterator().next()).isEqualTo("DummyParentWorkflow");
     }
 
     @Test
@@ -104,6 +111,7 @@ public class DomainControllerTest {
                                     .builder()
                                     .name("TEST domain %s".formatted(finalI))
                                     .description("Test domain description")
+                                    .workflowImplementations(Set.of("DummyParentWorkflow"))
                                     .build()
                     )
             );

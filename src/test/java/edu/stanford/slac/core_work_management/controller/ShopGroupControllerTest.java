@@ -85,6 +85,7 @@ public class ShopGroupControllerTest {
                                 .builder()
                                 .name("test")
                                 .description("test")
+                                .workflowImplementations(Set.of("DummyParentWorkflow"))
                                 .build()
                 )
         );
@@ -155,6 +156,7 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         shopGroupCreationResult.getPayload()
                 )
         );
@@ -196,6 +198,7 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         shopGroupCreationResult.getPayload(),
                         UpdateShopGroupDTO
                                 .builder()
@@ -219,6 +222,7 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         shopGroupCreationResult.getPayload()
                 )
         );
@@ -237,6 +241,7 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user3@slac.stanford.edu"),
+                        domainId,
                         shopGroupCreationResult.getPayload(),
                         UpdateShopGroupDTO
                                 .builder()
@@ -260,6 +265,7 @@ public class ShopGroupControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domainId,
                         shopGroupCreationResult.getPayload()
                 )
         );

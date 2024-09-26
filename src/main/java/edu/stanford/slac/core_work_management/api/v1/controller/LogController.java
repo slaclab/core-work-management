@@ -31,7 +31,7 @@ public class LogController {
     )
     @Operation(summary = "Create a log entry")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("@workAuthorizationService.checkLoggingOnWork(authentication, domainId, workId)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkLoggingOnWork(#authentication, #domainId, #workId)")
     public ApiResultResponse<Boolean> createWorkLogEntry(
             Authentication authentication,
             @Schema(description = "The domain id")

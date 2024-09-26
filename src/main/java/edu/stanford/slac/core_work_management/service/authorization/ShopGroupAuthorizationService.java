@@ -52,8 +52,6 @@ public class ShopGroupAuthorizationService {
                         .errorCode(-1)
                         .errorDomain("WorkAuthorizationService::checkCreateNewActivity")
                         .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
                 // should be one of these
                 () -> any(
                         // a root users

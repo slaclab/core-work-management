@@ -279,10 +279,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String id,
             UpdateShopGroupDTO updateShopGroupDTO
     ) throws Exception {
-        var requestBuilder = put("/v1/shop-group/{id}", id)
+        var requestBuilder = put("/v1/domain/{domainId}/shop-group/{id}", domainId, id)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateShopGroupDTO));
@@ -335,9 +336,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String id
     ) throws Exception {
-        var requestBuilder = get("/v1/shop-group/{id}", id)
+        var requestBuilder = get("/v1/domain/{domainId}/shop-group/{id}", domainId, id)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -423,9 +425,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String locationId
     ) throws Exception {
-        var requestBuilder = get("/v1/location/{locationId}", locationId)
+        var requestBuilder = get("/v1/domain/{domainId}/location/{locationId}", domainId, locationId)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -451,10 +454,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             Optional<String> filter,
             Optional<String> externalId
     ) throws Exception {
-        var requestBuilder = get("/v1/location")
+        var requestBuilder = get("/v1/domain/{domainId}/location", domainId)
                 .accept(MediaType.APPLICATION_JSON);
         filter.ifPresent(s -> requestBuilder.param("filter", s));
         externalId.ifPresent(s -> requestBuilder.param("externalId", s));
@@ -801,8 +805,9 @@ public class TestControllerHelperService {
      *
      * @param mockMvc       the mock mvc
      * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param domainId      the domain id
      * @param workId        the work id
-     * @param activityId    the activity id
      * @param newEntry      the new entry
      * @param files         the files
      * @return the boolean
@@ -812,12 +817,12 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String workId,
-            String activityId,
             NewLogEntry newEntry,
             MockMultipartFile... files) throws Exception {
         // create builder
-        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/log/work/{workId}/activity/{ActivityId}", workId, activityId);
+        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/domain/{domainId}/work/{workId}/log", domainId, workId);
 
         // add entry
         if (newEntry.title() != null) {

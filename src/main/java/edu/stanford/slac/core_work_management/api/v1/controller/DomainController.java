@@ -215,7 +215,7 @@ public class DomainController {
     )
     @Operation(summary = "Update a shop group")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@shopGroupAuthorizationService.checkUpdate(authentication, domainId, id, updateShopGroupDTO)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @shopGroupAuthorizationService.checkUpdate(#authentication, #domainId, #id, #updateShopGroupDTO)")
     public ApiResultResponse<Boolean> updateShopGroup(
             Authentication authentication,
             @Parameter(description = "The domain id")
