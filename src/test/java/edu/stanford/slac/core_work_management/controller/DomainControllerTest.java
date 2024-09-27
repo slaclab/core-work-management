@@ -94,8 +94,8 @@ public class DomainControllerTest {
         assertThat(fullDomain.getPayload().id()).isEqualTo(createNewDomainResult.getPayload());
         assertThat(fullDomain.getPayload().name()).isEqualTo("test-domain");
         assertThat(fullDomain.getPayload().description()).isEqualTo("Test domain description");
-        assertThat(fullDomain.getPayload().workflows()).isNotNull().isEqualTo(1);
-        assertThat(fullDomain.getPayload().workflows().iterator().next()).isEqualTo("DummyParentWorkflow");
+        assertThat(fullDomain.getPayload().workflows()).hasSize(1);
+        assertThat(fullDomain.getPayload().workflows().iterator().next().implementation()).isEqualTo("DummyParentWorkflow");
     }
 
     @Test

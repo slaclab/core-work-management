@@ -1,4 +1,7 @@
-![logo](./logos/SLAC-lab-hires.png)
+<div style="display: flex; align-items: flex-start;">
+<img src="./logos/logo.webp" alt="Project Logo" height="85" style="margin-right: 20px;"/>
+<img src="./logos/SLAC-lab-hires.png" alt="SLAC Logo"/>
+</div>
 
 # Code Work Management (CWM)
 

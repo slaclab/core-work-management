@@ -163,7 +163,7 @@ public class MaintenanceControllerTest {
                             Optional.of("user1@slac.stanford.edu"),
                             NewBucketDTO
                                     .builder()
-                                    .description("test-%d".formatted(finalI))
+                                    .description("test-%02d".formatted(finalI))
                                     .type(bucketTypeLOVIds.get(0))
                                     .status(bucketStatusLOVIds.get(0))
                                     .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
@@ -200,7 +200,7 @@ public class MaintenanceControllerTest {
         assertThat(firstPageResult.getPayload()).isNotNull();
         assertThat(firstPageResult.getPayload().size()).isEqualTo(10);
         for(int i = 0; i < 10; i++) {
-            assertThat(firstPageResult.getPayload().get(i).description()).isEqualTo("test-%d".formatted(99-i));
+            assertThat(firstPageResult.getPayload().get(i).description()).isEqualTo("test-%02d".formatted(i));
         }
     }
 }
