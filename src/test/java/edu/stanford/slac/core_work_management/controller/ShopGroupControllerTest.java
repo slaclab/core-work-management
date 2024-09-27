@@ -337,7 +337,8 @@ public class ShopGroupControllerTest {
                 () -> testControllerHelperService.shopGroupControllerFindAll(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanford.edu")
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainId
                 )
         );
         assertThat(findAllResult.getErrorCode()).isEqualTo(0);

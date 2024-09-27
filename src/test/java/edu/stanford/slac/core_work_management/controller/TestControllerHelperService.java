@@ -309,9 +309,10 @@ public class TestControllerHelperService {
     public ApiResultResponse<List<ShopGroupDTO>> shopGroupControllerFindAll(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
-            Optional<String> userInfo
+            Optional<String> userInfo,
+            String domainId
     ) throws Exception {
-        var requestBuilder = get("/v1/shop-group")
+        var requestBuilder = get("/v1/domain/{domainId}/shop-group", domainId)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
