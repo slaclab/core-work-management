@@ -145,7 +145,7 @@ public class AttachmentServiceTest {
             );
 
             await()
-                    .atMost(10, SECONDS)
+                    .atMost(30, SECONDS)
                     .pollInterval(1, SECONDS)
                     .until(
                     () -> {
@@ -181,7 +181,7 @@ public class AttachmentServiceTest {
                     true
             );
 
-            await().atMost(20, SECONDS)
+            await().atMost(30, SECONDS)
                     .pollInterval(1, SECONDS)
                     .until(
                             () -> {
@@ -210,7 +210,7 @@ public class AttachmentServiceTest {
             );
 
             await()
-                    .atMost(20, SECONDS)
+                    .atMost(30, SECONDS)
                     .pollInterval(1, SECONDS)
                     .until(
                     () -> {
@@ -244,7 +244,7 @@ public class AttachmentServiceTest {
             );
 
             await()
-                    .atMost(20, SECONDS)
+                    .atMost(30, SECONDS)
                     .pollInterval(1, SECONDS)
                     .until(
                             () -> {

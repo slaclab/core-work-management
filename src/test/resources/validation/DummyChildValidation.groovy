@@ -13,7 +13,7 @@ class DummyChildValidation extends WorkTypeValidation {
     @Override
     void updateWorkflow(WorkflowWorkUpdate workflowWorkUpdate) {
         var work = workflowWorkUpdate.getWork();
-        var workType = workflowWorkUpdate.getWorkType();
+        var workType =  workflowWorkUpdate.getWork().getWorkType();
         var workflow = workflowWorkUpdate.getWorkflow();
         var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
         if (work == null) return;

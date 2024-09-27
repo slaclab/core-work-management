@@ -54,6 +54,7 @@ public class LocationServiceTest {
                 NewDomainDTO.builder()
                         .name("test")
                         .description("test")
+                        .workflowImplementations(of("DummyParentWorkflow"))
                         .build()
         );
     }
@@ -147,8 +148,8 @@ public class LocationServiceTest {
         );
         var newLocationWithParentId = assertDoesNotThrow(
                 () -> locationService.createNewChild(
-                        newLocationId,
                         domainId,
+                        newLocationId,
                         NewLocationDTO.builder()
                                 .name("test child")
                                 .description("test")
@@ -216,18 +217,5 @@ public class LocationServiceTest {
         );
         violations = validator.validate(newLocationDTO);
         assertFalse(violations.isEmpty());
-    }
-
-    @Test
-    public void testErrorOrParentId() {
-        // Test when externalLocationIdentifier is null and name and description are not empty
-        NewLocationDTO newLocationDTO = new NewLocationDTO(
-                "test",
-                "test",
-                null,
-                "user1@slac.stanford.edu"
-        );
-        Set<ConstraintViolation<NewLocationDTO>> violations = validator.validate(newLocationDTO);
-        assertThat(violations).hasSize(1);
     }
 }

@@ -37,7 +37,7 @@ public class PeopleGroupServiceTest {
     @Autowired
     PeopleGroupService peopleGroupService;
 
-    @Test
+
     public void findPeopleTest() {
         String base = "dc=win,dc=slac,dc=stanford,dc=edu";
         String filter = "(&(objectClass=user)(mail=mgibbs@slac.stanford.edu))";

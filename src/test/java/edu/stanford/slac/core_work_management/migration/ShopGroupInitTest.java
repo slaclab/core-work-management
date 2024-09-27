@@ -40,6 +40,8 @@ public class ShopGroupInitTest {
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Domain.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
     }
 

@@ -342,7 +342,7 @@ public class BucketServiceTest {
             var newBucketId = assertDoesNotThrow(
                     () -> bucketSlotService.createNew(
                             NewBucketDTO.builder()
-                                    .description("bucket-%d".formatted(finalI))
+                                    .description("bucket-%02d".formatted(finalI))
                                     .type(bucketTypeLOVIds.getFirst())
                                     .status(bucketStatusLOVIds.getFirst())
                                     .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
@@ -374,7 +374,7 @@ public class BucketServiceTest {
         assertThat(first10Bucket).isNotNull();
         assertThat(first10Bucket).hasSize(10);
         for (int i = 0; i < 10; i++) {
-            assertThat(first10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(99 - i));
+            assertThat(first10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%02d".formatted(i));
         }
 
         // find next page
@@ -391,7 +391,7 @@ public class BucketServiceTest {
         assertThat(next10Bucket).isNotNull();
         assertThat(next10Bucket).hasSize(10);
         for (int i = 0; i < 10; i++) {
-            assertThat(next10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(89 - i));
+            assertThat(next10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%02d".formatted(10 + i));
         }
 
         // check previous page
@@ -407,7 +407,7 @@ public class BucketServiceTest {
         assertThat(previous10Bucket).isNotNull();
         assertThat(previous10Bucket).hasSize(10);
         for (int i = 0; i < 10; i++) {
-            assertThat(previous10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%d".formatted(98 - i));
+            assertThat(previous10Bucket.get(i)).extracting(BucketSlotDTO::description).isEqualTo("bucket-%02d".formatted(i));
         }
     }
 

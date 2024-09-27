@@ -205,7 +205,7 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
             Query query = getQuery(queryParameter);
             if (anchorCreatedDate != null) {
                 allCriteria.add(
-                        Criteria.where("createdDate").lt(anchorCreatedDate)
+                        Criteria.where("createdDate").gt(anchorCreatedDate)
                 );
             }
             if (queryParameter.getFrom() != null) {
@@ -253,11 +253,11 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
                         && anchorCreatedDate != null
         ) {
             allCriteria.add(
-                    Criteria.where("createdDate").gte(anchorCreatedDate)
+                    Criteria.where("createdDate").lte(anchorCreatedDate)
             );
             if (queryParameter.getFrom() != null) {
                 allCriteria.add(
-                        Criteria.where("from").lte(queryParameter.getFrom())
+                        Criteria.where("from").gte(queryParameter.getFrom())
                 );
             }
             // at this point the anchor id is not null
@@ -280,7 +280,7 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
                     )
             );
             // reverse the order
-            Collections.reverse(elementsBeforeAnchor);
+            //Collections.reverse(elementsBeforeAnchor);
         }
         return elementsBeforeAnchor;
     }

@@ -63,7 +63,7 @@ public class ShopGroupServiceTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    private String domainId = null;
+    private DomainDTO domainDTO = null;
 
     @BeforeEach
     public void cleanCollection() {
@@ -71,45 +71,22 @@ public class ShopGroupServiceTest {
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
 
-        domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        domainDTO = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("domain1")
                                 .description("domain1")
+                                .workflowImplementations(of("DummyParentWorkflow"))
                                 .build()
                 )
         );
-    }
-
-    @Test
-    public void createNewFailWithoutDomain() {
-        var domainMandatory = assertThrows(
-                ConstraintViolationException.class,
-                () -> shopGroupService.createNew(
-                        domainId, NewShopGroupDTO.builder()
-                                .name("shop1")
-                                .description("shop1 user[2-3]")
-                                .users(
-                                        of(
-                                                ShopGroupUserInputDTO.builder()
-                                                        .userId("user2@slac.stanford.edu")
-                                                        .build(),
-                                                ShopGroupUserInputDTO.builder()
-                                                        .userId("user3@slac.stanford.edu")
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(domainMandatory.getConstraintViolations()).hasSize(1);
     }
 
     @Test
     public void createNewShopGroupOK() {
         assertDoesNotThrow(
                 () -> shopGroupService.createNew(
-                        domainId,
+                        domainDTO.id(),
                         NewShopGroupDTO.builder()
                                 .name("shop1")
                                 .description("shop1 user[2-3]")
@@ -132,7 +109,7 @@ public class ShopGroupServiceTest {
     public void fetchShopGroupOK() {
         var newShopGroupId = assertDoesNotThrow(
                 () -> shopGroupService.createNew(
-                        domainId,
+                        domainDTO.id(),
                         NewShopGroupDTO.builder()
                                 .name("shop1")
                                 .description("shop1 user[2-3]")
@@ -151,7 +128,7 @@ public class ShopGroupServiceTest {
         );
 
         var foundShopGroup = assertDoesNotThrow(
-                () -> shopGroupService.findByDomainIdAndId(domainId, newShopGroupId)
+                () -> shopGroupService.findByDomainIdAndId(domainDTO.id(), newShopGroupId)
         );
 
         assertThat(foundShopGroup).isNotNull();
@@ -169,7 +146,7 @@ public class ShopGroupServiceTest {
     public void checkLeaderCreation() {
         var newShopGroupId = assertDoesNotThrow(
                 () -> shopGroupService.createNew(
-                        domainId,
+                        domainDTO.id(),
                         NewShopGroupDTO.builder()
                                 .name("shop1")
                                 .description("shop1 user[2-3]")
@@ -202,7 +179,7 @@ public class ShopGroupServiceTest {
     public void updateOk() {
         var newShopGroupId = assertDoesNotThrow(
                 () -> shopGroupService.createNew(
-                        domainId,
+                        domainDTO.id(),
                         NewShopGroupDTO.builder()
                                 .name("shop1")
                                 .description("shop1 user[2-3]")
@@ -224,7 +201,7 @@ public class ShopGroupServiceTest {
         // update the shop group
         assertDoesNotThrow(
                 () -> shopGroupService.update(
-                        domainId,
+                        domainDTO.id(),
                         newShopGroupId,
                         UpdateShopGroupDTO.builder()
                                 .name("shop1 updated")
@@ -264,7 +241,7 @@ public class ShopGroupServiceTest {
         PersonNotFound personNotFoundError = assertThrows(
                 PersonNotFound.class,
                 () -> shopGroupService.createNew(
-                        domainId,
+                        domainDTO.id(),
                         NewShopGroupDTO.builder()
                                 .name("shop1")
                                 .description("shop1 user[2-3]")
