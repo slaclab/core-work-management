@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @Schema(description = "Represents an association of the work to a bucket.")
 public record WorkBucketAssociationDTO(
         @Schema(description = "The unique identifier for the work bucket association.")
-        String bucketId,
+        BucketSlotDTO bucket,
         @Schema(description = "Specify that the work has been rolled up to this bucket.")
         Boolean rolled,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)

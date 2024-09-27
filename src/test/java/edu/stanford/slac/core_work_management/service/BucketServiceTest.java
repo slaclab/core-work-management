@@ -467,7 +467,7 @@ public class BucketServiceTest {
         );
         assertThat(fullWork).isNotNull();
         assertThat(fullWork.currentBucketAssociation()).isNotNull();
-        assertThat(fullWork.currentBucketAssociation().bucketId()).isEqualTo(newBucketId);
+        assertThat(fullWork.currentBucketAssociation().bucket().id()).isEqualTo(newBucketId);
         assertThat(fullWork.currentBucketAssociation().rolled()).isEqualTo(false);
 
         // try to add to the same bucket should trow an exception

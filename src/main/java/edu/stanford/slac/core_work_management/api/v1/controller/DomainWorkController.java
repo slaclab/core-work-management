@@ -163,4 +163,37 @@ public class DomainWorkController {
                 )
         );
     }
+
+    /**
+     * Assign a work to a bucket
+     *
+     * @param authentication the authentication object
+     * @param domainId       the domain id
+     * @param workId         the work id
+     * @param bucketId       the bucket id
+     * @return true if the work has been assigned to the bucket
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Get work history by id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The list of the found history state of the work")
+            }
+    )
+    @PutMapping(value = "/{domainId}/work/{workId}/buket/{bucketId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.canAssociateToBucket(#authentication, #domainId, #workId, #bucketId, #move)")
+    public ApiResultResponse<Boolean> assignWorkToBucket(
+            Authentication authentication,
+            @Parameter(description = "Is the id of the domain that contains the work", required = true)
+            @PathVariable String domainId,
+            @Parameter(description = "Is the id of the work", required = true)
+            @PathVariable String workId,
+            @Parameter(description = "Is the id of the bucket", required = true)
+            @PathVariable String bucketId,
+            @Parameter(description = "Is the flag to move the work to the bucket, instead of fire error if the work is already assigned to another bucket")
+            @RequestParam Optional<Boolean> move
+    ) {
+        workService.associateWorkToBucketSlot(domainId, workId, bucketId, move);
+        return ApiResultResponse.of(true);
+    }
 }

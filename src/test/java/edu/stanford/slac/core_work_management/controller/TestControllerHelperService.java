@@ -63,9 +63,10 @@ public class TestControllerHelperService {
 
     /**
      * Create a dummy PDF attachment
-     * @param mockMvc the mock mvc
+     *
+     * @param mockMvc       the mock mvc
      * @param resultMatcher the result matcher
-     * @param userInfo the user info
+     * @param userInfo      the user info
      * @return the id of the newly created attachment
      * @throws Exception the exception
      */
@@ -74,7 +75,7 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo) throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "test.pdf", MediaType.APPLICATION_PDF_VALUE, "test".getBytes());
-        return  attachmentControllerCreateNew(
+        return attachmentControllerCreateNew(
                 mockMvc,
                 resultMatcher,
                 userInfo,
@@ -89,6 +90,7 @@ public class TestControllerHelperService {
 
     /**
      * Check if the file is correctly downloaded
+     *
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo
@@ -120,6 +122,7 @@ public class TestControllerHelperService {
 
     /**
      * Check if the file is correctly downloaded
+     *
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo
@@ -597,6 +600,39 @@ public class TestControllerHelperService {
     }
 
     /**
+     * Associate a work to a bucket
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the id of the work to update
+     * @param bucketId      the update work dto
+     * @return the id of the newly created work
+     */
+    public ApiResultResponse<Boolean> workControllerAssociateWorkToBucket(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String domainId,
+            String workId,
+            String bucketId,
+            Optional<Boolean> move
+    ) throws Exception {
+        var requestBuilder = put("/v1/domain/{domainId}/work/{workId}/buket/{bucketId}", domainId, workId, bucketId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        move.ifPresent(aBoolean -> requestBuilder.param("move", aBoolean.toString()));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Find a work by id
      *
      * @param mockMvc       the mock mvc
@@ -616,8 +652,8 @@ public class TestControllerHelperService {
     ) throws Exception {
         var requestBuilder = get("/v1/domain/{domainId}/work/{workId}", domainId, workId)
                 .contentType(MediaType.APPLICATION_JSON);
-        if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes()!=null) {
-           requestBuilder.param("changes", String.valueOf(workDetailsOptionDTO.changes()));
+        if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes() != null) {
+            requestBuilder.param("changes", String.valueOf(workDetailsOptionDTO.changes()));
         }
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -631,6 +667,7 @@ public class TestControllerHelperService {
 
     /**
      * Find all work history by id
+     *
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo

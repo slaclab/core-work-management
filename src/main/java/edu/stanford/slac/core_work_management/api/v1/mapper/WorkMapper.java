@@ -107,6 +107,14 @@ public abstract class WorkMapper {
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
     abstract public WorkDTO toDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
 
+    @Mapping(target = "bucket", expression = "java(fetchBucket(bucketAssociation.getBucketId()))")
+    abstract public WorkBucketAssociationDTO toDTO(WorkBucketAssociation bucketAssociation);
+
+    public BucketSlotDTO fetchBucket(String bucketId) {
+        if(bucketId==null) return null;
+        return bucketService.findById(bucketId);
+    }
+
     /**
      * Fetch the list of changed on the work
      *

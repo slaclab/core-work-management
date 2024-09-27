@@ -1,7 +1,9 @@
 package edu.stanford.slac.core_work_management.service;
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.*;
+import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.bson.Document;
@@ -18,7 +20,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -45,6 +49,8 @@ public class WorkServiceTest {
     ShopGroupService shopGroupService;
     @Autowired
     LOVService lovService;
+    @Autowired
+    BucketService bucketService;
 
     private DomainDTO fullDomain;
     private WorkflowDTO parentWorkflow;
@@ -56,11 +62,21 @@ public class WorkServiceTest {
     private String domainId;
     private String alternateDomainId;
     private List<LOVElementDTO> projectLovValues = null;
+    private List<String> bucketTypeLOVIds = null;
+    private List<String> bucketStatusLOVIds = null;
+
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.getCollection("jv_head_id").deleteMany(new Document());
         mongoTemplate.getCollection("jv_snapshots").deleteMany(new Document());
         mongoTemplate.remove(new Query(), Domain.class);
+        mongoTemplate.remove(new Query(), Location.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
+        mongoTemplate.remove(new Query(), Work.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
+        mongoTemplate.remove(new Query(), ShopGroup.class);
+        mongoTemplate.remove(new Query(), BucketSlot.class);
+
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
                         NewDomainDTO
@@ -101,11 +117,6 @@ public class WorkServiceTest {
         );
         assertThat(alternateDomainId).isNotEmpty();
 
-        mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), LOVElement.class);
-        mongoTemplate.remove(new Query(), ShopGroup.class);
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
@@ -173,6 +184,14 @@ public class WorkServiceTest {
                 )
         );
         AssertionsForClassTypes.assertThat(locationIdOnAlternateDomain).isNotEmpty();
+
+        // create lov for bucket type and status
+        M1003_InitBucketTypeLOV initBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
+        assertDoesNotThrow(initBucketTypeLOV::changeSet);
+
+        bucketTypeLOVIds = lovService.findAllByGroupName("BucketType").stream().map(LOVElementDTO::id).toList();
+        bucketStatusLOVIds = lovService.findAllByGroupName("BucketStatus").stream().map(LOVElementDTO::id).toList();
+
     }
 
     @Test
@@ -697,6 +716,114 @@ public class WorkServiceTest {
                 )
         );
         assertThat(workNotFound).isNotNull();
+    }
 
+    @Test
+    void associateWorkToABucket() {
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("find the documentation")
+                                .description("find the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
+
+        // create new work
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newParentWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+
+        // create bucket
+        var bucketId = assertDoesNotThrow(
+                () -> bucketService.createNew(
+                        NewBucketDTO.builder()
+                                .domainIds(Set.of(domainId))
+                                .description("Bucket 1 description")
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
+                                .from(LocalDateTime.now())
+                                .to(LocalDateTime.now().plusDays(1))
+                                .admittedWorkTypeIds(
+                                        Set.of(BucketSlotWorkTypeDTO.builder().domainId(domainId).workTypeId(newParentWorkTypeId).build())
+                                )
+                                .build()
+                )
+        );
+
+        // now associate work to bucket
+        assertDoesNotThrow(
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, bucketId, Optional.empty())
+        );
+
+        // get full work to test
+        var fullWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.currentBucketAssociation()).isNotNull();
+        assertThat(fullWork.currentBucketAssociation().bucket().id()).isEqualTo(bucketId);
+
+        // try to put on the same bucket will give an error
+        var workAlreadyInBucket = assertThrows(
+                ControllerLogicException.class,
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, bucketId, Optional.empty())
+        );
+        assertThat(workAlreadyInBucket).isNotNull();
+
+        // create a new bucket to move the work from old to new
+        var newBucketId = assertDoesNotThrow(
+                () -> bucketService.createNew(
+                        NewBucketDTO.builder()
+                                .domainIds(Set.of(domainId))
+                                .description("Bucket 2 description")
+                                .type(bucketTypeLOVIds.get(1))
+                                .status(bucketStatusLOVIds.get(1))
+                                .from(LocalDateTime.now())
+                                .to(LocalDateTime.now().plusDays(1))
+                                .admittedWorkTypeIds(
+                                        Set.of(BucketSlotWorkTypeDTO.builder().domainId(domainId).workTypeId(newParentWorkTypeId).build())
+                                )
+                                .build()
+                )
+        );
+
+        // move to new bucket without force gives error
+        var errorBecauseIsAlreadyAssociatedToOneBucket = assertThrows(
+                ControllerLogicException.class,
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, newBucketId, Optional.empty())
+        );
+        assertThat(errorBecauseIsAlreadyAssociatedToOneBucket).isNotNull();
+
+        // now try to move with force
+        assertDoesNotThrow(
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, newBucketId, Optional.of(true))
+        );
+
+        // get new work to check
+        var fullWorkAfterMove = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(fullWorkAfterMove).isNotNull();
+        assertThat(fullWorkAfterMove.currentBucketAssociation()).isNotNull();
+        assertThat(fullWorkAfterMove.currentBucketAssociation().bucket().id()).isEqualTo(newBucketId);
+        // check history
+        assertThat(fullWorkAfterMove.bucketAssociationsHistory()).isNotNull().hasSize(1);
+        assertThat(fullWorkAfterMove.bucketAssociationsHistory().getFirst().bucket().id()).isEqualTo(bucketId);
     }
 }
