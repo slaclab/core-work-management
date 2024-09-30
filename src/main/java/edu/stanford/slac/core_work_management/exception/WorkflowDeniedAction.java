@@ -9,7 +9,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.getAllMethodInC
 
 @ResponseStatus(value = HttpStatus.UNAUTHORIZED, reason = "Workflow denied operation")
 public class WorkflowDeniedAction extends ControllerLogicException {
-    @Builder(builderMethodName = "notFoundById")
+    @Builder(builderMethodName = "byErrorMessage")
     public WorkflowDeniedAction(Integer errorCode, String errorMessage) {
         super(errorCode,
                 errorMessage,

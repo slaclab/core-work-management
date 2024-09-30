@@ -7,6 +7,7 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
+import edu.stanford.slac.core_work_management.exception.WorkflowDeniedAction
 import edu.stanford.slac.core_work_management.model.CustomField
 import edu.stanford.slac.core_work_management.model.EventTrigger
 import edu.stanford.slac.core_work_management.model.ProcessWorkflowInfo
@@ -220,7 +221,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 String areaManagerUserId = Objects.requireNonNull(workDTO.location()).locationManagerUserId()
                 boolean isRoot = authService.checkForRoot(userId)
                 if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
-                    WorkflowDeniedAction.builder()
+                    throw WorkflowDeniedAction.byErrorMessage()
                             .errorCode(-1)
                             .errorMessage("Only the area manager can move the work to ReadyForWork")
                             .build()

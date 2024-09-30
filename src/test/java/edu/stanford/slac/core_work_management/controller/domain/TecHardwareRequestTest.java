@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
+import edu.stanford.slac.core_work_management.exception.WorkflowDeniedAction;
 import edu.stanford.slac.core_work_management.model.Attachment;
 import edu.stanford.slac.core_work_management.model.EventTrigger;
 import edu.stanford.slac.core_work_management.model.Work;
@@ -438,7 +439,8 @@ public class TecHardwareRequestTest  {
                 () -> testControllerHelperService.workControllerCreateNew(
                         mockMvc,
                         status().isCreated(),
-                        Optional.of("user1@slac.stanford.edu"),
+                        // create with normal user
+                        Optional.of("user2@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
                         NewWorkDTO
                                 .builder()
@@ -461,7 +463,7 @@ public class TecHardwareRequestTest  {
                 () -> testControllerHelperService.workControllerFindWorkById(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("user2@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
                         newWorkResult.getPayload(),
                         WorkDetailsOptionDTO.builder().build()
@@ -477,12 +479,12 @@ public class TecHardwareRequestTest  {
                         mockMvc,
                         status().isOk(),
                         // user10 is the area manager for location 10
-                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("user2@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
                         newWorkResult.getPayload(),
                         UpdateWorkDTO
                                 .builder()
-                                .assignedTo(List.of("user2@slac.stanford.edu"))
+                                .assignedTo(List.of("user3@slac.stanford.edu"))
                                 .customFieldValues
                                         (
                                                 List.of(
@@ -551,6 +553,30 @@ public class TecHardwareRequestTest  {
         assertThat(updateWorkResult3.getErrorCode()).isEqualTo(0);
         assertThat(updateWorkResult3.getPayload()).isTrue();
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.PendingApproval)).isTrue();
+
+        // norma user should fail to sen to ready for work
+        var failOnSendToReadyToWork = assertThrows(
+                ControllerLogicException.class,
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        // user10 is the area manager for location 10
+                        Optional.of("user2@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.ReadyForWork)
+                                                .comment("Completed from REST API")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(failOnSendToReadyToWork).isNotNull();
 
         var updateWorkForPendingApproval = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerUpdate(
