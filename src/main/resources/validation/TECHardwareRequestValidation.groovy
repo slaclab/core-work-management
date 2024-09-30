@@ -2,7 +2,11 @@ package validation
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound
+import edu.stanford.slac.ad.eed.baselib.service.AuthService
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
+import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
 import edu.stanford.slac.core_work_management.model.CustomField
 import edu.stanford.slac.core_work_management.model.EventTrigger
 import edu.stanford.slac.core_work_management.model.ProcessWorkflowInfo
@@ -29,14 +33,18 @@ import java.time.LocalDateTime
 @Slf4j
 class TECHardwareRequestValidation extends WorkTypeValidation {
     private final Clock clock;
+    private final AuthService authService;
+    private final DomainMapper domainMapper;
     private final WorkRepository workRepository;
     private final BucketService bucketService;
     private final AttachmentService attachmentService;
     private final PeopleGroupService peopleGroupService;
     private final EventTriggerRepository eventTriggerRepository;
 
-    TECHardwareRequestValidation(Clock clock, WorkRepository workRepository, BucketService bucketService, AttachmentService attachmentService, PeopleGroupService peopleGroupService, EventTriggerRepository eventTriggerRepository) {
+    TECHardwareRequestValidation(Clock clock, AuthService authService, DomainMapper domainMapper, WorkRepository workRepository, BucketService bucketService, AttachmentService attachmentService, PeopleGroupService peopleGroupService, EventTriggerRepository eventTriggerRepository) {
         this.clock = clock
+        this.authService = authService
+        this.domainMapper = domainMapper
         this.workRepository = workRepository
         this.bucketService = bucketService
         this.attachmentService = attachmentService
@@ -108,7 +116,8 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
             case WorkflowState.WorkComplete -> {
                 manageWorkCompleteState(workflowWorkUpdate)
             }
-            case WorkflowState.Closed -> {}
+            case WorkflowState.Closed -> {
+            }
         }
     }
     /**
@@ -120,7 +129,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         var work = workflowWorkUpdate.getWork();
         var workflowInstance = workflowWorkUpdate.getWorkflow();
         var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
-        if(updateWorkflowState != null) {
+        if (updateWorkflowState != null) {
             workflowInstance.moveToState(work, updateWorkflowState);
         }
         log.info("Work %s has been moved to %s".formatted(work.getId(), updateWorkflowState.getNewState()));
@@ -135,7 +144,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         var work = workflowWorkUpdate.getWork();
         var workflowInstance = workflowWorkUpdate.getWorkflow();
         var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
-        if(updateWorkflowState != null) {
+        if (updateWorkflowState != null) {
             workflowInstance.moveToState(work, updateWorkflowState);
         }
         log.info("Work %s has been moved to %s".formatted(work.getId(), updateWorkflowState.getNewState()));
@@ -200,6 +209,25 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         checkAttachments(updateWorkValidation.getExistingWork(), validationResults);
         checkPlannedDataAgainstBucket(updateWorkValidation.getExistingWork(), validationResults)
         checkAndFireError(validationResults)
+    }
+
+    @Override
+    boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+        if(updateWorkDTO !=null && updateWorkDTO.workflowStateUpdate() != null) {
+            var statusModelValue = domainMapper.toModel(updateWorkDTO.workflowStateUpdate())
+            if(statusModelValue.getNewState() == WorkflowState.ReadyForWork) {
+                // only area manage and root users can move to ready for work
+                String areaManagerUserId = Objects.requireNonNull(workDTO.location()).locationManagerUserId()
+                boolean isRoot = authService.checkForRoot(userId)
+                if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
+                    WorkflowDeniedAction.builder()
+                            .errorCode(-1)
+                            .errorMessage("Only the area manager can move the work to ReadyForWork")
+                            .build()
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -300,7 +328,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
  */
     private void checkAssignedTo(Work work, ArrayList<ValidationResult<String>> validationResults) {
         def assignedUsers = work.getAssignedTo() ?: []
-        if(assignedUsers.size()==0) {
+        if (assignedUsers.size() == 0) {
             validationResults.add(ValidationResult.failure("The work must be assigned to someone"))
             return;
         }
@@ -320,7 +348,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
      */
     private void checkAndFireError(ArrayList<ValidationResult<String>> validationResults) {
 // Check if any validation failed
-        def hasErrors = validationResults.any { !it.valid}
+        def hasErrors = validationResults.any { !it.valid }
 
 // If there are errors, throw a ControllerLogicException with all error messages
         if (hasErrors) {
@@ -345,7 +373,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
             return;
         }
         attachmentsValue.getValue().forEach { attachmentId ->
-            if(!attachmentService.exists(attachmentId)){
+            if (!attachmentService.exists(attachmentId)) {
                 validationResult.addFirst(ValidationResult.failure("The '%s' attachment %s does not exist".formatted(fieldName, attachmentId)))
             }
         }

@@ -428,4 +428,153 @@ public class TecHardwareRequestTest  {
         assertThat(closeWorkResult.getPayload()).isTrue();
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Closed)).isTrue();
     }
+
+    @Test
+    public void hardwareRequestWholeWorkflowWithPlannedStartDateAuthorizingByAreaManager() {
+        var nowLocalDateTime = LocalDateTime.now();
+        var startPlannedDateTimeOneMothLater = nowLocalDateTime.plusMonths(1);
+        // create a new hardware request with minimal fields
+        var newWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(domainTestInfo.workTypes.getFirst().id())
+                                .title("Work 1")
+                                .description("Work 1 description")
+                                .locationId(domainTestInfo.getLocationByName("Location10").id())
+                                .shopGroupId(domainTestInfo.getShopGroupByName("Shop15").id())
+                                .build()
+                )
+        );
+        assertThat(newWorkResult).isNotNull();
+        assertThat(newWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkResult.getPayload()).isNotNull();
+        // we are in created state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // retrieve full work to get the lov value to fill the custom field
+        var fullWork = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.getErrorCode()).isEqualTo(0);
+        assertThat(fullWork.getPayload()).isNotNull();
+
+        // complete the work with these additional custom field: schedulingPriority, accessRequirements, ppsZone, radiationSafetyWorkControlForm, lockAndTag , subsystem,group
+        var updateWorkResult3 = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        // user10 is the area manager for location 10
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .assignedTo(List.of("user2@slac.stanford.edu"))
+                                .customFieldValues
+                                        (
+                                                List.of(
+                                                        // set plan start date
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "plannedStartDateTime"))
+                                                                .value(ValueDTO.builder().value(tecDomainEnvironmentTest.toString(startPlannedDateTimeOneMothLater)).type(ValueTypeDTO.DateTime).build())
+                                                                .build(),
+                                                        // add schedulingPriority
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "schedulingPriority"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "schedulingPriority", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add accessRequirements
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "accessRequirements"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "accessRequirements", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add ppsZone
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "ppsZone"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "ppsZone", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add radiationSafetyWorkControlForm
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "radiationSafetyWorkControlForm"))
+                                                                .value(ValueDTO.builder().value("false").type(ValueTypeDTO.Boolean).build())
+                                                                .build(),
+                                                        // add lockAndTag
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "lockAndTag"))
+                                                                .value(ValueDTO.builder().value("true").type(ValueTypeDTO.Boolean).build())
+                                                                .build(),
+                                                        // add subsystem
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "subsystem"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(fullWork.getPayload(), "subsystem", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build()
+                                                )
+                                        )
+                                .build()
+                )
+        );
+
+        // now the workflow should be fallen in ready for work
+        assertThat(updateWorkResult3).isNotNull();
+        assertThat(updateWorkResult3.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkResult3.getPayload()).isTrue();
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.PendingApproval)).isTrue();
+
+        var updateWorkForPendingApproval = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        // user10 is the area manager for location 10
+                        Optional.of("user10@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.ReadyForWork)
+                                                .comment("Completed from REST API")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkForPendingApproval).isNotNull();
+        assertThat(updateWorkForPendingApproval.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkForPendingApproval.getPayload()).isTrue();
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.ReadyForWork)).isTrue();
+    }
 }

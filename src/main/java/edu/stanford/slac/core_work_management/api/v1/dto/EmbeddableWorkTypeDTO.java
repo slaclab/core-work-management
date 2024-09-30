@@ -25,6 +25,8 @@ public record EmbeddableWorkTypeDTO(
         @Schema(description = "The list of the work types that can be child of this one")
         Set<WorkTypeSummaryDTO> childWorkType,
         @Schema(description = "The workflow that rule the life cycle of the work that refer to this type")
-        WorkflowDTO workflow
+        WorkflowDTO workflow,
+        @Schema(description = "The name of the validator to use to validate the work")
+        String validatorName
 ) {
 }

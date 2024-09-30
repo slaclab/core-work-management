@@ -9,7 +9,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -97,7 +100,8 @@ public class ScriptService {
     @Async("taskExecutor")
     public <T, R> CompletableFuture<R> executeScriptFile(String scriptFileName, Class<T> interfaceClass, String methodName, Object... args) {
         try {
-            return executeScriptContent(ResourceUtility.loadFileFromResource(scriptFileName), interfaceClass, methodName, args);
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(scriptFileName);
+            return executeScriptContent(loadISContent(inputStream), interfaceClass, methodName, args);
         } catch (IOException e) {
             throw ControllerLogicException.builder()
                     .errorMessage("Failed to load script file: " + e.getMessage())
@@ -151,7 +155,8 @@ public class ScriptService {
      */
     public <T> T getInterfaceImplementationFromFile(String scriptFileName, Class<T> tClass) {
         try {
-            return getInterfaceImplementation(ResourceUtility.loadFileFromResource(scriptFileName), tClass);
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(scriptFileName);
+            return getInterfaceImplementation(loadISContent(inputStream), tClass);
         } catch (IOException e) {
             throw ControllerLogicException.builder()
                     .errorMessage("Failed to load script file: " + e.getMessage())
@@ -190,5 +195,25 @@ public class ScriptService {
         return args != null ?
                 java.util.Arrays.stream(args).map(Object::getClass).toArray(Class<?>[]::new) :
                 new Class<?>[0];
+    }
+
+    /**
+     * Load the content of a file from the input stream
+     * @param inputStream the input stream
+     * @return the content of the file
+     * @throws IOException if an I/O error occurs
+     */
+    private String loadISContent(InputStream inputStream) throws IOException {
+        if(inputStream == null) {
+            throw new IOException("The input stream is null");
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder scriptContent = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            scriptContent.append(line).append("\n");
+        }
+        reader.close();
+        return scriptContent.toString();
     }
 }

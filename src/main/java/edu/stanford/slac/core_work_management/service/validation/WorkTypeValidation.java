@@ -1,6 +1,8 @@
 package edu.stanford.slac.core_work_management.service.validation;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
@@ -51,6 +53,19 @@ public abstract class WorkTypeValidation {
     abstract public void admitChildren(AdmitChildrenValidation canHaveChildValidation);
 
     /**
+     * Check if the current user is authorized to update the work
+     *
+     * @param userId        the domain id
+     * @param workDTO       the work id
+     * @param updateWorkDTO the work update information
+     * @return true if the user is authorized to update the work
+     */
+    public boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+
+        return true;
+    }
+
+    /**
      * Check if the status of the work is equal to any provided states
      *
      * @param customFields         the lis tof the custom field associated to the work type
@@ -85,7 +100,7 @@ public abstract class WorkTypeValidation {
      *
      * @param work the work to check
      */
-    protected ValidationResult<CustomField> checkWorkFieldPresence(Work work , String customFieldName, Optional<String> error) {
+    protected ValidationResult<CustomField> checkWorkFieldPresence(Work work, String customFieldName, Optional<String> error) {
         var filedToCheck = work.getWorkType().getCustomFields().stream()
                 .filter(customField -> customField.getName().compareToIgnoreCase(customFieldName) == 0)
                 .findFirst();

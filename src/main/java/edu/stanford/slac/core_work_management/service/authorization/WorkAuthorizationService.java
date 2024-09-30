@@ -110,29 +110,8 @@ public class WorkAuthorizationService {
                     )
             );
         }
-        // only group leader can update the assigned to
-        if (updateWorkDTO.assignedTo() != null && !updateWorkDTO.assignedTo().isEmpty()) {
-            assertion(
-                    NotAuthorized.notAuthorizedBuilder()
-                            .errorCode(-1)
-                            .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, updateWorkDTO)")
-                            .build(),
-                    // should be one of these
-                    () -> any(
-                            // a root users
-                            () -> isRoot,
-                            // or a user that is the leader of the group
-                            () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                    authentication,
-                                    AuthorizationTypeDTO.Admin,
-                                    SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(currentStoredWork.shopGroup().id())
-                            )
-                    )
-            );
-        }
-
         // call workflow validation
-        return true;
+        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(), currentStoredWork, updateWorkDTO);
     }
 
     /**

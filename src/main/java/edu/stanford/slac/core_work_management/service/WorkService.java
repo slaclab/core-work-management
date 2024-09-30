@@ -415,26 +415,18 @@ public class WorkService {
      * Check if the user can update the work
      *
      * @param userId        the id of the user
-     * @param domainId      the id of the domain
-     * @param workId        the id of the work
-     * @param updateWorkDTO the DTO to update the work
+     * @param workDTO       the work to update
+     * @param updateWorkDTO the update information
+     * @return true if the user can update the work
      */
-//    public void checkWorkflowForUpdate(String userId, String domainId, String workId, UpdateWorkDTO updateWorkDTO) {
-//        var work = workRepository
-//                .findByDomainIdAndId(domainId, workId)
-//                .orElseThrow(
-//                        () -> WorkNotFound
-//                                .notFoundById()
-//                                .errorCode(-1)
-//                                .workId(workId)
-//                                .build()
-//                );
-//        var workflowInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, work.getWorkTypeId());
-//        workflowInstance.canUpdate(userId, work);
-//        // retrieve workflow instance
-//        var wInstance = domainService.getWorkflowInstanceByDomainIdAndWorkTypeId(domainId, parentWWork.getWorkTypeId());
-//
-//    }
+    public boolean checkWorkflowForUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+// get validator for the work type
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
+                workDTO.workType().validatorName(),
+                WorkTypeValidation.class
+        );
+        return wtv.isUserAuthorizedToUpdate(userId, workDTO, updateWorkDTO);
+    }
 
     /**
      * Check if the user can create a new work
@@ -883,7 +875,7 @@ public class WorkService {
         return wrapCatch(
                 () -> workRepository.findAllByCurrentBucketAssociationBucketIdIs(id)
                         .stream()
-                        .map(w-> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                        .map(w -> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
                         .toList(),
                 -1
         );
