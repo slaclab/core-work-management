@@ -5,7 +5,6 @@ import edu.stanford.slac.ad.eed.baselib.model.Person;
 import edu.stanford.slac.ad.eed.baselib.repository.PersonAttributesMapper;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;

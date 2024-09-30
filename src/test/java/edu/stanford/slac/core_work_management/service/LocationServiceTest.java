@@ -1,6 +1,8 @@
 package edu.stanford.slac.core_work_management.service;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.Location;

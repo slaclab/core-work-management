@@ -4,7 +4,6 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedTransferQueue;
 
 public class DomainTestInfo {
     public DomainDTO domain;

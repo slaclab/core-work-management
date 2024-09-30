@@ -4,11 +4,13 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
-import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.Domain;
+import edu.stanford.slac.core_work_management.model.LOVElement;
+import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import jakarta.validation.ConstraintViolationException;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -22,14 +24,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

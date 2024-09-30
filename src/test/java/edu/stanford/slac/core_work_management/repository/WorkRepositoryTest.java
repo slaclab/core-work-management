@@ -17,8 +17,7 @@
 
 package edu.stanford.slac.core_work_management.repository;
 
-import edu.stanford.slac.core_work_management.model.*;
-import org.assertj.core.api.AssertionsForClassTypes;
+import edu.stanford.slac.core_work_management.model.Work;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -31,16 +30,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @AutoConfigureMockMvc
 @SpringBootTest()

@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableSet;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

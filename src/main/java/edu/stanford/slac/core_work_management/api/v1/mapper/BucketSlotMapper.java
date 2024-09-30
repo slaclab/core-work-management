@@ -21,7 +21,6 @@ import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 import edu.stanford.slac.core_work_management.model.BucketSlotWorkType;
-import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import org.mapstruct.*;

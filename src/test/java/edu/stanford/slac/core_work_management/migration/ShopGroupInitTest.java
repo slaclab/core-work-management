@@ -1,6 +1,9 @@
 package edu.stanford.slac.core_work_management.migration;
 
-import edu.stanford.slac.core_work_management.model.*;
+import edu.stanford.slac.core_work_management.model.Domain;
+import edu.stanford.slac.core_work_management.model.LOVElement;
+import edu.stanford.slac.core_work_management.model.ShopGroup;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.LOVService;
 import edu.stanford.slac.core_work_management.service.ShopGroupService;

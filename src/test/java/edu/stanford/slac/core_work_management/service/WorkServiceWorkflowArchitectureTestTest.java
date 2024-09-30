@@ -2,7 +2,6 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.WorkCannotHaveChildren;
 import edu.stanford.slac.core_work_management.exception.WorkflowNotManuallyUpdatable;
 import edu.stanford.slac.core_work_management.model.*;
 import org.assertj.core.api.AssertionsForClassTypes;

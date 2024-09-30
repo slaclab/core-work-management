@@ -1,15 +1,16 @@
 package edu.stanford.slac.core_work_management.controller;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryDomainSummaryDTO;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryElementSummaryDTO;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
-import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
@@ -31,7 +32,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
