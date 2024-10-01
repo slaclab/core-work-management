@@ -12,12 +12,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Log4j2
 @Component
 @AllArgsConstructor
 public class ManageBucketWorkflowUpdate {
+    private final Clock clock;
     private final CWMAppProperties cwmAppProperties;
     private final WorkService workService;
     private final BucketService bucketService;
@@ -50,7 +52,7 @@ public class ManageBucketWorkflowUpdate {
     public void processBucketStartEvent() {
         log.info("Check which bucket need to be started");
         BucketSlotDTO selectedBucket = null;
-        var now = LocalDateTime.now();
+        var now = LocalDateTime.now(clock);
         // use the bucket service to find the next bucket to start
         while ((selectedBucket = bucketService.findNextBucketToStart(now, now.minusSeconds(30))) != null) {
             processBucket(selectedBucket);
@@ -69,7 +71,7 @@ public class ManageBucketWorkflowUpdate {
     public void processBucketStopEvent() {
         log.info("Check which bucket need to be stopped");
         BucketSlotDTO selectedBucket = null;
-        var now = LocalDateTime.now();
+        var now = LocalDateTime.now(clock);
         // use the bucket service to find the next bucket to start
         while ((selectedBucket = bucketService.findNextBucketToStop(now, now.minusSeconds(30))) != null) {
             processBucket(selectedBucket);

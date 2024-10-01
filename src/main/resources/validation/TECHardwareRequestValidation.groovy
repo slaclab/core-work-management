@@ -4,6 +4,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound
 import edu.stanford.slac.ad.eed.baselib.service.AuthService
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService
+import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
@@ -162,15 +163,8 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         boolean haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
 
         if (haveABucket) {
-            bucketService.findById(work.getCurrentBucketAssociation().getBucketId())
-                    .ifPresent { bucket ->
-                        inProgressStarDate = bucket.getStartDate();
-                    }
-                    .orElseThrow(() -> ControllerLogicException.builder()
-                            .errorCode(-1)
-                            .errorMessage("The bucket does not exist")
-                            .errorDomain("TECHardwareReportValidation::update")
-                            .build());
+            BucketSlotDTO bucket = bucketService.findById(work.getCurrentBucketAssociation().getBucketId())
+            inProgressStarDate = bucket.from();
         } else {
             var plannedStartDate = checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty());
             if (!plannedStartDate.valid || plannedStartDate.payload.getValue() == null) {
@@ -200,7 +194,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 checkObjectField(newWorkValidation.newWorkDTO.getShopGroup(), "shopGroup", Optional.of("The shop group is mandatory")),
         ]
         checkAttachments(newWorkValidation.newWorkDTO, validationResults);
-        checkPlannedDataAgainstBucket(newWorkValidation.newWorkDTO, validationResults)
         checkAndFireError(validationResults)
     }
 
@@ -208,7 +201,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     void checkValid(UpdateWorkValidation updateWorkValidation) {
         def validationResults = []
         checkAttachments(updateWorkValidation.getExistingWork(), validationResults);
-        checkPlannedDataAgainstBucket(updateWorkValidation.getExistingWork(), validationResults)
         checkAndFireError(validationResults)
     }
 
@@ -252,7 +244,10 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         // verify that if we have a planned start date we don't have a bucket
         if (plannedStartDate.valid && haveABucket) {
             validationResults.add(ValidationResult.failure("The work cannot have a planned start date and a bucket at the same time"));
+        } else if (!plannedStartDate.valid && !haveABucket) {
+            validationResults.add(ValidationResult.failure("The work must have a planned start date or a bucket"));
         }
+
         if (plannedStartDate.valid && plannedStartDate.payload == null) {
             validationResults.add(ValidationResult.failure("A valid planned start date is required"));
         }
@@ -292,7 +287,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         ValidationResult<CustomField> radiationSafetyWorkControlForm = null;
         def validationResults = [
                 checkWorkFieldPresence(work, "schedulingPriority", Optional.empty()),
-                checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty()),
                 checkWorkFieldPresence(work, "accessRequirements", Optional.empty()),
                 checkWorkFieldPresence(work, "ppsZone", Optional.empty()),
                 radiationSafetyWorkControlForm = checkWorkFieldPresence(work, "radiationSafetyWorkControlForm", Optional.empty()),

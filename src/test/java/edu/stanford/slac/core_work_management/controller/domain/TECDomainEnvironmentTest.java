@@ -225,36 +225,6 @@ public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest{
     }
 
     public void clean(DomainTestInfo domainTestInfo) {
-        mongoTemplate.remove(BucketSlot.class).all();
-
-        // create test bucket
-        var bucketSlotResult = assertDoesNotThrow(
-                () -> testControllerHelperService.maintenanceControllerCreateNewBucket(
-                        mockMvc,
-                        status().isCreated(),
-                        Optional.of("user18@slac.stanford.edu"),
-                        NewBucketDTO
-                                .builder()
-                                .description("test")
-                                .domainIds(Set.of(domainTestInfo.domain.id()))
-                                .admittedWorkTypeIds(
-                                        Set.of(
-                                                BucketSlotWorkTypeDTO
-                                                        .builder()
-                                                        .domainId(domainTestInfo.domain.id())
-                                                        .workTypeId(domainTestInfo.workTypes.getFirst().id())
-                                                        .build()
-                                        )
-                                )
-                                .type(domainTestInfo.lovElementBucketType.get(0).id())
-                                .status(domainTestInfo.lovElementBucketStatus.get(0).id())
-                                .from(LocalDateTime.of(2021, 1, 1, 0, 0))
-                                .to(LocalDateTime.of(2021, 1, 2, 23, 0))
-                                .build()
-                )
-        );
-        AssertionsForClassTypes.assertThat(bucketSlotResult).isNotNull();
-
         // clean kafka queue for test
         try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
             Set<String> existingTopics = adminClient.listTopics().names().get();
