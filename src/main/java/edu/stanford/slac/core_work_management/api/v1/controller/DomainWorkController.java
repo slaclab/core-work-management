@@ -180,7 +180,7 @@ public class DomainWorkController {
                     @ApiResponse(responseCode = "200", description = "The list of the found history state of the work")
             }
     )
-    @PutMapping(value = "/{domainId}/work/{workId}/buket/{bucketId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{domainId}/work/{workId}/bucket/{bucketId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.canAssociateToBucket(#authentication, #domainId, #workId, #bucketId, #move)")
     public ApiResultResponse<Boolean> assignWorkToBucket(
             Authentication authentication,

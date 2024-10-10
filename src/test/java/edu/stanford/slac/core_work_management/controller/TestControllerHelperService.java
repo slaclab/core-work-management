@@ -617,7 +617,7 @@ public class TestControllerHelperService {
             String bucketId,
             Optional<Boolean> move
     ) throws Exception {
-        var requestBuilder = put("/v1/domain/{domainId}/work/{workId}/buket/{bucketId}", domainId, workId, bucketId)
+        var requestBuilder = put("/v1/domain/{domainId}/work/{workId}/bucket/{bucketId}", domainId, workId, bucketId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON);
         move.ifPresent(aBoolean -> requestBuilder.param("move", aBoolean.toString()));
