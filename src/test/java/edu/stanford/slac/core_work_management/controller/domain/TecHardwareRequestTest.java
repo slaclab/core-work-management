@@ -4,14 +4,12 @@ import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
-import edu.stanford.slac.core_work_management.exception.WorkflowDeniedAction;
 import edu.stanford.slac.core_work_management.model.Attachment;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.EventTrigger;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
 import edu.stanford.slac.core_work_management.task.ManageWorkflowUpdateByEventTrigger;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -243,7 +241,7 @@ public class TecHardwareRequestTest  {
                 ControllerLogicException.class,
                 () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
-                        status().isOk(),
+                        status().is5xxServerError(),
                         Optional.of("user1@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
                         newWorkResult.getPayload(),
