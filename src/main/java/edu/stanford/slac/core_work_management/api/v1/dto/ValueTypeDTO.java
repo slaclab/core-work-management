@@ -14,5 +14,8 @@ public enum ValueTypeDTO {
     Double,
     Boolean,
     Date,
-    DateTime
+    DateTime,
+    LOV,
+    Attachments,
+    Bucket
 }

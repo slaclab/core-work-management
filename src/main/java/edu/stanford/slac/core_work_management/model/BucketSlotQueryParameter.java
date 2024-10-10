@@ -22,6 +22,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -31,4 +33,5 @@ public class BucketSlotQueryParameter {
     private Integer contextSize;
     private Integer limit;
     private String search;
+    private LocalDateTime from;
 }

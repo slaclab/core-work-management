@@ -9,7 +9,7 @@ spring:
   application:
     name: 'cwm'
   cache:
-    cache-names: user-root-authorization,work-authorization,user-authorization
+    cache-names: workflow,domains
     type: hazelcast
   ldap:
     urls: ${CWM_LDAP_URI:ldap://localhost:8389}
@@ -37,9 +37,14 @@ edu:
   stanford:
     slac:
       core-work-management:
+        #new configuration
+        image-preview-topic: ${CWM_IMAGE_PREVIEW_TOPIC:cwm-preview-creation}
+        kafka-consumer-concurrency: ${CWM_KAFKA_CONSUMER_CONCURRENCY:1}
+        #new configuration
         cis-backend-url: ${CWM_CIS_URL:http://localhost:8081}
         elog-backend-url: ${CWM_ELOG_URL:http://localhost:8082}
         elog-import-topic: ${CWM_ELOG_IMPORT_TOPIC:elog-plus-import-entry}
+        workflow-processing-topic: ${CWM_WORKFLOW_PROCESSING_TOPIC:workflow-processing}
       ad:
         eed:
           baselib:

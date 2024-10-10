@@ -7,10 +7,11 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.elog_api.api.EntriesControllerApi;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,17 +25,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -75,23 +78,26 @@ public class LogControllerTest {
     EntriesControllerApi entriesControllerApi;
     @Autowired
     AppProperties appProperties;
+    @Autowired
+    CWMAppProperties cwmAppProperties;
+    @Autowired
+    KafkaAdmin kafkaAdmin;
 
-    private String domainId;
-    private List<String> workActivityIds;
+    private DomainDTO domain;
+    private WorkflowDTO workflowDTO;
+    private List<String> workIds;
     private String shopGroupId;
     private String locationId;
     private String newWorkTypeId;
     private String newWorkId;
-    private List<String> testActivityTypeIds = new ArrayList<>();
     private String newActivityId;
     private List<LOVElementDTO> projectLovValues;
     @BeforeAll
     public void setUpWorkAndJob() {
         mongoTemplate.remove(new Query(), Domain.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
@@ -99,49 +105,40 @@ public class LogControllerTest {
         appProperties.getRootUserList().add("user1@slac.stanford.edu");
         authService.updateRootUser();
 
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
-        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
-
         // create domain
-        domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        domain = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("SLAC")
                                 .description("SLAC National Accelerator Laboratory")
+                                .workflowImplementations(Set.of("DummyParentWorkflow"))
                                 .build()
                 )
         );
+        assertThat(domain).isNotNull();
+        // get the workflow ID
+        workflowDTO = domain.workflows().stream().findFirst().orElse(null);
+        assertThat(workflowDTO).isNotNull();
 
         // create test work
-        workActivityIds = helperService.ensureWorkAndActivitiesTypes(
+        workIds = helperService.ensureWorkAndActivitiesTypes(
+                domain.id(),
                 NewWorkTypeDTO
                         .builder()
                         .title("Update the documentation")
                         .description("Update the documentation description")
+                        .workflowId(workflowDTO.id())
+                        .validatorName("validation/DummyParentValidation.groovy")
                         .build(),
-                of(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        of(
-                                                WATypeCustomFieldDTO.builder().name("field1").description("field1 description").valueType(ValueTypeDTO.String).isLov(true).build(),
-                                                WATypeCustomFieldDTO.builder().name("field2").description("value2 description").valueType(ValueTypeDTO.String).isLov(false).build()
-                                        )
-                                )
-                                .build()
-                )
+                emptyList()
         );
-        assertThat(workActivityIds).hasSize(2);
+        assertThat(workIds).hasSize(1);
 
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domain.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -162,9 +159,8 @@ public class LogControllerTest {
         locationId =
                 assertDoesNotThrow(
                         () -> locationService.createNew(
-                                NewLocationDTO
-                                        .builder()
-                                        .domainId(domainId)
+                                domain.id(),
+                                NewLocationDTO.builder()
                                         .name("SLAC")
                                         .description("SLAC National Accelerator Laboratory")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -174,11 +170,14 @@ public class LogControllerTest {
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
 
         newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domain.id(),
                         NewWorkTypeDTO
                                 .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
+                                .title("Fix the hardware")
+                                .description("Fix the hardware description")
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .workflowId(workflowDTO.id())
                                 .build()
                 )
         );
@@ -188,12 +187,11 @@ public class LogControllerTest {
         newWorkId =
                 assertDoesNotThrow(
                         () -> workService.createNew(
+                                domain.id(),
                                 NewWorkDTO.builder()
-                                        .domainId(domainId)
                                         .locationId(locationId)
                                         .workTypeId(newWorkTypeId)
                                         .shopGroupId(shopGroupId)
-                                        .project(projectLovValues.get(0).id())
                                         .title("work 1")
                                         .description("work 1 description")
                                         .build()
@@ -201,43 +199,27 @@ public class LogControllerTest {
                 );
         assertThat(newWorkId).isNotEmpty();
 
-        // create activity type for work 2
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 4")
-                                        .description("Activity 4 description")
-                                        .build()
-                        )
-                )
-        );
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    cwmAppProperties.getImagePreviewTopic(),
+                    String.format("%s-retry-2000", cwmAppProperties.getImagePreviewTopic()),
+                    String.format("%s-retry-4000", cwmAppProperties.getImagePreviewTopic())
+            );
 
-        newActivityId =
-                assertDoesNotThrow(
-                        () -> workService.createNew(
-                                newWorkId,
-                                NewActivityDTO.builder()
-                                        .activityTypeId(testActivityTypeIds.getFirst())
-                                        .title("New activity 1")
-                                        .description("activity 1 description")
-                                        .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                        .build()
-                        )
-                );
-        assertThat(newActivityId).isNotNull();
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to recreate Kafka topic", e);
+        }
     }
 
     @BeforeEach
@@ -257,6 +239,7 @@ public class LogControllerTest {
                             mockMvc,
                             status().isCreated(),
                             Optional.of("user1@slac.stanford.edu"),
+                            domain.id(),
                             newWorkId,
                             NewLogEntry
                                     .builder()
@@ -281,7 +264,7 @@ public class LogControllerTest {
             assertThat(uploadResult.getPayload()).isTrue();
 
             //try to fetch the log entry using elog api
-            var fullWork = workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().build());
+            var fullWork = workService.findWorkById(domain.id(), newWorkId, WorkDetailsOptionDTO.builder().build());
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)
@@ -318,14 +301,13 @@ public class LogControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewWorkDTO.builder()
-                                .domainId(domainId)
                                 .locationId(locationId)
                                 .workTypeId(newWorkTypeId)
                                 .shopGroupId(shopGroupId)
                                 .title("work contextually to log creation")
                                 .description("this is a work that will be used to test log creation during the work creation")
-                                .project(projectLovValues.get(0).id())
                                 .build(),
                         Optional.of(true)
                 )
@@ -333,7 +315,7 @@ public class LogControllerTest {
 
 
         //try to fetch the log entry using elog api
-        var fullWork = workService.findWorkById(newWorkLogIdResult.getPayload(), WorkDetailsOptionDTO.builder().build());
+        var fullWork = workService.findWorkById(domain.id(), newWorkLogIdResult.getPayload(), WorkDetailsOptionDTO.builder().build());
         await()
                 .atMost(30, SECONDS)
                 .pollDelay(2, SECONDS)
@@ -359,71 +341,5 @@ public class LogControllerTest {
                             !result.getPayload().isEmpty();
                 });
 
-    }
-
-    @Test
-    public void testCreateMewLogEntryOnActivity() {
-        Faker faker = new Faker();
-        try (
-                InputStream isPng = assertDoesNotThrow(() -> documentGenerationService.getTestPng());
-                InputStream isJpg = assertDoesNotThrow(() -> documentGenerationService.getTestJpeg())
-        ) {
-            ApiResultResponse<Boolean> uploadResult = assertDoesNotThrow(
-                    () -> testControllerHelperService.createLogEntry(
-                            mockMvc,
-                            status().isCreated(),
-                            Optional.of("user1@slac.stanford.edu"),
-                            newWorkId,
-                            newActivityId,
-                            NewLogEntry
-                                    .builder()
-                                    .title("second test entry from cwm")
-                                    .text("second test entry from cwm")
-                                    .build(),
-                            new MockMultipartFile(
-                                    "files",
-                                    "test.png",
-                                    MediaType.IMAGE_PNG_VALUE,
-                                    isPng
-                            ),
-                            new MockMultipartFile(
-                                    "files",
-                                    "test.jpg",
-                                    MediaType.IMAGE_JPEG_VALUE,
-                                    isJpg
-                            ))
-            );
-            // Process the uploadResult as needed
-            assertThat(uploadResult).isNotNull();
-            assertThat(uploadResult.getPayload()).isTrue();
-
-            //try to fetch the log entry using elog api
-            var fulActivity = workService.findActivityById(newActivityId);
-            await()
-                    .atMost(30, HOURS)
-                    .pollDelay(2, SECONDS)
-                    .until(() -> {
-                        var result = entriesControllerApi.search(
-                                null,
-                                null,
-                                null,
-                                null,
-                                10,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                "cwm:work:%s:activity:%s".formatted(fulActivity.workNumber(), fulActivity.activityNumber())
-                        );
-                        return result != null &&
-                                result.getErrorCode() == 0 &&
-                                result.getPayload() != null &&
-                                !result.getPayload().isEmpty();
-                    });
-        } catch (Exception e) {
-            // Handle possible exceptions here
-        }
     }
 }

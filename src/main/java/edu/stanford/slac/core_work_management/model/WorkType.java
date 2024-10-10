@@ -8,7 +8,9 @@ import org.springframework.data.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * ActivityType model
@@ -25,6 +27,10 @@ public class WorkType {
     @Id
     private String id;
     /**
+     * The unique identifier for the domain.
+     */
+    private String domainId;
+    /**
      * The title of the activity type. This field stores the title or name of the activity type.
      */
     private String title;
@@ -38,6 +44,23 @@ public class WorkType {
      */
     @Builder.Default
     private List<WATypeCustomField> customFields = new ArrayList<>();
+
+    /**
+     * The list of the work types that can be child of this one
+     */
+    @Builder.Default
+    private Set<String> childWorkTypeIds = new HashSet<>();
+
+    /**
+     * The id of the workflow that rule the life cycle of the work that refer to this type
+     */
+    private String workflowId;
+
+    /**
+     * The name of the validator that validate the work that refer to this type
+     */
+    private String validatorName;
+
     /**
      * The creation date of the activity type.
      */

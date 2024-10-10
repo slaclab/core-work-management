@@ -6,10 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.auth.JWTHelper;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.mock.web.MockPart;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 @Service()
@@ -36,6 +38,118 @@ public class TestControllerHelperService {
 
     }
 
+    public ApiResultResponse<String> attachmentControllerCreateNew(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            MockMultipartFile file) throws Exception {
+        var requestBuilder = multipart("/v1/attachment").file(file);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result_upload = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result_upload.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        ApiResultResponse<String> res = new ObjectMapper().readValue(result_upload.getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(res.getErrorCode()).isEqualTo(0);
+        return res;
+    }
+
+    /**
+     * Create a dummy PDF attachment
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @return the id of the newly created attachment
+     * @throws Exception the exception
+     */
+    public ApiResultResponse<String> createDummyPDFAttachment(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo) throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "test.pdf", MediaType.APPLICATION_PDF_VALUE, "test".getBytes());
+        return attachmentControllerCreateNew(
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                new MockMultipartFile(
+                        "uploadFile",
+                        "file.pdf",
+                        MediaType.APPLICATION_PDF_VALUE,
+                        "<<pdf data>>".getBytes(StandardCharsets.UTF_8)
+                )
+        );
+    }
+
+    /**
+     * Check if the file is correctly downloaded
+     *
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param attachmentID
+     * @param mediaType
+     * @throws Exception
+     */
+    public void checkDownloadedFile(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String attachmentID,
+            String mediaType) throws Exception {
+        var requestBuilder = get("/v1/attachment/{id}/download", attachmentID)
+                .contentType(mediaType);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0);
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
+    }
+
+    /**
+     * Check if the file is correctly downloaded
+     *
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param attachmentID
+     * @param mediaType
+     * @throws Exception
+     */
+    public void checkDownloadedPreview(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String attachmentID,
+            String mediaType) throws Exception {
+        var requestBuilder = get("/v1/attachment/{id}/preview.jpg", attachmentID)
+                .contentType(mediaType);
+        userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
+        MvcResult result = mockMvc.perform(
+                        requestBuilder
+                )
+                .andExpect(resultMatcher)
+                .andReturn();
+        Optional<ControllerLogicException> someException = Optional.ofNullable((ControllerLogicException) result.getResolvedException());
+        if (someException.isPresent()) {
+            throw someException.get();
+        }
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentAsByteArray().length).isGreaterThan(0);
+        AssertionsForClassTypes.assertThat(result.getResponse().getContentType()).isEqualTo(mediaType);
+    }
 
     /**
      * Create new domain
@@ -135,9 +249,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewShopGroupDTO newShopGroupDTO
     ) throws Exception {
-        var requestBuilder = post("/v1/shop-group")
+        var requestBuilder = post("/v1/domain/{domainId}/shop-group", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newShopGroupDTO));
@@ -166,10 +281,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String id,
             UpdateShopGroupDTO updateShopGroupDTO
     ) throws Exception {
-        var requestBuilder = put("/v1/shop-group/{id}", id)
+        var requestBuilder = put("/v1/domain/{domainId}/shop-group/{id}", domainId, id)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateShopGroupDTO));
@@ -195,9 +311,10 @@ public class TestControllerHelperService {
     public ApiResultResponse<List<ShopGroupDTO>> shopGroupControllerFindAll(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
-            Optional<String> userInfo
+            Optional<String> userInfo,
+            String domainId
     ) throws Exception {
-        var requestBuilder = get("/v1/shop-group")
+        var requestBuilder = get("/v1/domain/{domainId}/shop-group", domainId)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -222,9 +339,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String id
     ) throws Exception {
-        var requestBuilder = get("/v1/shop-group/{id}", id)
+        var requestBuilder = get("/v1/domain/{domainId}/shop-group/{id}", domainId, id)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -249,9 +367,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewLocationDTO newLocationDTO
     ) throws Exception {
-        var requestBuilder = post("/v1/location")
+        var requestBuilder = post("/v1/domain/{domainId}/location", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newLocationDTO));
@@ -309,9 +428,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String locationId
     ) throws Exception {
-        var requestBuilder = get("/v1/location/{locationId}", locationId)
+        var requestBuilder = get("/v1/domain/{domainId}/location/{locationId}", domainId, locationId)
                 .accept(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -337,10 +457,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             Optional<String> filter,
             Optional<String> externalId
     ) throws Exception {
-        var requestBuilder = get("/v1/location")
+        var requestBuilder = get("/v1/domain/{domainId}/location", domainId)
                 .accept(MediaType.APPLICATION_JSON);
         filter.ifPresent(s -> requestBuilder.param("filter", s));
         externalId.ifPresent(s -> requestBuilder.param("externalId", s));
@@ -363,12 +484,13 @@ public class TestControllerHelperService {
      * @return the id of the newly created work type
      * @throws Exception the exception
      */
-    public ApiResultResponse<List<WorkTypeDTO>> workControllerFindAllWorkTypes(
+    public ApiResultResponse<List<WorkTypeDTO>> domainControllerFindAllWorkTypes(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
-            Optional<String> userInfo
+            Optional<String> userInfo,
+            String domainId
     ) throws Exception {
-        var requestBuilder = get("/v1/work/work-type")
+        var requestBuilder = get("/v1/domain/{domainId}/work-type", domainId)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -380,57 +502,6 @@ public class TestControllerHelperService {
         );
     }
 
-    /**
-     * get all work type new work type
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @return the id of the newly created work type
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<List<ActivityTypeDTO>> workControllerFindAllActivityTypes(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo
-    ) throws Exception {
-        var requestBuilder = get("/v1/work/activity-type")
-                .contentType(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * get all work type new work type
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @return the id of the newly created work type
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<List<ActivityTypeSubtypeDTO>> workControllerFindAllActivitySubTypes(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo
-    ) throws Exception {
-        var requestBuilder = get("/v1/work/activity-type-subtype")
-                .contentType(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
 
     /**
      * Create new work
@@ -445,9 +516,10 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewWorkDTO newWorkDTO
     ) throws Exception {
-        var requestBuilder = post("/v1/work")
+        var requestBuilder = post("/v1/domain/{domainId}/work", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newWorkDTO));
@@ -475,10 +547,11 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             NewWorkDTO newWorkDTO,
             Optional<Boolean> logIf
     ) throws Exception {
-        var requestBuilder = post("/v1/work")
+        var requestBuilder = post("/v1/domain/{domainId}/work", domainId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newWorkDTO));
@@ -507,13 +580,47 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String workId,
             UpdateWorkDTO updateWorkDTO
     ) throws Exception {
-        var requestBuilder = put("/v1/work/{workId}", workId)
+        var requestBuilder = put("/v1/domain/{domainId}/work/{workId}", domainId, workId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateWorkDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Associate a work to a bucket
+     *
+     * @param mockMvc       the mock mvc
+     * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param workId        the id of the work to update
+     * @param bucketId      the update work dto
+     * @return the id of the newly created work
+     */
+    public ApiResultResponse<Boolean> workControllerAssociateWorkToBucket(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String domainId,
+            String workId,
+            String bucketId,
+            Optional<Boolean> move
+    ) throws Exception {
+        var requestBuilder = put("/v1/domain/{domainId}/work/{workId}/bucket/{bucketId}", domainId, workId, bucketId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        move.ifPresent(aBoolean -> requestBuilder.param("move", aBoolean.toString()));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },
@@ -538,13 +645,14 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String workId,
             WorkDetailsOptionDTO workDetailsOptionDTO
     ) throws Exception {
-        var requestBuilder = get("/v1/work/{workId}", workId)
+        var requestBuilder = get("/v1/domain/{domainId}/work/{workId}", domainId, workId)
                 .contentType(MediaType.APPLICATION_JSON);
-        if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes()!=null) {
-            workDetailsOptionDTO.changes().ifPresent(aBoolean -> requestBuilder.param("changes", aBoolean.toString()));
+        if (workDetailsOptionDTO != null && workDetailsOptionDTO.changes() != null) {
+            requestBuilder.param("changes", String.valueOf(workDetailsOptionDTO.changes()));
         }
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -558,6 +666,7 @@ public class TestControllerHelperService {
 
     /**
      * Find all work history by id
+     *
      * @param mockMvc
      * @param resultMatcher
      * @param userInfo
@@ -572,226 +681,6 @@ public class TestControllerHelperService {
             String workId
     ) throws Exception {
         var requestBuilder = get("/v1/work/{workId}/history", workId)
-                .contentType(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Create new work activity
-     *
-     * @param mockMvc        the mock mvc
-     * @param resultMatcher  the result matcher
-     * @param userInfo       the user info
-     * @param workId         the work id
-     * @param newActivityDTO the new activity dto
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<String> workControllerCreateNew(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId,
-            NewActivityDTO newActivityDTO
-    ) throws Exception {
-        var requestBuilder = post("/v1/work/{workId}/activity", workId)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(newActivityDTO));
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Find all activities by work id
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param workId        the work id
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<List<ActivitySummaryDTO>> workControllerFindAllActivitiesByWorkId(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId
-    ) throws Exception {
-        var requestBuilder = get("/v1/work/{workId}/activity", workId)
-                .contentType(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Update an activity
-     *
-     * @param mockMvc           the mock mvc
-     * @param resultMatcher     the result matcher
-     * @param userInfo          the user info
-     * @param workId            the work id
-     * @param activityId        the activity id
-     * @param updateActivityDTO the update activity dto
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<String> workControllerUpdate(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId,
-            String activityId,
-            UpdateActivityDTO updateActivityDTO
-    ) throws Exception {
-        var requestBuilder = put("/v1/work/{workId}/activity/{activityId}", workId, activityId)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateActivityDTO));
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Update an activity status
-     *
-     * @param mockMvc                 the mock mvc
-     * @param resultMatcher           the result matcher
-     * @param userInfo                the user info
-     * @param workId                  the work id
-     * @param activityId              the activity id
-     * @param updateActivityStatusDTO the update activity status dto
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<Boolean> workControllerUpdateStatus(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId,
-            String activityId,
-            UpdateActivityStatusDTO updateActivityStatusDTO
-    ) throws Exception {
-        var requestBuilder = put("/v1/work/{workId}/activity/{activityId}/status", workId, activityId)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateActivityStatusDTO));
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Get the permitted status list for a specific status
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param status        the status
-     * @return the list of activity type subtypes
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<List<ActivityStatusDTO>> workControllerGetPermittedStatus(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            ActivityStatusDTO status
-    ) throws Exception {
-        var requestBuilder = get("/v1/work/activity/status/{status}/permitted", status)
-                .contentType(MediaType.APPLICATION_JSON);
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Review a work
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param workId        the work id
-     * @param activityId    the activity id
-     * @param reviewWorkDTO the review work dto
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<Boolean> workControllerReviewWork(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId,
-            String activityId,
-            ReviewWorkDTO reviewWorkDTO
-    ) throws Exception {
-        var requestBuilder = put("/v1/work/{workId}/review", workId, activityId)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(reviewWorkDTO));
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
-     * Find an activity by id
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param workId        the work id
-     * @param ActivityId    the activity id
-     * @return the work dto
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<ActivityDTO> workControllerFindById(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            String workId,
-            String ActivityId
-    ) throws Exception {
-        var requestBuilder = get("/v1/work/{workId}/activity/{activityId}", workId, ActivityId)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -842,60 +731,23 @@ public class TestControllerHelperService {
     }
 
     /**
-     * Search all the activities
-     *
-     * @param mockMvc       the mock mvc
-     * @param resultMatcher the result matcher
-     * @param userInfo      the user info
-     * @param anchorID      the anchor id
-     * @param contextSize   the context size
-     * @param limit         the limit
-     * @param search        the search
-     * @return the list of activities
-     * @throws Exception the exception
-     */
-    public ApiResultResponse<List<ActivityDTO>> workControllerSearchAllActivities(
-            MockMvc mockMvc,
-            ResultMatcher resultMatcher,
-            Optional<String> userInfo,
-            Optional<String> anchorID,
-            Optional<Integer> contextSize,
-            Optional<Integer> limit,
-            Optional<String> search
-    ) throws Exception {
-        var requestBuilder = get("/v1/work/activity")
-                .contentType(MediaType.APPLICATION_JSON);
-        anchorID.ifPresent(s -> requestBuilder.param("anchorId", s));
-        contextSize.ifPresent(s -> requestBuilder.param("contextSize", s.toString()));
-        limit.ifPresent(s -> requestBuilder.param("limit", s.toString()));
-        search.ifPresent(s -> requestBuilder.param("search", s));
-        return executeHttpRequest(
-                new TypeReference<>() {
-                },
-                mockMvc,
-                resultMatcher,
-                userInfo,
-                requestBuilder
-        );
-    }
-
-    /**
      * Find all field that are LOV
      *
      * @param mockMvc       the mock mvc
      * @param resultMatcher the result matcher
      * @param userInfo      the user info
      * @param domainTypeDTO the domain type dto
-     * @return the list of activity dto
+     * @return the list of all lov field dto
      */
     public ApiResultResponse<List<String>> lovControllerFindAllFieldThatAreLOV(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             LOVDomainTypeDTO domainTypeDTO,
+            String domainId,
             String subtypeId
     ) throws Exception {
-        var requestBuilder = get("/v1/lov/{domainType}/{subtypeId}", domainTypeDTO, subtypeId)
+        var requestBuilder = get("/v1/lov/{domainType}/{domainId}/{subtypeId}", domainTypeDTO, domainId, subtypeId)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -922,10 +774,11 @@ public class TestControllerHelperService {
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
             LOVDomainTypeDTO domainTypeDTO,
+            String domainId,
             String subtypeId,
             String fieldName
     ) throws Exception {
-        var requestBuilder = get("/v1/lov/{domainType}/{subtypeId}/{fieldName}", domainTypeDTO, subtypeId, fieldName)
+        var requestBuilder = get("/v1/lov/{domainType}/{domainId}/{subtypeId}/{fieldName}", domainTypeDTO, domainId, subtypeId, fieldName)
                 .contentType(MediaType.APPLICATION_JSON);
         return executeHttpRequest(
                 new TypeReference<>() {
@@ -989,8 +842,9 @@ public class TestControllerHelperService {
      *
      * @param mockMvc       the mock mvc
      * @param resultMatcher the result matcher
+     * @param userInfo      the user info
+     * @param domainId      the domain id
      * @param workId        the work id
-     * @param activityId    the activity id
      * @param newEntry      the new entry
      * @param files         the files
      * @return the boolean
@@ -1000,12 +854,12 @@ public class TestControllerHelperService {
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
+            String domainId,
             String workId,
-            String activityId,
             NewLogEntry newEntry,
             MockMultipartFile... files) throws Exception {
         // create builder
-        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/log/work/{workId}/activity/{ActivityId}", workId, activityId);
+        MockMultipartHttpServletRequestBuilder multiPartBuilder = multipart("/v1/domain/{domainId}/work/{workId}/log", domainId, workId);
 
         // add entry
         if (newEntry.title() != null) {
@@ -1073,7 +927,7 @@ public class TestControllerHelperService {
      * @return the bucket dto
      * @throws Exception the exception
      */
-    public ApiResultResponse<BucketDTO> maintenanceControllerFindBucketById(
+    public ApiResultResponse<BucketSlotDTO> maintenanceControllerFindBucketById(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -1104,7 +958,7 @@ public class TestControllerHelperService {
      * @return the list of bucket dto
      * @throws Exception the exception
      */
-    public ApiResultResponse<List<BucketDTO>> maintenanceControllerFindAllBuckets(
+    public ApiResultResponse<List<BucketSlotDTO>> maintenanceControllerFindAllBuckets(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -1137,12 +991,15 @@ public class TestControllerHelperService {
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
 
         MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(resultMatcher)
                 .andReturn();
+        // check if it is the result matcher is ok
+        resultMatcher.match(result);
 
+        // in case of exception throw it
         if (result.getResolvedException() != null) {
             throw result.getResolvedException();
         }
+
         return objectMapper.readValue(result.getResponse().getContentAsString(), typeRef);
     }
 

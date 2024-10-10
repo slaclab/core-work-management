@@ -6,11 +6,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
+import java.util.List;
+
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Describe the custom field associated with the activity type. The custom fields are used to store additional information about the activity.")
+@Schema(description = "Describe the custom field associated with the work type. The custom fields are used to store additional information about the work.")
 public record WATypeCustomFieldDTO(
         @Schema(description = "The unique identifier for the custom field.")
         String id,
@@ -26,8 +28,13 @@ public record WATypeCustomFieldDTO(
         @NotNull
         @Schema(description = "The type of the custom field.")
         ValueTypeDTO valueType,
-        @Schema(description = "Specify is the value of the custom field is a list of values.")
-        Boolean isLov,
+        @Schema(description = "An additional mapping information for the custom field. IN case the type is LOV it need to be associated to the LOV group")
+        String additionalMappingInfo,
         @Schema(description = "Specify is the custom field is mandatory.")
         Boolean isMandatory) {
+        public WATypeCustomFieldDTO {
+                if(isMandatory == null) {
+                        isMandatory = false;
+                }
+        }
 }

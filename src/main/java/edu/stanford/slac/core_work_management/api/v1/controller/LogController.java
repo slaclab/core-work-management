@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController()
-@RequestMapping("/v1/log")
+@RequestMapping("/v1/domain")
 @AllArgsConstructor
 @Profile("elog-support")
 @Schema(description = "Set of api for the log entries management")
@@ -25,43 +25,26 @@ public class LogController {
     private final ELogService logService;
 
     @PostMapping(
-            path = "/work/{workId}",
+            path = "/{domainId}/work/{workId}/log",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @Operation(summary = "Create a log entry")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("@workAuthorizationService.checkLoggingOnWork(#authentication, #workId)")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkLoggingOnWork(#authentication, #domainId, #workId)")
     public ApiResultResponse<Boolean> createWorkLogEntry(
             Authentication authentication,
+            @Schema(description = "The domain id")
+            @PathVariable("domainId") @NotEmpty String domainId,
+            @Schema(description = "The work id")
             @PathVariable("workId") @NotEmpty String workId,
+            @Schema(description = "The log entry")
             @ModelAttribute @Valid NewLogEntry entry,
             @RequestPart(value = "files", required = false)
             MultipartFile[] files
     ) {
         // create new log entry
-        logService.createNewLogEntry(workId, entry, files);
-        return ApiResultResponse.of(true);
-    }
-
-    @PostMapping(
-            path = "/work/{workId}/activity/{activityId}",
-            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
-            produces = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    @Operation(summary = "Create a log entry")
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("@workAuthorizationService.checkLoggingOnActivity(#authentication, #workId, #activityId)")
-    public ApiResultResponse<Boolean> createActivityLogEntry(
-            Authentication authentication,
-            @PathVariable() @NotEmpty String workId,
-            @PathVariable() @NotEmpty String activityId,
-            @ModelAttribute @Valid NewLogEntry entry,
-            @RequestPart(value = "files", required = false)
-            MultipartFile[] files
-    ) {
-        // create new log entry
-        logService.createNewLogEntry(workId, activityId, entry, files);
+        logService.createNewLogEntry(domainId, workId, entry, files);
         return ApiResultResponse.of(true);
     }
 }

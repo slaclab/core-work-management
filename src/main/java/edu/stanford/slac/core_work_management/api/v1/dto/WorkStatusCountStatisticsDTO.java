@@ -11,7 +11,7 @@ import lombok.Builder;
 @Schema(description = "Work status count statistics")
 public record WorkStatusCountStatisticsDTO (
         @Schema(description = "The status of the work")
-        WorkStatusDTO status,
+        WorkflowStateDTO status,
         @Schema(description = "The count of work in the status")
         Integer count
 ){}

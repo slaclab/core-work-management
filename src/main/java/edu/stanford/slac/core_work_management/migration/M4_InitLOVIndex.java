@@ -29,7 +29,6 @@ public class M4_InitLOVIndex {
                                 Sort.Direction.ASC
                         )
                         .named("value-group-name")
-                        .unique()
         );
     }
 

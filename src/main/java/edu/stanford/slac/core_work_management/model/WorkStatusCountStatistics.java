@@ -1,17 +1,27 @@
 package edu.stanford.slac.core_work_management.model;
 
+import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-@Data
-@Builder
-@AllArgsConstructor
+import java.io.Serializable;
+
+
 /**
  * Define the statistics of the work status count
  * correlate the number of work that are in a specific status
  */
-public class WorkStatusCountStatistics {
-    private WorkStatus status;
+@Data
+@Builder
+@AllArgsConstructor
+public class WorkStatusCountStatistics implements Serializable {
+    /**
+     * The status of the work for the statistic
+     */
+    private WorkflowState status;
+    /**
+     * The count of the work that are in the status
+     */
     private Integer count;
 }

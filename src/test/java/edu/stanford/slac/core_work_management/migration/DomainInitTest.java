@@ -1,9 +1,10 @@
 package edu.stanford.slac.core_work_management.migration;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
 import edu.stanford.slac.core_work_management.model.Domain;
-import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
+import edu.stanford.slac.core_work_management.model.LOVElement;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import edu.stanford.slac.core_work_management.service.DomainService;
+import edu.stanford.slac.core_work_management.service.LOVService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -28,32 +28,25 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class DomainInitTest {
     @Autowired
-    private DomainService domainService;
-
+    LOVService lovService;
     @Autowired
-    private WorkTypeRepository workTypeRepository;
+    DomainService domainService;
     @Autowired
-    private MongoTemplate mongoTemplate;
+    MongoTemplate mongoTemplate;
 
     @BeforeEach
-    public void cleanCollection() {
-        mongoTemplate.remove(new Query(), Domain.class);
+    public void clear() {
+        mongoTemplate.remove(Domain.class).all();
+        mongoTemplate.remove(WorkType.class).all();
+        mongoTemplate.remove(LOVElement.class).all();
     }
 
     @Test
-    public void initTest() {
-        M1000_InitDomain initWorkType = new M1000_InitDomain(domainService);
-        assertDoesNotThrow(initWorkType::changeSet);
-        var allDomain = assertDoesNotThrow(
-                () -> domainService.finAll()
-        );
-        assertThat(allDomain).isNotNull();
-        assertThat(allDomain.size()).isEqualTo(1);
-        assertThat(allDomain)
-                .extracting(DomainDTO::name)
-                .contains("tec");
-        assertThat(allDomain)
-                .extracting(DomainDTO::description)
-                .contains("TEC");
+    public void test() {
+        M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
+        assertDoesNotThrow(initLOV::initLOV);
+        M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(lovService, domainService);
+        var tecDomain = assertDoesNotThrow(initWorkType::initTECDomain);
+        assertThat(tecDomain).isNotNull();
     }
 }

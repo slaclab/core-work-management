@@ -1,11 +1,10 @@
 package edu.stanford.slac.core_work_management.api.v1.validator;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
-
 import java.lang.reflect.Field;
 import java.util.stream.Stream;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 /**
  * Validator to check if a group of fields are not empty

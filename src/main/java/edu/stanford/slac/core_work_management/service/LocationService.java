@@ -22,26 +22,19 @@ import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
 import edu.stanford.slac.core_work_management.api.v1.mapper.LocationMapper;
-import edu.stanford.slac.core_work_management.api.v1.mapper.ShopGroupMapper;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryElementDTO;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
-import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.Location;
-import edu.stanford.slac.core_work_management.model.ShopGroup;
 import edu.stanford.slac.core_work_management.repository.ExternalLocationRepository;
 import edu.stanford.slac.core_work_management.repository.LocationRepository;
-import edu.stanford.slac.core_work_management.repository.ShopGroupRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
@@ -58,7 +51,6 @@ public class LocationService {
     private final DomainService domainService;
     private final LocationMapper locationMapper;
     private final LocationRepository locationRepository;
-    private final ShopGroupService shopGroupService;
     private final PeopleGroupService peopleGroupService;
     private final ExternalLocationRepository externalLocationRepository;
 
@@ -68,7 +60,7 @@ public class LocationService {
      * @param newLocationDTO the DTO to create the location
      * @return the id of the created location
      */
-    public String createNew(@Valid NewLocationDTO newLocationDTO) {
+    public String createNew(@NotNull String domainId, @Valid NewLocationDTO newLocationDTO) {
         InventoryElementDTO externalLocationDTO;
         if (
                 newLocationDTO.externalLocationIdentifier() != null &&
@@ -79,7 +71,7 @@ public class LocationService {
         } else {
             externalLocationDTO = null;
         }
-        return saveLocation(locationMapper.toModel(null, newLocationDTO, externalLocationDTO)).getId();
+        return saveLocation(locationMapper.toModel(domainId, null, newLocationDTO, externalLocationDTO)).getId();
     }
 
     /**
@@ -88,7 +80,7 @@ public class LocationService {
      * @param newLocationDTO the DTO to create the location
      * @return the id of the created location
      */
-    public String createNewChild(String parentId, NewLocationDTO newLocationDTO) {
+    public String createNewChild(@NotNull String domainId, @NotNull String parentId, @Valid NewLocationDTO newLocationDTO) {
         InventoryElementDTO externalLocationDTO;
         assertion(
                 () -> locationRepository.existsById(parentId),
@@ -108,7 +100,21 @@ public class LocationService {
         } else {
             externalLocationDTO = null;
         }
-        return saveLocation(locationMapper.toModel(parentId, newLocationDTO, externalLocationDTO)).getId();
+        return saveLocation(locationMapper.toModel(domainId, parentId, newLocationDTO, externalLocationDTO)).getId();
+    }
+
+    /**
+     * Check if a location exists by domain id and id
+     *
+     * @param domainId the domain id
+     * @param locationId the id
+     * @return true if the location exists, false otherwise
+     */
+    public boolean existsByDomainIdAndId(String domainId, String locationId) {
+        return  wrapCatch(
+                () -> locationRepository.existsByDomainIdAndId(domainId, locationId),
+                -1
+        );
     }
 
     /**
@@ -117,9 +123,9 @@ public class LocationService {
      * @param locationId the id of the location
      * @return the location
      */
-    public LocationDTO findById(String locationId) {
+    public LocationDTO findById(String domainId, String locationId) {
         return wrapCatch(
-                () -> locationRepository.findById(locationId),
+                () -> locationRepository.findByDomainIdAndId(domainId, locationId),
                 -1
         )
                 .map(locationMapper::toDTO)
@@ -135,13 +141,14 @@ public class LocationService {
     /**
      * Find all locations
      *
+     * @param domainId
      * @param locationFilterDTO the filter to use
      * @return the list of locations
      */
-    public List<LocationDTO> findAll(LocationFilterDTO locationFilterDTO) {
+    public List<LocationDTO> findAll(@NotNull String domainId, LocationFilterDTO locationFilterDTO) {
         var filter = locationMapper.toModel(locationFilterDTO);
         return wrapCatch(
-                () -> locationRepository.findByLocationFilter(filter),
+                () -> locationRepository.findByLocationFilter(domainId, filter),
                 -1
         )
                 .stream()

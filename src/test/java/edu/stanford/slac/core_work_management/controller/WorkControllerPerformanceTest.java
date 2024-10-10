@@ -17,15 +17,10 @@
 
 package edu.stanford.slac.core_work_management.controller;
 
-import com.google.common.collect.ImmutableList;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
-import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,7 +34,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,12 +41,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.SHOP_GROUP_FAKE_USER_TEMPLATE;
-import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -103,34 +96,40 @@ public class WorkControllerPerformanceTest {
     private TestControllerHelperService testControllerHelperService;
     @Autowired
     private LOVService lovService;
-    private String domainId;
+    private DomainDTO domainDTO;
+    private WorkflowDTO workflowDTO;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
     private final List<String> testActivityTypeIds = new ArrayList<>();
     private List<LOVElementDTO> projectLovValues;
+
     @BeforeAll
     public void init() {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
 
-        domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        domainDTO = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("domain1")
                                 .description("domain1 description")
+                                .workflowImplementations(Set.of("DummyParentWorkflow"))
                                 .build()
                 )
         );
+        assertThat(domainDTO).isNotNull();
+
+        // get the workflow
+        workflowDTO = domainDTO.workflows().stream().findFirst().get();
 
         // create location for test
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location1")
                                         .description("location1 description")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -141,8 +140,8 @@ public class WorkControllerPerformanceTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location2")
                                         .description("location2 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -153,8 +152,8 @@ public class WorkControllerPerformanceTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location3")
                                         .description("location3 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -166,11 +165,14 @@ public class WorkControllerPerformanceTest {
         // create work 1
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 1")
                                         .description("Work type 1 description")
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
@@ -178,70 +180,24 @@ public class WorkControllerPerformanceTest {
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 2")
                                         .description("Work type 2 description")
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
         );
 
-        // create activity type for work 1
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 1")
-                                        .description("Activity 1 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 2")
-                                        .description("Activity 2 description")
-                                        .build()
-                        )
-                )
-        );
-
-
-        // create activity type for work 2
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 3")
-                                        .description("Activity 3 description")
-                                        .build()
-                        )
-                )
-        );
-        testActivityTypeIds.add(
-                assertDoesNotThrow(
-                        () -> workService.ensureActivityType(
-                                NewActivityTypeDTO
-                                        .builder()
-                                        .title("Activity 4")
-                                        .description("Activity 4 description")
-                                        .build()
-                        )
-                )
-        );
     }
 
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
@@ -254,8 +210,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -276,8 +232,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -297,8 +253,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -315,8 +271,8 @@ public class WorkControllerPerformanceTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(
@@ -330,16 +286,12 @@ public class WorkControllerPerformanceTest {
                         )
                 )
         );
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
-        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
 
     @Test
     public void testCreateNewWork() {
-        for(int i=0; i<200; i++) {
+        for (int i = 0; i < 200; i++) {
             // create new work
             var newWorkIdResult =
                     assertDoesNotThrow(
@@ -347,12 +299,11 @@ public class WorkControllerPerformanceTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
-                                            .domainId(domainId)
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
                                             .shopGroupId(testShopGroupIds.get(0))
-                                            .project(projectLovValues.get(0).id())
                                             .title("work 1")
                                             .description("work 1 description")
                                             .build()

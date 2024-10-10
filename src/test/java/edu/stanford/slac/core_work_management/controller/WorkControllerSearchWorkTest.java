@@ -21,7 +21,6 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,7 +38,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -95,7 +96,8 @@ public class WorkControllerSearchWorkTest {
     @Autowired
     private LOVService lovService;
 
-    private String domainId;
+    private DomainDTO domainDTO;
+    private WorkflowDTO workflowDTO;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
@@ -106,21 +108,27 @@ public class WorkControllerSearchWorkTest {
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
-        domainId = assertDoesNotThrow(
-                () -> domainService.createNew(
+        domainDTO = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
                                 .name("domain1")
                                 .description("domain1 description")
+                                .workflowImplementations(
+                                        of("DummyParentWorkflow")
+                                )
                                 .build()
                 )
         );
+        assertThat(domainDTO).isNotNull();
+        workflowDTO = domainDTO.workflows().stream().findFirst().get();
+        assertThat(workflowDTO).isNotNull();
+
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -140,8 +148,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop2")
                                         .description("shop1 user[1-2]")
                                         .users(
@@ -161,8 +169,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop3")
                                         .description("shop3 user3")
                                         .users(
@@ -179,8 +187,8 @@ public class WorkControllerSearchWorkTest {
         testShopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop4")
                                         .description("shop4 user[3]")
                                         .users(
@@ -199,8 +207,8 @@ public class WorkControllerSearchWorkTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location1")
                                         .description("location1 description")
                                         .locationManagerUserId("user1@slac.stanford.edu")
@@ -211,8 +219,8 @@ public class WorkControllerSearchWorkTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location2")
                                         .description("location2 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -223,8 +231,8 @@ public class WorkControllerSearchWorkTest {
         testLocationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
+                                domainDTO.id(),
                                 NewLocationDTO.builder()
-                                        .domainId(domainId)
                                         .name("location3")
                                         .description("location3 description")
                                         .locationManagerUserId("user2@slac.stanford.edu")
@@ -236,11 +244,14 @@ public class WorkControllerSearchWorkTest {
         // create work 1
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 1")
                                         .description("Work type 1 description")
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
@@ -248,25 +259,23 @@ public class WorkControllerSearchWorkTest {
         // create work 2
         testWorkTypeIds.add(
                 assertDoesNotThrow(
-                        () -> workService.ensureWorkType(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
                                 NewWorkTypeDTO
                                         .builder()
                                         .title("Work type 2")
                                         .description("Work type 2 description")
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
         );
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
-        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
     }
 
     @BeforeEach
     public void cleanCollection() {
         mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
         mongoTemplate.remove(new Query(), Authorization.class);
 
         appProperties.getRootUserList().clear();
@@ -287,12 +296,11 @@ public class WorkControllerSearchWorkTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
-                                            .domainId(domainId)
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
                                             .shopGroupId(testShopGroupIds.get(0))
-                                            .project(projectLovValues.get(0).id())
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
                                             .build()
@@ -344,12 +352,11 @@ public class WorkControllerSearchWorkTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
-                                            .domainId(domainId)
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
                                             .shopGroupId(testShopGroupIds.get(0))
-                                            .project(projectLovValues.get(0).id())
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
                                             .build()
@@ -399,12 +406,11 @@ public class WorkControllerSearchWorkTest {
                                     mockMvc,
                                     status().isCreated(),
                                     Optional.of("user1@slac.stanford.edu"),
+                                    domainDTO.id(),
                                     NewWorkDTO.builder()
-                                            .domainId(domainId)
                                             .locationId(testLocationIds.get(0))
                                             .workTypeId(testWorkTypeIds.get(0))
                                             .shopGroupId(testShopGroupIds.get(0))
-                                            .project(projectLovValues.get(0).id())
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
                                             .build()

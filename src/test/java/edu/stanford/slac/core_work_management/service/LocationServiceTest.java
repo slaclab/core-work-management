@@ -1,6 +1,8 @@
 package edu.stanford.slac.core_work_management.service;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationFilterDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.Location;
@@ -21,8 +23,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -56,6 +56,7 @@ public class LocationServiceTest {
                 NewDomainDTO.builder()
                         .name("test")
                         .description("test")
+                        .workflowImplementations(of("DummyParentWorkflow"))
                         .build()
         );
     }
@@ -69,8 +70,8 @@ public class LocationServiceTest {
     public void testCreateNewLocation() {
         var newLocationId = assertDoesNotThrow(
                 () -> locationService.createNew(
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("test")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -81,6 +82,7 @@ public class LocationServiceTest {
         assertThat(newLocationId).isNotNull();
         var newCreatedLocation = assertDoesNotThrow(
                 () -> locationService.findById(
+                        domainId,
                         newLocationId
                 )
         );
@@ -95,8 +97,8 @@ public class LocationServiceTest {
             int finalIdx = idx;
             var newLocationId = assertDoesNotThrow(
                     () -> locationService.createNew(
+                            domainId,
                             NewLocationDTO.builder()
-                                    .domainId(domainId)
                                     .name(String.format("%d_text", finalIdx))
                                     .description(String.format("%d_text", finalIdx))
                                     .locationManagerUserId("user1@slac.stanford.edu")
@@ -108,14 +110,14 @@ public class LocationServiceTest {
 
         var foundLocations = assertDoesNotThrow(
                 () -> locationService.findAll(
-                        LocationFilterDTO.builder().build()
+                        domainId, LocationFilterDTO.builder().build()
                 )
         );
         assertThat(foundLocations).isNotNull().hasSize(100);
 
         foundLocations = assertDoesNotThrow(
                 () -> locationService.findAll(
-                        LocationFilterDTO
+                        domainId, LocationFilterDTO
                                 .builder()
                                 .text("1_text")
                                 .build()
@@ -125,7 +127,7 @@ public class LocationServiceTest {
 
         foundLocations = assertDoesNotThrow(
                 () -> locationService.findAll(
-                        LocationFilterDTO
+                        domainId, LocationFilterDTO
                                 .builder()
                                 .text("1_text 2_text")
                                 .build()
@@ -138,8 +140,8 @@ public class LocationServiceTest {
     public void testLocationWithParentOK() {
         var newLocationId = assertDoesNotThrow(
                 () -> locationService.createNew(
+                        domainId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("test")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -148,9 +150,9 @@ public class LocationServiceTest {
         );
         var newLocationWithParentId = assertDoesNotThrow(
                 () -> locationService.createNewChild(
+                        domainId,
                         newLocationId,
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("test child")
                                 .description("test")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -160,6 +162,7 @@ public class LocationServiceTest {
         assertThat(newLocationWithParentId).isNotNull();
         var newCreatedLocation = assertDoesNotThrow(
                 () -> locationService.findById(
+                        domainId,
                         newLocationWithParentId
                 )
         );
@@ -173,6 +176,7 @@ public class LocationServiceTest {
         var locationNotFoundForParent = assertThrows(
                 LocationNotFound.class,
                 () -> locationService.createNewChild(
+                        domainId,
                         "bad-id",
                         NewLocationDTO.builder()
                                 .name("test")
@@ -188,7 +192,6 @@ public class LocationServiceTest {
     public void testErrorOnNameDescriptionAndExternalLocation() {
         // Test when externalLocationIdentifier is null and name and description are not empty
         NewLocationDTO newLocationDTO = new NewLocationDTO(
-                "dom-id",
                 "test",
                 "test",
                 null,
@@ -199,7 +202,6 @@ public class LocationServiceTest {
 
         // Test when externalLocationIdentifier is not empty and name and description are empty
         newLocationDTO = new NewLocationDTO(
-                "dom-id",
                 null,
                 null,
                 "external id",
@@ -210,7 +212,6 @@ public class LocationServiceTest {
 
         // Test when externalLocationIdentifier is not empty and name and description are not empty
         newLocationDTO = new NewLocationDTO(
-                "dom-id",
                 "test",
                 "test",
                 "external id",
@@ -218,19 +219,5 @@ public class LocationServiceTest {
         );
         violations = validator.validate(newLocationDTO);
         assertFalse(violations.isEmpty());
-    }
-
-    @Test
-    public void testErrorOrParentId() {
-        // Test when externalLocationIdentifier is null and name and description are not empty
-        NewLocationDTO newLocationDTO = new NewLocationDTO(
-                "",
-                "test",
-                "test",
-                null,
-                "user1@slac.stanford.edu"
-        );
-        Set<ConstraintViolation<NewLocationDTO>> violations = validator.validate(newLocationDTO);
-        assertThat(violations).hasSize(1);
     }
 }

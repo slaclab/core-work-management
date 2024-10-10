@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,6 +34,8 @@ public record CustomFieldDTO(
         @Schema(description = "The name of the custom field")
         String name,
         @Schema(description = "The value of the custom field")
-        ValueDTO value
+        ValueDTO value,
+        @Schema(description = "If the value.type is ValueTypeDTO.LOV type, those are the list of the possible values")
+        List<LOVElementDTO> options
 ) {
 }

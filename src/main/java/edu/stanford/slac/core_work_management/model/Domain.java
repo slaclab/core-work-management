@@ -6,9 +6,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Data
 @Builder
@@ -18,7 +20,7 @@ import java.util.Map;
  * This class is used to represent the domain of the application
  * the domain is the main entity that is used to group the different work, location and shop groups
  */
-public class Domain {
+public class Domain implements Serializable {
 
     /**
      * The unique identifier for the domain.
@@ -36,6 +38,11 @@ public class Domain {
      * This field stores the description of the domain, using @Schema annotation to provide a description for the field.
      */
     private String description;
+
+    /**
+     * The list of the work types associated with the domain.
+     */
+    private Set<Workflow> workflows;
 
     /**
      * The work type status statistics of the domain.

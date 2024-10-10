@@ -6,5 +6,8 @@ public enum ValueType {
     Double,
     Boolean,
     Date,
-    DateTime
+    DateTime,
+    LOV,
+    Attachments,
+    Bucket
 }

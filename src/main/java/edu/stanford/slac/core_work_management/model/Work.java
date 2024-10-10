@@ -1,6 +1,6 @@
 package edu.stanford.slac.core_work_management.model;
 
-import edu.stanford.slac.core_work_management.model.value.LOVField;
+import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +10,6 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Represents a Work entity in the system.
@@ -21,13 +20,17 @@ import java.util.Set;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Work {
-    private static WorkStatusStateMachine workStatusStateMachine = new WorkStatusStateMachine();
     /**
      * The unique identifier for the work.
      * This field is annotated with @Id to signify its use as a primary key in MongoDB.
      */
     @Id
     private String id;
+    /**
+     * The parent work id if the work is a sub work.
+     * This field is used to identify the parent work of the current work.
+     */
+    private String parentWorkId;
     /**
      * The unique identifier for the domain.
      * This field is used to identify the domain to which the work belongs.
@@ -39,20 +42,15 @@ public class Work {
      */
     private Long workNumber;
     /**
-     * The total number of activities present in the work.
-     */
-    @Builder.Default
-    private Long activitiesNumber = 0L;
-    /**
      * The type of the work.
      * This field identify the work which this is related to. This creates dependency between works
      */
-    private String relatedToWorkId;
+    private List<String> relatedToWorkIds;
     /**
      * The type of the work.
      * This field categorizes the work into a specific type
      */
-    private String workTypeId;
+    private EmbeddableWorkType workType;
     /**
      * The name of the work.
      * This field stores the name or title of the work.
@@ -64,45 +62,52 @@ public class Work {
      */
     private String description;
     /**
-     * The identifier of the location associated with the work.
-     * This field links the work to a specific location, identified by its ID.
+     * The location where the work is performed.
      */
-    private String locationId;
+    private EmbeddableLocation location;
     /**
      * The shop group that perform the work in the location
      */
-    private String shopGroupId;
+    private EmbeddableShopGroup shopGroup;
     /**
      * The identifier of the user assigned to the work.
      * This field links the work to a specific user, identified by its ID.
      */
     private List<String> assignedTo;
     /**
-     * The id of the lov value used to define the project
-     */
-    @LOVField(fieldReference = "projectWork", isMandatory = true)
-    private String project;
-    /**
      * The list of the custom fields associated with the activity.
      * The custom fields are used to store additional information about the activity.
      */
     private List<CustomField> customFields;
     /**
-     * Give a followup description when the work is closed
+     * The list of the attachments associated with the work.
      */
-    private String followupDescriptionOnClose;
+    private List<String> attachments;
     /**
      * Is the actual status of the work.
      */
     @Builder.Default
-    private WorkStatusLog currentStatus = WorkStatusLog.builder().status(WorkStatus.New).build();
+    private WorkStatusLog currentStatus = WorkStatusLog.builder().status(WorkflowState.Created).build();
 
+    /**
+     * The list of the notifications associated with the work.
+     */
+    @Builder.Default
+    private List<Notification> notificationsHistory = new ArrayList<>();
+    /**
+     * The list of the bucket association for the work
+     */
+    private WorkBucketAssociation currentBucketAssociation;
+    /**
+     * The list of the notifications associated with the work.
+     */
+    @Builder.Default
+    private List<WorkBucketAssociation> bucketAssociationsHistory = new ArrayList<>();
     /**
      * Is the full work status history
      */
     @Builder.Default
     private List<WorkStatusLog> statusHistory = new ArrayList<>();
-
     /**
      * The date and time when the work was created.
      * This field is automatically populated with the date and time of creation, using @CreatedDate annotation.
@@ -137,12 +142,5 @@ public class Work {
      */
     @Version
     private Long version;
-
-    /**
-     * updateStatus according to the list of all job statuses
-     */
-    public void updateStatus(Set<ActivityStatus> allActivitiesStatus) {
-        workStatusStateMachine.updateModel(this, allActivitiesStatus);
-    }
 }
 

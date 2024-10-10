@@ -14,7 +14,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @AllArgsConstructor
-@Profile({"init-default-data"})
+@Profile({"init-domain","init-default-data"})
 @ChangeUnit(id = "init-bucket-slot-lov", order = "1003", author = "bisegni")
 public class M1003_InitBucketTypeLOV {
     private final LOVService lovService;
@@ -83,29 +83,23 @@ public class M1003_InitBucketTypeLOV {
                                 .build()
                 )
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Bucket,
-                            "bucket",
-                            "type",
-                            "BucketType"
-                    );
-                    return null;
-                },
-                -2
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Bucket,
+                null,
+                "bucket",
+                "type",
+                "BucketType"
         );
-        wrapCatch(
-                () -> {
-                    lovService.associateDomainFieldToGroupName(
-                            LOVDomainTypeDTO.Bucket,
-                            "bucket",
-                            "status",
-                            "BucketStatus"
-                    );
-                    return null;
-                },
-                -3
+
+
+        lovService.associateDomainFieldToGroupName(
+                LOVDomainTypeDTO.Bucket,
+                null,
+                "bucket",
+                "status",
+                "BucketStatus"
         );
+
     }
 }

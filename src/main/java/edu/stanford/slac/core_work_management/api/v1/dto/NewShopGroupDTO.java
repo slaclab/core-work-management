@@ -14,9 +14,6 @@ import java.util.Set;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "New Shop Group DTO, a group of people that is in charge of fixing a problem")
 public record NewShopGroupDTO(
-        @Schema(description = "The domain where the shop group belongs to")
-        @NotEmpty(message = "The domain is required")
-        String domainId,
         @Schema(description = "The name of the shop group")
         @NotEmpty(message = "The name of the shop group cannot be empty")
         String name,

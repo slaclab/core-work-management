@@ -1,15 +1,16 @@
 package edu.stanford.slac.core_work_management.controller;
 
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.LocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewDomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
 import edu.stanford.slac.core_work_management.cis_api.api.InventoryElementControllerApi;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryDomainSummaryDTO;
 import edu.stanford.slac.core_work_management.cis_api.dto.InventoryElementSummaryDTO;
 import edu.stanford.slac.core_work_management.exception.DomainNotFound;
-import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.model.Domain;
 import edu.stanford.slac.core_work_management.model.Location;
 import edu.stanford.slac.core_work_management.model.ShopGroup;
@@ -31,7 +32,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,7 +62,7 @@ public class LocationControllerTest {
     @Autowired
     private InventoryElementControllerApi inventoryElementControllerApi;
 
-    private String domainId;
+    private DomainDTO domain;
     private InventoryDomainSummaryDTO inventoryDomainDTO;
     private List<InventoryElementSummaryDTO> inventoryElementSummaryDTOList;
 
@@ -70,13 +70,14 @@ public class LocationControllerTest {
     public void init() {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
-        domainId = domainService.createNew(
+        domain = domainService.createNewAndGet(
                 NewDomainDTO.builder()
                         .name("domain1")
                         .description("domain1 description")
+                        .workflowImplementations(of("DummyParentWorkflow"))
                         .build()
         );
-        assertThat(domainId).isNotEmpty();
+        assertThat(domain).isNotNull();
 
         // fetch all inventory elements from demo
         var foundDomainsResult = inventoryElementControllerApi.findAllDomain();
@@ -119,6 +120,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
                                 .build()
                 )
@@ -130,6 +132,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
                                 .name("location1")
                                 .build()
@@ -142,6 +145,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
                                 .description("location1 description")
                                 .build()
@@ -154,6 +158,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
                                 .locationManagerUserId("user1@slac.stanford.edu")
                                 .build()
@@ -166,6 +171,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
                                 .build()
                 )
@@ -180,8 +186,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -199,8 +205,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("bad@slac.stanford.edu")
@@ -219,8 +225,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -234,6 +240,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         createNewLocationResult.getPayload()
                 )
         );
@@ -249,8 +256,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is4xxClientError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        "bad-id",
                         NewLocationDTO.builder()
-                                .domainId("bad-id")
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -270,8 +277,8 @@ public class LocationControllerTest {
                             mockMvc,
                             status().isCreated(),
                             Optional.of("user1@slac.stanford.edu"),
+                            domain.id(),
                             NewLocationDTO.builder()
-                                    .domainId(domainId)
                                     .name("location-%d".formatted((finalI)))
                                     .description("location-%d description".formatted((finalI)))
                                     .locationManagerUserId("user1@slac.stanford.edu")
@@ -287,6 +294,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         Optional.empty(),
                         Optional.empty()
                 )
@@ -302,6 +310,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         Optional.of("1"),
                         Optional.empty()
                 )
@@ -321,8 +330,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .description("location1 description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -337,6 +346,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isUnauthorized(),
                         Optional.empty(),
+                        domain.id(),
                         createNewLocationResult.getPayload()
                 )
         );
@@ -352,8 +362,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().is5xxServerError(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .externalLocationIdentifier(externalLocationIdentifier)
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -373,8 +383,8 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isCreated(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         NewLocationDTO.builder()
-                                .domainId(domainId)
                                 .name("location1")
                                 .externalLocationIdentifier(externalLocationIdentifier)
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -388,6 +398,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         createNewLocationResult.getPayload()
                 )
         );
@@ -400,6 +411,7 @@ public class LocationControllerTest {
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
+                        domain.id(),
                         Optional.empty(),
                         Optional.of(externalLocationIdentifier)
                 )

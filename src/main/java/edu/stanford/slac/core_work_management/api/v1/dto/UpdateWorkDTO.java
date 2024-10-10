@@ -17,16 +17,15 @@
 
 package edu.stanford.slac.core_work_management.api.v1.dto;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import edu.stanford.slac.core_work_management.api.v1.validator.NullOrNotEmpty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-
-import java.util.List;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -51,9 +50,14 @@ public record UpdateWorkDTO(
         @NullOrNotEmpty(message = "Shop group can be null or not empty")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
-        @Schema(description = "The project where the work is associated")
-        String project,
+        @Schema(description = "The unique identifier of the work which his is related to")
+        List<String> relatedToWorkIds,
+        @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
+        UpdateWorkflowStateDTO workflowStateUpdate,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
-        List<WriteCustomFieldDTO> customFieldValues
+        List<WriteCustomFieldDTO> customFieldValues,
+        @Valid
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments
 ){}

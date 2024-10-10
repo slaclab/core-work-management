@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.util.Collections;
@@ -16,18 +15,15 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Define the information for create new work plan")
 public record NewWorkDTO(
-        @Schema(description = "The domain where the work belongs to")
-        @NotEmpty(message = "The domain is required")
-        String domainId,
-        @Schema(description = "The title of the work plan")
-        @NotEmpty(message = "Title is required")
-        String title,
-        @Schema(description = "The description of the work plan")
-        @NotEmpty(message = "Description is required")
-        String description,
         @Schema(description = "Define the type of the work to do")
         @NotEmpty(message = "Work type is required")
         String workTypeId,
+        @Schema(description = "The parent work id if the work is a sub work")
+        String parentWorkId,
+        @Schema(description = "The title of the work plan")
+        String title,
+        @Schema(description = "The description of the work plan")
+        String description,
         @Schema(description =
                 """
                         Define the location of the work to do. Location is considered to
@@ -35,16 +31,17 @@ public record NewWorkDTO(
                         shall to be matched with an inventory item frm core inventory system
                         """
         )
-        @NotEmpty(message = "Location is required")
         String locationId,
-        @NotEmpty(message = "Shop group is mandatory is required")
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
-        @NotNull(message = "Project is required")
-        String project,
+        @Schema(description = "The unique identifier of the work which his is related to")
+        List<String> relatedToWorkIds,
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
-        List<WriteCustomFieldDTO> customFieldValues
+        List<WriteCustomFieldDTO> customFieldValues,
+        @Valid
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments
 ) {
     public NewWorkDTO {
         if (customFieldValues == null) {

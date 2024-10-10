@@ -1,13 +1,10 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import com.mongodb.DuplicateKeyException;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
-import edu.stanford.slac.core_work_management.config.SecurityAuditorAware;
-import edu.stanford.slac.core_work_management.model.ActivityType;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
-import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.WorkType;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -16,10 +13,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalizeStringWithReplace;
 
@@ -27,7 +22,7 @@ import static edu.stanford.slac.ad.eed.baselib.utility.StringUtilities.normalize
 @AllArgsConstructor
 public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
     MongoTemplate mongoTemplate;
-    SecurityAuditorAware securityAuditorAware;
+    AuditorAware<String> auditorAware;
 
     @Override
     public String ensureWorkType(WorkType workType) {
@@ -42,10 +37,15 @@ public class WorkTypeRepositoryImpl implements WorkTypeRepositoryCustom {
                 Criteria.where("title").is(normalizedTitle)
         );
         Update update = new Update()
+                .set("domainId", workType.getDomainId())
                 .setOnInsert("title", normalizedTitle)
                 .setOnInsert("description", workType.getDescription())
-                .setOnInsert("createdBy", securityAuditorAware.getCurrentAuditor().orElse(null))
-                .setOnInsert("lastModifiedBy", securityAuditorAware.getCurrentAuditor().orElse(null))
+                .setOnInsert("workflowId", workType.getWorkflowId())
+                .setOnInsert("validatorName", workType.getValidatorName())
+                .setOnInsert("childWorkTypeIds", workType.getChildWorkTypeIds())
+                .setOnInsert("customFields", workType.getCustomFields())
+                .setOnInsert("createdBy", auditorAware.getCurrentAuditor().orElse(null))
+                .setOnInsert("lastModifiedBy", auditorAware.getCurrentAuditor().orElse(null))
                 .setOnInsert("createdDate", LocalDateTime.now())
                 .setOnInsert("lastModifiedDate", LocalDateTime.now());
         FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true).upsert(true);

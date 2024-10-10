@@ -1,7 +1,6 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.ad.eed.base_mongodb_lib.utility.MongoDDLOps;
-import edu.stanford.slac.core_work_management.model.Activity;
 import edu.stanford.slac.core_work_management.model.Work;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
@@ -20,7 +19,6 @@ public class M3_InitWorkAndActivityIndex {
     @Execution
     public void changeSet() {
         initWorkIndex();
-        initActivityIndex();
     }
 
     /**
@@ -39,30 +37,6 @@ public class M3_InitWorkAndActivityIndex {
         );
         MongoDDLOps.createIndex(
                 Work.class,
-                mongoTemplate,
-                new TextIndexDefinition.TextIndexDefinitionBuilder()
-                        .onField("title")
-                        .onField("description")
-                        .build()
-        );
-    }
-
-    /**
-     * This method creates the index for the activity collection
-     */
-    private void initActivityIndex() {
-        MongoDDLOps.createIndex(
-                Activity.class,
-                mongoTemplate,
-                new Index().on(
-                                "activityTypeId",
-                                Sort.Direction.ASC
-                        )
-                        .named("activityTypeId")
-                        .sparse()
-        );
-        MongoDDLOps.createIndex(
-                Activity.class,
                 mongoTemplate,
                 new TextIndexDefinition.TextIndexDefinitionBuilder()
                         .onField("title")

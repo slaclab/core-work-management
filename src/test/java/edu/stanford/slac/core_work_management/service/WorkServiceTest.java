@@ -2,13 +2,13 @@ package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
-import edu.stanford.slac.core_work_management.exception.InvalidLocation;
-import edu.stanford.slac.core_work_management.exception.InvalidShopGroup;
+import edu.stanford.slac.core_work_management.exception.LocationNotFound;
+import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
 import edu.stanford.slac.core_work_management.exception.WorkNotFound;
-import edu.stanford.slac.core_work_management.migration.M1004_InitProjectLOV;
+import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.model.*;
-import jakarta.validation.ConstraintViolationException;
 import org.assertj.core.api.AssertionsForClassTypes;
+import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -22,8 +22,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -49,7 +51,12 @@ public class WorkServiceTest {
     ShopGroupService shopGroupService;
     @Autowired
     LOVService lovService;
+    @Autowired
+    BucketService bucketService;
 
+    private DomainDTO fullDomain;
+    private WorkflowDTO parentWorkflow;
+    private WorkflowDTO childWorkflow;
     private String shopGroupId;
     private String alternateShopGroupId;
     private String locationId;
@@ -57,19 +64,44 @@ public class WorkServiceTest {
     private String domainId;
     private String alternateDomainId;
     private List<LOVElementDTO> projectLovValues = null;
+    private List<String> bucketTypeLOVIds = null;
+    private List<String> bucketStatusLOVIds = null;
+
     @BeforeEach
     public void cleanCollection() {
+        mongoTemplate.getCollection("jv_head_id").deleteMany(new Document());
+        mongoTemplate.getCollection("jv_snapshots").deleteMany(new Document());
         mongoTemplate.remove(new Query(), Domain.class);
+        mongoTemplate.remove(new Query(), Location.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
+        mongoTemplate.remove(new Query(), Work.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
+        mongoTemplate.remove(new Query(), ShopGroup.class);
+        mongoTemplate.remove(new Query(), BucketSlot.class);
+
         domainId = assertDoesNotThrow(
                 () -> domainService.createNew(
                         NewDomainDTO
                                 .builder()
                                 .name("Test Domain")
                                 .description("Test Domain Description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow",
+                                                "DummyChildWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
         assertThat(domainId).isNotEmpty();
+
+        // fetch full domain
+        fullDomain = assertDoesNotThrow(
+                () -> domainService.findById(domainId)
+        );
+        parentWorkflow = fullDomain.workflows().stream().filter(w -> w.implementation().equals("DummyParentWorkflow")).findFirst().get();
+        childWorkflow = fullDomain.workflows().stream().filter(w -> w.implementation().equals("DummyChildWorkflow")).findFirst().get();
 
         alternateDomainId = assertDoesNotThrow(
                 () -> domainService.createNew(
@@ -77,22 +109,21 @@ public class WorkServiceTest {
                                 .builder()
                                 .name("Alternate Test Domain")
                                 .description("Alternate Test Domain Description")
+                                .workflowImplementations(
+                                        Set.of(
+                                                "DummyParentWorkflow"
+                                        )
+                                )
                                 .build()
                 )
         );
         assertThat(alternateDomainId).isNotEmpty();
 
-        mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), WorkType.class);
-        mongoTemplate.remove(new Query(), ActivityType.class);
-        mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Activity.class);
-        mongoTemplate.remove(new Query(), LOVElement.class);
         shopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                domainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(domainId)
                                         .name("shop1")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -113,8 +144,8 @@ public class WorkServiceTest {
         alternateShopGroupId =
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
+                                alternateDomainId,
                                 NewShopGroupDTO.builder()
-                                        .domainId(alternateDomainId)
                                         .name("shop2")
                                         .description("shop1 user[2-3]")
                                         .users(
@@ -134,9 +165,8 @@ public class WorkServiceTest {
 
         locationId = assertDoesNotThrow(
                 () -> locationService.createNew(
-                        NewLocationDTO
-                                .builder()
-                                .domainId(domainId)
+                        domainId,
+                        NewLocationDTO.builder()
                                 .name("SLAC")
                                 .description("SLAC National Accelerator Laboratory")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -147,9 +177,8 @@ public class WorkServiceTest {
 
         locationIdOnAlternateDomain = assertDoesNotThrow(
                 () -> locationService.createNew(
-                        NewLocationDTO
-                                .builder()
-                                .domainId(alternateDomainId)
+                        alternateDomainId,
+                        NewLocationDTO.builder()
                                 .name("Alternate location")
                                 .description("Alternate location description")
                                 .locationManagerUserId("user1@slac.stanford.edu")
@@ -158,240 +187,40 @@ public class WorkServiceTest {
         );
         AssertionsForClassTypes.assertThat(locationIdOnAlternateDomain).isNotEmpty();
 
-        // crete lov for 'project' static filed
-        M1004_InitProjectLOV m1004_initProjectLOV = new M1004_InitProjectLOV(lovService);
-        assertDoesNotThrow(()->m1004_initProjectLOV.changeSet());
-        projectLovValues = assertDoesNotThrow(()->lovService.findAllByGroupName("Project"));
-    }
+        // create lov for bucket type and status
+        M1003_InitBucketTypeLOV initBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
+        assertDoesNotThrow(initBucketTypeLOV::changeSet);
 
-    @Test
-    public void createNewWorkType() {
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
-        );
+        bucketTypeLOVIds = lovService.findAllByGroupName("BucketType").stream().map(LOVElementDTO::id).toList();
+        bucketStatusLOVIds = lovService.findAllByGroupName("BucketStatus").stream().map(LOVElementDTO::id).toList();
 
-        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
-    }
-
-    @Test
-    public void createNewActivityType() {
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .build()
-                )
-        );
-        assertThat(newActivityTypeId).isNotNull();
-    }
-
-    @Test
-    public void updateActivityType() {
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .build()
-                )
-        );
-        assertThat(newActivityTypeId).isNotNull();
-        //update activity type
-        assertDoesNotThrow(
-                () -> workService.updateActivityType(
-                        newActivityTypeId,
-                        UpdateActivityTypeDTO
-                                .builder()
-                                .title("Activity 1 updated")
-                                .description("Activity 1 description updated")
-                                .customFields(
-                                        List.of(
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field1")
-                                                        .description("custom field1 description")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isMandatory(true)
-                                                        .build(),
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field2")
-                                                        .description("custom field2 description")
-                                                        .valueType(ValueTypeDTO.Boolean)
-                                                        .isMandatory(false)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        // retrieve and check the full activity type
-        var fullUpdatedActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
-        );
-        assertThat(fullUpdatedActivityType).isNotNull();
-        assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
-        assertThat(fullUpdatedActivityType.title()).isEqualTo("Activity 1 updated");
-        assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description updated");
-        assertThat(fullUpdatedActivityType.customFields()).isNotNull();
-        assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(2);
-        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1");
-        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1");
-        assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description");
-        assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
-        assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isTrue();
-        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field2");
-        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField2");
-        assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field2 description");
-        assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
-        assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isFalse();
-
-        //update activity type adding a new custom filed and modifying the other
-        ActivityTypeDTO finalFullUpdatedActivityType = fullUpdatedActivityType;
-        assertDoesNotThrow(
-                () -> workService.updateActivityType(
-                        newActivityTypeId,
-                        UpdateActivityTypeDTO
-                                .builder()
-                                .title("Activity 1 re-updated")
-                                .description("Activity 1 description re-updated")
-                                .customFields(
-                                        List.of(
-                                                finalFullUpdatedActivityType.customFields().get(0).toBuilder()
-                                                        .label("custom field1 updated")
-                                                        .description("custom field1 description updated")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isLov(false)
-                                                        .isMandatory(false)
-                                                        .build(),
-                                                finalFullUpdatedActivityType.customFields().get(1).toBuilder()
-                                                        .label("custom field2 updated")
-                                                        .description("custom field2 description updated")
-                                                        .valueType(ValueTypeDTO.Number)
-                                                        .isLov(true)
-                                                        .isMandatory(true)
-                                                        .build(),
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field3")
-                                                        .description("custom field3 description")
-                                                        .valueType(ValueTypeDTO.Boolean)
-                                                        .isLov(false)
-                                                        .isMandatory(false)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        fullUpdatedActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
-        );
-        assertThat(fullUpdatedActivityType).isNotNull();
-        assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
-        assertThat(fullUpdatedActivityType.title()).isEqualTo("Activity 1 re-updated");
-        assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description re-updated");
-        assertThat(fullUpdatedActivityType.customFields()).isNotNull();
-        assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(3);
-        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1 updated");
-        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
-        assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description updated");
-        assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
-        assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isFalse();
-        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field2 updated");
-        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField2"); // notice this is correct because if the label is found it is not updated
-        assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field2 description updated");
-        assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Number);
-        assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isTrue();
-        assertThat(fullUpdatedActivityType.customFields().get(2).label()).isEqualTo("custom field3");
-        assertThat(fullUpdatedActivityType.customFields().get(2).name()).isEqualTo("customField3");
-        assertThat(fullUpdatedActivityType.customFields().get(2).description()).isEqualTo("custom field3 description");
-        assertThat(fullUpdatedActivityType.customFields().get(2).valueType()).isEqualTo(ValueTypeDTO.Boolean);
-        assertThat(fullUpdatedActivityType.customFields().get(2).isMandatory()).isFalse();
-
-        //update activity type removing an attribute
-        assertDoesNotThrow(
-                () -> workService.updateActivityType(
-                        newActivityTypeId,
-                        UpdateActivityTypeDTO
-                                .builder()
-                                .title("Activity 1 re-updated")
-                                .description("Activity 1 description re-updated")
-                                .customFields(
-                                        List.of(
-                                                finalFullUpdatedActivityType.customFields().get(0).toBuilder()
-                                                        .label("custom field1 updated")
-                                                        .description("custom field1 description updated")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isLov(false)
-                                                        .isMandatory(false)
-                                                        .build(),
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field3")
-                                                        .description("custom field3 description")
-                                                        .valueType(ValueTypeDTO.Boolean)
-                                                        .isLov(false)
-                                                        .isMandatory(false)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        fullUpdatedActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
-        );
-        assertThat(fullUpdatedActivityType).isNotNull();
-        assertThat(fullUpdatedActivityType.id()).isEqualTo(newActivityTypeId);
-        assertThat(fullUpdatedActivityType.title()).isEqualTo("Activity 1 re-updated");
-        assertThat(fullUpdatedActivityType.description()).isEqualTo("Activity 1 description re-updated");
-        assertThat(fullUpdatedActivityType.customFields()).isNotNull();
-        assertThat(fullUpdatedActivityType.customFields().size()).isEqualTo(2);
-        assertThat(fullUpdatedActivityType.customFields().get(0).label()).isEqualTo("custom field1 updated");
-        assertThat(fullUpdatedActivityType.customFields().get(0).name()).isEqualTo("customField1"); // notice this is correct because if the label is found it is not updated
-        assertThat(fullUpdatedActivityType.customFields().get(0).description()).isEqualTo("custom field1 description updated");
-        assertThat(fullUpdatedActivityType.customFields().get(0).valueType()).isEqualTo(ValueTypeDTO.String);
-        assertThat(fullUpdatedActivityType.customFields().get(0).isMandatory()).isFalse();
-        assertThat(fullUpdatedActivityType.customFields().get(1).label()).isEqualTo("custom field3");
-        assertThat(fullUpdatedActivityType.customFields().get(1).name()).isEqualTo("customField3");
-        assertThat(fullUpdatedActivityType.customFields().get(1).description()).isEqualTo("custom field3 description");
-        assertThat(fullUpdatedActivityType.customFields().get(1).valueType()).isEqualTo(ValueTypeDTO.Boolean);
-        assertThat(fullUpdatedActivityType.customFields().get(1).isMandatory()).isFalse();
     }
 
     @Test
     public void createNewWork() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -399,28 +228,76 @@ public class WorkServiceTest {
     }
 
     @Test
-    public void updateWorkOK() {
+    public void createNewWorkAndGetIt() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        var foundWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(foundWork).isNotNull();
+        assertThat(foundWork.id()).isNotNull();
+        assertThat(foundWork.domain().id()).isEqualTo(domainId);
+        // check the work type
+        assertThat(foundWork.workType().id()).isEqualTo(newWorkTypeId);
+        // check the workflow
+        assertThat(foundWork.workType().workflow().id()).isEqualTo(parentWorkflow.id());
+        // check the location
+        assertThat(foundWork.location().id()).isEqualTo(locationId);
+        // check the shop group
+        assertThat(foundWork.shopGroup().id()).isEqualTo(shopGroupId);
+    }
+
+    @Test
+    public void updateWorkOK() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
                                 .title("Work 1")
                                 .description("Work 1 description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -428,6 +305,7 @@ public class WorkServiceTest {
 
         assertDoesNotThrow(
                 () -> workService.update(
+                        domainId,
                         newWorkId,
                         UpdateWorkDTO
                                 .builder()
@@ -435,7 +313,6 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
@@ -444,34 +321,37 @@ public class WorkServiceTest {
     @Test
     public void updateWorkFailOnInvalidLocationForDomainId() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Work 1")
                                 .description("Work 1 description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
         assertThat(newWorkId).isNotNull();
 
-        InvalidLocation invalidLocationForDomainException = assertThrows(
-                InvalidLocation.class,
+        LocationNotFound invalidLocationForDomainException = assertThrows(
+                LocationNotFound.class,
                 () -> workService.update(
+                        domainId,
                         newWorkId,
                         UpdateWorkDTO
                                 .builder()
@@ -479,692 +359,247 @@ public class WorkServiceTest {
                                 .description("Update work 1 description")
                                 .locationId(locationIdOnAlternateDomain)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
         assertThat(invalidLocationForDomainException).isNotNull();
-        assertThat(invalidLocationForDomainException.getErrorCode()).isEqualTo(-4);
-    }
-
-    @Test
-    public void updateWorkFailOnInvalidShopGroupForDomainId() {
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO
-                                .builder()
-                                .domainId(domainId)
-                                .title("Work 1")
-                                .description("Work 1 description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotNull();
-
-        InvalidShopGroup invalidLocationForDomainException = assertThrows(
-                InvalidShopGroup.class,
-                () -> workService.update(
-                        newWorkId,
-                        UpdateWorkDTO
-                                .builder()
-                                .title("Update work 1")
-                                .description("Update work 1 description")
-                                .locationId(locationId)
-                                .shopGroupId(alternateShopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(invalidLocationForDomainException).isNotNull();
-        assertThat(invalidLocationForDomainException.getErrorCode()).isEqualTo(-5);
     }
 
     @Test
     public void createNewWorkFailWithLocationInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
 
         // create the work in the alternate domain with the location of the main domain
-        InvalidLocation invalidLocationException = assertThrows(
-                InvalidLocation.class,
+        LocationNotFound invalidLocationException = assertThrows(
+                LocationNotFound.class,
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(alternateDomainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
+                                .locationId(locationIdOnAlternateDomain)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
         assertThat(invalidLocationException).isNotNull();
-        assertThat(invalidLocationException.getErrorCode()).isEqualTo(-3);
     }
 
     @Test
     public void createNewWorkFailWithShopGroupInvalidForDomain() {
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
 
         // create the work in the alternate domain with the location of the main domain
-        InvalidShopGroup invalidLocationException = assertThrows(
-                InvalidShopGroup.class,
+        ShopGroupNotFound invalidLocationException = assertThrows(
+                ShopGroupNotFound.class,
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(alternateShopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
         assertThat(invalidLocationException).isNotNull();
-        assertThat(invalidLocationException.getErrorCode()).isEqualTo(-4);
-    }
-
-    @Test
-    public void createNewWorkAndGetIt() {
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO
-                                .builder()
-                                .domainId(domainId)
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotNull();
-
-        var foundWork = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().build())
-        );
-        assertThat(foundWork).isNotNull();
-        assertThat(foundWork.id()).isNotNull();
-        assertThat(foundWork.domain().id()).isEqualTo(domainId);
     }
 
     @Test
     public void errorTryToGetWorkWithBadId() {
         var workNotFoundException = assertThrows(
                 WorkNotFound.class,
-                () -> workService.findWorkById("bad id", WorkDetailsOptionDTO.builder().build())
+                () -> workService.findWorkById(domainId, "bad id", WorkDetailsOptionDTO.builder().build())
         );
         assertThat(workNotFoundException).isNotNull();
         assertThat(workNotFoundException.getErrorCode()).isEqualTo(-1);
     }
 
     @Test
-    public void createNewActivityOK() {
-        //create work type
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+    public void createNewSubWorkOK() {
+        // create work type for children
+        String newChildrenWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
-                                .title("Update the documentation")
+                                .title("Children work type")
                                 .description("Update the documentation description")
+                                .workflowId(childWorkflow.id())
+                                .validatorName("validation/DummyChildValidation.groovy")
                                 .build()
                 )
         );
-        assertThat(newWorkTypeId).isNotNull();
+        //create work type
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Parent work type")
+                                .description("Update the documentation description")
+                                .childWorkTypeIds(Set.of(newChildrenWorkTypeId))
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .workflowId(parentWorkflow.id())
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
         // create work plan
-        var newWorkId = assertDoesNotThrow(
+        var newParentWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
+                                .title("Parent work")
+                                .description("Parent work description")
+                                .workTypeId(newParentWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
-        assertThat(newWorkId).isNotEmpty();
-        // create new activity type for work type
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .build()
-                )
-        );
-        assertThat(newActivityTypeId).isNotEmpty();
-
-        // create new activity fail with wrong DTO
-        var errorCreatingActivityWithEmptyDTO = assertThrows(
-                ConstraintViolationException.class,
+        assertThat(newParentWorkId).isNotEmpty();
+        // now create children
+        var newChildrenWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
+                        domainId,
+                        NewWorkDTO
                                 .builder()
+                                .title("Child work")
+                                .description("Child work description")
+                                .workTypeId(newChildrenWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .parentWorkId(newParentWorkId)
                                 .build()
                 )
         );
-        assertThat(errorCreatingActivityWithEmptyDTO).isNotNull();
-
-        // create new activity OK
-        var newActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .build()
-                )
+        assertThat(newChildrenWorkId).isNotEmpty();
+        // get full children
+        var fullChildrenWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newChildrenWorkId, WorkDetailsOptionDTO.builder().build())
         );
-        assertThat(newActivityId).isNotEmpty();
-
-        // fetch activity and check field
-        var newlyCreatedActivity = assertDoesNotThrow(
-                () -> workService.findActivityById(newActivityId)
-        );
-        assertThat(newlyCreatedActivity).isNotNull();
-        assertThat(newlyCreatedActivity.id()).isNotNull();
-        assertThat(newlyCreatedActivity.domain().id()).isEqualTo(domainId);
-        assertThat(newlyCreatedActivity.title()).isEqualTo("Activity 1");
-        assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
-        assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
-        assertThat(newlyCreatedActivity.activityTypeSubtype()).isEqualTo(ActivityTypeSubtypeDTO.Other);
+        assertThat(fullChildrenWork).isNotNull();
+        assertThat(fullChildrenWork.id()).isNotNull();
+        assertThat(fullChildrenWork.domain().id()).isEqualTo(domainId);
+        assertThat(fullChildrenWork.parentWorkId()).isEqualTo(newParentWorkId);
     }
 
-    @Test
-    public void createNewActivityFailOnWorkCustomFieldInfo() {
-        //create work type
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        // create work plan
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO
-                                .builder()
-                                .domainId(domainId)
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotEmpty();
-        // create new activity type for work type
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.ensureActivityType(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        List.of(
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field1")
-                                                        .description("custom field1 description")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isMandatory(true)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(newActivityTypeId).isNotEmpty();
-
-        var activityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
-        );
-        assertThat(activityType).isNotNull();
-        assertThat(activityType.customFields()).isNotNull().hasSize(1);
-
-        // create new activity fails with not type defined
-        ConstraintViolationException newActivityFailNotCustomFieldType = assertThrows(
-                ConstraintViolationException.class,
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(activityType.customFields().getFirst().id())
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-//                                                                        .type(ValueTypeDTO.String)
-//                                                                        .value("custom field1 value")
-                                                                        .build()
-                                                        )
-                                                        .build()
-
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(newActivityFailNotCustomFieldType).isNotNull();
-        assertThat(newActivityFailNotCustomFieldType.getConstraintViolations())
-                .isNotNull()
-                .hasSize(2);
-
-    }
 
     @Test
-    public void createNewActivityWithCustomAttributesOK() {
+    public void checkWorkCustomAttributeLOV() {
+        // create lov
+        List<String> lovElementIds = lovService.createNew(
+                "SubsystemGroup",
+                List.of(
+                        NewLOVElementDTO.builder()
+                                .value("ACM")
+                                .description("ACM")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("AIDA")
+                                .description("AIDA")
+                                .build()
+                )
+        );
         //create work type
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
-                                .title("Update the documentation")
+                                .title("Parent work type")
                                 .description("Update the documentation description")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        // create work plan
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO
-                                .builder()
-                                .domainId(domainId)
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotEmpty();
-        // create new activity type for work type
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .customFields(
                                         List.of(
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field1")
-                                                        .description("custom field1 description")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isLov(true)
-                                                        .isMandatory(true)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(newActivityTypeId).isNotEmpty();
-
-        var fullActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
-        );
-
-        // create new activity OK
-        var newActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .project(projectLovValues.get(0).id())
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().get(0).id())
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value")
-                                                                        .build()
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(newActivityId).isNotEmpty();
-
-        // fetch activity and check field
-        var newlyCreatedActivity = assertDoesNotThrow(
-                () -> workService.findActivityById(newActivityId)
-        );
-        assertThat(newlyCreatedActivity).isNotNull();
-        assertThat(newlyCreatedActivity.id()).isNotNull();
-        assertThat(newlyCreatedActivity.title()).isEqualTo("Activity 1");
-        assertThat(newlyCreatedActivity.description()).isEqualTo("Activity 1 description");
-        assertThat(newlyCreatedActivity.activityType().id()).isEqualTo(newActivityTypeId);
-        assertThat(newlyCreatedActivity.activityTypeSubtype()).isEqualTo(ActivityTypeSubtypeDTO.Other);
-        assertThat(newlyCreatedActivity.customFields()).isNotNull();
-        assertThat(newlyCreatedActivity.customFields().size()).isEqualTo(1);
-        assertThat(newlyCreatedActivity.customFields().get(0).id()).isEqualTo(fullActivityType.customFields().get(0).id());
-        assertThat(newlyCreatedActivity.customFields().get(0).name()).isEqualTo("customField1");
-        assertThat(newlyCreatedActivity.customFields().get(0).value().type()).isEqualTo(ValueTypeDTO.String);
-        assertThat(newlyCreatedActivity.customFields().get(0).value().value()).isEqualTo("custom field1 value");
-    }
-
-    @Test
-    public void updateActivityWithCustomAttributesOK() {
-        //create work type
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        // create work plan
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO
-                                .builder()
-                                .domainId(domainId)
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotEmpty();
-        // create new activity type for work type
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        List.of(
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .label("custom field1")
-                                                        .description("custom field1 description")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isLov(true)
-                                                        .isMandatory(true)
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(newActivityTypeId).isNotEmpty();
-
-        var fullActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
-        );
-
-        // create new activity OK
-        var newActivityId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().get(0).id())
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value")
-                                                                        .build()
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-        assertThat(newActivityId).isNotEmpty();
-
-        // fetch activity and check field
-        var newlyCreatedActivity = assertDoesNotThrow(
-                () -> workService.findActivityById(newActivityId)
-        );
-        assertThat(newlyCreatedActivity).isNotNull();
-        assertThat(newlyCreatedActivity.id()).isNotNull().isEqualTo(newActivityId);
-
-        // update custom attributes
-        assertDoesNotThrow(
-                () -> workService.update(
-                        newWorkId,
-                        newActivityId,
-                        UpdateActivityDTO
-                                .builder()
-                                .title("Activity 1 updated")
-                                .description("Activity 1 description updated")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .project(projectLovValues.get(0).id())
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().get(0).id())
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value updated")
-                                                                        .build()
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-
-        var updatedActivity = assertDoesNotThrow(
-                () -> workService.findActivityById(newActivityId)
-        );
-        assertThat(updatedActivity).isNotNull();
-        assertThat(updatedActivity.id()).isNotNull().isEqualTo(newActivityId);
-        assertThat(updatedActivity.title()).isEqualTo("Activity 1 updated");
-        assertThat(updatedActivity.description()).isEqualTo("Activity 1 description updated");
-        assertThat(updatedActivity.customFields()).isNotNull();
-        assertThat(updatedActivity.customFields().size()).isEqualTo(1);
-        assertThat(updatedActivity.customFields().get(0).id()).isEqualTo(fullActivityType.customFields().get(0).id());
-        assertThat(updatedActivity.customFields().get(0).name()).isEqualTo("customField1");
-        assertThat(updatedActivity.customFields().get(0).value().type()).isEqualTo(ValueTypeDTO.String);
-        assertThat(updatedActivity.customFields().get(0).value().value()).isEqualTo("custom field1 value updated");
-    }
-
-    @Test
-    public void createNewActivityCheckValidationError() {
-        //create work type
-        String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
-                        NewWorkTypeDTO
-                                .builder()
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .build()
-                )
-        );
-        assertThat(newWorkTypeId).isNotNull();
-        // create work plan
-        var newWorkId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewWorkDTO
-                                .builder()
-                                .domainId(domainId)
-                                .title("Update the documentation")
-                                .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
-                                .locationId(locationId)
-                                .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
-                                .build()
-                )
-        );
-        assertThat(newWorkId).isNotEmpty();
-        // create new activity type for work type
-        String newActivityTypeId = assertDoesNotThrow(
-                () -> workService.createNew(
-                        NewActivityTypeDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .customFields(
-                                        List.of(
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .name("custom field1")
-                                                        .description("custom field1 description")
-                                                        .valueType(ValueTypeDTO.String)
-                                                        .isLov(true)
+                                                WATypeCustomFieldDTO.builder()
+                                                        .label("Subsystem")
+                                                        .description("Subsystem Group")
+                                                        .valueType(ValueTypeDTO.LOV)
+                                                        .group("General Information")
+                                                        .additionalMappingInfo("SubsystemGroup")
                                                         .isMandatory(true)
                                                         .build(),
-                                                WATypeCustomFieldDTO
-                                                        .builder()
-                                                        .name("custom field2")
-                                                        .description("custom field2 description")
+                                                WATypeCustomFieldDTO.builder()
+                                                        .label("attributeOne")
+                                                        .description("Attribute One")
                                                         .valueType(ValueTypeDTO.String)
-                                                        .isLov(false)
-                                                        .isMandatory(false)
+                                                        .group("General Information")
+                                                        .additionalMappingInfo("SubsystemGroup")
+                                                        .isMandatory(true)
                                                         .build()
                                         )
                                 )
                                 .build()
                 )
         );
-        assertThat(newActivityTypeId).isNotEmpty();
+        assertThat(newWorkTypeId).isNotNull();
 
-        var fullActivityType = assertDoesNotThrow(
-                () -> workService.findActivityTypeById(newActivityTypeId)
+        // retrieve the full work type
+        var workType = assertDoesNotThrow(
+                () -> domainService.findWorkTypeById(domainId, newWorkTypeId)
         );
+        assertThat(workType).isNotNull();
 
-        // check duplicated id
-        var duplicateIdException = assertThrows(
-                ControllerLogicException.class,
+        // create work plan
+        var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
+                        domainId,
+                        NewWorkDTO
                                 .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .project(projectLovValues.get(0).id())
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
                                 .customFieldValues(
                                         List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().getFirst().id())
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(workType.customFields().getFirst().id())
                                                         .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value")
+                                                                ValueDTO.builder()
+                                                                        .type(ValueTypeDTO.LOV)
+                                                                        .value(lovElementIds.getFirst())
                                                                         .build()
                                                         )
                                                         .build(),
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().getFirst().id())
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(workType.customFields().getLast().id())
                                                         .value(
-                                                                ValueDTO
-                                                                        .builder()
+                                                                ValueDTO.builder()
                                                                         .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value")
+                                                                        .value("a good string value")
                                                                         .build()
                                                         )
                                                         .build()
@@ -1173,147 +608,224 @@ public class WorkServiceTest {
                                 .build()
                 )
         );
+        assertThat(newWorkId).isNotEmpty();
 
-        assertThat(duplicateIdException.getErrorCode()).isEqualTo(-1);
-
-        // fail because the id has not been found
-        var wrongIdException = assertThrows(
-                ControllerLogicException.class,
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id("bad id")
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value")
-                                                                        .build()
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
+        // fetch full work
+        var fullWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
         );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.id()).isNotNull();
+        assertThat(fullWork.domain().id()).isEqualTo(domainId);
+        assertThat(fullWork.customFields()).isNotNull().hasSize(2);
+        assertThat(((LOVElementDTO)fullWork.customFields().getFirst().value().originalValue()).id()).isEqualTo(lovElementIds.getFirst());
+        assertThat(fullWork.customFields().getLast().value().value()).isEqualTo("a good string value");
 
-        assertThat(wrongIdException.getErrorCode()).isEqualTo(-2);
-
-        // fail because the type is not correct
-        var badTypeException = assertThrows(
-                ControllerLogicException.class,
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().get(1).id())
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.Date)
-                                                                        .value("custom field1 value")
-                                                                        .build()
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-
-        assertThat(badTypeException.getErrorCode()).isEqualTo(-5);
-
-        // fail because the id has not been found
-        var mandatoryException = assertThrows(
-                ControllerLogicException.class,
-                () -> workService.createNew(
-                        newWorkId,
-                        NewActivityDTO
-                                .builder()
-                                .title("Activity 1")
-                                .description("Activity 1 description")
-                                .activityTypeId(newActivityTypeId)
-                                .activityTypeSubtype(ActivityTypeSubtypeDTO.Other)
-                                .customFieldValues(
-                                        List.of(
-                                                WriteCustomFieldDTO
-                                                        .builder()
-                                                        .id(fullActivityType.customFields().get(1).id())
-                                                        .value(
-                                                                ValueDTO
-                                                                        .builder()
-                                                                        .type(ValueTypeDTO.String)
-                                                                        .value("custom field1 value")
-                                                                        .build()
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-        );
-
-        assertThat(mandatoryException.getErrorCode()).isEqualTo(-4);
     }
 
     @Test
     public void testWorkChanges() {
         // create base work
         String newWorkTypeId = assertDoesNotThrow(
-                () -> workService.ensureWorkType(
+                () -> domainService.createNew(
+                        domainId,
                         NewWorkTypeDTO
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
                                 .build()
                 )
         );
         assertThat(newWorkTypeId).isNotNull();
         var newWorkId = assertDoesNotThrow(
                 () -> workService.createNew(
+                        domainId,
                         NewWorkDTO
                                 .builder()
-                                .domainId(domainId)
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
                                 .workTypeId(newWorkTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
-                                .project(projectLovValues.get(0).id())
                                 .build()
                 )
         );
         assertThat(newWorkId).isNotNull();
 
         var foundWorkWithHistory = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(true)).build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(true).build())
         );
         assertThat(foundWorkWithHistory).isNotNull();
         assertThat(foundWorkWithHistory.id()).isEqualTo(newWorkId);
         assertThat(foundWorkWithHistory.changesHistory()).isNotNull().hasSize(1);
 
         var foundWorkNoHistory = assertDoesNotThrow(
-                () -> workService.findWorkById(newWorkId, WorkDetailsOptionDTO.builder().changes(Optional.of(false)).build())
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().changes(false).build())
         );
         assertThat(foundWorkNoHistory).isNotNull();
         assertThat(foundWorkNoHistory.id()).isEqualTo(newWorkId);
         assertThat(foundWorkNoHistory.changesHistory()).isNotNull().isEmpty();
+    }
+
+    @Test
+    public void savingWorkFailsWithWrongParentId() {
+        // create base work type
+        String newChildWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(childWorkflow.id())
+                                .validatorName("validation/DummyChildValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newChildWorkTypeId).isNotNull();
+
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("find the documentation")
+                                .description("find the documentation description")
+                                .childWorkTypeIds(Set.of(newChildWorkTypeId))
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
+
+        // type for the parent
+        var workNotFound = assertThrows(
+                WorkNotFound.class,
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newParentWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .parentWorkId("bad id")
+                                .build()
+                )
+        );
+        assertThat(workNotFound).isNotNull();
+    }
+
+    @Test
+    void associateWorkToABucket() {
+        String newParentWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("find the documentation")
+                                .description("find the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newParentWorkTypeId).isNotNull();
+
+        // create new work
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newParentWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .build()
+                )
+        );
+
+        // create bucket
+        var bucketId = assertDoesNotThrow(
+                () -> bucketService.createNew(
+                        NewBucketDTO.builder()
+                                .domainIds(Set.of(domainId))
+                                .description("Bucket 1 description")
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
+                                .from(LocalDateTime.now())
+                                .to(LocalDateTime.now().plusDays(1))
+                                .admittedWorkTypeIds(
+                                        Set.of(BucketSlotWorkTypeDTO.builder().domainId(domainId).workTypeId(newParentWorkTypeId).build())
+                                )
+                                .build()
+                )
+        );
+
+        // now associate work to bucket
+        assertDoesNotThrow(
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, bucketId, Optional.empty())
+        );
+
+        // get full work to test
+        var fullWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.currentBucketAssociation()).isNotNull();
+        assertThat(fullWork.currentBucketAssociation().bucket().id()).isEqualTo(bucketId);
+
+        // try to put on the same bucket will give an error
+        var workAlreadyInBucket = assertThrows(
+                ControllerLogicException.class,
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, bucketId, Optional.empty())
+        );
+        assertThat(workAlreadyInBucket).isNotNull();
+
+        // create a new bucket to move the work from old to new
+        var newBucketId = assertDoesNotThrow(
+                () -> bucketService.createNew(
+                        NewBucketDTO.builder()
+                                .domainIds(Set.of(domainId))
+                                .description("Bucket 2 description")
+                                .type(bucketTypeLOVIds.get(1))
+                                .status(bucketStatusLOVIds.get(1))
+                                .from(LocalDateTime.now())
+                                .to(LocalDateTime.now().plusDays(1))
+                                .admittedWorkTypeIds(
+                                        Set.of(BucketSlotWorkTypeDTO.builder().domainId(domainId).workTypeId(newParentWorkTypeId).build())
+                                )
+                                .build()
+                )
+        );
+
+        // move to new bucket without force gives error
+        var errorBecauseIsAlreadyAssociatedToOneBucket = assertThrows(
+                ControllerLogicException.class,
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, newBucketId, Optional.empty())
+        );
+        assertThat(errorBecauseIsAlreadyAssociatedToOneBucket).isNotNull();
+
+        // now try to move with force
+        assertDoesNotThrow(
+                () -> workService.associateWorkToBucketSlot(domainId, newWorkId, newBucketId, Optional.of(true))
+        );
+
+        // get new work to check
+        var fullWorkAfterMove = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(fullWorkAfterMove).isNotNull();
+        assertThat(fullWorkAfterMove.currentBucketAssociation()).isNotNull();
+        assertThat(fullWorkAfterMove.currentBucketAssociation().bucket().id()).isEqualTo(newBucketId);
+        // check history
+        assertThat(fullWorkAfterMove.bucketAssociationsHistory()).isNotNull().hasSize(1);
+        assertThat(fullWorkAfterMove.bucketAssociationsHistory().getFirst().bucket().id()).isEqualTo(bucketId);
     }
 }

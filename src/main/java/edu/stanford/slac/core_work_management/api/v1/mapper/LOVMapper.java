@@ -39,6 +39,5 @@ public abstract class LOVMapper {
     @Mapping(target = "description", source = "lovElementDTO.description")
     public abstract LOVElement toModel(LOVDomainTypeDTO domain, List<String> fieldReference, NewLOVElementDTO lovElementDTO);
     public abstract LOVElementDTO toDTO(LOVElement lovElement);
-
     public abstract LOVElement toModelByGroupName(String groupName, NewLOVElementDTO e);
 }

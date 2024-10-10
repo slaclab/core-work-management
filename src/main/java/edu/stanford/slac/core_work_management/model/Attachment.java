@@ -1,18 +1,39 @@
 package edu.stanford.slac.core_work_management.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.io.InputStream;
+import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+@ToString
+@Document()
 public class Attachment {
-    String filename;
-    String contentType;
-    InputStream file;
+    public enum PreviewProcessingState{
+        Waiting,
+        Processing,
+        Error,
+        PreviewNotAvailable,
+        Completed
+    }
+    @Id
+    private String id;
+    private String fileName;
+    private String contentType;
+    private String hasPreview;
+    private String previewId;
+    private String originalId;
+    private byte[] miniPreview;
+    @Builder.Default
+    private Boolean inUse = false;
+    @Builder.Default
+    private PreviewProcessingState previewState = PreviewProcessingState.Waiting;
+    @CreatedDate
+    private LocalDateTime creationData;
 }

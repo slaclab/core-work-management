@@ -23,15 +23,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
+
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "Describe a value for a specific type")
-public record ValueDTO (
+public record ValueDTO<T> (
     @NotNull(message = "Type is mandatory field")
     @Schema(description = "The type of the attribute")
     ValueTypeDTO type,
     @NotEmpty(message = "The value is mandatory field")
     @Schema(description = "The string representation of the value")
-    String value
+    String value,
+    @Schema(description = "The original value of the attribute")
+    T originalValue
 ){}

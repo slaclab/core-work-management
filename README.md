@@ -1,4 +1,7 @@
-![logo](./logos/SLAC-lab-hires.png)
+<div style="display: flex; align-items: flex-start;">
+<img src="./logos/logo.webp" alt="Project Logo" height="85" style="margin-right: 20px;"/>
+<img src="./logos/SLAC-lab-hires.png" alt="SLAC Logo"/>
+</div>
 
 # Code Work Management (CWM)
 
@@ -9,15 +12,13 @@ The SLAC National Accelerator Laboratory is operated by Stanford University for 
 ## License
 Copyright (c) 2017-2023, The Board of Trustees of the Leland Stanford Junior University, through SLAC National Accelerator Laboratory... the complete license is [here](LICENSE.md)
 
-## Overview: Work and Activity Management System
+## Overview: Work Management System
 
 ### Purpose
 
 This software is designed to streamline and manage workflows centered around 'works' and their associated 'activities'. It is a flexible and scalable solution aimed at improving task management, scheduling, and execution within organizations. The system provides a structured approach to handling a variety of activities, including those linked to external data sources, and offers robust user authorization for activity management.
 
 ### Key Features
-
-- **Activity Management**: Central to the software is the ability to create, track, and update activities. Each activity is linked to a specific 'work', allowing for organized and focused task management.
 
 - **Work-Centric Approach**: The software is designed around the 'work' entity, which is a collection of activities. This approach provides a comprehensive view of all tasks associated with a particular project or objective.
 
@@ -55,31 +56,6 @@ The architecture is scalable and robust, capable of handling large volumes of da
  "name":"Project", 
  "description":null
 }
-```
-### Activity
-
-```json lines
-{
-  "_id": "1", 
-  "workId": "",
-  "title": "Activity Title",
-  "description": "",
-  "type": {},
-  "current_status": {
-    status: {Created|Cancelled|Rejected|Authorized|Pending|InProgress|Completed},
-    changed_on: Date,
-    changed_by: user_id
-  },
-  "status_history": [
-    {
-      status: {Created|Cancelled|Rejected|Authorized|Pending|InProgress|Completed},
-      changed_on: Date,
-      changed_by: user_id
-    },
-    // ... more status history records
-  ]
-}
-
 ```
 
 ### Location

@@ -45,15 +45,13 @@ public class ShopGroupAuthorizationService {
      * @param updateShopGroupDTO the DTO to update the shop group
      * @return true if the user can update the shop group, false otherwise
      */
-    public boolean checkUpdate(Authentication authentication, String shopGroupId, UpdateShopGroupDTO updateShopGroupDTO) {
+    public boolean checkUpdate(Authentication authentication, String domainId, String shopGroupId, UpdateShopGroupDTO updateShopGroupDTO) {
         // check for auth
         assertion(
                 NotAuthorized.notAuthorizedBuilder()
                         .errorCode(-1)
                         .errorDomain("WorkAuthorizationService::checkCreateNewActivity")
                         .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
                 // should be one of these
                 () -> any(
                         // a root users

@@ -1,21 +1,21 @@
 package edu.stanford.slac.core_work_management.api.v1.dto;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
-import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
-import edu.stanford.slac.core_work_management.model.WorkLocation;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
-import lombok.Builder;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
+import edu.stanford.slac.core_work_management.model.WorkBucketAssociation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,14 +24,16 @@ import java.util.List;
 public record WorkDTO(
         @Schema(description = "The unique identifier of the work plan")
         String id,
+        @Schema(description = "The parent work id if the work is a sub work")
+        String parentWorkId,
         @Schema(description = "The domain where the work belongs to")
         DomainDTO domain,
         @Schema(description = "The unique identifier of the work plan")
         Long workNumber,
         @Schema(description = "The unique identifier of the work which his is related to")
-        String relatedToWorkId,
+        List<String> relatedToWorkIds,
         @Schema(description = "The type of the work")
-        WorkTypeDTO workType,
+        EmbeddableWorkTypeDTO workType,
         @Schema(description = "The current status of the work")
         WorkStatusLogDTO currentStatus,
         @Schema(description = "The full work status history")
@@ -46,12 +48,16 @@ public record WorkDTO(
         LocationDTO location,
         @Schema(description = "The shop group that perform the work in the location")
         ShopGroupDTO shopGroup,
-        @Schema(description = "The the lov value that represent the project")
-        LOVValueDTO project,
         @Schema(description = "The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
         List<CustomFieldDTO> customFields,
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments,
         @Schema(description = "The list of changes on the work, each element represent a change on the work for a single save operation")
         List<ModelChangesHistoryDTO> changesHistory,
+        @Schema(description = "The list of the bucket association for the work")
+        WorkBucketAssociationDTO currentBucketAssociation,
+        @Schema(description = "The list of the bucket association for the work")
+        List<WorkBucketAssociationDTO> bucketAssociationsHistory,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
