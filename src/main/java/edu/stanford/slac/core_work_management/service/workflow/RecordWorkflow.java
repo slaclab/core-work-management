@@ -34,18 +34,4 @@ public class RecordWorkflow extends BaseWorkflow {
                 WorkflowState.InProgress, Set.of(WorkflowState.Closed)
         );
     }
-
-    @Override
-    public void canUpdate(String identityId, Work work) {
-    }
-
-    @Override
-    public boolean isCompleted(Work work) {
-        return true;
-    }
-
-    @Override
-    public Set<WorkflowState> permittedStatus(Work work) {
-        return Set.of();
-    }
 }

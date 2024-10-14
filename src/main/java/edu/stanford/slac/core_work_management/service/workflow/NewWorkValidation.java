@@ -7,5 +7,5 @@ import lombok.Data;
 @Data
 @Builder
 public class NewWorkValidation {
-    private Work newWorkDTO;
+    private Work work;
 }

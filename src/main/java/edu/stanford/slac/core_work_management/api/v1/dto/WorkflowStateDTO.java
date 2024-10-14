@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public enum WorkflowStateDTO {
     Created,
     Submitted,
+    Scheduled,
     PendingAssignment,
     Assigned,
     ReadyForWork,

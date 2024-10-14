@@ -12,8 +12,10 @@ import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation
 import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation;
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowWorkUpdate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Define the work type validation baseclass
@@ -96,7 +98,7 @@ public abstract class WorkTypeValidation {
     }
 
     /**
-     * Check if the status of the work is equal to any provided states
+     * Check the presence of the custom field in the work
      *
      * @param work the work to check
      */
@@ -153,5 +155,26 @@ public abstract class WorkTypeValidation {
 
         // Return success with the field name as payload
         return ValidationResult.success(fieldName);
+    }
+
+    /**
+     * Check if the object field is not null or empty
+     *
+     * @param validationResults the list of validation results
+     */
+    protected void checkAndFireError(ArrayList<ValidationResult<String>> validationResults) {
+// Check if any validation failed
+        var hasErrors = validationResults.stream().anyMatch(vr->!vr.isValid());
+
+// If there are errors, throw a ControllerLogicException with all error messages
+        if (hasErrors) {
+            var errorMessages = validationResults.stream().filter(vr->!vr.isValid()).map(ValidationResult::getErrorMessage).toList();
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage(String.join(", ", errorMessages))
+                    .errorDomain("TECHardwareReportValidation::checkValid")
+                    .build();
+        }
     }
 }

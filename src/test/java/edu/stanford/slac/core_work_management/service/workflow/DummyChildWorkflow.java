@@ -34,20 +34,4 @@ public class DummyChildWorkflow extends BaseWorkflow {
                 WorkflowState.Created, Set.of(WorkflowState.Closed)
         );
     }
-
-    @Override
-    public void canUpdate(String identityId, Work work) {
-
-    }
-
-    @Override
-    public boolean isCompleted(Work work) {
-        if (work == null) return false;
-        return work.getCurrentStatus().getStatus() == WorkflowState.Closed;
-    }
-
-    @Override
-    public Set<WorkflowState> permittedStatus(Work work) {
-        return validTransitions.get(work.getCurrentStatus().getStatus());
-    }
 }

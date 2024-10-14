@@ -12,6 +12,7 @@ import lombok.Data;
 import java.util.*;
 
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
+import static edu.stanford.slac.core_work_management.service.workflow.WorkflowState.Closed;
 
 /**
  * Base class for all workflows
@@ -27,16 +28,22 @@ public abstract class BaseWorkflow {
      * Check if the work is completed
      *
      * @param work the work to check
+     * @return true if the work is completed
      */
-    abstract public boolean isCompleted(Work work);
+    public boolean isCompleted(Work work) {
+        if (work == null) return false;
+        return work.getCurrentStatus().getStatus() == Closed;
+    }
 
     /**
-     * Return the permitted status for the work
+     * Check the permitted status for the work
      *
      * @param work the work to check
+     * @return the set of the permitted status
      */
-    abstract public Set<WorkflowState> permittedStatus(Work work);
-
+    public Set<WorkflowState> permittedStatus(Work work) {
+        return validTransitions.get(work.getCurrentStatus().getStatus());
+    }
     /**
      * Check if the work can move to the state
      *

@@ -170,7 +170,7 @@ public class WorkService {
             );
         }
 
-        isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(workToSave).build());
+        isValidForWorkflow(domainId, NewWorkValidation.builder().work(workToSave).build());
 
         // save work
         Work savedWork = wrapCatch(
@@ -326,7 +326,7 @@ public class WorkService {
     public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
-                newWorkValidation.getNewWorkDTO().getWorkType().getValidatorName(),
+                newWorkValidation.getWork().getWorkType().getValidatorName(),
                 WorkTypeValidation.class
         );
         wtv.checkValid(newWorkValidation);

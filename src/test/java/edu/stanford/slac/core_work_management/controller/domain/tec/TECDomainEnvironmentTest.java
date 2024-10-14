@@ -1,8 +1,13 @@
-package edu.stanford.slac.core_work_management.controller.domain;
+package edu.stanford.slac.core_work_management.controller.domain.tec;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.api.v1.dto.DomainDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewLocationDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.NewShopGroupDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.ShopGroupUserInputDTO;
 import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
+import edu.stanford.slac.core_work_management.controller.domain.BaseWorkflowDomainTest;
+import edu.stanford.slac.core_work_management.controller.domain.DomainTestInfo;
 import edu.stanford.slac.core_work_management.migration.M1000_InitLOV;
 import edu.stanford.slac.core_work_management.migration.M1001_InitTECDomain;
 import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
@@ -14,12 +19,10 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Service
-public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest{
+public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -67,15 +70,16 @@ public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest{
         M1003_InitBucketTypeLOV initBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
         assertDoesNotThrow(initBucketTypeLOV::changeSet);
 
+        // retrieve all lov elements
         domainTestInfo.lovElementBucketType = lovService.findAllByGroupName("BucketType");
         domainTestInfo.lovElementBucketStatus = lovService.findAllByGroupName("BucketStatus");
 
-        mongoTemplate.remove(new Query(), Domain.class);
-        mongoTemplate.remove(new Query(), WorkType.class);
+        // init tec domain
         M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(lovService, domainService);
         DomainDTO tecDomain = assertDoesNotThrow(initWorkType::initTECDomain);
         AssertionsForClassTypes.assertThat(tecDomain).isNotNull();
         domainTestInfo.domain = tecDomain;
+
         // find all work type
         var workTypesResult = assertDoesNotThrow(
                 () -> testControllerHelperService.domainControllerFindAllWorkTypes(

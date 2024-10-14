@@ -38,15 +38,4 @@ public class DummyParentWorkflow extends BaseWorkflow {
                 WorkflowState.ReviewToClose, Set.of(Closed)
         );
     }
-
-    @Override
-    public boolean isCompleted(Work work) {
-        if (work == null) return false;
-        return work.getCurrentStatus().getStatus() == Closed;
-    }
-
-    @Override
-    public Set<WorkflowState> permittedStatus(Work work) {
-        return validTransitions.get(work.getCurrentStatus().getStatus());
-    }
 }

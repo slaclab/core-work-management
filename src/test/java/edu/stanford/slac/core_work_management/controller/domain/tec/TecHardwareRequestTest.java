@@ -1,9 +1,11 @@
-package edu.stanford.slac.core_work_management.controller.domain;
+package edu.stanford.slac.core_work_management.controller.domain.tec;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
+import edu.stanford.slac.core_work_management.controller.domain.BaseWorkflowDomainTest;
+import edu.stanford.slac.core_work_management.controller.domain.DomainTestInfo;
 import edu.stanford.slac.core_work_management.model.Attachment;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.EventTrigger;
@@ -91,7 +93,6 @@ public class TecHardwareRequestTest  {
         // reset the clock to be used to mock the advance of time
         Mockito.reset(clock);
     }
-
 
     @Test
     public void hardwareRequestFailingNoMandatoryField() {
