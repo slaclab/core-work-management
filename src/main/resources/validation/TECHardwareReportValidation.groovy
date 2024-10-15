@@ -27,10 +27,9 @@ class TECHardwareReportValidation extends WorkTypeValidation {
     @Override
     void updateWorkflow(WorkflowWorkUpdate workflowWorkUpdate) {
         var work = workflowWorkUpdate.getWork();
-        var workType = workflowWorkUpdate.getWorkType();
-        var workflow = workflowWorkUpdate.getWorkflow();
+        var workflowInstance = workflowWorkUpdate.getWorkflow();
         var updateWorkflowState = workflowWorkUpdate.getUpdateWorkflowState();
-        if (!ReportWorkflow.isAssignableFrom(workflow)) {
+        if (!workflowInstance.getClass().isAssignableFrom(ReportWorkflow.class)) {
             throw ControllerLogicException.builder()
                     .errorCode(-1)
                     .errorMessage("Invalid workflow type")
@@ -46,30 +45,30 @@ class TECHardwareReportValidation extends WorkTypeValidation {
         switch (currentStatus) {
             case WorkflowState.Created -> {
                 if (childrenInProgress) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
                 } else if (childrenInReadyForWork) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
                 }
             }
             case WorkflowState.Scheduled -> {
                 if (!childrenInProgress && !childrenInReadyForWork) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
                 } else if (childrenInReadyForWorks) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
                 }
             }
             case WorkflowState.InProgress -> {
                 if (!childrenInProgress && !childrenInReadyForWork) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
                 } else if (updateWorkflowState.getNewState() == WorkflowState.InProgress) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
                 }
             }
             case WorkflowState.ReviewToClose -> {
                 if (childrenInProgress) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
                 } else if (childrenInReadyForWork) {
-                    workflow.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
+                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
                 } else if(updateWorkflowState!=null) {
                     workflowInstance.moveToState(work, updateWorkflowState);
                 }

@@ -28,13 +28,17 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -164,5 +168,221 @@ public class TecHardwareReportTest {
         assertThat(newWorkResult.getPayload()).isNotNull();
         // we are in created state
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // create a new child a new child for it
+        LocalDateTime now =  LocalDateTime.now();
+        var newHWRequestId = createNewRequestAndSendInReadyToWork(newWorkResult.getPayload(), "HW Request 1", now.plusDays(1));
+
+        // now the report should be in scheduled
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Scheduled)).isTrue();
     }
+
+    /**
+     * Create a new hardware request and send it to ready for work
+     * @param hwRequestName the name of the hardware request
+     * @param plannedStartDateTime the planned start date time
+     * @return the new hardware request id
+     */
+    private String createNewRequestAndSendInReadyToWork(String reportId, String hwRequestName, LocalDateTime plannedStartDateTime) {
+        var hardwareRequestWorkType = domainTestInfo.getWorkTypeByName("Hardware Request");
+        // create a new hardware request with minimal fields
+        var newWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        // create with normal user
+                        Optional.of("user2@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(hardwareRequestWorkType.id())
+                                .parentWorkId(reportId)
+                                .title(hwRequestName)
+                                .description("%s description".formatted(hwRequestName))
+                                .locationId(domainTestInfo.getLocationByName("Location10").id())
+                                .shopGroupId(domainTestInfo.getShopGroupByName("Shop15").id())
+                                .assignedTo(List.of("user2@slac.stanford.edu"))
+                                .customFieldValues
+                                        (
+                                                List.of(
+                                                        // set plan start date
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "plannedStartDateTime"))
+                                                                .value(ValueDTO.builder().value(tecDomainEnvironmentTest.toString(plannedStartDateTime)).type(ValueTypeDTO.DateTime).build())
+                                                                .build(),
+                                                        // add schedulingPriority
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "schedulingPriority"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(hardwareRequestWorkType, "schedulingPriority", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add accessRequirements
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "accessRequirements"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(hardwareRequestWorkType, "accessRequirements", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add ppsZone
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "ppsZone"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(hardwareRequestWorkType, "ppsZone", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build(),
+                                                        // add radiationSafetyWorkControlForm
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "radiationSafetyWorkControlForm"))
+                                                                .value(ValueDTO.builder().value("false").type(ValueTypeDTO.Boolean).build())
+                                                                .build(),
+                                                        // add lockAndTag
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "lockAndTag"))
+                                                                .value(ValueDTO.builder().value("true").type(ValueTypeDTO.Boolean).build())
+                                                                .build(),
+                                                        // add subsystem
+                                                        WriteCustomFieldDTO
+                                                                .builder()
+                                                                .id(tecDomainEnvironmentTest.getCustomFileIdByName(hardwareRequestWorkType, "subsystem"))
+                                                                .value(
+                                                                        ValueDTO.builder()
+                                                                                .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(hardwareRequestWorkType, "subsystem", 0))
+                                                                                .type(ValueTypeDTO.LOV).build())
+                                                                .build()
+                                                )
+                                        )
+                                .build()
+                )
+        );
+        assertThat(newWorkResult).isNotNull();
+        assertThat(newWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkResult.getPayload()).isNotNull();
+        // we are in created state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.PendingApproval)).isTrue();
+
+        // update to send in ready to work
+        var updateWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                //send immediately into ready for work
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.ReadyForWork)
+                                                .comment("Sent to ready for work")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult).isNotNull();
+        assertThat(updateWorkResult.getErrorCode()).isEqualTo(0);
+
+        // return the new request id
+        return newWorkResult.getPayload();
+    }
+
+    /**
+     * Process the pending request at the given date and wait for the work to be in progress
+     * @param processingDate the processing date
+     * @param requestId the request id
+     */
+    public void processPendingRequestAtDateAndWait(LocalDateTime processingDate, String requestId) {
+        // now advance the day up the planned start date expiration
+        when(clock.instant()).thenReturn(processingDate.atZone(ZoneId.systemDefault()).toInstant());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+
+        // Now when LocalDateTime.now() is called, it returns the fixed time
+        // simulate the event trigger scheduler
+        manageBucketWorkflowUpdate.processStartAndStop();
+
+        await()
+                .atMost(20, SECONDS)
+                .pollInterval(1, SECONDS)
+                .until(
+                        () -> {
+                            var stateReached = tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), requestId, WorkflowStateDTO.InProgress);
+                            return stateReached;
+                        }
+                );
+
+    }
+
+    /**
+     * Simulate the request completion
+     * @param requestId the request id
+     */
+    private void completeRequest(String requestId) {
+        // update to send in ready to work
+        var updateWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanfod.edu"),
+                        domainTestInfo.domain.id(),
+                        requestId,
+                        UpdateWorkDTO
+                                .builder()
+                                //send immediately into ready for work
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.WorkComplete)
+                                                .comment("Closed")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult).isNotNull();
+        assertThat(updateWorkResult.getErrorCode()).isEqualTo(0);
+    }
+
+    /**
+     * Simulate the request close operation
+     * @param requestId the request id
+     */
+    private void closeRequest(String requestId) {
+        // update to send in ready to work
+        // update to send in ready to work
+        var updateWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanfod.edu"),
+                        domainTestInfo.domain.id(),
+                        requestId,
+                        UpdateWorkDTO
+                                .builder()
+                                //send immediately into ready for work
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .comment("Closed")
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult).isNotNull();
+        assertThat(updateWorkResult.getErrorCode()).isEqualTo(0);
+    }
+
 }

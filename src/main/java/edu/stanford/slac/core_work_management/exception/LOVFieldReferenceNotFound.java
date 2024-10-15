@@ -12,7 +12,7 @@ public class LOVFieldReferenceNotFound extends ControllerLogicException {
     @Builder(builderMethodName = "byFieldName")
     public LOVFieldReferenceNotFound(Integer errorCode, String fieldName) {
         super(errorCode,
-                String.format("The field reference has been found for %s", fieldName),
+                String.format("The field reference has not been found for %s", fieldName),
                 getAllMethodInCall()
         );
     }

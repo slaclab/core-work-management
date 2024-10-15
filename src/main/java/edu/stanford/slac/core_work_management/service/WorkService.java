@@ -169,9 +169,10 @@ public class WorkService {
                     shopGroupMapper.toEmbeddable(shopGroupService.findByDomainIdAndId(domainId, newWorkDTO.shopGroupId()))
             );
         }
-
+        // check if is valid
         isValidForWorkflow(domainId, NewWorkValidation.builder().work(workToSave).build());
-
+        // update workflow
+        updateWorkWorkflow(workToSave, null);
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),

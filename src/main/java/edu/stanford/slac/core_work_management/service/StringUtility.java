@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public class StringUtility {
     public static String toCamelCase(String input) {
-        if (input == null || input.isEmpty()) {
+        if (input == null || !input.contains(" ")) {
             return input;
         }
 
