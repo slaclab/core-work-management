@@ -1,6 +1,10 @@
 package validation
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
+import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
+import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
+import edu.stanford.slac.core_work_management.exception.WorkflowDeniedAction
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState
 import edu.stanford.slac.core_work_management.model.Work
 import edu.stanford.slac.core_work_management.repository.WorkRepository
@@ -16,10 +20,12 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion
  */
 @Slf4j
 class TECHardwareReportValidation extends WorkTypeValidation {
+    private final DomainMapper domainMapper;
     private final WorkRepository workRepository;
     private final ShopGroupService shopGroupService;
 
-    TECHardwareReportValidation(WorkRepository workRepository, ShopGroupService shopGroupService) {
+    TECHardwareReportValidation(DomainMapper domainMapper, WorkRepository workRepository, ShopGroupService shopGroupService) {
+        this.domainMapper = domainMapper
         this.workRepository = workRepository
         this.shopGroupService = shopGroupService
     }
@@ -39,42 +45,68 @@ class TECHardwareReportValidation extends WorkTypeValidation {
 
         // get current state
         var currentStatus = work.getCurrentStatus().getStatus();
-        List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
-        boolean childrenInReadyForWork = children.stream().anyMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.ReadyForWork);
-        boolean childrenInProgress = children.stream().anyMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.InProgress);
         switch (currentStatus) {
             case WorkflowState.Created -> {
-                if (childrenInProgress) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
-                } else if (childrenInReadyForWork) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
-                }
+                manageInCreateState(workflowInstance, work)
             }
             case WorkflowState.Scheduled -> {
-                if (!childrenInProgress && !childrenInReadyForWork) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
-                } else if (childrenInReadyForWorks) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
-                }
+                manageScheduledState(workflowInstance, work)
             }
             case WorkflowState.InProgress -> {
-                if (!childrenInProgress && !childrenInReadyForWork) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
-                } else if (updateWorkflowState.getNewState() == WorkflowState.InProgress) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
-                }
+                manageInProgressState(workflowInstance, work)
             }
             case WorkflowState.ReviewToClose -> {
-                if (childrenInProgress) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
-                } else if (childrenInReadyForWork) {
-                    workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
-                } else if(updateWorkflowState!=null) {
-                    workflowInstance.moveToState(work, updateWorkflowState);
-                }
+                manageReviewToCodeState(workflowInstance, work, updateWorkflowState)
             }
             case WorkflowState.Closed -> {
             }
+        }
+    }
+
+
+    private void manageReviewToCodeState(BaseWorkflow workflowInstance, Work work, UpdateWorkflowState updateWorkflowState) {
+        List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
+        boolean childrenInReadyForWork = children.stream().anyMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.ReadyForWork);
+        boolean childrenInProgress = children.stream().anyMatch(w -> EnumSet.of(WorkflowState.InProgress, WorkflowState.WorkComplete, WorkflowState.ReviewToClose).contains(w.getCurrentStatus().getStatus()));
+        if (childrenInProgress) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+        } else if (childrenInReadyForWork) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
+        } else if (updateWorkflowState != null) {
+            workflowInstance.moveToState(work, updateWorkflowState);
+        }
+    }
+
+    private void manageInProgressState(BaseWorkflow workflowInstance, Work work) {
+        List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
+        boolean childrenInReadyForWork = children.stream().anyMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.ReadyForWork);
+        boolean childrenInProgress = children.stream().anyMatch(w -> EnumSet.of(WorkflowState.InProgress, WorkflowState.WorkComplete, WorkflowState.ReviewToClose).contains(w.getCurrentStatus().getStatus()));
+         if (!childrenInProgress && !childrenInReadyForWork) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
+        } else if (!childrenInProgress && childrenInReadyForWork) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
+        }
+    }
+
+    private void manageScheduledState(BaseWorkflow workflowInstance, Work work) {
+        List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
+        boolean childrenInReadyForWork = children.stream().anyMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.ReadyForWork);
+        boolean childrenInProgress = children.stream().anyMatch(w -> EnumSet.of(WorkflowState.InProgress, WorkflowState.WorkComplete, WorkflowState.ReviewToClose).contains(w.getCurrentStatus().getStatus()));
+        if (!childrenInProgress && !childrenInReadyForWork) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.ReviewToClose).build());
+        } else if (childrenInProgress) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+        }
+    }
+
+    private void manageInCreateState(BaseWorkflow workflowInstance, Work work) {
+        List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
+        boolean childrenInReadyForWork = children.stream().anyMatch(w -> w.getCurrentStatus().getStatus() == WorkflowState.ReadyForWork);
+        boolean childrenInProgress = children.stream().anyMatch(w -> EnumSet.of(WorkflowState.InProgress, WorkflowState.WorkComplete, WorkflowState.ReviewToClose).contains(w.getCurrentStatus().getStatus()));
+        if (childrenInProgress) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.InProgress).build());
+        } else if (childrenInReadyForWork) {
+            workflowInstance.moveToState(work, UpdateWorkflowState.builder().newState(WorkflowState.Scheduled).build());
         }
     }
 
@@ -106,4 +138,23 @@ class TECHardwareReportValidation extends WorkTypeValidation {
 
     @Override
     void admitChildren(AdmitChildrenValidation canHaveChildValidation) {}
+
+    @Override
+    boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+        if(updateWorkDTO !=null && updateWorkDTO.workflowStateUpdate() != null) {
+            var statusModelValue = domainMapper.toModel(updateWorkDTO.workflowStateUpdate())
+            if(statusModelValue.getNewState() == WorkflowState.ReadyForWork) {
+                // only area manage and root users can move to ready for work
+                String areaManagerUserId = Objects.requireNonNull(workDTO.location()).locationManagerUserId()
+                boolean isRoot = authService.checkForRoot(userId)
+                if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
+                    throw WorkflowDeniedAction.byErrorMessage()
+                            .errorCode(-1)
+                            .errorMessage("Only the area manager and root users can move the work to ReadyForWork")
+                            .build()
+                }
+            }
+        }
+        return true;
+    }
 }

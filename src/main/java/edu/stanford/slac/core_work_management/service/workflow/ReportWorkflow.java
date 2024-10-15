@@ -39,14 +39,14 @@ public class ReportWorkflow extends BaseWorkflow {
     public void init() {
         validTransitions = Map.of(
                 // Rule:one or more child are in ReadyForWork
-                WorkflowState.Created, Set.of(WorkflowState.Scheduled),
+                WorkflowState.Created, Set.of(WorkflowState.Scheduled, WorkflowState.InProgress),
                 // Rule: one or more child are in InProgress
                 WorkflowState.Scheduled, Set.of(WorkflowState.InProgress),
                 // Rule: All child requests or records must be completed before transitioning.
                 // If a new child request/record is added after all others are completed, return to the "In Progress" state.
-                WorkflowState.InProgress, Set.of(WorkflowState.ReviewToClose),
+                WorkflowState.InProgress, Set.of(WorkflowState.Scheduled, WorkflowState.ReviewToClose),
                 // Rule: Admin manually reviews and sets the work to "Review to Close" if no new child requests/records are added.
-                WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed)
+                WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed, WorkflowState.Scheduled, WorkflowState.InProgress)
         );
     }
 }

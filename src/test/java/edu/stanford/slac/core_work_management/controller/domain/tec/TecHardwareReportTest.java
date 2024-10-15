@@ -123,7 +123,7 @@ public class TecHardwareReportTest {
         var reportWorkType = domainTestInfo.getWorkTypeByName("Hardware Report");
         assertThat(reportWorkType).isNotNull();
         // create a new hardware report
-        var newWorkResult = assertDoesNotThrow(
+        var newHWRequestResult = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerCreateNew(
                         mockMvc,
                         status().isCreated(),
@@ -163,18 +163,48 @@ public class TecHardwareReportTest {
                                 .build()
                 )
         );
-        assertThat(newWorkResult).isNotNull();
-        assertThat(newWorkResult.getErrorCode()).isEqualTo(0);
-        assertThat(newWorkResult.getPayload()).isNotNull();
+        assertThat(newHWRequestResult).isNotNull();
+        assertThat(newHWRequestResult.getErrorCode()).isEqualTo(0);
+        assertThat(newHWRequestResult.getPayload()).isNotNull();
         // we are in created state
-        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
 
-        // create a new child a new child for it
+        // create a hardware request for this report
         LocalDateTime now =  LocalDateTime.now();
-        var newHWRequestId = createNewRequestAndSendInReadyToWork(newWorkResult.getPayload(), "HW Request 1", now.plusDays(1));
+        var newHWRequestId = createNewRequestAndSendInReadyToWork(newHWRequestResult.getPayload(), "HW Request 1", now.plusDays(1));
 
         // now the report should be in scheduled
-        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Scheduled)).isTrue();
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Scheduled)).isTrue();
+
+        // simulate the start of the request and wait for the request to be in progress
+        processPendingRequestAtDateAndWait(now.plusDays(1), newHWRequestId);
+
+        // check the request should be in progress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestId, WorkflowStateDTO.InProgress)).isTrue();
+        // check the report should be in progress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.InProgress)).isTrue();
+
+        // simulate the completion of the request
+        completeWork(newHWRequestId);
+
+        // the request should have gone in rev
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestId, WorkflowStateDTO.WorkComplete)).isTrue();
+        // the report should remain in progress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.InProgress)).isTrue();
+
+        // now close the request
+        close(newHWRequestId);
+
+        // the request now should be in closed
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestId, WorkflowStateDTO.Closed)).isTrue();
+        // the report should goes in review to close
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.ReviewToClose)).isTrue();
+
+        // close the report
+        close(newHWRequestResult.getPayload());
+
+        // the report now should be closed
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Closed)).isTrue();
     }
 
     /**
@@ -309,9 +339,10 @@ public class TecHardwareReportTest {
         when(clock.getZone()).thenReturn(ZoneId.systemDefault());
 
         // Now when LocalDateTime.now() is called, it returns the fixed time
-        // simulate the event trigger scheduler
+        // simulate the bucket fire event
         manageBucketWorkflowUpdate.processStartAndStop();
-
+        // process the event trigger
+        manageWorkflowUpdateByEventTrigger.processTriggeredEvent();
         await()
                 .atMost(20, SECONDS)
                 .pollInterval(1, SECONDS)
@@ -326,17 +357,17 @@ public class TecHardwareReportTest {
 
     /**
      * Simulate the request completion
-     * @param requestId the request id
+     * @param workId the request or report id
      */
-    private void completeRequest(String requestId) {
+    private void completeWork(String workId) {
         // update to send in ready to work
         var updateWorkResult = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanfod.edu"),
+                        Optional.of("user1@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
-                        requestId,
+                        workId,
                         UpdateWorkDTO
                                 .builder()
                                 //send immediately into ready for work
@@ -356,18 +387,18 @@ public class TecHardwareReportTest {
 
     /**
      * Simulate the request close operation
-     * @param requestId the request id
+     * @param workId the request or report id
      */
-    private void closeRequest(String requestId) {
+    private void close(String workId) {
         // update to send in ready to work
         // update to send in ready to work
         var updateWorkResult = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanfod.edu"),
+                        Optional.of("user1@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
-                        requestId,
+                        workId,
                         UpdateWorkDTO
                                 .builder()
                                 //send immediately into ready for work

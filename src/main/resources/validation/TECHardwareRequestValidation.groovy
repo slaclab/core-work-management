@@ -215,7 +215,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
                     throw WorkflowDeniedAction.byErrorMessage()
                             .errorCode(-1)
-                            .errorMessage("Only the area manager can move the work to ReadyForWork")
+                            .errorMessage("Only the area manager and root users can move the work to ReadyForWork")
                             .build()
                 }
             }

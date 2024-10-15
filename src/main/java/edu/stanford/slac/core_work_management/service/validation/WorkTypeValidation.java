@@ -63,7 +63,6 @@ public abstract class WorkTypeValidation {
      * @return true if the user is authorized to update the work
      */
     public boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
-
         return true;
     }
 
