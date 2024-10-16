@@ -2,6 +2,7 @@ package edu.stanford.slac.core_work_management.controller.domain.tec;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
 import edu.stanford.slac.core_work_management.controller.domain.BaseWorkflowDomainTest;
 import edu.stanford.slac.core_work_management.controller.domain.DomainTestInfo;
@@ -11,6 +12,7 @@ import edu.stanford.slac.core_work_management.model.EventTrigger;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
 import edu.stanford.slac.core_work_management.task.ManageWorkflowUpdateByEventTrigger;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,8 +33,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -62,6 +67,10 @@ public class TecHardwareReportTest {
     private ManageWorkflowUpdateByEventTrigger manageWorkflowUpdateByEventTrigger;
     @Autowired
     private BaseWorkflowDomainTest tecDomainEnvironmentTest;
+    @Autowired
+    private CWMAppProperties cwmAppProperties;
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
     // test tec domain data
     private DomainTestInfo domainTestInfo = null;
 
@@ -85,6 +94,28 @@ public class TecHardwareReportTest {
         mongoTemplate.remove(Attachment.class).all();
         mongoTemplate.remove(EventTrigger.class).all();
         mongoTemplate.remove(BucketSlot.class).all();
+
+        try (AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
+            Set<String> existingTopics = adminClient.listTopics().names().get();
+            List<String> topicsToDelete = List.of(
+                    cwmAppProperties.getImagePreviewTopic(),
+                    String.format("%s-retry-2000", cwmAppProperties.getImagePreviewTopic()),
+                    String.format("%s-retry-4000", cwmAppProperties.getImagePreviewTopic())
+            );
+
+            // Delete topics that actually exist
+            topicsToDelete.stream()
+                    .filter(existingTopics::contains)
+                    .forEach(topic -> {
+                        try {
+                            adminClient.deleteTopics(Collections.singletonList(topic)).all().get();
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete topic " + topic + ": " + e.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to recreate Kafka topic", e);
+        }
 
         // reset the clock to be used to mock the advance of time
         Mockito.reset(clock);
@@ -198,6 +229,139 @@ public class TecHardwareReportTest {
         // the request now should be in closed
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestId, WorkflowStateDTO.Closed)).isTrue();
         // the report should goes in review to close
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.ReviewToClose)).isTrue();
+
+        // close the report
+        close(newHWRequestResult.getPayload());
+
+        // the report now should be closed
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Closed)).isTrue();
+    }
+
+    @Test
+    public void wholeWorkflowWithPlannedStartDateAndTwoActivity() {
+        // fetch the report work type
+        var reportWorkType = domainTestInfo.getWorkTypeByName("Hardware Report");
+        assertThat(reportWorkType).isNotNull();
+        // create a new hardware report
+        var newHWRequestResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(reportWorkType.id())
+                                .title("Report 1")
+                                .description("report 1 description")
+                                .locationId(domainTestInfo.getLocationByName("Location10").id())
+                                .shopGroupId(domainTestInfo.getShopGroupByName("Shop15").id())
+                                .customFieldValues(
+                                        List.of(
+                                                // set group
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(reportWorkType, "group"))
+                                                        .value(
+                                                                ValueDTO.builder()
+                                                                        .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(reportWorkType, "group", 0))
+                                                                        .type(ValueTypeDTO.LOV).build()
+                                                        )
+                                                        .build(),
+                                                // set urgency
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(reportWorkType, "urgency"))
+                                                        .value(
+                                                                ValueDTO.builder()
+                                                                        .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(reportWorkType, "urgency", 0))
+                                                                        .type(ValueTypeDTO.LOV).build()
+                                                        )
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(newHWRequestResult).isNotNull();
+        assertThat(newHWRequestResult.getErrorCode()).isEqualTo(0);
+        assertThat(newHWRequestResult.getPayload()).isNotNull();
+        // we are in created state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // create a two hardware request for this report
+        LocalDateTime requestOneStartDate =  LocalDateTime.now().plusDays(1);
+        LocalDateTime requestTwoStartDate =  LocalDateTime.now().plusDays(2);
+        LocalDateTime requestThreeStartDate =  LocalDateTime.now().plusDays(3);
+
+        var newHWOneRequestId = createNewRequestAndSendInReadyToWork(newHWRequestResult.getPayload(), "HW Request 1", requestOneStartDate);
+        var newHWTwoRequestId = createNewRequestAndSendInReadyToWork(newHWRequestResult.getPayload(), "HW Request 2", requestTwoStartDate);
+        var newHWThreeRequestId = createNewRequestAndSendInReadyToWork(newHWRequestResult.getPayload(), "HW Request 3", requestThreeStartDate);
+
+        // activity one should be in ready for work
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWOneRequestId, WorkflowStateDTO.ReadyForWork)).isTrue();
+        // activity two should be in ready for work
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWTwoRequestId, WorkflowStateDTO.ReadyForWork)).isTrue();
+        // activity three should be in ready for work
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWThreeRequestId, WorkflowStateDTO.ReadyForWork)).isTrue();
+        // now the report should be in scheduled
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Scheduled)).isTrue();
+
+        // simulate the start of the request and wait for the request one to be in progress
+        processPendingRequestAtDateAndWait(requestOneStartDate, newHWOneRequestId);
+
+        // activity one should be in progress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWOneRequestId, WorkflowStateDTO.InProgress)).isTrue();
+        // activity two should be in ready for work
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWTwoRequestId, WorkflowStateDTO.ReadyForWork)).isTrue();
+        // check the report should be in progress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.InProgress)).isTrue();
+
+        // simulate the completion and close of the request1
+        completeWork(newHWOneRequestId);
+        close(newHWOneRequestId);
+        // the request should have gone in rev
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWOneRequestId, WorkflowStateDTO.Closed)).isTrue();
+        // activity two should be in ready for work
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWTwoRequestId, WorkflowStateDTO.ReadyForWork)).isTrue();
+        // the report should remain in scheduled cause the second activity is not started
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.Scheduled)).isTrue();
+
+        // simulate the start of the request two and wait for the request two to be in progress
+        processPendingRequestAtDateAndWait(requestTwoStartDate, newHWTwoRequestId);
+        // the request should have gone in rev
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWOneRequestId, WorkflowStateDTO.Closed)).isTrue();
+        // activity two should be in ready for work
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWTwoRequestId, WorkflowStateDTO.InProgress)).isTrue();
+        // the report should remain in scheduled cause the second activity is not started
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.InProgress)).isTrue();
+
+        // advance to request three date and schedule the request three
+        processPendingRequestAtDateAndWait(requestThreeStartDate, newHWThreeRequestId);
+        // activity two should be in InProgress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWTwoRequestId, WorkflowStateDTO.InProgress)).isTrue();
+        // activity three should be in InProgress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWThreeRequestId, WorkflowStateDTO.InProgress)).isTrue();
+        // the report should remain in scheduled cause the second activity is not started
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.InProgress)).isTrue();
+
+        //simulate to close the request three
+        completeWork(newHWTwoRequestId);
+        close(newHWTwoRequestId);
+        // activity two should be in closed
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWTwoRequestId, WorkflowStateDTO.Closed)).isTrue();
+        // activity three should be in InProgress
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWThreeRequestId, WorkflowStateDTO.InProgress)).isTrue();
+        // the report should remain in scheduled cause the second activity is not started
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.InProgress)).isTrue();
+
+        // now close the last request
+        completeWork(newHWThreeRequestId);
+        close(newHWThreeRequestId);
+        // activity three should be in closed
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWThreeRequestId, WorkflowStateDTO.Closed)).isTrue();
+        // the report should be in review to close
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newHWRequestResult.getPayload(), WorkflowStateDTO.ReviewToClose)).isTrue();
 
         // close the report
