@@ -169,9 +169,10 @@ public class WorkService {
                     shopGroupMapper.toEmbeddable(shopGroupService.findByDomainIdAndId(domainId, newWorkDTO.shopGroupId()))
             );
         }
-
-        isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(workToSave).build());
-
+        // check if is valid
+        isValidForWorkflow(domainId, NewWorkValidation.builder().work(workToSave).build());
+        // update workflow
+        updateWorkWorkflow(workToSave, null);
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -326,7 +327,7 @@ public class WorkService {
     public void isValidForWorkflow(String domainId, NewWorkValidation newWorkValidation) {
         Set<ConstraintViolation<WorkflowValidation<NewWorkValidation>>> violations = null;
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
-                newWorkValidation.getNewWorkDTO().getWorkType().getValidatorName(),
+                newWorkValidation.getWork().getWorkType().getValidatorName(),
                 WorkTypeValidation.class
         );
         wtv.checkValid(newWorkValidation);

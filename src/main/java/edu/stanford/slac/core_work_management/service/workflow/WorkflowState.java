@@ -6,6 +6,7 @@ package edu.stanford.slac.core_work_management.service.workflow;
 public enum WorkflowState {
     Created,
     Submitted,
+    Scheduled,
     PendingAssignment,
     Assigned,
     ReadyForWork,

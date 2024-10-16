@@ -39,19 +39,4 @@ public class RequestWorkflow extends BaseWorkflow {
                 WorkflowState.WorkComplete, Set.of(WorkflowState.Closed)
         );
     }
-
-    @Override
-    public void canUpdate(String identityId, Work work) {
-    }
-
-
-    @Override
-    public boolean isCompleted(Work work) {
-        return false;
-    }
-
-    @Override
-    public Set<WorkflowState> permittedStatus(Work work) {
-        return Set.of();
-    }
 }

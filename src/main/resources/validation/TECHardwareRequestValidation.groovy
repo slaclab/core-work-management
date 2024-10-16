@@ -188,12 +188,12 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     @Override
     void checkValid(NewWorkValidation newWorkValidation) {
         def validationResults = [
-                checkStringField(newWorkValidation.newWorkDTO.getTitle(), "title", Optional.empty()),
-                checkStringField(newWorkValidation.newWorkDTO.getDescription(), "description", Optional.empty()),
-                checkObjectField(newWorkValidation.newWorkDTO.getLocation(), "location", Optional.of("The location is mandatory")),
-                checkObjectField(newWorkValidation.newWorkDTO.getShopGroup(), "shopGroup", Optional.of("The shop group is mandatory")),
+                checkStringField(newWorkValidation.work.getTitle(), "title", Optional.empty()),
+                checkStringField(newWorkValidation.work.getDescription(), "description", Optional.empty()),
+                checkObjectField(newWorkValidation.work.getLocation(), "location", Optional.of("The location is mandatory")),
+                checkObjectField(newWorkValidation.work.getShopGroup(), "shopGroup", Optional.of("The shop group is mandatory")),
         ]
-        checkAttachments(newWorkValidation.newWorkDTO, validationResults);
+        checkAttachments(newWorkValidation.work, validationResults);
         checkAndFireError(validationResults)
     }
 
@@ -215,7 +215,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
                     throw WorkflowDeniedAction.byErrorMessage()
                             .errorCode(-1)
-                            .errorMessage("Only the area manager can move the work to ReadyForWork")
+                            .errorMessage("Only the area manager and root users can move the work to ReadyForWork")
                             .build()
                 }
             }
@@ -334,27 +334,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
             } catch (PersonNotFound e) {
                 validationResults.add(ValidationResult.failure("The user '${user}' does not exist"))
             }
-        }
-    }
-
-    /**
-     * Check if the string field is not null or empty
-     * @param validationResults
-     */
-    private void checkAndFireError(ArrayList<ValidationResult<String>> validationResults) {
-// Check if any validation failed
-        def hasErrors = validationResults.any { !it.valid }
-
-// If there are errors, throw a ControllerLogicException with all error messages
-        if (hasErrors) {
-            def errorMessages = validationResults.findAll { !it.valid }
-                    .collect { it.errorMessage }
-            throw ControllerLogicException
-                    .builder()
-                    .errorCode(-1)
-                    .errorMessage(errorMessages.join(", "))
-                    .errorDomain("TECHardwareReportValidation::checkValid")
-                    .build()
         }
     }
 

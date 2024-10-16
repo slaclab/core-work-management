@@ -34,42 +34,19 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 @Component("ReportWorkflow")
 @AllArgsConstructor
 public class ReportWorkflow extends BaseWorkflow {
-    private final WorkRepository workRepository;
-    private final ShopGroupService shopGroupService;
-
     // This map defines the valid transitions for each state
     @PostConstruct
     public void init() {
         validTransitions = Map.of(
-                // Rule: AssignedTo != null
-                WorkflowState.Created, Set.of(WorkflowState.ReadyForWork),
-                // Rule: (wait for attachment on radiation control form if it is required) and when admin set workflow to = "Ready to work"
-                WorkflowState.PendingApproval, Set.of(WorkflowState.ReadyForWork),
-                // Rule: all required paperwork attached and admin set directly the status to "Approved"
-                WorkflowState.ReadyForWork, Set.of(WorkflowState.Approved),
-                // Rule: when the start date is reached or user automatically set the state in progress
-                WorkflowState.Approved, Set.of(WorkflowState.InProgress),
-                // Rule: In Progress state becomes active based on start date and time of scheduled activity
-                WorkflowState.InProgress, Set.of(WorkflowState.WorkComplete),
-                // Rule: user/admin manually se the work to closed
-                WorkflowState.WorkComplete, Set.of(WorkflowState.ReviewToClose),
-                // Rule: When all activities have ended admin can close the work
-                WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed)
+                // Rule:one or more child are in ReadyForWork
+                WorkflowState.Created, Set.of(WorkflowState.Scheduled, WorkflowState.InProgress),
+                // Rule: one or more child are in InProgress
+                WorkflowState.Scheduled, Set.of(WorkflowState.InProgress),
+                // Rule: All child requests or records must be completed before transitioning.
+                // If a new child request/record is added after all others are completed, return to the "In Progress" state.
+                WorkflowState.InProgress, Set.of(WorkflowState.Scheduled, WorkflowState.ReviewToClose),
+                // Rule: Admin manually reviews and sets the work to "Review to Close" if no new child requests/records are added.
+                WorkflowState.ReviewToClose, Set.of(WorkflowState.Closed, WorkflowState.Scheduled, WorkflowState.InProgress)
         );
-    }
-
-    @Override
-    public void canUpdate(String identityId, Work work) {
-    }
-
-
-    @Override
-    public boolean isCompleted(Work work) {
-        return false;
-    }
-
-    @Override
-    public Set<WorkflowState> permittedStatus(Work work) {
-        return Set.of();
     }
 }

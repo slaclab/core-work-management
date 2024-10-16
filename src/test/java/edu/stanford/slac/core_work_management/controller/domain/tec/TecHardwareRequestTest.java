@@ -1,9 +1,11 @@
-package edu.stanford.slac.core_work_management.controller.domain;
+package edu.stanford.slac.core_work_management.controller.domain.tec;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.config.CWMAppProperties;
 import edu.stanford.slac.core_work_management.controller.TestControllerHelperService;
+import edu.stanford.slac.core_work_management.controller.domain.BaseWorkflowDomainTest;
+import edu.stanford.slac.core_work_management.controller.domain.DomainTestInfo;
 import edu.stanford.slac.core_work_management.model.Attachment;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.EventTrigger;
@@ -92,7 +94,6 @@ public class TecHardwareRequestTest  {
         Mockito.reset(clock);
     }
 
-
     @Test
     public void hardwareRequestFailingNoMandatoryField() {
         // create a new work
@@ -118,7 +119,7 @@ public class TecHardwareRequestTest  {
     }
 
     @Test
-    public void hardwareRequestWholeWorkflowWithPlannedStartDate() {
+    public void wholeWorkflowWithPlannedStartDate() {
         var nowLocalDateTime = LocalDateTime.now();
         var startPlannedDateTimeOneMothLater = nowLocalDateTime.plusMonths(1);
         // create a new hardware request with minimal fields
@@ -425,7 +426,7 @@ public class TecHardwareRequestTest  {
 
 
     @Test
-    public void hardwareRequestWholeWorkflowWithBucket() {
+    public void wholeWorkflowWithBucket() {
         var nowLocalDateTime = LocalDateTime.now();
         // start buket in one month
         var bucketStartDate = nowLocalDateTime.plusMonths(1);
@@ -660,7 +661,7 @@ public class TecHardwareRequestTest  {
     }
 
     @Test
-    public void hardwareRequestWholeWorkflowFailWithPlannedDataAdnBucket() {
+    public void wholeWorkflowFailWithPlannedDataAdnBucket() {
         var nowLocalDateTime = LocalDateTime.now();
         // start buket in one month
         var bucketStartDate = nowLocalDateTime.plusMonths(1);
@@ -880,7 +881,7 @@ public class TecHardwareRequestTest  {
     }
 
     @Test
-    public void hardwareRequestWholeWorkflowWithPlannedStartDateAuthorizingByAreaManager() {
+    public void wholeWorkflowWithPlannedStartDateAuthorizingByAreaManager() {
         var nowLocalDateTime = LocalDateTime.now();
         var startPlannedDateTimeOneMothLater = nowLocalDateTime.plusMonths(1);
         // create a new hardware request with minimal fields
@@ -1003,7 +1004,7 @@ public class TecHardwareRequestTest  {
         assertThat(updateWorkResult3.getPayload()).isTrue();
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.PendingApproval)).isTrue();
 
-        // norma user should fail to sen to ready for work
+        // normal user should fail to send to ready for work
         var failOnSendToReadyToWork = assertThrows(
                 ControllerLogicException.class,
                 () -> testControllerHelperService.workControllerUpdate(

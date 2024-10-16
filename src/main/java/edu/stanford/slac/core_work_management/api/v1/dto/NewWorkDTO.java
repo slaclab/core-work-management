@@ -34,6 +34,8 @@ public record NewWorkDTO(
         String locationId,
         @Schema(description = "The shop group id that is authorized to make the works in that location")
         String shopGroupId,
+        @Schema(description = "The list of the user that are assigned to the work")
+        List<String> assignedTo,
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
         @Valid

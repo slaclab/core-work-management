@@ -1,8 +1,6 @@
 package edu.stanford.slac.core_work_management.controller.domain;
 
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkTypeDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkflowStateDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.service.HelperService;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -54,6 +52,14 @@ public abstract class BaseWorkflowDomainTest {
                 .lovValues()
                 .get(elementIndex)
                 .id();
+    }
+
+    public @NotEmpty(message = "The value is mandatory field") String
+    getWorkLovValueIdByGroupNameAndIndex(WorkTypeDTO workTypeDTO, String fieldName, int elementIndex) throws Exception {
+        assertThat(workTypeDTO).isNotNull();
+        var lovElementDTOs = helperService.getCustomFiledLOVValue(LOVDomainTypeDTO.Work, workTypeDTO.domainId(), workTypeDTO.id(), fieldName);
+        assertThat(lovElementDTOs).isNotNull();
+        return lovElementDTOs.get(elementIndex).id();
     }
 
     public boolean checkWorkflowStatus(String domainId, String workId, WorkflowStateDTO status) {

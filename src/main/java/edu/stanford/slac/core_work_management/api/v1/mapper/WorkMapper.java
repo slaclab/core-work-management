@@ -100,8 +100,6 @@ public abstract class WorkMapper {
      * @return the converted DTO
      */
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getDomainId(), work.getWorkType()))")
-//    @Mapping(target = "shopGroup", expression = "java(toShopGroupDTOById(work.getDomainId(), work.getShopGroupId()))")
-//    @Mapping(target = "location", expression = "java(toLocationDTOById(work.getDomainId(), work.getLocationId()))")
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkType().getId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
