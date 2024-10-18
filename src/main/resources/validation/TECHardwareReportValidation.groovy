@@ -117,7 +117,7 @@ class TECHardwareReportValidation extends WorkTypeValidation {
                 checkStringField(newWorkValidation.work.getDescription(), "description", Optional.empty()),
                 checkObjectField(newWorkValidation.work.getLocation(), "location", Optional.empty()),
                 checkObjectField(newWorkValidation.work.getShopGroup(), "shopGroup", Optional.empty()),
-                checkWorkFieldPresence(newWorkValidation.work, "group", Optional.empty()),
+                checkWorkFieldPresence(newWorkValidation.work, "project", Optional.empty()),
                 checkWorkFieldPresence(newWorkValidation.work, "urgency", Optional.empty())
         ]
         checkAndFireError(validationResults)
@@ -130,7 +130,7 @@ class TECHardwareReportValidation extends WorkTypeValidation {
                 checkStringField(updateWorkValidation.getExistingWork().getDescription(), "description", Optional.empty()),
                 checkObjectField(updateWorkValidation.getExistingWork().getLocation(), "location", Optional.empty()),
                 checkObjectField(updateWorkValidation.getExistingWork().getShopGroup(), "shopGroup", Optional.empty()),
-                checkWorkFieldPresence(updateWorkValidation.getExistingWork(), "group", Optional.empty()),
+                checkWorkFieldPresence(updateWorkValidation.getExistingWork(), "project", Optional.empty()),
                 checkWorkFieldPresence(updateWorkValidation.getExistingWork(), "urgency", Optional.empty())
         ]
         checkAndFireError(validationResults)
