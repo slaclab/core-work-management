@@ -45,7 +45,7 @@ public class MaintenanceController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
-            @Schema(description = "The new bucket slot to create")
+            @Schema(description = "The new bucket slot to create",implementation = NewBucketDTO.class)
             @Valid @RequestBody NewBucketDTO newBucketSlotDTO
     ) {
         return ApiResultResponse.of(
