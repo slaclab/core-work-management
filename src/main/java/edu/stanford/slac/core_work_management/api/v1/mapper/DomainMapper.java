@@ -8,6 +8,7 @@ import edu.stanford.slac.core_work_management.model.value.ValueType;
 import edu.stanford.slac.core_work_management.repository.DomainRepository;
 import edu.stanford.slac.core_work_management.repository.WorkTypeRepository;
 import edu.stanford.slac.core_work_management.service.LOVService;
+import edu.stanford.slac.core_work_management.service.ScriptService;
 import edu.stanford.slac.core_work_management.service.StringUtility;
 import edu.stanford.slac.core_work_management.service.workflow.BaseWorkflow;
 import edu.stanford.slac.core_work_management.service.workflow.WorkflowState;
@@ -33,7 +34,8 @@ public abstract class DomainMapper {
     private DomainRepository domainRepository;
     @Autowired
     private WorkTypeRepository workTypeRepository;
-
+    @Autowired
+    protected ScriptService scriptService;
     /**
      * Convert a NewDomainDTO to a Domain model
      *

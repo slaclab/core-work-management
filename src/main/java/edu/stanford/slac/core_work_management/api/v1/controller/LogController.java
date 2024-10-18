@@ -40,6 +40,7 @@ public class LogController {
             @PathVariable("workId") @NotEmpty String workId,
             @Schema(description = "The log entry")
             @ModelAttribute @Valid NewLogEntry entry,
+            @Schema(description = "The files to attach to the log entry")
             @RequestPart(value = "files", required = false)
             MultipartFile[] files
     ) {

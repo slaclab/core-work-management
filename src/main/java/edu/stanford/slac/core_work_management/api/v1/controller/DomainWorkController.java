@@ -72,12 +72,12 @@ public class DomainWorkController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkCanCreate(#authentication, #domainId, #newWorkDTO)")
     public ApiResultResponse<String> createNewWork(
             Authentication authentication,
-            @Parameter(description = "Is the domain id to use to create the work", required = true)
+            @Schema(description = "Is the domain id to use to create the work")
             @PathVariable String domainId,
             @RequestParam(name = "logIf", required = false, defaultValue = "false")
-            @Parameter(description = "Log the operation if true")
+            @Schema(description = "Log the operation if true")
             Optional<Boolean> logIf,
-            @Parameter(description = "The new work to create", required = true)
+            @Schema(description = "The new work to create", implementation = NewWorkDTO.class)
             @Validated @RequestBody NewWorkDTO newWorkDTO
     ) {
         return ApiResultResponse.of(workService.createNew(domainId, newWorkDTO, logIf));
@@ -96,10 +96,11 @@ public class DomainWorkController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.checkUpdate(#authentication, #domainId, #workId, #updateWorkDTO)")
     public ApiResultResponse<Boolean> updateWork(
             Authentication authentication,
-            @Parameter(description = "Is the domain id that own the work", required = true)
+            @Schema(description = "Is the domain id that own the work")
             @PathVariable String domainId,
-            @Parameter(description = "Is the work id to update", required = true)
+            @Schema(description = "Is the work id to update")
             @PathVariable() String workId,
+            @Schema(description = "The update to the update", implementation = UpdateWorkDTO.class)
             @Valid @RequestBody UpdateWorkDTO updateWorkDTO
     ) {
         workService.update(domainId, workId, updateWorkDTO);
@@ -119,13 +120,13 @@ public class DomainWorkController {
     @PostAuthorize("@workAuthorizationService.applyCompletionDTO(returnObject, authentication)")
     public ApiResultResponse<WorkDTO> findWorkById(
             Authentication authentication,
-            @Parameter(description = "Is the id of the domain to use to find the work", required = true)
+            @Schema(description = "Is the id of the domain to use to find the work", required = true)
             @PathVariable String domainId,
-            @Parameter(description = "Is the id of the work to find", required = true)
+            @Schema(description = "Is the id of the work to find", required = true)
             @PathVariable String workId,
-            @Parameter(description = "Is the flag to include the changes history")
+            @Schema(description = "Is the flag to include the changes history")
             @RequestParam(name = "changes", required = false, defaultValue = "false") Optional<Boolean> changes,
-            @Parameter(description = "Is the flag to include the model changes history")
+            @Schema(description = "Is the flag to include the model changes history")
             @RequestParam(name = "model-changes", required = false, defaultValue = "false") Optional<Boolean> modelChanges
 
     ) {
@@ -151,9 +152,9 @@ public class DomainWorkController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<WorkDTO>> findWorkHistoryById(
             Authentication authentication,
-            @Parameter(description = "Is the id of the domain that contains the work", required = true)
+            @Schema(description = "Is the id of the domain that contains the work", required = true)
             @PathVariable String domainId,
-            @Parameter(description = "Is the id of the work", required = true)
+            @Schema(description = "Is the id of the work", required = true)
             @PathVariable String workId
     ) {
         return ApiResultResponse.of(
@@ -184,13 +185,13 @@ public class DomainWorkController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.canAssociateToBucket(#authentication, #domainId, #workId, #bucketId, #move)")
     public ApiResultResponse<Boolean> assignWorkToBucket(
             Authentication authentication,
-            @Parameter(description = "Is the id of the domain that contains the work", required = true)
+            @Schema(description = "Is the id of the domain that contains the work", required = true)
             @PathVariable String domainId,
-            @Parameter(description = "Is the id of the work", required = true)
+            @Schema(description = "Is the id of the work", required = true)
             @PathVariable String workId,
-            @Parameter(description = "Is the id of the bucket", required = true)
+            @Schema(description = "Is the id of the bucket", required = true)
             @PathVariable String bucketId,
-            @Parameter(description = "Is the flag to move the work to the bucket, instead of fire error if the work is already assigned to another bucket")
+            @Schema(description = "Is the flag to move the work to the bucket, instead of fire error if the work is already assigned to another bucket")
             @RequestParam Optional<Boolean> move
     ) {
         workService.associateWorkToBucketSlot(domainId, workId, bucketId, move);
