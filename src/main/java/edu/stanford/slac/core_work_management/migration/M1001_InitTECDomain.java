@@ -150,7 +150,8 @@ public class M1001_InitTECDomain {
                         .childWorkTypeIds(Set.of(newHardwareRequestId))
                         .customFields(
                                 List.of(
-                                        WATypeCustomFieldDTO.builder().label("group").description("Group").valueType(ValueTypeDTO.LOV).additionalMappingInfo("ProjectGroup").group("General Information").isMandatory(false).build(),
+//                                        WATypeCustomFieldDTO.builder().label("group").description("Group").valueType(ValueTypeDTO.LOV).additionalMappingInfo("ProjectGroup").group("General Information").isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("project").description("Project").valueType(ValueTypeDTO.LOV).additionalMappingInfo("ProjectGroup").group("General Information").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("subsystem").description("Subsystem").valueType(ValueTypeDTO.LOV).additionalMappingInfo("SubsystemGroup").group("General Information").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("assignedTo").description("Assigned To").valueType(ValueTypeDTO.String).group("General Information").isMandatory(false).build(),
                                         WATypeCustomFieldDTO.builder().label("estimatedHrs").description("Estimated Hrs").valueType(ValueTypeDTO.Double).group("Scheduling").isMandatory(false).build(),

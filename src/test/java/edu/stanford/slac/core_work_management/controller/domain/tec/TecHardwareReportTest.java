@@ -172,10 +172,10 @@ public class TecHardwareReportTest {
                                                 // set group
                                                 WriteCustomFieldDTO
                                                         .builder()
-                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(reportWorkType, "group"))
+                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(reportWorkType, "project"))
                                                         .value(
                                                                 ValueDTO.builder()
-                                                                        .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(reportWorkType, "group", 0))
+                                                                        .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(reportWorkType, "project", 0))
                                                                         .type(ValueTypeDTO.LOV).build()
                                                         )
                                                         .build(),
@@ -262,10 +262,10 @@ public class TecHardwareReportTest {
                                                 // set group
                                                 WriteCustomFieldDTO
                                                         .builder()
-                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(reportWorkType, "group"))
+                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(reportWorkType, "project"))
                                                         .value(
                                                                 ValueDTO.builder()
-                                                                        .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(reportWorkType, "group", 0))
+                                                                        .value(tecDomainEnvironmentTest.getWorkLovValueIdByGroupNameAndIndex(reportWorkType, "project", 0))
                                                                         .type(ValueTypeDTO.LOV).build()
                                                         )
                                                         .build(),
