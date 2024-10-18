@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -30,7 +31,7 @@ public class TestControllerHelperService {
     private final JWTHelper jwtHelper;
     private final AppProperties appProperties;
     private final ObjectMapper objectMapper;
-
+    static public boolean goLive = false;
     public TestControllerHelperService(ObjectMapper objectMapper, JWTHelper jwtHelper, AppProperties appProperties) {
         this.jwtHelper = jwtHelper;
         this.appProperties = appProperties;
@@ -989,7 +990,10 @@ public class TestControllerHelperService {
             Optional<String> userInfo,
             MockHttpServletRequestBuilder requestBuilder) throws Exception {
         userInfo.ifPresent(login -> requestBuilder.header(appProperties.getUserHeaderName(), jwtHelper.generateJwt(login)));
-
+        if(goLive) {
+            mockMvc.perform(requestBuilder)
+                    .andExpect(resultMatcher);
+        }
         MvcResult result = mockMvc.perform(requestBuilder)
                 .andReturn();
         // check if it is the result matcher is ok

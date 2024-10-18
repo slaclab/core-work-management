@@ -55,8 +55,11 @@ public class LOVController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<String>> findAllFieldThatAreLOV(
             Authentication authentication,
+            @Schema(description = "The domain type")
             @NotEmpty @PathVariable LOVDomainTypeDTO domainType,
+            @Schema(description = "The domain id")
             @NotEmpty @PathVariable String domainId,
+            @Schema(description = "The subtype id")
             @NotEmpty @PathVariable String subtypeId
     ) {
         if(domainType==LOVDomainTypeDTO.Bucket && !subtypeId.equalsIgnoreCase("bucket")) {
@@ -78,9 +81,13 @@ public class LOVController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<LOVElementDTO>> findValuesByDomainAndFieldName(
             Authentication authentication,
+            @Schema(description = "The domain type")
             @PathVariable LOVDomainTypeDTO domainType,
+            @Schema(description = "The domain id")
             @NotEmpty @PathVariable String domainId,
+            @Schema(description = "The subtype id")
             @NotEmpty @PathVariable String subtypeId,
+            @Schema(description = "The field name")
             @NotEmpty @PathVariable String fieldName
     ) {
         return ApiResultResponse.of(lovService.findAllByDomainAndFieldName(domainType, domainId, subtypeId, fieldName));

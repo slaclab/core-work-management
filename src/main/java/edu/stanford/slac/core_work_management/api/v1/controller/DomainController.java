@@ -42,7 +42,7 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNewDomain(
             Authentication authentication,
-            @Parameter(description = "The new domain to create")
+            @Schema(description = "The new domain to create", implementation = NewDomainDTO.class)
             @Valid @RequestBody NewDomainDTO newDomainDTO
     ) {
         return ApiResultResponse.of(
@@ -60,7 +60,7 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<DomainDTO> findDomainById(
             Authentication authentication,
-            @Parameter(description = "The id of the domain to find")
+            @Schema(description = "The id of the domain to find")
             @PathVariable String domainId
     ) {
         return ApiResultResponse.of(
@@ -92,7 +92,7 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<WorkTypeDTO>> findAllWorkTypes(
             Authentication authentication,
-            @Parameter(description = "The domain id", required = true)
+            @Schema(description = "The domain id", required = true)
             @PathVariable @NotNull String domainId
     ) {
         return ApiResultResponse.of(domainService.findAllWorkTypes(domainId));
@@ -109,9 +109,9 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNewRootLocation(
             Authentication authentication,
-            @Parameter(description = "The domain id")
+            @Schema(description = "The domain id")
             @PathVariable @NotEmpty String domainId,
-            @Parameter(description = "The new location to create")
+            @Schema(description = "The new location to create", implementation = NewLocationDTO.class)
             @Valid @RequestBody NewLocationDTO newLocationDTO
     ) {
         return ApiResultResponse.of(
@@ -129,11 +129,11 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNewChildLocation(
             Authentication authentication,
-            @Parameter(description = "The domain id")
+            @Schema(description = "The domain id")
             @PathVariable @NotEmpty String domainId,
-            @Parameter(description = "The id of the parent location")
+            @Schema(description = "The id of the parent location")
             @PathVariable @NotEmpty String locationId,
-            @Parameter(description = "The new location to create")
+            @Schema(description = "The new location to create", implementation = NewLocationDTO.class)
             @Valid @RequestBody NewLocationDTO newLocationDTO
     ) {
         return ApiResultResponse.of(
@@ -150,9 +150,9 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<LocationDTO> findLocationById(
             Authentication authentication,
-            @Parameter(description = "The domain id", required = true)
+            @Schema(description = "The domain id")
             @PathVariable @NotNull String domainId,
-            @Parameter(description = "The id of the location to find")
+            @Schema(description = "The id of the location to find")
             @PathVariable("locationId") String locationId
     ) {
         return ApiResultResponse.of(
@@ -169,10 +169,11 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<LocationDTO>> findAllLocations(
             Authentication authentication,
-            @Parameter(description = "The domain id", required = true)
+            @Schema(description = "The domain id", required = true)
             @PathVariable @NotNull String domainId,
-            @Parameter(description = "The filter for the location")
+            @Schema(description = "The filter for the location")
             @RequestParam(value = "filter") Optional<String> filter,
+            @Schema(description = "The external id of the location")
             @RequestParam(value = "externalId") Optional<String> externalId
     ) {
         return ApiResultResponse.of(
@@ -198,9 +199,9 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNewShopGroup(
             Authentication authentication,
-            @Parameter(description = "The domain id")
+            @Schema(description = "The domain id")
             @PathVariable String domainId,
-            @Schema(description = "The new shop group to create")
+            @Schema(description = "The new shop group to create", implementation = NewShopGroupDTO.class)
             @Valid @RequestBody NewShopGroupDTO newShopGroupDTO
     ) {
         return ApiResultResponse.of(
@@ -218,10 +219,11 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @shopGroupAuthorizationService.checkUpdate(#authentication, #domainId, #id, #updateShopGroupDTO)")
     public ApiResultResponse<Boolean> updateShopGroup(
             Authentication authentication,
-            @Parameter(description = "The domain id")
+            @Schema(description = "The domain id")
             @PathVariable String domainId,
-            @Parameter(description = "The id of the shop group to update")
+            @Schema(description = "The id of the shop group to update")
             @PathVariable String id,
+            @Schema(description = "The new shop group to update", implementation = UpdateShopGroupDTO.class)
             @Valid @RequestBody UpdateShopGroupDTO updateShopGroupDTO
     ) {
         shopGroupService.update(domainId, id, updateShopGroupDTO);
@@ -232,7 +234,7 @@ public class DomainController {
             path = "{domainId}/shop-group",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(summary = "Create a new shop group")
+    @Operation(summary = "Find all the  shop group for a domain")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
 
@@ -249,7 +251,7 @@ public class DomainController {
             path = "{domainId}/shop-group/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @Operation(summary = "Create a new shop group")
+    @Operation(summary = "Get a full shop group")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<ShopGroupDTO> findShopGroupByDomainAndId(

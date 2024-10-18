@@ -53,13 +53,13 @@ public class WorkController {
     @PostAuthorize("@workAuthorizationService.applyCompletionDTOList(returnObject, authentication)")
     public ApiResultResponse<List<WorkDTO>> findAllWork(
             Authentication authentication,
-            @Parameter(name = "anchorId", description = "Is the id of an entry from where start the search")
+            @Schema(name = "anchorId", description = "Is the id of an entry from where start the search")
             @RequestParam("anchorId") Optional<String> anchorId,
-            @Parameter(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
+            @Schema(name = "contextSize", description = "Include this number of entries before the startDate (used for highlighting entries)")
             @RequestParam("contextSize") Optional<Integer> contextSize,
-            @Parameter(name = "limit", description = "Limit the number the number of entries after the start date.")
+            @Schema(name = "limit", description = "Limit the number the number of entries after the start date.")
             @RequestParam(value = "limit") Optional<Integer> limit,
-            @Parameter(name = "search", description = "Typical search functionality")
+            @Schema(name = "search", description = "Typical search functionality")
             @RequestParam(value = "search") Optional<String> search
     ) {
         return ApiResultResponse.of(

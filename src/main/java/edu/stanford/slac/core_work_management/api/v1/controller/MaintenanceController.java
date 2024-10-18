@@ -45,6 +45,7 @@ public class MaintenanceController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNew(
             Authentication authentication,
+            @Schema(description = "The new bucket slot to create")
             @Valid @RequestBody NewBucketDTO newBucketSlotDTO
     ) {
         return ApiResultResponse.of(
@@ -61,6 +62,7 @@ public class MaintenanceController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<BucketSlotDTO> findById(
             Authentication authentication,
+            @Schema(description = "The id of the bucket slot to find")
             @PathVariable("id") String id
     ) {
         return ApiResultResponse.of(
@@ -78,13 +80,13 @@ public class MaintenanceController {
     public ApiResultResponse<List<BucketSlotDTO>> findAll
             (
                     Authentication authentication,
-                    @Parameter(description = "The maximum number of bucket slots to return")
+                    @Schema(description = "The maximum number of bucket slots to return")
                     @RequestParam(value = "limit", required = false, defaultValue = "10") Optional<Integer> limit,
-                    @Parameter(description = "The size of the context to return")
+                    @Schema(description = "The size of the context to return")
                     @RequestParam(value = "contextSize", required = false, defaultValue = "0") Optional<Integer> contextSize,
-                    @Parameter(description = "The id of the anchor to use for pagination")
+                    @Schema(description = "The id of the anchor to use for pagination")
                     @RequestParam(value = "anchorId", required = false) Optional<String> anchorId,
-                    @Parameter(description = "The from date to use for the search")
+                    @Schema(description = "The from date to use for the search")
                     @RequestParam(value = "from", required = false) Optional<LocalDateTime> from
 
             ) {

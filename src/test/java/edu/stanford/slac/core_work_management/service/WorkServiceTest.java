@@ -53,6 +53,8 @@ public class WorkServiceTest {
     LOVService lovService;
     @Autowired
     BucketService bucketService;
+    @Autowired
+    ScriptService scriptService;
 
     private DomainDTO fullDomain;
     private WorkflowDTO parentWorkflow;
@@ -267,6 +269,8 @@ public class WorkServiceTest {
         assertThat(foundWork.workType().id()).isEqualTo(newWorkTypeId);
         // check the workflow
         assertThat(foundWork.workType().workflow().id()).isEqualTo(parentWorkflow.id());
+        assertThat(foundWork.workType().workflow().implementation()).isEqualTo(parentWorkflow.implementation());
+        assertThat(foundWork.workType().validatorName()).isEqualTo("validation/DummyParentValidation.groovy");
         // check the location
         assertThat(foundWork.location().id()).isEqualTo(locationId);
         // check the shop group

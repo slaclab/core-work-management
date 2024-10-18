@@ -36,7 +36,7 @@ public class AttachmentsController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) ")//and @attachmentAuthorizationService.canCreate(#authentication)
     public ApiResultResponse<String> newAttachment(
             Authentication authentication,
-            @Parameter(name = "uploadFile", description = "The file to upload", required = true)
+            @Schema(name = "uploadFile", description = "The file to upload", required = true)
             @RequestParam("uploadFile") MultipartFile uploadFile
     ) throws Exception {
         return ApiResultResponse.of(
@@ -58,7 +58,7 @@ public class AttachmentsController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)") //  and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)
     public ResponseEntity<Resource> download(
             Authentication authentication,
-            @Parameter(name = "attachmentId", description = "The unique id of the attachment", required = true)
+            @Schema(name = "attachmentId", description = "The unique id of the attachment", required = true)
             @PathVariable @NotNull String attachmentId
     ) throws Exception {
         StorageObjectDTO objectDTO = attachmentService.getAttachmentContent(attachmentId);
@@ -81,7 +81,7 @@ public class AttachmentsController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)") // and @attachmentAuthorizationService.canRead(#authentication, #attachmentId)
     public ResponseEntity<Resource> downloadPreview(
             Authentication authentication,
-            @Parameter(name = "attachmentId", description = "The unique id of the attachment", required = true)
+            @Schema(name = "attachmentId", description = "The unique id of the attachment", required = true)
             @PathVariable String attachmentId
     ) throws Exception {
         StorageObjectDTO objectDTO = attachmentService.getPreviewContent(attachmentId);

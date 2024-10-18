@@ -166,6 +166,20 @@ public class ScriptService {
         }
     }
 
+    /**
+     * Get the hash of a script file
+     * @param scriptFileName the name of the script file
+     * @return the hash of the script file
+     */
+    public String getScriptFileHash(String scriptFileName) {
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(scriptFileName);
+        try {
+            return hashScript(loadISContent(inputStream));
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     // Helper method to compile the script
     private Class<?> compileScript(String scriptText) {
         try {
