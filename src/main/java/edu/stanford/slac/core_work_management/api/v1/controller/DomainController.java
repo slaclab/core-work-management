@@ -169,10 +169,11 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
     public ApiResultResponse<List<LocationDTO>> findAllLocations(
             Authentication authentication,
-            @Parameter(description = "The domain id", required = true)
+            @Schema(description = "The domain id", required = true)
             @PathVariable @NotNull String domainId,
-            @Parameter(description = "The filter for the location")
+            @Schema(description = "The filter for the location")
             @RequestParam(value = "filter") Optional<String> filter,
+            @Schema(description = "The external id of the location")
             @RequestParam(value = "externalId") Optional<String> externalId
     ) {
         return ApiResultResponse.of(
@@ -198,7 +199,7 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @baseAuthorizationService.checkForRoot(#authentication)")
     public ApiResultResponse<String> createNewShopGroup(
             Authentication authentication,
-            @Parameter(description = "The domain id")
+            @Schema(description = "The domain id")
             @PathVariable String domainId,
             @Schema(description = "The new shop group to create", implementation = NewShopGroupDTO.class)
             @Valid @RequestBody NewShopGroupDTO newShopGroupDTO
@@ -218,9 +219,9 @@ public class DomainController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @shopGroupAuthorizationService.checkUpdate(#authentication, #domainId, #id, #updateShopGroupDTO)")
     public ApiResultResponse<Boolean> updateShopGroup(
             Authentication authentication,
-            @Parameter(description = "The domain id")
+            @Schema(description = "The domain id")
             @PathVariable String domainId,
-            @Parameter(description = "The id of the shop group to update")
+            @Schema(description = "The id of the shop group to update")
             @PathVariable String id,
             @Schema(description = "The new shop group to update", implementation = UpdateShopGroupDTO.class)
             @Valid @RequestBody UpdateShopGroupDTO updateShopGroupDTO
