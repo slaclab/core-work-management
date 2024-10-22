@@ -11,6 +11,8 @@ spring:
   cache:
     cache-names: workflow,domains
     type: hazelcast
+  hazelcast:
+    config: ${CWM_HAZELCAST_CONFIG_PATH:classpath:hazelcast.yaml}
   ldap:
     urls: ${CWM_LDAP_URI:ldap://localhost:8389}
     base: ${CWM_LDAP_BASE:dc=sdf,dc=slac,dc=stanford,dc=edu}
