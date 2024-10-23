@@ -47,6 +47,7 @@ edu:
         elog-backend-url: ${CWM_ELOG_URL:http://localhost:8082}
         elog-import-topic: ${CWM_ELOG_IMPORT_TOPIC:elog-plus-import-entry}
         workflow-processing-topic: ${CWM_WORKFLOW_PROCESSING_TOPIC:workflow-processing}
+        smtp-server: ${CWM_SMTP_SERVER:smtp.slac.stanford.edu}
       ad:
         eed:
           baselib:

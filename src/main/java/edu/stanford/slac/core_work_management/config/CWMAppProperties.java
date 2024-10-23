@@ -15,4 +15,5 @@ public class CWMAppProperties {
     private String imagePreviewTopic;
     private String workflowProcessingTopic;
     private Integer kafkaConsumerConcurrency;
+    private String smtpServer;
 }
