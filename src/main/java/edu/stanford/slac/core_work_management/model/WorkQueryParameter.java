@@ -23,11 +23,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
 public class WorkQueryParameter {
+    private List<String> domainIds;
+    private List<String> workTypeIds;
     private String anchorID;
     private Integer contextSize;
     private Integer limit;

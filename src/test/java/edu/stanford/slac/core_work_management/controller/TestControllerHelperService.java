@@ -706,7 +706,7 @@ public class TestControllerHelperService {
      * @return the list of work
      * @throws Exception the exception
      */
-    public ApiResultResponse<List<WorkDTO>> workControllerSearchAllWork(
+    public ApiResultResponse<List<WorkSummaryDTO>> workControllerSearchAllWork(
             MockMvc mockMvc,
             ResultMatcher resultMatcher,
             Optional<String> userInfo,
@@ -715,12 +715,52 @@ public class TestControllerHelperService {
             Optional<Integer> limit,
             Optional<String> search
     ) throws Exception {
+        return workControllerSearchAllWork(
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                anchorID,
+                contextSize,
+                limit,
+                search,
+                Optional.empty(),
+                Optional.empty()
+        );
+    }
+
+    /**
+     * Search all the work
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param anchorID
+     * @param contextSize
+     * @param limit
+     * @param search
+     * @param domainIds
+     * @param workTypeIds
+     * @return
+     * @throws Exception
+     */
+    public ApiResultResponse<List<WorkSummaryDTO>> workControllerSearchAllWork(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            Optional<String> anchorID,
+            Optional<Integer> contextSize,
+            Optional<Integer> limit,
+            Optional<String> search,
+            Optional<List<String>> domainIds,
+            Optional<List<String>> workTypeIds
+    ) throws Exception {
         var requestBuilder = get("/v1/work")
                 .contentType(MediaType.APPLICATION_JSON);
         anchorID.ifPresent(s -> requestBuilder.param("anchorId", s));
         contextSize.ifPresent(s -> requestBuilder.param("contextSize", s.toString()));
         limit.ifPresent(s -> requestBuilder.param("limit", s.toString()));
         search.ifPresent(s -> requestBuilder.param("search", s));
+        domainIds.ifPresent(strings -> requestBuilder.param("domainIds", String.join(",", strings)));
+        workTypeIds.ifPresent(strings -> requestBuilder.param("workTypeIds", String.join(",", strings)));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

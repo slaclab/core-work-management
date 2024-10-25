@@ -105,9 +105,31 @@ public abstract class WorkMapper {
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
     abstract public WorkDTO toDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
 
+    /**
+     * Convert the {@link Work} to a {@link WorkSummaryDTO}
+     *
+     * @param work the entity to convert
+     * @return the converted DTO
+     */
+    @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getDomainId(), work.getWorkType()))")
+    @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
+    abstract public WorkSummaryDTO toSummaryDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
+
+    /**
+     * Convert the {@link WorkBucketAssociation} to a {@link WorkBucketAssociationDTO}
+     *
+     * @param bucketAssociation the entity to convert
+     * @return the converted DTO
+     */
     @Mapping(target = "bucket", expression = "java(fetchBucket(bucketAssociation.getBucketId()))")
     abstract public WorkBucketAssociationDTO toDTO(WorkBucketAssociation bucketAssociation);
 
+    /**
+     * Fetch the bucket
+     *
+     * @param bucketId the entity to convert
+     * @return the converted DTO
+     */
     public BucketSlotDTO fetchBucket(String bucketId) {
         if(bucketId==null) return null;
         return bucketService.findById(bucketId);

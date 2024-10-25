@@ -136,6 +136,19 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
                         Criteria.where("createdDate").gt(anchorCreatedDate)
                 );
             }
+
+            if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
+                allCriteria.add(
+                        Criteria.where("domainId").in(queryParameter.getDomainIds())
+                );
+            }
+
+            if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
+                allCriteria.add(
+                        Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
+                );
+            }
+
             if(!allCriteria.isEmpty()) {
                 query.addCriteria(
                         new Criteria().andOperator(
@@ -175,6 +188,18 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
             allCriteria.add(
                     Criteria.where("createdDate").lte(anchorCreatedDate)
             );
+
+            if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
+                allCriteria.add(
+                        Criteria.where("domainId").in(queryParameter.getDomainIds())
+                );
+            }
+
+            if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
+                allCriteria.add(
+                        Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
+                );
+            }
 
             // at this point the anchor id is not null
             Query query = getQuery(queryParameter);

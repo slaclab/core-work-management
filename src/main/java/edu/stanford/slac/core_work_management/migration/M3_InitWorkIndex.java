@@ -9,27 +9,39 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-work-statistic-index", order = "6", author = "bisegni")
-public class M6_IndexForWorkStatistic {
+@ChangeUnit(id = "init-work-activity-index", order = "3", author = "bisegni")
+public class M3_InitWorkIndex {
     private final MongoTemplate mongoTemplate;
 
     @Execution
     public void changeSet() {
+        initWorkIndex();
+    }
+
+    /**
+     * This method creates the index for the work collection
+     */
+    private void initWorkIndex() {
         MongoDDLOps.createIndex(
                 Work.class,
                 mongoTemplate,
-                new Index()
-                        .on(
-                                "workType.id",
+                new Index().on(
+                                "relatedToWorkId",
                                 Sort.Direction.ASC
                         )
-                        .on(
-                                "currentStatus.status",
-                                Sort.Direction.ASC
-                        )
-                        .named("work-type-status-statistic-index")
+                        .named("relatedToWorkId")
+                        .sparse()
+        );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new TextIndexDefinition.TextIndexDefinitionBuilder()
+                        .onField("title")
+                        .onField("description")
+                        .build()
         );
     }
 

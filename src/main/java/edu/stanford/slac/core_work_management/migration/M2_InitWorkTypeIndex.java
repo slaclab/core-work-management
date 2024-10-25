@@ -1,7 +1,7 @@
 package edu.stanford.slac.core_work_management.migration;
 
 import edu.stanford.slac.ad.eed.base_mongodb_lib.utility.MongoDDLOps;
-import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.WorkType;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;
 import io.mongock.api.annotations.RollbackExecution;
@@ -9,41 +9,33 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 
 @AllArgsConstructor
-@ChangeUnit(id = "init-work-activity-index", order = "3", author = "bisegni")
-public class M3_InitWorkAndActivityIndex {
+@ChangeUnit(id = "init-work-type-index", order = "2", author = "bisegni")
+public class M2_InitWorkTypeIndex {
     private final MongoTemplate mongoTemplate;
 
     @Execution
     public void changeSet() {
-        initWorkIndex();
+        initWorkTypeIndex();
     }
 
     /**
      * This method creates the index for the work collection
      */
-    private void initWorkIndex() {
+    private void initWorkTypeIndex() {
         MongoDDLOps.createIndex(
-                Work.class,
+                WorkType.class,
                 mongoTemplate,
                 new Index().on(
-                                "relatedToWorkId",
+                                "title",
                                 Sort.Direction.ASC
                         )
-                        .named("relatedToWorkId")
-                        .sparse()
-        );
-        MongoDDLOps.createIndex(
-                Work.class,
-                mongoTemplate,
-                new TextIndexDefinition.TextIndexDefinitionBuilder()
-                        .onField("title")
-                        .onField("description")
-                        .build()
+                        .named("title")
+                        .unique()
         );
     }
+
 
     @RollbackExecution
     public void rollback() {
