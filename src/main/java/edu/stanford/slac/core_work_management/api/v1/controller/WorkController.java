@@ -60,12 +60,18 @@ public class WorkController {
             @Schema(name = "limit", description = "Limit the number the number of entries after the start date.")
             @RequestParam(value = "limit") Optional<Integer> limit,
             @Schema(name = "search", description = "Typical search functionality")
-            @RequestParam(value = "search") Optional<String> search
+            @RequestParam(value = "search") Optional<String> search,
+            @Schema(name = "domainIds", description = "Return all the works that belong ot one of the domain id")
+            @RequestParam(value = "domainIds") Optional<List<String>> domainIds,
+            @Schema(name = "workTypeId", description = "Return all the works that belong ot one of the work type id")
+            @RequestParam(value = "workTypeId") Optional<List<String>> workTypeId
     ) {
         return ApiResultResponse.of(
                 workService.searchAllWork(
                         WorkQueryParameterDTO.builder()
                                 .anchorID(anchorId.orElse(null))
+                                .domainIds(domainIds.orElse(null))
+                                .workTypeId(workTypeId.orElse(null))
                                 .contextSize(contextSize.orElse(null))
                                 .limit(limit.orElse(null))
                                 .search(search.orElse(null))
