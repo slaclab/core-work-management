@@ -15,7 +15,7 @@ public record WorkQueryParameterDTO(
         @Schema(description = "The list of domain ids to search in.")
         List<String> domainIds,
         @Schema(description = "The list of work type id to search in.")
-        List<String> workTypeId,
+        List<String> workTypeIds,
         @Schema(description = "Is the id to point to as starting point in the search")
         String anchorID,
         @Schema(description = "Include this number of element before the anchor")

@@ -63,15 +63,15 @@ public class WorkController {
             @RequestParam(value = "search") Optional<String> search,
             @Schema(name = "domainIds", description = "Return all the works that belong ot one of the domain id")
             @RequestParam(value = "domainIds") Optional<List<String>> domainIds,
-            @Schema(name = "workTypeId", description = "Return all the works that belong ot one of the work type id")
-            @RequestParam(value = "workTypeId") Optional<List<String>> workTypeIds
+            @Schema(name = "workTypeIds", description = "Return all the works that belong ot one of the work type id")
+            @RequestParam(value = "workTypeIds") Optional<List<String>> workTypeIds
     ) {
         return ApiResultResponse.of(
                 workService.searchAllWork(
                         WorkQueryParameterDTO.builder()
                                 .anchorID(anchorId.orElse(null))
                                 .domainIds(domainIds.orElse(null))
-                                .workTypeId(workTypeIds.orElse(null))
+                                .workTypeIds(workTypeIds.orElse(null))
                                 .contextSize(contextSize.orElse(null))
                                 .limit(limit.orElse(null))
                                 .search(search.orElse(null))

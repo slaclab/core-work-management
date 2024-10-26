@@ -40,10 +40,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -522,7 +519,7 @@ public class WorkControllerSearchWorkTest {
                 workIdsDomain2.add(newWorkIdResult.getPayload());
             }
         }
-
+        // search all the work for domain 1
         var searchResult =
                 assertDoesNotThrow(
                         () -> testControllerHelperService.workControllerSearchAllWork(
@@ -531,15 +528,115 @@ public class WorkControllerSearchWorkTest {
                                 Optional.of("user1@slac.stanford.edu"),
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(50),
+                                Optional.of(100),
                                 Optional.empty(),
                                 Optional.of(List.of(domainDTO.id())),
                                 Optional.empty()
                         )
                 );
-        assertThat(searchResult.getPayload()).isNotEmpty();
+        assertThat(searchResult.getPayload()).isNotEmpty().hasSize(50);
         searchResult.getPayload().forEach(workSummaryDTO -> {
             assertThat(workIdsDomain1).contains(workSummaryDTO.id());
+        });
+
+        // search all the work for domain 2
+        searchResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.of(List.of(alternateDomainDTO.id())),
+                                Optional.empty()
+                        )
+                );
+        assertThat(searchResult.getPayload()).isNotEmpty().hasSize(50);
+        searchResult.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain2).contains(workSummaryDTO.id());
+        });
+    }
+
+    @Test
+    public void testSearchByWorkType() {
+        Set<String> workIdsDomain1 = new HashSet<>();
+        Set<String> workTypeIdDomain1 = new HashSet<>();
+        Set<String> workIdsDomain2 = new HashSet<>();
+        Set<String> workTypeIdDomain2 = new HashSet<>();
+        for (int i = 0; i < 100; i++) {
+            // create new work
+            int finalI = i;
+            // select a random number form one and two
+            int domainIndex = i % 2;
+            int workTypeIndex = i % 2;
+            var newWorkIdResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.workControllerCreateNew(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of("user1@slac.stanford.edu"),
+                                    domainIndex == 0 ? domainDTO.id() : alternateDomainDTO.id(),
+                                    NewWorkDTO.builder()
+                                            .locationId(domainIndex == 0 ? testLocationIds.get(0) : testAlternateLocationIds.get(0))
+                                            .workTypeId(domainIndex == 0 ? testWorkTypeIds.get(0) : testAlternateWorkTypeIds.get(0))
+                                            .shopGroupId(domainIndex == 0 ? testShopGroupIds.get(0) : testAlternateShopGroupIds.get(0))
+                                            .title("work %s".formatted(finalI))
+                                            .description("work %s description".formatted(finalI))
+                                            .build()
+                            )
+                    );
+            assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+            assertThat(newWorkIdResult.getPayload()).isNotNull();
+            if(domainIndex == 0) {
+                workIdsDomain1.add(newWorkIdResult.getPayload());
+                workTypeIdDomain1.add(testWorkTypeIds.get(0));
+            } else {
+                workIdsDomain2.add(newWorkIdResult.getPayload());
+                workTypeIdDomain2.add(testAlternateWorkTypeIds.get(0));
+            }
+        }
+        // // fetch all work type 1 from domain 1
+        var searchResultWT1D1 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(List.of(testWorkTypeIds.get(0)))
+                        )
+                );
+        assertThat(searchResultWT1D1.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
+        searchResultWT1D1.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain1).contains(workSummaryDTO.id());
+            assertThat(workTypeIdDomain1).contains(workSummaryDTO.workType().id());
+        });
+
+        var searchResultWT1D2 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(List.of(testAlternateWorkTypeIds.get(0)))
+                        )
+                );
+        assertThat(searchResultWT1D2.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
+        searchResultWT1D2.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain2).contains(workSummaryDTO.id());
+            assertThat(workTypeIdDomain2).contains(workSummaryDTO.workType().id());
         });
     }
 }
