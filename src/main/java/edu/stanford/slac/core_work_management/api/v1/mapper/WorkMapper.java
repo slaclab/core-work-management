@@ -2,9 +2,11 @@ package edu.stanford.slac.core_work_management.api.v1.mapper;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
@@ -21,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +58,8 @@ public abstract class WorkMapper {
     ModelHistoryService modelHistoryService;
     @Autowired
     DomainMapper domainMapper;
+    @Autowired
+    PeopleGroupService peopleGroupService;
 
     /**
      * Convert the {@link NewWorkDTO} to a {@link Work}
@@ -396,6 +401,13 @@ public abstract class WorkMapper {
                             .value(value.value())
                             .build();
                 }
+                case Users -> {
+                    List<String> userIds = Arrays.asList(value.value().split(","));
+                    return UsersValue
+                            .builder()
+                            .value(userIds)
+                            .build();
+                }
 
                 default -> throw ControllerLogicException.builder()
                         .errorCode(-4)
@@ -487,6 +499,21 @@ public abstract class WorkMapper {
                     .type(ValueTypeDTO.Bucket)
                     .value("%s[%s]".formatted(bucketSlotDTO.type().value(), bucketSlotDTO.description()!=null?bucketSlotDTO.description():""))
                     .originalValue(bucketSlotDTO)
+                    .build();
+        } else if (valueType.isAssignableFrom(UsersValue.class)) {
+            // find all the user and set as original value
+            List<PersonDTO> foundUsers = new ArrayList<>();
+            ((UsersValue) abstractValue).getValue().forEach(
+                    userId -> {
+                        foundUsers.add(peopleGroupService.findPersonByEMail(userId));
+                    }
+            );
+            // now create the value and return it
+            newAttributeValue = ValueDTO
+                    .builder()
+                    .type(ValueTypeDTO.Users)
+                    .value(String.join(",", ((UsersValue) abstractValue).getValue()))
+                    .originalValue(foundUsers)
                     .build();
         } else {
             throw ControllerLogicException.builder()

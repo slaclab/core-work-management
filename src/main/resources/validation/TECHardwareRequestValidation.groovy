@@ -265,7 +265,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 "rswcfAttachments",
                 Optional.empty()
         )).valid) {
-            validateAttachment(attachment.payload.getValue() as AttachmentsValue, "RSWCF Attachments", validationResults)
+            validateAttachment(attachmentService, attachment.payload.getValue() as AttachmentsValue, "RSWCF Attachments", validationResults)
         }
 
         if ((attachment = checkWorkFieldPresence(
@@ -273,7 +273,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 "attachmentsAndFiles",
                 Optional.empty()
         )).valid) {
-            validateAttachment(attachment.payload.getValue() as AttachmentsValue, "Attachments and Files", validationResults)
+            validateAttachment(attachmentService, attachment.payload.getValue() as AttachmentsValue, "Attachments and Files", validationResults)
         }
     }
 
@@ -309,47 +309,9 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         }
 
         // check if the work has been assigned to someone
-        checkAssignedTo(work, validationResults);
+        checkAssignedTo(peopleGroupService, work, validationResults);
 
         // check if we have some errors
         checkAndFireError(validationResults)
-    }
-
-/**
- * Check if the string field is not null or empty
- *
- * @param work the work to check
- * @throws ControllerLogicException if the field is null or empty or with unalloyed user
- */
-    private void checkAssignedTo(Work work, ArrayList<ValidationResult<String>> validationResults) {
-        def assignedUsers = work.getAssignedTo() ?: []
-        if (assignedUsers.size() == 0) {
-            validationResults.add(ValidationResult.failure("The work must be assigned to someone"))
-            return;
-        }
-        // the assignedTo can be null or empty only if we are in created state
-        assignedUsers.each { user ->
-            try {
-                peopleGroupService.findPersonByEMail(user)
-            } catch (PersonNotFound e) {
-                validationResults.add(ValidationResult.failure("The user '${user}' does not exist"))
-            }
-        }
-    }
-
-    /**
-     * Validate the attachments
-     * @param attachmentsValue the attachments to validate
-     * @param errorMessage the error message to show in case of error
-     */
-    private void validateAttachment(AttachmentsValue attachmentsValue, String fieldName, List<ValidationResult<String>> validationResult) {
-        if (attachmentsValue == null || attachmentsValue.getValue() == null || attachmentsValue.getValue().isEmpty()) {
-            return;
-        }
-        attachmentsValue.getValue().forEach { attachmentId ->
-            if (!attachmentService.exists(attachmentId)) {
-                validationResult.addFirst(ValidationResult.failure("The '%s' attachment %s does not exist".formatted(fieldName, attachmentId)))
-            }
-        }
     }
 }

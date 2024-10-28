@@ -1152,5 +1152,43 @@ public class M1000_InitLOV {
                         NewLOVElementDTO.builder().value("li06-li09").description("Unknown").build()
                 )
         );
+
+        lovService.createNew(
+                "SolutionTypeGroup",
+                List.of(
+                        NewLOVElementDTO.builder()
+                                .value("Bug Fix")
+                                .description("Bug Fix")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Database")
+                                .description("Database")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Design")
+                                .description("Design")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Duplicate")
+                                .description("Duplicate")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Enhancement")
+                                .description("Enhancement")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("No Trouble Found")
+                                .description("No Trouble Found")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Other")
+                                .description("Other")
+                                .build(),
+                        NewLOVElementDTO.builder()
+                                .value("Panel")
+                                .description("Panel")
+                                .build()
+                )
+        );
     }
 }
