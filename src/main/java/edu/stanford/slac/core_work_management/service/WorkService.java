@@ -170,7 +170,7 @@ public class WorkService {
         // check if is valid
         isValidForWorkflow(domainId, NewWorkValidation.builder().work(workToSave).build());
         // update workflow
-        updateWorkWorkflow(workToSave, null);
+        updateWorkWorkflow(workToSave,  domainMapper.toModel(newWorkDTO.workflowStateUpdate()));
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -486,23 +486,27 @@ public class WorkService {
 
         // delete old authorization
         authService.deleteAuthorizationForResourcePrefix(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()));
-
-        // this will fire exception in case the location has not been found
-        LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocation().getId());
-
         if (work.getCreatedBy() != null) {
             // the creator is a writer
             writerUserList.add(work.getCreatedBy());
         }
 
-        // authorize location manager as admin
-        adminUserList.add(locationDTO.locationManagerUserId());
-        // add shop group as writer in the form of virtual user
-        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroup().getId()));
-        // add assigned to users
-        if (work.getAssignedTo() != null) {
-            writerUserList.addAll(work.getAssignedTo());
+        if(work.getLocation() != null) {
+            // this will fire exception in case the location has not been found
+            LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocation().getId());
+            // authorize location manager as admin
+            adminUserList.add(locationDTO.locationManagerUserId());
         }
+
+        if(work.getShopGroup()!= null) {
+            // add shop group as writer in the form of virtual user
+            writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroup().getId()));
+            // add assigned to users
+            if (work.getAssignedTo() != null) {
+                writerUserList.addAll(work.getAssignedTo());
+            }
+        }
+
 
         // some user for various reason could be either admin and read
         // so removing the common from the reader list we are going

@@ -50,7 +50,7 @@ public class ManageBucketWorkflowUpdate {
      */
 
     public void processBucketStartEvent() {
-        log.info("Check which bucket need to be started");
+        log.debug("Check which bucket need to be started");
         BucketSlotDTO selectedBucket = null;
         var now = LocalDateTime.now(clock);
         // use the bucket service to find the next bucket to start
@@ -59,7 +59,7 @@ public class ManageBucketWorkflowUpdate {
             // set the bucket as completed
             bucketService.completeStartEventProcessing(selectedBucket.id());
         }
-        log.info("Startup bucket completed");
+        log.debug("Startup bucket completed");
     }
 
     /**
@@ -69,7 +69,7 @@ public class ManageBucketWorkflowUpdate {
      * update the workflow status
      */
     public void processBucketStopEvent() {
-        log.info("Check which bucket need to be stopped");
+        log.debug("Check which bucket need to be stopped");
         BucketSlotDTO selectedBucket = null;
         var now = LocalDateTime.now(clock);
         // use the bucket service to find the next bucket to start
@@ -77,7 +77,7 @@ public class ManageBucketWorkflowUpdate {
             processBucket(selectedBucket);
             bucketService.completeStopEventProcessing(selectedBucket.id());
         }
-        log.info("Stop bucket completed");
+        log.debug("Stop bucket completed");
     }
 
     /**

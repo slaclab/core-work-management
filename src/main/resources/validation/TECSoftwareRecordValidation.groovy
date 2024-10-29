@@ -1,6 +1,6 @@
 package validation
 
-import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
+
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
@@ -12,8 +12,8 @@ import edu.stanford.slac.core_work_management.service.ShopGroupService
 import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation
 import edu.stanford.slac.core_work_management.service.workflow.*
 import groovy.util.logging.Slf4j
-
-import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
 
 /**
  * Validation for the TECHardwareReport work type.
@@ -62,7 +62,16 @@ class TECSoftwareReportValidation extends WorkTypeValidation {
     }
 
     private void manageInCreateState(BaseWorkflow workflowInstance, Work work, UpdateWorkflowState updateWorkflowState) {
+        // check if assigned is null assign the creator
+        if(work.getAssignedTo()== null || work.getAssignedTo().isEmpty()) {
+            final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            work.setAssignedTo(List.of(auth.getPrincipal().toString()))
+        }
 
+        // check if user what close the record upon creation
+        if(updateWorkflowState!= null && updateWorkflowState.getNewState() == WorkflowState.Closed) {
+            workflowInstance.moveToState(work, updateWorkflowState);
+        }
     }
 
     @Override

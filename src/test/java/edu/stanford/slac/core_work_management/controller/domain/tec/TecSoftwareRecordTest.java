@@ -144,4 +144,34 @@ public class TecSoftwareRecordTest {
         assertThat(failForMandatoryField.getErrorMessage()).containsIgnoringCase("description");
     }
 
+    @Test
+    public void createAClosedRecord() {
+        // create a new work
+        var newRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(domainTestInfo.getWorkTypeByName("Software Record").id())
+                                .title("Software Record")
+                                .description("Software Record Description")
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .comment("Closed on creation")
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(newRecordId).isNotNull();
+        assertThat(newRecordId.getErrorCode()).isEqualTo(0);
+        assertThat(newRecordId.getPayload()).isNotNull().isNotEmpty();
+
+        // check that work is going on close state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
+    }
 }

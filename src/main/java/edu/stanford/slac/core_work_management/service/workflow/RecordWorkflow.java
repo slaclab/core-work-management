@@ -27,7 +27,7 @@ public class RecordWorkflow extends BaseWorkflow {
     public RecordWorkflow() {
         validTransitions = Map.of(
                 // Rule: workStatus = "Approved"
-                WorkflowState.Created, Set.of(WorkflowState.Approved),
+                WorkflowState.Created, Set.of(WorkflowState.Approved, WorkflowState.Closed),
                 // Rule: becomes active when startDate starts
                 WorkflowState.Approved, Set.of(WorkflowState.InProgress),
                 // Rule: becomes active when endDate reaches or user tag completed the work

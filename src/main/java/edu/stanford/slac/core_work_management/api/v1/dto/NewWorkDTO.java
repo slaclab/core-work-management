@@ -40,7 +40,9 @@ public record NewWorkDTO(
         List<String> relatedToWorkIds,
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
-        List<WriteCustomFieldDTO> customFieldValues
+        List<WriteCustomFieldDTO> customFieldValues,
+        @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
+        UpdateWorkflowStateDTO workflowStateUpdate
 ) {
     public NewWorkDTO {
         if (customFieldValues == null) {
