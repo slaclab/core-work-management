@@ -174,4 +174,51 @@ public class TecSoftwareRecordTest {
         // check that work is going on close state
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
     }
+
+    @Test
+    public void createAndClosedAfter() {
+        // create a new work
+        var newRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(domainTestInfo.getWorkTypeByName("Software Record").id())
+                                .title("Software Record")
+                                .description("Software Record Description")
+                                .build()
+                )
+        );
+        assertThat(newRecordId).isNotNull();
+        assertThat(newRecordId.getErrorCode()).isEqualTo(0);
+        assertThat(newRecordId.getPayload()).isNotNull().isNotEmpty();
+
+        // check that work is going on close state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // close work
+        var closedRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newRecordId.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .comment("Closed after creation")
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+
+        // check that work is going on close state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
+    }
 }
