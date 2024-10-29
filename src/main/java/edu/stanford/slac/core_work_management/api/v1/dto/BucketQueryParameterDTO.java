@@ -39,4 +39,6 @@ public record BucketQueryParameterDTO(
         @Schema(description = "The search string")
         String search,
         @Schema(description = "Select all the bucket slot since from to future")
-        LocalDateTime from) {}
+        LocalDateTime from,
+        @Schema(description = "Select all the bucket slot that belong to a specific domain id")
+        String domainId) {}

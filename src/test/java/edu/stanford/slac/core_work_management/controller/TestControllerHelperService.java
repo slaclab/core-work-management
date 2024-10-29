@@ -929,6 +929,48 @@ public class TestControllerHelperService {
     }
 
     /**
+     * Get all bucket types
+     */
+    public ApiResultResponse<List<LOVElementDTO>> maintenanceControllerGetBucketTypes(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/maintenance/bucket/types")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Get all bucket status
+     */
+    public ApiResultResponse<List<LOVElementDTO>> maintenanceControllerGetBucketStatus(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo
+    ) throws Exception {
+        var requestBuilder = get("/v1/maintenance/bucket/status")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
      * Create a new log entry
      *
      * @param mockMvc          the mock mvc

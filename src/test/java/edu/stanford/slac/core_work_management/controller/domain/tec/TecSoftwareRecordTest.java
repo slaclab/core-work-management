@@ -144,5 +144,4 @@ public class TecSoftwareRecordTest {
         assertThat(failForMandatoryField.getErrorMessage()).containsIgnoringCase("description");
     }
 
-
 }

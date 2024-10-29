@@ -102,6 +102,28 @@ public class MaintenanceControllerTest {
     }
 
     @Test
+    public void testBucketLOV() {
+        var bucketTypesResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.maintenanceControllerGetBucketTypes(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(bucketTypesResult).isNotNull();
+        assertThat(bucketTypesResult.getPayload()).isNotNull().isNotEmpty().allMatch(lovElementDTO -> bucketTypeLOVIds.contains(lovElementDTO.id()));
+        var bucketStatusResult = assertDoesNotThrow(
+                ()-> testControllerHelperService.maintenanceControllerGetBucketStatus(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(bucketStatusResult).isNotNull();
+        assertThat(bucketStatusResult.getPayload()).isNotNull().isNotEmpty().allMatch(lovElementDTO -> bucketStatusLOVIds.contains(lovElementDTO.id()));
+    }
+
+    @Test
     public void crateBucketSlot() {
         var createNewBucketResult = assertDoesNotThrow(
                 ()-> testControllerHelperService.maintenanceControllerCreateNewBucket(
