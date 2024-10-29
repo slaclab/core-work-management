@@ -15,6 +15,8 @@ import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.DomainService;
 import edu.stanford.slac.core_work_management.service.HelperService;
 import edu.stanford.slac.core_work_management.service.LOVService;
+import edu.stanford.slac.core_work_management.task.ManageBucketWorkflowUpdate;
+import edu.stanford.slac.core_work_management.task.ManageWorkflowUpdateByEventTrigger;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,8 +52,8 @@ public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest {
     @Autowired
     private KafkaAdmin kafkaAdmin;
 
-    public TECDomainEnvironmentTest(HelperService helperService) {
-        super(helperService);
+    public TECDomainEnvironmentTest(HelperService helperService, ManageBucketWorkflowUpdate manageBucketWorkflowUpdate, ManageWorkflowUpdateByEventTrigger manageWorkflowUpdateByEventTrigger) {
+        super(helperService , manageBucketWorkflowUpdate, manageWorkflowUpdateByEventTrigger);
     }
 
     public DomainTestInfo init() {
@@ -91,7 +93,7 @@ public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest {
         );
         AssertionsForClassTypes.assertThat(workTypesResult).isNotNull();
         AssertionsForClassTypes.assertThat(workTypesResult.getErrorCode()).isEqualTo(0);
-        assertThat(workTypesResult.getPayload()).isNotNull().isNotEmpty().hasSize(2);
+        assertThat(workTypesResult.getPayload()).isNotNull().isNotEmpty().hasSize(3);
         domainTestInfo.workTypes = workTypesResult.getPayload();
 
         // create locations

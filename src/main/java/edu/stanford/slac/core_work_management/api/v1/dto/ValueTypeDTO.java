@@ -17,5 +17,6 @@ public enum ValueTypeDTO {
     DateTime,
     LOV,
     Attachments,
-    Bucket
+    Bucket,
+    Users
 }

@@ -1,12 +1,16 @@
 package edu.stanford.slac.core_work_management.service.validation;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
+import edu.stanford.slac.core_work_management.model.value.AttachmentsValue;
+import edu.stanford.slac.core_work_management.service.AttachmentService;
 import edu.stanford.slac.core_work_management.service.workflow.AdmitChildrenValidation;
 import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation;
 import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation;
@@ -16,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Define the work type validation baseclass
@@ -175,5 +181,46 @@ public abstract class WorkTypeValidation {
                     .errorDomain("TECHardwareReportValidation::checkValid")
                     .build();
         }
+    }
+
+    /**
+     * Check if the string field is not null or empty
+     *
+     * @param work the work to check
+     * @throws ControllerLogicException if the field is null or empty or with unalloyed user
+     */
+    protected void checkAssignedTo(PeopleGroupService peopleGroupService, Work work, ArrayList<ValidationResult<String>> validationResults) {
+        List<String> assignedUsers = work.getAssignedTo()!=null ?work.getAssignedTo(): emptyList();
+        if (assignedUsers.isEmpty()) {
+            validationResults.add(ValidationResult.failure("The work must be assigned to someone"));
+            return;
+        }
+        // the assignedTo can be null or empty only if we are in created state
+        assignedUsers.forEach(
+                user -> {
+                    try {
+                        peopleGroupService.findPersonByEMail(user);
+                    } catch (PersonNotFound e) {
+                        validationResults.add(ValidationResult.failure("The user '%s' does not exist".formatted(user)));
+                    }
+                }
+        );
+    }
+
+    /**
+     * Validate the attachments
+     * @param attachmentsValue the attachments to validate
+     */
+    protected void validateAttachment(AttachmentService attachmentService, AttachmentsValue attachmentsValue, String fieldName, List<ValidationResult<String>> validationResult) {
+        if (attachmentsValue == null || attachmentsValue.getValue() == null || attachmentsValue.getValue().isEmpty()) {
+            return;
+        }
+        attachmentsValue.getValue().forEach(
+                attachmentId ->{
+                    if (!attachmentService.exists(attachmentId)) {
+                        validationResult.addFirst(ValidationResult.failure("The '%s' attachment %s does not exist".formatted(fieldName, attachmentId)));
+                    }
+                }
+        );
     }
 }

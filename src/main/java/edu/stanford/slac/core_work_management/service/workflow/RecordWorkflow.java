@@ -26,12 +26,8 @@ public class RecordWorkflow extends BaseWorkflow {
     // This map defines the valid transitions for each state
     public RecordWorkflow() {
         validTransitions = Map.of(
-                // Rule: workStatus = "Approved"
-                WorkflowState.Submitted, Set.of(WorkflowState.Approved),
-                // Rule: becomes active when startDate starts
-                WorkflowState.Approved, Set.of(WorkflowState.InProgress),
-                // Rule: becomes active when endDate reaches or user tag completed the work
-                WorkflowState.InProgress, Set.of(WorkflowState.Closed)
+                WorkflowState.Created, Set.of(WorkflowState.Closed),
+                WorkflowState.Closed, Set.of()
         );
     }
 }

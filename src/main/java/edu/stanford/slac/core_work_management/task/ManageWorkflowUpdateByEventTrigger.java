@@ -25,7 +25,7 @@ public class ManageWorkflowUpdateByEventTrigger {
     @Transactional
     @Scheduled(fixedDelay = 60000)
     public void processTriggeredEvent() {
-        log.info("Check which bucket need to be started");
+        log.debug("Check which bucket need to be started");
         EventTrigger selectedEvent = null;
         var now = LocalDateTime.now(clock);
         // use the bucket service to find the next bucket to start
@@ -56,6 +56,6 @@ public class ManageWorkflowUpdateByEventTrigger {
             // set the bucket as completed
             eventTriggerRepository.completeProcessing("work", selectedEvent.getId());
         }
-        log.info("Startup bucket completed");
+        log.debug("Startup bucket completed");
     }
 }

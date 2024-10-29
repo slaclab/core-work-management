@@ -1,10 +1,7 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.BucketQueryParameterDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewBucketDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateBucketDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.BucketSlotMapper;
 import edu.stanford.slac.core_work_management.exception.ActivityAlreadyAssociatedToSlot;
 import edu.stanford.slac.core_work_management.exception.BucketSlotNotFound;
@@ -17,6 +14,8 @@ import edu.stanford.slac.core_work_management.repository.WorkRepository;
 import edu.stanford.slac.core_work_management.service.validation.BucketValidationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -33,9 +32,28 @@ public class BucketService {
     private final BucketRepository bucketSlotRepository;
     private final BucketSlotMapper bucketSlotMapper;
     private final BucketValidationService bucketValidationService;
-    private final DomainService domainService;
-
     private final WorkRepository workRepository;
+    private final DomainService domainService;
+    private final LOVService lovService;
+
+    /**
+     * This method is used to get all the bucket types
+     *
+     * @return the list of bucket types
+     */
+    public List<LOVElementDTO> getBucketTypes() {
+       return lovService.findAllByGroupName("BucketType");
+    }
+
+    /**
+     * This method is used to get all the bucket status
+     *
+     * @return the list of bucket status
+     */
+    public List<LOVElementDTO> getBucketStatus() {
+        return  lovService.findAllByGroupName("BucketStatus");
+    }
+
     /**
      * This method is used to create a new bucket slot
      *

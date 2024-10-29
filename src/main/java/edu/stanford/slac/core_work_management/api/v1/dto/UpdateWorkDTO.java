@@ -56,8 +56,5 @@ public record UpdateWorkDTO(
         UpdateWorkflowStateDTO workflowStateUpdate,
         @Valid
         @Schema(description = "The values of the custom attributes for the activity")
-        List<WriteCustomFieldDTO> customFieldValues,
-        @Valid
-        @Schema(description = "The list of the attachment id to associate to the work")
-        List<String> attachments
+        List<WriteCustomFieldDTO> customFieldValues
 ){}

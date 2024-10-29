@@ -18,6 +18,7 @@
 package edu.stanford.slac.core_work_management.repository;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.core_work_management.api.v1.dto.LOVElementDTO;
 import edu.stanford.slac.core_work_management.model.BucketSlot;
 import edu.stanford.slac.core_work_management.model.BucketSlotQueryParameter;
 import lombok.AllArgsConstructor;
@@ -213,6 +214,11 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
                         Criteria.where("from").gte(queryParameter.getFrom())
                 );
             }
+            if(queryParameter.getDomainId() != null && !queryParameter.getDomainId().isEmpty()) {
+                allCriteria.add(
+                        Criteria.where("domainIds").in(queryParameter.getDomainId())
+                );
+            }
             if (!allCriteria.isEmpty()) {
                 query.addCriteria(
                         new Criteria().andOperator(
@@ -258,6 +264,11 @@ public class BucketRepositoryImpl implements BucketRepositoryCustom {
             if (queryParameter.getFrom() != null) {
                 allCriteria.add(
                         Criteria.where("from").gte(queryParameter.getFrom())
+                );
+            }
+            if(queryParameter.getDomainId() != null && !queryParameter.getDomainId().isEmpty()) {
+                allCriteria.add(
+                        Criteria.where("domainIds").in(queryParameter.getDomainId())
                 );
             }
             // at this point the anchor id is not null

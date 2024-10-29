@@ -56,9 +56,13 @@ public class BucketServiceTest {
     private List<String> bucketTypeLOVIds = null;
     private List<String> bucketStatusLOVIds = null;
     private DomainDTO domainDTO;
-    private String newWorkTypeId;
+    private String workTypeId;
     private String shopGroupId;
     private String locationId;
+    private DomainDTO alternateDomainDTO;
+    private String alternateWorkTypeId;
+    private String alternateShopGroupId;
+    private String alternateLocationId;
 
     @BeforeAll
     public void initLOV() {
@@ -92,7 +96,7 @@ public class BucketServiceTest {
         );
         assertThat(domainDTO).isNotNull();
 
-        newWorkTypeId = assertDoesNotThrow(
+        workTypeId = assertDoesNotThrow(
                 () -> domainService.createNew(
                         domainDTO.id(),
                         NewWorkTypeDTO
@@ -104,7 +108,7 @@ public class BucketServiceTest {
                                 .build()
                 )
         );
-        assertThat(newWorkTypeId).isNotNull().contains(newWorkTypeId);
+        assertThat(workTypeId).isNotNull().contains(workTypeId);
 
         shopGroupId =
                 assertDoesNotThrow(
@@ -139,6 +143,78 @@ public class BucketServiceTest {
                 )
         );
         AssertionsForClassTypes.assertThat(locationId).isNotEmpty();
+
+        // create alternate domain
+        alternateDomainDTO = domainService.createNewAndGet(
+                NewDomainDTO.builder()
+                        .name("TEST alternate domain")
+                        .description("Test alternate domain description")
+                        .workflowImplementations(
+                                Set.of(
+                                        "DummyParentWorkflow"
+                                )
+                        )
+                        .build()
+        );
+        assertThat(alternateDomainDTO).isNotNull();
+
+        alternateWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        alternateDomainDTO.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation alternate")
+                                .description("Update the documentation alternate description")
+                                .workflowId(alternateDomainDTO.workflows().stream().findFirst().get().id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(workTypeId).isNotNull().contains(workTypeId);
+
+        alternateShopGroupId =
+                assertDoesNotThrow(
+                        () -> shopGroupService.createNew(
+                                alternateDomainDTO.id(),
+                                NewShopGroupDTO.builder()
+                                        .name("alternate shop1")
+                                        .description("shop1 user[2-3]")
+                                        .users(
+                                                of(
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user2@slac.stanford.edu")
+                                                                .build(),
+                                                        ShopGroupUserInputDTO.builder()
+                                                                .userId("user3@slac.stanford.edu")
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                );
+        AssertionsForClassTypes.assertThat(alternateShopGroupId).isNotEmpty();
+
+        alternateLocationId = assertDoesNotThrow(
+                () -> locationService.createNew(
+                        alternateDomainDTO.id(),
+                        NewLocationDTO.builder()
+                                .name("SLAC alternate")
+                                .description("SLAC Alternate National Accelerator Laboratory")
+                                .locationManagerUserId("user1@slac.stanford.edu")
+                                .build()
+                )
+        );
+        AssertionsForClassTypes.assertThat(alternateLocationId).isNotEmpty();
+    }
+
+    @Test
+    public void checkBucketLOVs() {
+        assertThat(bucketSlotService.getBucketStatus()).isNotNull().isNotEmpty().allMatch(
+                lov -> bucketStatusLOVIds.contains(lov.id())
+        );
+        assertThat(bucketSlotService.getBucketTypes()).isNotNull().isNotEmpty().allMatch(
+                lov -> bucketTypeLOVIds.contains(lov.id())
+        );
     }
 
     @Test
@@ -156,7 +232,7 @@ public class BucketServiceTest {
                                         Set.of(
                                                 BucketSlotWorkTypeDTO.builder()
                                                         .domainId(domainDTO.id())
-                                                        .workTypeId(newWorkTypeId)
+                                                        .workTypeId(workTypeId)
                                                         .build()
                                         )
                                 )
@@ -176,7 +252,7 @@ public class BucketServiceTest {
         assertThat(fullBucketFound.from()).isEqualTo(LocalDateTime.of(2021, 1, 1, 0, 0));
         assertThat(fullBucketFound.to()).isEqualTo(LocalDateTime.of(2021, 1, 3, 23, 0));
         assertThat(fullBucketFound.admittedWorkType()).hasSize(1);
-        assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(newWorkTypeId);
+        assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(workTypeId);
         assertThat(fullBucketFound.admittedWorkType().iterator().next().domainId()).isEqualTo(domainDTO.id());
     }
 
@@ -195,7 +271,7 @@ public class BucketServiceTest {
                                         Set.of(
                                                 BucketSlotWorkTypeDTO.builder()
                                                         .domainId(domainDTO.id())
-                                                        .workTypeId(newWorkTypeId)
+                                                        .workTypeId(workTypeId)
                                                         .build()
                                         )
                                 )
@@ -217,7 +293,7 @@ public class BucketServiceTest {
                                         Set.of(
                                                 BucketSlotWorkTypeDTO.builder()
                                                         .domainId(domainDTO.id())
-                                                        .workTypeId(newWorkTypeId)
+                                                        .workTypeId(workTypeId)
                                                         .build()
                                         )
                                 )
@@ -237,7 +313,7 @@ public class BucketServiceTest {
         assertThat(fullBucketFound.from()).isEqualTo(LocalDateTime.of(2022, 1, 1, 0, 0));
         assertThat(fullBucketFound.to()).isEqualTo(LocalDateTime.of(2022, 1, 3, 23, 0));
         assertThat(fullBucketFound.admittedWorkType()).hasSize(1);
-        assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(newWorkTypeId);
+        assertThat(fullBucketFound.admittedWorkType().iterator().next().id()).isEqualTo(workTypeId);
         assertThat(fullBucketFound.admittedWorkType().iterator().next().domainId()).isEqualTo(domainDTO.id());
 
     }
@@ -350,7 +426,7 @@ public class BucketServiceTest {
                                             Set.of(
                                                     BucketSlotWorkTypeDTO.builder()
                                                             .domainId(domainDTO.id())
-                                                            .workTypeId(newWorkTypeId)
+                                                            .workTypeId(workTypeId)
                                                             .build()
                                             )
                                     )
@@ -424,7 +500,7 @@ public class BucketServiceTest {
                                         Set.of(
                                                 BucketSlotWorkTypeDTO.builder()
                                                         .domainId(domainDTO.id())
-                                                        .workTypeId(newWorkTypeId)
+                                                        .workTypeId(workTypeId)
                                                         .build()
                                         )
                                 )
@@ -441,7 +517,7 @@ public class BucketServiceTest {
                                 .builder()
                                 .title("Update the documentation")
                                 .description("Update the documentation description")
-                                .workTypeId(newWorkTypeId)
+                                .workTypeId(workTypeId)
                                 .locationId(locationId)
                                 .shopGroupId(shopGroupId)
                                 .build()
@@ -524,7 +600,7 @@ public class BucketServiceTest {
                                             Set.of(
                                                     BucketSlotWorkTypeDTO.builder()
                                                             .domainId(domainDTO.id())
-                                                            .workTypeId(newWorkTypeId)
+                                                            .workTypeId(workTypeId)
                                                             .build()
                                             )
                                     )
@@ -579,6 +655,85 @@ public class BucketServiceTest {
         }
     }
 
+    @Test
+    public void findAllByDomainId() {
+            for (int i = 0; i < 100; i++) {
+                int finalI = i;
+                var newBucketId = assertDoesNotThrow(
+                        () -> bucketSlotService.createNew(
+                                NewBucketDTO.builder()
+                                        .description("bucket-%02d".formatted(finalI))
+                                        .type(bucketTypeLOVIds.getFirst())
+                                        .status(bucketStatusLOVIds.getFirst())
+                                        .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
+                                        .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                        .domainIds(Set.of(domainDTO.id()))
+                                        .admittedWorkTypeIds(
+                                                Set.of(
+                                                        BucketSlotWorkTypeDTO.builder()
+                                                                .domainId(domainDTO.id())
+                                                                .workTypeId(workTypeId)
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                );
+                assertThat(newBucketId).isNotNull();
+
+                // write alternate domain work
+                var newAlternateBucketId = assertDoesNotThrow(
+                        () -> bucketSlotService.createNew(
+                                NewBucketDTO.builder()
+                                        .description("alternate bucket-%02d".formatted(finalI))
+                                        .type(bucketTypeLOVIds.getFirst())
+                                        .status(bucketStatusLOVIds.getFirst())
+                                        .from(LocalDateTime.of(2021, 1, 1, 0, 0).plus(finalI, ChronoUnit.MINUTES))
+                                        .to(LocalDateTime.of(2021, 1, 3, 23, 0))
+                                        .domainIds(Set.of(alternateDomainDTO.id()))
+                                        .admittedWorkTypeIds(
+                                                Set.of(
+                                                        BucketSlotWorkTypeDTO.builder()
+                                                                .domainId(alternateDomainDTO.id())
+                                                                .workTypeId(alternateWorkTypeId)
+                                                                .build()
+                                                )
+                                        )
+                                        .build()
+                        )
+                );
+                assertThat(newAlternateBucketId).isNotNull();
+            }
+
+            var domainFirst10Bucket = assertDoesNotThrow(
+                    () -> bucketSlotService.findAll(
+                            BucketQueryParameterDTO
+                                    .builder()
+                                    .limit(10)
+                                    .domainId(domainDTO.id())
+                                    .build()
+                    )
+            );
+            // check that all returned that should match the domain id
+            assertThat(domainFirst10Bucket).isNotNull();
+            assertThat(domainFirst10Bucket).hasSize(10);
+            assertThat(domainFirst10Bucket).allMatch(bucket -> bucket.domainIds().contains(domainDTO.id()));
+
+        var alternateDomainFirst10Bucket = assertDoesNotThrow(
+                () -> bucketSlotService.findAll(
+                        BucketQueryParameterDTO
+                                .builder()
+                                .limit(10)
+                                .domainId(alternateDomainDTO.id())
+                                .build()
+                )
+        );
+        // check that all returned that should match the domain id
+        assertThat(alternateDomainFirst10Bucket).isNotNull();
+        assertThat(alternateDomainFirst10Bucket).hasSize(10);
+        assertThat(alternateDomainFirst10Bucket).allMatch(bucket -> bucket.domainIds().contains(alternateDomainDTO.id()));
+    }
+
     // create test for the bucket start event
     @Test
     public void processBucketStartEvent() {
@@ -601,7 +756,7 @@ public class BucketServiceTest {
                         .admittedWorkTypeIds(Set.of(
                                 BucketSlotWorkTypeDTO.builder()
                                         .domainId(domainDTO.id())
-                                        .workTypeId(newWorkTypeId)
+                                        .workTypeId(workTypeId)
                                         .build()
                         ))
                         .build()
@@ -618,7 +773,7 @@ public class BucketServiceTest {
                         .admittedWorkTypeIds(Set.of(
                                 BucketSlotWorkTypeDTO.builder()
                                         .domainId(domainDTO.id())
-                                        .workTypeId(newWorkTypeId)
+                                        .workTypeId(workTypeId)
                                         .build()
                         ))
                         .build()
@@ -675,7 +830,7 @@ public class BucketServiceTest {
                         .admittedWorkTypeIds(Set.of(
                                 BucketSlotWorkTypeDTO.builder()
                                         .domainId(domainDTO.id())
-                                        .workTypeId(newWorkTypeId)
+                                        .workTypeId(workTypeId)
                                         .build()
                         ))
                         .build()
@@ -692,7 +847,7 @@ public class BucketServiceTest {
                         .admittedWorkTypeIds(Set.of(
                                 BucketSlotWorkTypeDTO.builder()
                                         .domainId(domainDTO.id())
-                                        .workTypeId(newWorkTypeId)
+                                        .workTypeId(workTypeId)
                                         .build()
                         ))
                         .build()
@@ -749,7 +904,7 @@ public class BucketServiceTest {
                         .admittedWorkTypeIds(Set.of(
                                 BucketSlotWorkTypeDTO.builder()
                                         .domainId(domainDTO.id())
-                                        .workTypeId(newWorkTypeId)
+                                        .workTypeId(workTypeId)
                                         .build()
                         ))
                         .build()
@@ -766,7 +921,7 @@ public class BucketServiceTest {
                         .admittedWorkTypeIds(Set.of(
                                 BucketSlotWorkTypeDTO.builder()
                                         .domainId(domainDTO.id())
-                                        .workTypeId(newWorkTypeId)
+                                        .workTypeId(workTypeId)
                                         .build()
                         ))
                         .build()

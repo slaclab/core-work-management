@@ -34,4 +34,5 @@ public class BucketSlotQueryParameter {
     private Integer limit;
     private String search;
     private LocalDateTime from;
+    private String domainId;
 }

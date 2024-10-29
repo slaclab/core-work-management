@@ -76,6 +76,15 @@ public class M1001_InitTECDomain {
                         .build(),
                 () -> reportWorkflow != null
         );
+        var recordWorkflow = domain.workflows().stream().filter(w -> w.implementation().contains("RecordWorkflow")).findFirst().orElse(null);
+        assertion(
+                ControllerLogicException.builder()
+                        .errorCode(-1)
+                        .errorMessage("The workflow RecordWorkflow is not present in the domain")
+                        .errorDomain("M1001_InitTECDomain::createHardwareReportWT")
+                        .build(),
+                () -> recordWorkflow != null
+        );
 
         // create work types
         var newHardwareRequestId = domainService.createNew(
@@ -139,6 +148,27 @@ public class M1001_InitTECDomain {
                         )
                         .build()
         );
+        var softwareRecordId = domainService.createNew(
+                domain.id(),
+                NewWorkTypeDTO.builder()
+                        .title("Software Record")
+                        .description("It is used to record a software issue")
+                        .workflowId(recordWorkflow.id())
+                        .validatorName("validation/TECSoftwareRecordValidation.groovy")
+                        .childWorkTypeIds(Set.of(newHardwareRequestId))
+                        .customFields(
+                                List.of(
+                                        WATypeCustomFieldDTO.builder().label("Complete").description("Complete").valueType(ValueTypeDTO.Boolean).isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("Feedback Comments").description("Feedback Comments").valueType(ValueTypeDTO.String).isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("Solver").description("Solver").valueType(ValueTypeDTO.Users).isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("Solution Type").description("Solution Type").additionalMappingInfo("SolutionTypeGroup").valueType(ValueTypeDTO.LOV).isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("Solve Hours").description("Solve Hours").valueType(ValueTypeDTO.Double).isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("DocSolution").description("Doc (Solution)").valueType(ValueTypeDTO.Boolean).isMandatory(false).build(),
+                                        WATypeCustomFieldDTO.builder().label("DocSolutionAttachments").description("Doc (Solution) Attachments").valueType(ValueTypeDTO.Attachments).isMandatory(false).build()
+                                )
+                        )
+                        .build()
+        );
 
         var newHardwareReportId = domainService.createNew(
                 domain.id(),
@@ -147,7 +177,7 @@ public class M1001_InitTECDomain {
                         .description("It is used to report an hardware issue")
                         .workflowId(reportWorkflow.id())
                         .validatorName("validation/TECHardwareReportValidation.groovy")
-                        .childWorkTypeIds(Set.of(newHardwareRequestId))
+                        .childWorkTypeIds(Set.of(newHardwareRequestId, softwareRecordId))
                         .customFields(
                                 List.of(
 //                                        WATypeCustomFieldDTO.builder().label("group").description("Group").valueType(ValueTypeDTO.LOV).additionalMappingInfo("ProjectGroup").group("General Information").isMandatory(false).build(),
@@ -181,7 +211,6 @@ public class M1001_InitTECDomain {
                         )
                         .build()
         );
-
         return domain;
     }
 }

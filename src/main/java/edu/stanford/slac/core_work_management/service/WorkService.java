@@ -60,10 +60,8 @@ public class WorkService {
     private final LocationService locationService;
     private final ShopGroupService shopGroupService;
     private final ModelFieldValidationService modelFieldValidationService;
-    private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
     private final ModelHistoryService modelHistoryService;
     private final ApplicationContext applicationContext;
-    private final LocationMapperImpl locationMapperImpl;
 
     /**
      * Create a new work automatically creating the sequence
@@ -172,7 +170,7 @@ public class WorkService {
         // check if is valid
         isValidForWorkflow(domainId, NewWorkValidation.builder().work(workToSave).build());
         // update workflow
-        updateWorkWorkflow(workToSave, null);
+        updateWorkWorkflow(workToSave,  domainMapper.toModel(newWorkDTO.workflowStateUpdate()));
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -488,23 +486,27 @@ public class WorkService {
 
         // delete old authorization
         authService.deleteAuthorizationForResourcePrefix(WORK_AUTHORIZATION_TEMPLATE.formatted(work.getId()));
-
-        // this will fire exception in case the location has not been found
-        LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocation().getId());
-
         if (work.getCreatedBy() != null) {
             // the creator is a writer
             writerUserList.add(work.getCreatedBy());
         }
 
-        // authorize location manager as admin
-        adminUserList.add(locationDTO.locationManagerUserId());
-        // add shop group as writer in the form of virtual user
-        writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroup().getId()));
-        // add assigned to users
-        if (work.getAssignedTo() != null) {
-            writerUserList.addAll(work.getAssignedTo());
+        if(work.getLocation() != null) {
+            // this will fire exception in case the location has not been found
+            LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocation().getId());
+            // authorize location manager as admin
+            adminUserList.add(locationDTO.locationManagerUserId());
         }
+
+        if(work.getShopGroup()!= null) {
+            // add shop group as writer in the form of virtual user
+            writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroup().getId()));
+            // add assigned to users
+            if (work.getAssignedTo() != null) {
+                writerUserList.addAll(work.getAssignedTo());
+            }
+        }
+
 
         // some user for various reason could be either admin and read
         // so removing the common from the reader list we are going
@@ -780,13 +782,13 @@ public class WorkService {
      *
      * @return the list of work
      */
-    public List<WorkDTO> searchAllWork(WorkQueryParameterDTO workQueryParameterDTO) {
+    public List<WorkSummaryDTO> searchAllWork(WorkQueryParameterDTO workQueryParameterDTO) {
         var workList = wrapCatch(
                 () -> workRepository.searchAll(workMapper.toModel(workQueryParameterDTO)),
                 -1
         );
         return workList.stream()
-                .map(w -> workMapper.toDTO(w, WorkDetailsOptionDTO.builder().build()))
+                .map(w -> workMapper.toSummaryDTO(w, WorkDetailsOptionDTO.builder().build()))
                 .toList();
     }
 
@@ -797,8 +799,8 @@ public class WorkService {
      */
     @Cacheable(
             value = {"work-authorization"},
-            key = "{#authentication.principal, #workDTO.shopGroup.id}")
-    public List<AuthorizationResourceDTO> getAuthorizationByWork(WorkDTO workDTO, Authentication authentication) {
+            key = "{#authentication.principal, #shopGroupId}")
+    public List<AuthorizationResourceDTO> getAuthorizationByWork(String domainId, String workId, String shopGroupId, Authentication authentication) {
         if (authentication == null) {
             // if the DTO has been requested by an anonymous user, then the access level is Read
             // in other case will should have been blocked by the security layer
@@ -819,13 +821,13 @@ public class WorkService {
                                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Write,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workDTO.id())
+                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
                                 ),
                                 // user of the shop group are always treated as admin on the work
                                 () -> shopGroupService.checkContainsAUserEmail(
                                         // fire not found work exception
-                                        workDTO.domain().id(),
-                                        workDTO.shopGroup().id(),
+                                        domainId,
+                                        shopGroupId,
                                         authentication.getCredentials().toString()
                                 )
                         ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
@@ -842,7 +844,7 @@ public class WorkService {
                                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Admin,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workDTO.id())
+                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
                                 )
                         ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
                 .build());
@@ -858,7 +860,7 @@ public class WorkService {
                                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Admin,
-                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(workDTO.shopGroup().id())
+                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId)
                                 )
                         ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
                 .build());
@@ -894,5 +896,4 @@ public class WorkService {
                 -1
         );
     }
-
 }

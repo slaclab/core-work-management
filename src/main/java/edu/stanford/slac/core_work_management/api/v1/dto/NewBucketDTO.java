@@ -14,7 +14,7 @@ import java.util.Set;
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "A DTO that represents a new bucket slot. A bucket slot represent a preido of time where job can be submitted to be acceppted or rejected.")
+@Schema(description = "A DTO that represents a new bucket slot. A bucket slot represent a range of time where job can be submitted to be accepted or rejected.")
 public record NewBucketDTO(
         @NotEmpty(message = "The list of the id of the domain is required")
         @Schema(description = "The list of the id of the domain that can use the bucket slot")

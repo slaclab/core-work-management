@@ -41,9 +41,8 @@ public record NewWorkDTO(
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
         List<WriteCustomFieldDTO> customFieldValues,
-        @Valid
-        @Schema(description = "The list of the attachment id to associate to the work")
-        List<String> attachments
+        @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
+        UpdateWorkflowStateDTO workflowStateUpdate
 ) {
     public NewWorkDTO {
         if (customFieldValues == null) {

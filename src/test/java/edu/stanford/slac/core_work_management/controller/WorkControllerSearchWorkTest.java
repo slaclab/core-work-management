@@ -21,6 +21,8 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.migration.M6_IndexForWorkStatistic;
+import edu.stanford.slac.core_work_management.migration.M7_IndexForExtendedWorkSearch;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,9 +40,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -97,11 +97,17 @@ public class WorkControllerSearchWorkTest {
     private LOVService lovService;
 
     private DomainDTO domainDTO;
+    private DomainDTO alternateDomainDTO;
     private WorkflowDTO workflowDTO;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
+
+    private final List<String> testAlternateShopGroupIds = new ArrayList<>();
+    private final List<String> testAlternateLocationIds = new ArrayList<>();
+    private final List<String> testAlternateWorkTypeIds = new ArrayList<>();
     private List<LOVElementDTO> projectLovValues;
+
     @BeforeAll
     public void init() {
         mongoTemplate.remove(new Query(), Domain.class);
@@ -109,6 +115,13 @@ public class WorkControllerSearchWorkTest {
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
+
+        // init index
+        M6_IndexForWorkStatistic m6_indexForWorkStatistic = new M6_IndexForWorkStatistic(mongoTemplate);
+        assertDoesNotThrow(m6_indexForWorkStatistic::changeSet);
+        M7_IndexForExtendedWorkSearch m7_indexForExtendedWorkSearch = new M7_IndexForExtendedWorkSearch(mongoTemplate);
+        assertDoesNotThrow(m7_indexForExtendedWorkSearch::changeSet);
+
         domainDTO = assertDoesNotThrow(
                 () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
@@ -121,16 +134,119 @@ public class WorkControllerSearchWorkTest {
                 )
         );
         assertThat(domainDTO).isNotNull();
+
+        alternateDomainDTO = assertDoesNotThrow(
+                () -> domainService.createNewAndGet(
+                        NewDomainDTO.builder()
+                                .name("domain2")
+                                .description("domain2 description")
+                                .workflowImplementations(
+                                        of("DummyParentWorkflow")
+                                )
+                                .build()
+                )
+        );
+        assertThat(alternateDomainDTO).isNotNull();
+
+        // create shop groups
+        createShopGroup(domainDTO, testShopGroupIds, null);
+        createShopGroup(alternateDomainDTO, testAlternateShopGroupIds, "alternate");
+
+        // create location for test
+        createLocation(domainDTO, testLocationIds, null);
+        createLocation(alternateDomainDTO, testAlternateLocationIds, "alternate");
+
+        // create work types
+        createWorkTypes(domainDTO, testWorkTypeIds, null);
+        createWorkTypes(alternateDomainDTO, testAlternateWorkTypeIds, "alternate");
+    }
+
+    private void createWorkTypes(DomainDTO domainDTO, List<String> workTypeIds, String postfix) {
         workflowDTO = domainDTO.workflows().stream().findFirst().get();
         assertThat(workflowDTO).isNotNull();
+        // create work 1
+        workTypeIds.add(
+                assertDoesNotThrow(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
+                                NewWorkTypeDTO
+                                        .builder()
+                                        .title("Work type %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("Work type %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
+                                        .build()
+                        )
+                )
+        );
+        // create work 2
+        workTypeIds.add(
+                assertDoesNotThrow(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
+                                NewWorkTypeDTO
+                                        .builder()
+                                        .title("Work type %s 2".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("Work type %s 2 description".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .workflowId(workflowDTO.id())
+                                        .validatorName("validation/DummyParentValidation.groovy")
+                                        .build()
+                        )
+                )
+        );
+    }
 
-        testShopGroupIds.add(
+    private void createLocation(DomainDTO domainDTO, List<String> locationIds, String postfix) {
+        workflowDTO = domainDTO.workflows().stream().findFirst().get();
+        assertThat(workflowDTO).isNotNull();
+        locationIds.add(
+                assertDoesNotThrow(
+                        () -> locationService.createNew(
+                                domainDTO.id(),
+                                NewLocationDTO.builder()
+                                        .name("location %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("location %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .locationManagerUserId("user1@slac.stanford.edu")
+                                        .build()
+                        )
+                )
+        );
+        locationIds.add(
+                assertDoesNotThrow(
+                        () -> locationService.createNew(
+                                domainDTO.id(),
+                                NewLocationDTO.builder()
+                                        .name("location %s 2".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("location %s 2 description".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .locationManagerUserId("user2@slac.stanford.edu")
+                                        .build()
+                        )
+                )
+        );
+        locationIds.add(
+                assertDoesNotThrow(
+                        () -> locationService.createNew(
+                                domainDTO.id(),
+                                NewLocationDTO.builder()
+                                        .name("location %s 3".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("location %s 3 description".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .locationManagerUserId("user2@slac.stanford.edu")
+                                        .build()
+                        )
+                )
+        );
+    }
+
+    private void createShopGroup(DomainDTO domainDTO, List<String> shopGroupIds, String postfix) {
+        workflowDTO = domainDTO.workflows().stream().findFirst().get();
+        assertThat(workflowDTO).isNotNull();
+        shopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .name("shop1")
-                                        .description("shop1 user[2-3]")
+                                        .name("shop group %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("shop group %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .users(
                                                 of(
                                                         ShopGroupUserInputDTO.builder()
@@ -145,13 +261,13 @@ public class WorkControllerSearchWorkTest {
                         )
                 )
         );
-        testShopGroupIds.add(
+        shopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .name("shop2")
-                                        .description("shop1 user[1-2]")
+                                        .name("shop group %s 2".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("shop group %s 2 description".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .users(
                                                 of(
                                                         ShopGroupUserInputDTO.builder()
@@ -166,13 +282,13 @@ public class WorkControllerSearchWorkTest {
                         )
                 )
         );
-        testShopGroupIds.add(
+        shopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .name("shop3")
-                                        .description("shop3 user3")
+                                        .name("shop group %s 3".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("shop group %s 3 description".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .users(
                                                 of(
                                                         ShopGroupUserInputDTO.builder()
@@ -184,13 +300,13 @@ public class WorkControllerSearchWorkTest {
                         )
                 )
         );
-        testShopGroupIds.add(
+        shopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
                                 domainDTO.id(),
                                 NewShopGroupDTO.builder()
-                                        .name("shop4")
-                                        .description("shop4 user[3]")
+                                        .name("shop group %s 4".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("shop group %s 4 description".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .users(
                                                 of(
                                                         ShopGroupUserInputDTO.builder()
@@ -198,75 +314,6 @@ public class WorkControllerSearchWorkTest {
                                                                 .build()
                                                 )
                                         )
-                                        .build()
-                        )
-                )
-        );
-
-        // create location for test
-        testLocationIds.add(
-                assertDoesNotThrow(
-                        () -> locationService.createNew(
-                                domainDTO.id(),
-                                NewLocationDTO.builder()
-                                        .name("location1")
-                                        .description("location1 description")
-                                        .locationManagerUserId("user1@slac.stanford.edu")
-                                        .build()
-                        )
-                )
-        );
-        testLocationIds.add(
-                assertDoesNotThrow(
-                        () -> locationService.createNew(
-                                domainDTO.id(),
-                                NewLocationDTO.builder()
-                                        .name("location2")
-                                        .description("location2 description")
-                                        .locationManagerUserId("user2@slac.stanford.edu")
-                                        .build()
-                        )
-                )
-        );
-        testLocationIds.add(
-                assertDoesNotThrow(
-                        () -> locationService.createNew(
-                                domainDTO.id(),
-                                NewLocationDTO.builder()
-                                        .name("location3")
-                                        .description("location3 description")
-                                        .locationManagerUserId("user2@slac.stanford.edu")
-                                        .build()
-                        )
-                )
-        );
-
-        // create work 1
-        testWorkTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.createNew(
-                                domainDTO.id(),
-                                NewWorkTypeDTO
-                                        .builder()
-                                        .title("Work type 1")
-                                        .description("Work type 1 description")
-                                        .workflowId(workflowDTO.id())
-                                        .validatorName("validation/DummyParentValidation.groovy")
-                                        .build()
-                        )
-                )
-        );
-        // create work 2
-        testWorkTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.createNew(
-                                domainDTO.id(),
-                                NewWorkTypeDTO
-                                        .builder()
-                                        .title("Work type 2")
-                                        .description("Work type 2 description")
-                                        .workflowId(workflowDTO.id())
-                                        .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
                 )
@@ -333,7 +380,7 @@ public class WorkControllerSearchWorkTest {
 
             assertThat(searchResult.getErrorCode()).isEqualTo(0);
             assertThat(searchResult.getPayload()).hasSize(10);
-            for(int i1 = 0; i1 < 10; i1++) {
+            for (int i1 = 0; i1 < 10; i1++) {
                 assertThat(searchResult.getPayload().get(i1).id()).isEqualTo(workIds.get(i1 + i * 10));
             }
             anchorIdOptional = Optional.of(searchResult.getPayload().get(9).id());
@@ -388,8 +435,8 @@ public class WorkControllerSearchWorkTest {
 
             assertThat(searchResult.getErrorCode()).isEqualTo(0);
             assertThat(searchResult.getPayload()).hasSize(10);
-            for(int i1 = 0; i1 < 10; i1++) {
-                assertThat(searchResult.getPayload().get(9-i1).id()).isEqualTo(workIds.get(99 - i * 10 - i1));
+            for (int i1 = 0; i1 < 10; i1++) {
+                assertThat(searchResult.getPayload().get(9 - i1).id()).isEqualTo(workIds.get(99 - i * 10 - i1));
             }
         }
     }
@@ -435,7 +482,161 @@ public class WorkControllerSearchWorkTest {
                 );
         assertThat(searchResult.getPayload())
                 .hasSize(2)
-                .extracting(WorkDTO::title)
+                .extracting(WorkSummaryDTO::title)
                 .containsExactlyInAnyOrder("work 50", "work 51");
+    }
+
+    @Test
+    public void testSearchByDomainId() {
+        List<String> workIdsDomain1 = new ArrayList<>();
+        List<String> workIdsDomain2 = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            // create new work
+            int finalI = i;
+            // select a random number form one and two
+            int domainIndex = i % 2;
+            var newWorkIdResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.workControllerCreateNew(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of("user1@slac.stanford.edu"),
+                                    domainIndex == 0 ? domainDTO.id() : alternateDomainDTO.id(),
+                                    NewWorkDTO.builder()
+                                            .locationId(domainIndex == 0 ? testLocationIds.get(0) : testAlternateLocationIds.get(0))
+                                            .workTypeId(domainIndex == 0 ? testWorkTypeIds.get(0) : testAlternateWorkTypeIds.get(0))
+                                            .shopGroupId(domainIndex == 0 ? testShopGroupIds.get(0) : testAlternateShopGroupIds.get(0))
+                                            .title("work %s".formatted(finalI))
+                                            .description("work %s description".formatted(finalI))
+                                            .build()
+                            )
+                    );
+            assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+            assertThat(newWorkIdResult.getPayload()).isNotNull();
+            if(domainIndex == 0) {
+                workIdsDomain1.add(newWorkIdResult.getPayload());
+            } else {
+                workIdsDomain2.add(newWorkIdResult.getPayload());
+            }
+        }
+        // search all the work for domain 1
+        var searchResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.of(List.of(domainDTO.id())),
+                                Optional.empty()
+                        )
+                );
+        assertThat(searchResult.getPayload()).isNotEmpty().hasSize(50);
+        searchResult.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain1).contains(workSummaryDTO.id());
+        });
+
+        // search all the work for domain 2
+        searchResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.of(List.of(alternateDomainDTO.id())),
+                                Optional.empty()
+                        )
+                );
+        assertThat(searchResult.getPayload()).isNotEmpty().hasSize(50);
+        searchResult.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain2).contains(workSummaryDTO.id());
+        });
+    }
+
+    @Test
+    public void testSearchByWorkType() {
+        Set<String> workIdsDomain1 = new HashSet<>();
+        Set<String> workTypeIdDomain1 = new HashSet<>();
+        Set<String> workIdsDomain2 = new HashSet<>();
+        Set<String> workTypeIdDomain2 = new HashSet<>();
+        for (int i = 0; i < 100; i++) {
+            // create new work
+            int finalI = i;
+            // select a random number form one and two
+            int domainIndex = i % 2;
+            int workTypeIndex = i % 2;
+            var newWorkIdResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.workControllerCreateNew(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of("user1@slac.stanford.edu"),
+                                    domainIndex == 0 ? domainDTO.id() : alternateDomainDTO.id(),
+                                    NewWorkDTO.builder()
+                                            .locationId(domainIndex == 0 ? testLocationIds.get(0) : testAlternateLocationIds.get(0))
+                                            .workTypeId(domainIndex == 0 ? testWorkTypeIds.get(0) : testAlternateWorkTypeIds.get(0))
+                                            .shopGroupId(domainIndex == 0 ? testShopGroupIds.get(0) : testAlternateShopGroupIds.get(0))
+                                            .title("work %s".formatted(finalI))
+                                            .description("work %s description".formatted(finalI))
+                                            .build()
+                            )
+                    );
+            assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+            assertThat(newWorkIdResult.getPayload()).isNotNull();
+            if(domainIndex == 0) {
+                workIdsDomain1.add(newWorkIdResult.getPayload());
+                workTypeIdDomain1.add(testWorkTypeIds.get(0));
+            } else {
+                workIdsDomain2.add(newWorkIdResult.getPayload());
+                workTypeIdDomain2.add(testAlternateWorkTypeIds.get(0));
+            }
+        }
+        // // fetch all work type 1 from domain 1
+        var searchResultWT1D1 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(List.of(testWorkTypeIds.get(0)))
+                        )
+                );
+        assertThat(searchResultWT1D1.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
+        searchResultWT1D1.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain1).contains(workSummaryDTO.id());
+            assertThat(workTypeIdDomain1).contains(workSummaryDTO.workType().id());
+        });
+
+        var searchResultWT1D2 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(List.of(testAlternateWorkTypeIds.get(0)))
+                        )
+                );
+        assertThat(searchResultWT1D2.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
+        searchResultWT1D2.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workIdsDomain2).contains(workSummaryDTO.id());
+            assertThat(workTypeIdDomain2).contains(workSummaryDTO.workType().id());
+        });
     }
 }

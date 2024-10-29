@@ -211,11 +211,16 @@ public class WorkAuthorizationService {
      * @param authentication the authentication object
      * @return true if the user can update the status of the activity, false otherwise
      */
-    public boolean applyCompletionDTOList(ApiResultResponse<List<WorkDTO>> workDTOS, Authentication authentication) {
-        List<WorkDTO> filledDTOs = workDTOS.getPayload().stream().map(
+    public boolean applyCompletionDTOList(ApiResultResponse<List<WorkSummaryDTO>> workDTOS, Authentication authentication) {
+        List<WorkSummaryDTO> filledDTOs = workDTOS.getPayload().stream().map(
                 workDTO -> {
                     // check for auth
-                    var authList = workService.getAuthorizationByWork(workDTO, authentication);
+                    var authList = workService.getAuthorizationByWork(
+                            workDTO.domain().id(),
+                            workDTO.id(),
+                            workDTO.shopGroup().id(),
+                            authentication
+                    );
                     return workDTO.toBuilder().accessList(authList).build();
                 }
         ).toList();
@@ -230,6 +235,7 @@ public class WorkAuthorizationService {
      * @return true if the user can update the status of the activity, false otherwise
      */
     public boolean applyCompletionDTO(ApiResultResponse<WorkDTO> workDTO, Authentication authentication) {
+        var w = workDTO.getPayload();
         workDTO.setPayload(
                 workDTO.getPayload()
                         .toBuilder()
@@ -237,7 +243,9 @@ public class WorkAuthorizationService {
                                 (
                                         workService.getAuthorizationByWork
                                                 (
-                                                        workDTO.getPayload(),
+                                                        w.domain().id(),
+                                                        w.id(),
+                                                        w.shopGroup().id(),
                                                         authentication
                                                 )
                                 )

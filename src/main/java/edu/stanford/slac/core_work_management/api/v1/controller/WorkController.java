@@ -51,7 +51,7 @@ public class WorkController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @PostAuthorize("@workAuthorizationService.applyCompletionDTOList(returnObject, authentication)")
-    public ApiResultResponse<List<WorkDTO>> findAllWork(
+    public ApiResultResponse<List<WorkSummaryDTO>> findAllWork(
             Authentication authentication,
             @Schema(name = "anchorId", description = "Is the id of an entry from where start the search")
             @RequestParam("anchorId") Optional<String> anchorId,
@@ -60,12 +60,18 @@ public class WorkController {
             @Schema(name = "limit", description = "Limit the number the number of entries after the start date.")
             @RequestParam(value = "limit") Optional<Integer> limit,
             @Schema(name = "search", description = "Typical search functionality")
-            @RequestParam(value = "search") Optional<String> search
+            @RequestParam(value = "search") Optional<String> search,
+            @Schema(name = "domainIds", description = "Return all the works that belong ot one of the domain id")
+            @RequestParam(value = "domainIds") Optional<List<String>> domainIds,
+            @Schema(name = "workTypeIds", description = "Return all the works that belong ot one of the work type id")
+            @RequestParam(value = "workTypeIds") Optional<List<String>> workTypeIds
     ) {
         return ApiResultResponse.of(
                 workService.searchAllWork(
                         WorkQueryParameterDTO.builder()
                                 .anchorID(anchorId.orElse(null))
+                                .domainIds(domainIds.orElse(null))
+                                .workTypeIds(workTypeIds.orElse(null))
                                 .contextSize(contextSize.orElse(null))
                                 .limit(limit.orElse(null))
                                 .search(search.orElse(null))

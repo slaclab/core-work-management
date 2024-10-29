@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.LOVElementDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +35,32 @@ import lombok.AllArgsConstructor;
 @Schema(description = "Set of api for the maintenance management")
 public class MaintenanceController {
     private final BucketService bucketService;
+
+    @GetMapping(
+            path = "/bucket/types",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Return all bucket types")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<LOVElementDTO>> getBucketTypes(
+            Authentication authentication
+    ) {
+        return ApiResultResponse.of(bucketService.getBucketTypes());
+    }
+
+    @GetMapping(
+            path = "/bucket/status",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Return all bucket status")
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication)")
+    public ApiResultResponse<List<LOVElementDTO>> getBucketStatus(
+            Authentication authentication
+    ) {
+        return ApiResultResponse.of(bucketService.getBucketStatus());
+    }
 
     @PostMapping(
             path = "/bucket",
@@ -87,7 +114,9 @@ public class MaintenanceController {
                     @Schema(description = "The id of the anchor to use for pagination")
                     @RequestParam(value = "anchorId", required = false) Optional<String> anchorId,
                     @Schema(description = "The from date to use for the search")
-                    @RequestParam(value = "from", required = false) Optional<LocalDateTime> from
+                    @RequestParam(value = "from", required = false) Optional<LocalDateTime> from,
+                    @Schema(description = "The filter for domain id")
+                    @RequestParam(value = "domainId", required = false) Optional<String> domainId
 
             ) {
         return ApiResultResponse.of(
@@ -98,6 +127,7 @@ public class MaintenanceController {
                                 .contextSize(contextSize.orElse(0))
                                 .anchorID(anchorId.orElse(null))
                                 .from(from.orElse(null))
+                                .domainId(domainId.orElse(null))
                                 .build()
                 )
         );
