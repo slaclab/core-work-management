@@ -218,8 +218,9 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
         String areaManagerUserId = Objects.requireNonNull(work.getLocation()).getLocationManagerUserId()
         switch(currentWorkStatus) {
             case WorkflowState.WorkComplete ->{
+                boolean isRoot = authService.checkForRoot(userId)
                 // when in these state only are manage can update it
-                if(areaManagerUserId.compareToIgnoreCase(userId) != 0) {
+                if(!isRoot && areaManagerUserId.compareToIgnoreCase(userId) != 0) {
                     throw WorkflowDeniedAction.byErrorMessage()
                             .errorCode(-1)
                             .errorMessage("Only the area manager can update the work in the current state")
