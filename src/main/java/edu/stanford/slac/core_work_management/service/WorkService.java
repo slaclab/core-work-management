@@ -170,7 +170,7 @@ public class WorkService {
         // check if is valid
         isValidForWorkflow(domainId, NewWorkValidation.builder().work(workToSave).build());
         // update workflow
-        updateWorkWorkflow(workToSave,  domainMapper.toModel(newWorkDTO.workflowStateUpdate()));
+        updateWorkWorkflow(workToSave, domainMapper.toModel(newWorkDTO.workflowStateUpdate()));
         // save work
         Work savedWork = wrapCatch(
                 () -> workRepository.save(workToSave),
@@ -245,13 +245,7 @@ public class WorkService {
 
         // check if the new work that is being created is valid for the workflow
         // we send the updated work to the validator
-        isValidForWorkflow(
-                UpdateWorkValidation
-                        .builder()
-                        .updateWorkDTO(updateWorkDTO)
-                        .existingWork(foundWork)
-                        .build()
-        );
+        isValidForWorkflow(updateWorkDTO, foundWork);
 
         // validate lov
         modelFieldValidationService.verify(
@@ -332,19 +326,28 @@ public class WorkService {
     }
 
     /**
-     * Update a work workflow
+     * Check the work update against the workflow validator
      * <p>
-     * it takes care of updating the workflow of the work
+     * it takes care to check if the update is valid respect to the workflow
      *
-     * @param updateWorkValidation the information to validate
+     * @param updateWorkDTO the id of the domain
+     * @param foundWork     the work to update
      */
-    public void isValidForWorkflow(UpdateWorkValidation updateWorkValidation) {
-        Set<ConstraintViolation<WorkflowValidation<UpdateWorkValidation>>> violations = null;
+    public void isValidForWorkflow(UpdateWorkDTO updateWorkDTO, Work foundWork) {
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
-                updateWorkValidation.getExistingWork().getWorkType().getValidatorName(),
+                foundWork.getWorkType().getValidatorName(),
                 WorkTypeValidation.class
         );
-        wtv.checkValid(updateWorkValidation);
+        // fetch the workflow
+        var wInstance = (BaseWorkflow) applicationContext.getBean(foundWork.getWorkType().getWorkflow().getImplementation());
+        wtv.checkValid(
+                UpdateWorkValidation
+                        .builder()
+                        .updateWorkDTO(updateWorkDTO)
+                        .existingWork(foundWork)
+                        .workflow(wInstance)
+                        .build()
+        );
     }
 
     /**
@@ -491,14 +494,14 @@ public class WorkService {
             writerUserList.add(work.getCreatedBy());
         }
 
-        if(work.getLocation() != null) {
+        if (work.getLocation() != null) {
             // this will fire exception in case the location has not been found
             LocationDTO locationDTO = locationService.findById(work.getDomainId(), work.getLocation().getId());
             // authorize location manager as admin
             adminUserList.add(locationDTO.locationManagerUserId());
         }
 
-        if(work.getShopGroup()!= null) {
+        if (work.getShopGroup() != null) {
             // add shop group as writer in the form of virtual user
             writerUserList.add(SHOP_GROUP_FAKE_USER_TEMPLATE.formatted(work.getShopGroup().getId()));
             // add assigned to users

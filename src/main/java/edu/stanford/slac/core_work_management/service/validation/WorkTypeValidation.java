@@ -11,10 +11,7 @@ import edu.stanford.slac.core_work_management.model.WATypeCustomField;
 import edu.stanford.slac.core_work_management.model.Work;
 import edu.stanford.slac.core_work_management.model.value.AttachmentsValue;
 import edu.stanford.slac.core_work_management.service.AttachmentService;
-import edu.stanford.slac.core_work_management.service.workflow.AdmitChildrenValidation;
-import edu.stanford.slac.core_work_management.service.workflow.NewWorkValidation;
-import edu.stanford.slac.core_work_management.service.workflow.UpdateWorkValidation;
-import edu.stanford.slac.core_work_management.service.workflow.WorkflowWorkUpdate;
+import edu.stanford.slac.core_work_management.service.workflow.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +48,17 @@ public abstract class WorkTypeValidation {
      *
      * @param updateWorkValidation the work update information to check
      */
-    abstract public void checkValid(UpdateWorkValidation updateWorkValidation);
+    public void checkValid(UpdateWorkValidation updateWorkValidation) {
+        // Check if the user is authorized to update the work
+        if (isCompleted(updateWorkValidation.getWorkflow(), updateWorkValidation.getExistingWork())) {
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("The work %s is closed and cannot be updated".formatted(updateWorkValidation.getExistingWork().getTitle()))
+                    .errorDomain("WorkTypeValidation::checkValid")
+                    .build();
+        }
+    }
 
     /**
      * Check if the current work can have child
@@ -70,6 +77,20 @@ public abstract class WorkTypeValidation {
      */
     public boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
         return true;
+    }
+
+    /**
+     * Check if the current user is authorized to create the work
+     *
+     * @param workflow the workflow instance
+     * @param work     the work instance
+     * @return true if the work is completed
+     */
+    public boolean isCompleted(BaseWorkflow workflow, Work work) {
+        if(workflow==null || work==null) {
+            return true;
+        }
+        return workflow.isCompleted(work);
     }
 
     /**

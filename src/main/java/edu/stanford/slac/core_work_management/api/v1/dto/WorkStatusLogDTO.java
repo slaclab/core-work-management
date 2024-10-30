@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -27,7 +28,7 @@ public record WorkStatusLogDTO (
         @Schema(description = "The date when the status was changed")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
-        LocalDateTime changed_on,
+        LocalDateTime changedOn,
         @Schema(description = "The user that made the change")
-        String changed_by
+        PersonDTO changedBy
 ){}

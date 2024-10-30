@@ -10,4 +10,5 @@ import lombok.Data;
 public class UpdateWorkValidation {
     private UpdateWorkDTO updateWorkDTO;
     private Work existingWork;
+    private BaseWorkflow workflow;
 }
