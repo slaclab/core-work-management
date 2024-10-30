@@ -217,18 +217,6 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
 
         String areaManagerUserId = Objects.requireNonNull(work.getLocation()).getLocationManagerUserId()
         switch(currentWorkStatus) {
-            case WorkflowState.ReadyForWork, WorkflowState.InProgress->{
-                // check if the current user s the creator or the assign to
-                boolean canModify = areaManagerUserId.compareToIgnoreCase(userId) != 0 ||
-                        work.getCreatedBy().compareToIgnoreCase(userId) != 0 ||
-                        work.getAssignedTo().contains(userId)
-                if(!canModify) {
-                    throw WorkflowDeniedAction.byErrorMessage()
-                            .errorCode(-1)
-                            .errorMessage("The work can be updated only by the area manager, creator or one of the assignee ")
-                            .build()
-                }
-            }
             case WorkflowState.WorkComplete ->{
                 // when in these state only are manage can update it
                 if(areaManagerUserId.compareToIgnoreCase(userId) != 0) {
