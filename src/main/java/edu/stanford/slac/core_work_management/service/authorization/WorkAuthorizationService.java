@@ -218,7 +218,6 @@ public class WorkAuthorizationService {
                     var authList = workService.getAuthorizationByWork(
                             workDTO.domain().id(),
                             workDTO.id(),
-                            workDTO.shopGroup().id(),
                             authentication
                     );
                     return workDTO.toBuilder().accessList(authList).build();
@@ -245,7 +244,6 @@ public class WorkAuthorizationService {
                                                 (
                                                         w.domain().id(),
                                                         w.id(),
-                                                        w.shopGroup().id(),
                                                         authentication
                                                 )
                                 )

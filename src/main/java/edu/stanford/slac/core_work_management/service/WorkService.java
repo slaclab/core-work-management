@@ -802,8 +802,8 @@ public class WorkService {
      */
     @Cacheable(
             value = {"work-authorization"},
-            key = "{#authentication.principal, #shopGroupId}")
-    public List<AuthorizationResourceDTO> getAuthorizationByWork(String domainId, String workId, String shopGroupId, Authentication authentication) {
+            key = "{#authentication.principal}")
+    public List<AuthorizationResourceDTO> getAuthorizationByWork(String domainId, String workId, Authentication authentication) {
         if (authentication == null) {
             // if the DTO has been requested by an anonymous user, then the access level is Read
             // in other case will should have been blocked by the security layer
@@ -825,13 +825,6 @@ public class WorkService {
                                         authentication,
                                         AuthorizationTypeDTO.Write,
                                         WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                                ),
-                                // user of the shop group are always treated as admin on the work
-                                () -> shopGroupService.checkContainsAUserEmail(
-                                        // fire not found work exception
-                                        domainId,
-                                        shopGroupId,
-                                        authentication.getCredentials().toString()
                                 )
                         ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
                 .build());
@@ -863,7 +856,7 @@ public class WorkService {
                                 () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Admin,
-                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId)
+                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
                                 )
                         ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
                 .build());
