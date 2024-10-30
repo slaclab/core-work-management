@@ -422,12 +422,46 @@ public class WorkService {
      * @return true if the user can update the work
      */
     public boolean checkWorkflowForUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
-// get validator for the work type
+        // get validator for the work type
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
                 workDTO.workType().validatorName(),
                 WorkTypeValidation.class
         );
         return wtv.isUserAuthorizedToUpdate(userId, workDTO, updateWorkDTO);
+    }
+
+    /**
+     * Get all user authorization on work
+     * authorization can contains reference to fields with the respective level of access
+     *
+     * @param userId  the id of the user
+     * @param workDTO the work to check for authorization
+     * @return the list of authorization
+     */
+    public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkDTO workDTO) {
+        // get validator for the work type
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
+                workDTO.workType().validatorName(),
+                WorkTypeValidation.class
+        );
+        return wtv.getUserAuthorizationOnWork(userId, workDTO);
+    }
+
+    /**
+     * Get all user authorization on work
+     * authorization can contains reference to fields with the respective level of access
+     *
+     * @param userId  the id of the user
+     * @param workDTO the work to check for authorization
+     * @return the list of authorization
+     */
+    public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkSummaryDTO workDTO) {
+        // get validator for the work type
+        WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
+                workDTO.workType().validatorName(),
+                WorkTypeValidation.class
+        );
+        return wtv.getUserAuthorizationOnWork(userId, workDTO);
     }
 
     /**
@@ -793,82 +827,6 @@ public class WorkService {
         return workList.stream()
                 .map(w -> workMapper.toSummaryDTO(w, WorkDetailsOptionDTO.builder().build()))
                 .toList();
-    }
-
-    /**
-     * Search on all the activities
-     *
-     * @return the found activities
-     */
-    @Cacheable(
-            value = {"work-authorization"},
-            key = "{#authentication.principal, #shopGroupId}")
-    public List<AuthorizationResourceDTO> getAuthorizationByWork(String domainId, String workId, String shopGroupId, Authentication authentication) {
-        if (authentication == null) {
-            // if the DTO has been requested by an anonymous user, then the access level is Read
-            // in other case will should have been blocked by the security layer
-            return emptyList();
-        }
-
-        List<AuthorizationResourceDTO> accessList = new ArrayList<>();
-        //check if it's a root
-        boolean isRoot = authService.checkForRoot(authentication);
-        // check if user can write normal field
-        accessList.add(AuthorizationResourceDTO.builder()
-                .field("*")
-                .authorizationType(
-                        any(
-                                // a root users
-                                () -> authService.checkForRoot(authentication),
-                                // or a user that has the right as writer on the work
-                                () -> workId == null || authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                        authentication,
-                                        AuthorizationTypeDTO.Write,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                                ),
-                                // user of the shop group are always treated as admin on the work
-                                () -> shopGroupId!=null && shopGroupService.checkContainsAUserEmail(
-                                        // fire not found work exception
-                                        domainId,
-                                        shopGroupId,
-                                        authentication.getCredentials().toString()
-                                )
-                        ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
-                .build());
-
-        // check if can modify location
-        accessList.add(AuthorizationResourceDTO.builder()
-                .field("location")
-                .authorizationType(
-                        any(
-                                // a root users
-                                () -> isRoot,
-                                // or a user that has the right as admin on the work
-                                () -> workId == null || authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                        authentication,
-                                        AuthorizationTypeDTO.Admin,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                                )
-                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
-                .build());
-
-        // check if can modify assignTo
-        accessList.add(AuthorizationResourceDTO.builder()
-                .field("assignTo")
-                .authorizationType(
-                        any(
-                                // a root users
-                                () -> isRoot,
-                                // or a user that is the leader of the group
-                                () -> shopGroupId!=null && authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                        authentication,
-                                        AuthorizationTypeDTO.Admin,
-                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId)
-                                )
-                        ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
-                .build());
-
-        return accessList;
     }
 
     /**

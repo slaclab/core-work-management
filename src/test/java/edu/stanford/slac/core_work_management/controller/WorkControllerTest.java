@@ -548,9 +548,7 @@ public class WorkControllerTest {
         assertThat(fullWorkDTO.getPayload()).isNotNull();
         assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
         assertThat(fullWorkDTO.getPayload().accessList())
-                .hasSize(3)
-                .extracting(AuthorizationResourceDTO::authorizationType)
-                .contains(AuthorizationTypeDTO.Write, AuthorizationTypeDTO.Admin, AuthorizationTypeDTO.Admin);
+                .hasSize(0);
 
         // read with different user is a reader
         fullWorkDTO = assertDoesNotThrow(
@@ -568,8 +566,6 @@ public class WorkControllerTest {
         assertThat(fullWorkDTO.getPayload()).isNotNull();
         assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
         assertThat(fullWorkDTO.getPayload().accessList())
-                .hasSize(3)
-                .extracting(AuthorizationResourceDTO::authorizationType)
-                .contains(AuthorizationTypeDTO.Write, AuthorizationTypeDTO.Admin);
+                .hasSize(0);
     }
 }

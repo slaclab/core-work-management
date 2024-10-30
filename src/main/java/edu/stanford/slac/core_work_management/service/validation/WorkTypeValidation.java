@@ -1,10 +1,12 @@
 package edu.stanford.slac.core_work_management.service.validation;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkSummaryDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
@@ -91,6 +93,28 @@ public abstract class WorkTypeValidation {
             return true;
         }
         return workflow.isCompleted(work);
+    }
+
+    /**
+     * Return all the authorization on work filed for the current input user
+     *
+     * @param userId the user id
+     * @param workDTO the work
+     * @return the list of the authorization resource
+     */
+    public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkDTO workDTO) {
+        return emptyList();
+    }
+
+    /**
+     * Return all the authorization on work filed for the current input user
+     *
+     * @param userId the user id
+     * @param workDTO the work
+     * @return the list of the authorization resource
+     */
+    public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkSummaryDTO workDTO) {
+        return emptyList();
     }
 
     /**
