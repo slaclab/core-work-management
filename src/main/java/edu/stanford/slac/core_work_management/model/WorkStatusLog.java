@@ -28,10 +28,10 @@ public class WorkStatusLog {
      * The date of the status change
      */
     @LastModifiedDate
-    private LocalDateTime changed_on;
+    private LocalDateTime changedOn;
     /**
      * The user that changed the status
      */
     @LastModifiedBy
-    private String changed_by;
+    private String changedBy;
 }

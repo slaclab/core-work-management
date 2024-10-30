@@ -199,6 +199,8 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
 
     @Override
     void checkValid(UpdateWorkValidation updateWorkValidation) {
+        // check superclass validations
+        super.checkValid(updateWorkValidation)
         def validationResults = []
         checkAttachments(updateWorkValidation.getExistingWork(), validationResults);
         checkAndFireError(validationResults)

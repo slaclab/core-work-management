@@ -125,6 +125,8 @@ class TECHardwareReportValidation extends WorkTypeValidation {
 
     @Override
     void checkValid(UpdateWorkValidation updateWorkValidation) {
+        // check superclass validations
+        super.checkValid(updateWorkValidation)
         def validationResults = [
                 checkStringField(updateWorkValidation.getExistingWork().getTitle(), "title", Optional.empty()),
                 checkStringField(updateWorkValidation.getExistingWork().getDescription(), "description", Optional.empty()),

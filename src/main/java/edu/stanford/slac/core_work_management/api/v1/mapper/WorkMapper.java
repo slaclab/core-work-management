@@ -99,6 +99,26 @@ public abstract class WorkMapper {
     }
 
     /**
+     * Convert the {@link WorkStatusLog} to a {@link WorkStatusLogDTO}
+     *
+     * @param workStatusLog the entity to convert
+     * @return the converted DTO
+     */
+    @Mapping(target = "changedBy", expression = "java(getPersonDTO(workStatusLog.getChangedBy()))")
+    abstract public WorkStatusLogDTO toWorkStatusLog(WorkStatusLog workStatusLog);
+
+    /**
+     * Get the person by email
+     *
+     * @param email the email of the person
+     * @return the person
+     */
+    public PersonDTO getPersonDTO(String email) {
+        if(email==null) return null;
+        return peopleGroupService.findPersonByEMail(email);
+    }
+
+    /**
      * Convert the {@link Work} to a {@link WorkDTO}
      *
      * @param work the entity to convert

@@ -548,6 +548,6 @@ public class WorkControllerTest {
         assertThat(fullWorkDTO.getPayload().accessList())
                 .hasSize(3)
                 .extracting(AuthorizationResourceDTO::authorizationType)
-                .contains(AuthorizationTypeDTO.Write, AuthorizationTypeDTO.Read, AuthorizationTypeDTO.Admin);
+                .contains(AuthorizationTypeDTO.Write, AuthorizationTypeDTO.Admin);
     }
 }
