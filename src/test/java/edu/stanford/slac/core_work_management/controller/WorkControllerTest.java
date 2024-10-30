@@ -19,6 +19,7 @@ package edu.stanford.slac.core_work_management.controller;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
@@ -334,6 +335,27 @@ public class WorkControllerTest {
                 );
         assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
         assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        // fetch work
+        var fullWorkDTO = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+        assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
+        assertThat(fullWorkDTO.getPayload()).isNotNull();
+        assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+        assertThat(fullWorkDTO.getPayload().title()).isEqualTo("work 1");
+        assertThat(fullWorkDTO.getPayload().description()).isEqualTo("work 1 description");
+        assertThat(fullWorkDTO.getPayload().location().id()).isEqualTo(testLocationIds.get(0));
+        assertThat(fullWorkDTO.getPayload().shopGroup().id()).isEqualTo(testShopGroupIds.get(0));
+        assertThat(fullWorkDTO.getPayload().createdBy()).isNotNull().extracting(PersonDTO::mail).isEqualTo("user1@slac.stanford.edu");
+        assertThat(fullWorkDTO.getPayload().lastModifiedBy()).isNotNull().extracting(PersonDTO::mail).isEqualTo("user1@slac.stanford.edu");
     }
 
     @Test

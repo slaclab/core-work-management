@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ModelChangesHistoryDTO;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.PersonDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -47,13 +48,13 @@ public record WorkSummaryDTO(
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime createdDate,
         @Schema(description = "The user that created the work")
-        String createdBy,
+        PersonDTO createdBy,
         @Schema(description = "The last modified date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime lastModifiedDate,
         @Schema(description = "The user that last modified the work")
-        String lastModifiedBy,
+        PersonDTO lastModifiedBy,
         Long version,
         @Schema(description = "The authorization access for the work specific resources")
         List<AuthorizationResourceDTO> accessList

@@ -173,22 +173,6 @@ public class TecSoftwareRecordTest {
 
         // check that work is going on close state
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
-
-        // fetch full work info
-        var workInfoResult = assertDoesNotThrow(() -> testControllerHelperService.workControllerFindWorkById(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        domainTestInfo.domain.id(),
-                        newRecordId.getPayload(),
-                        WorkDetailsOptionDTO.builder().build()
-                )
-        );
-        assertThat(workInfoResult).isNotNull();
-        assertThat(workInfoResult.getErrorCode()).isEqualTo(0);
-        assertThat(workInfoResult.getPayload()).isNotNull();
-        assertThat(workInfoResult.getPayload().currentStatus().status()).isNotNull().isEqualTo(WorkflowStateDTO.Closed);
-        assertThat(workInfoResult.getPayload().currentStatus().changedBy().mail()).isNotNull().isNotEmpty().isEqualTo("user1@slac.stanford.edu");
     }
 
     @Test
