@@ -802,8 +802,8 @@ public class WorkService {
      */
     @Cacheable(
             value = {"work-authorization"},
-            key = "{#authentication.principal}")
-    public List<AuthorizationResourceDTO> getAuthorizationByWork(String domainId, String workId, Authentication authentication) {
+            key = "{#authentication.principal, #shopGroupId}")
+    public List<AuthorizationResourceDTO> getAuthorizationByWork(String domainId, String workId, String shopGroupId, Authentication authentication) {
         if (authentication == null) {
             // if the DTO has been requested by an anonymous user, then the access level is Read
             // in other case will should have been blocked by the security layer
@@ -821,10 +821,17 @@ public class WorkService {
                                 // a root users
                                 () -> authService.checkForRoot(authentication),
                                 // or a user that has the right as writer on the work
-                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                () -> workId == null || authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Write,
                                         WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
+                                ),
+                                // user of the shop group are always treated as admin on the work
+                                () -> shopGroupId!=null && shopGroupService.checkContainsAUserEmail(
+                                        // fire not found work exception
+                                        domainId,
+                                        shopGroupId,
+                                        authentication.getCredentials().toString()
                                 )
                         ) ? AuthorizationTypeDTO.Write : AuthorizationTypeDTO.Read)
                 .build());
@@ -837,7 +844,7 @@ public class WorkService {
                                 // a root users
                                 () -> isRoot,
                                 // or a user that has the right as admin on the work
-                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                () -> workId == null || authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Admin,
                                         WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
@@ -853,10 +860,10 @@ public class WorkService {
                                 // a root users
                                 () -> isRoot,
                                 // or a user that is the leader of the group
-                                () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
+                                () -> shopGroupId!=null && authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
                                         authentication,
                                         AuthorizationTypeDTO.Admin,
-                                        WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
+                                        SHOP_GROUP_AUTHORIZATION_TEMPLATE.formatted(shopGroupId)
                                 )
                         ) ? AuthorizationTypeDTO.Admin : AuthorizationTypeDTO.Read)
                 .build());
