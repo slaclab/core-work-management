@@ -57,13 +57,8 @@ public class WorkAuthorizationService {
      * @return true if the user can update the work, false otherwise
      */
     public boolean checkUpdate(Authentication authentication, String domainId, String workId, UpdateWorkDTO updateWorkDTO) {
-        // get stored work for check authorization on all fields
-        var currentStoredWork = wrapCatch(
-                () -> workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build()),
-                -1
-        );
         // call workflow validation
-        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(), currentStoredWork, updateWorkDTO);
+        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(),  domainId, workId, updateWorkDTO);
     }
 
     /**
@@ -76,41 +71,8 @@ public class WorkAuthorizationService {
      * @return true if the user can associate the work to the bucket, false otherwise
      */
     public boolean canAssociateToBucket(Authentication authentication, String domainId, String workId, String buketId, Optional<Boolean> move) {
-        // get stored work for check authorization on all fields
-        var currentStoredWork = wrapCatch(
-                () -> workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build()),
-                -1
-        );
-        boolean isRoot = authService.checkForRoot(authentication);
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, updateWorkDTO)")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be one of these
-                () -> any(
-                        // a root users
-                        () -> isRoot,
-                        // or a user that has the right as writer on the work
-                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                AuthorizationTypeDTO.Write,
-                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                        ),
-                        // user of the shop group are always treated as admin on the work
-                        () -> shopGroupService.checkContainsAUserEmail(
-                                // fire not found work exception
-                                domainId,
-                                workService.getShopGroupIdByWorkId(workId),
-                                authentication.getCredentials().toString()
-                        )
-                )
-        );
-        // call workflow validation
-        return true;
+        // the authorization, for now reflex the update one
+        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(),  domainId, workId, UpdateWorkDTO.builder().build());
     }
 
     /**

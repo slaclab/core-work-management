@@ -1,6 +1,7 @@
 package validation
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
+import edu.stanford.slac.ad.eed.baselib.service.AuthService
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
@@ -13,6 +14,8 @@ import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidat
 import edu.stanford.slac.core_work_management.service.workflow.*
 import groovy.util.logging.Slf4j
 
+import java.time.Clock
+
 import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion
 
 /**
@@ -20,11 +23,15 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion
  */
 @Slf4j
 class TECHardwareReportValidation extends WorkTypeValidation {
+    private final Clock clock;
+    private final AuthService authService;
     private final DomainMapper domainMapper;
     private final WorkRepository workRepository;
     private final ShopGroupService shopGroupService;
 
-    TECHardwareReportValidation(DomainMapper domainMapper, WorkRepository workRepository, ShopGroupService shopGroupService) {
+    TECHardwareReportValidation(Clock clock, AuthService authService, DomainMapper domainMapper, WorkRepository workRepository, ShopGroupService shopGroupService) {
+        this.clock = clock
+        this.authService = authService
         this.domainMapper = domainMapper
         this.workRepository = workRepository
         this.shopGroupService = shopGroupService
@@ -142,12 +149,14 @@ class TECHardwareReportValidation extends WorkTypeValidation {
     void admitChildren(AdmitChildrenValidation canHaveChildValidation) {}
 
     @Override
-    boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+    boolean isUserAuthorizedToUpdate(String userId, UpdateWorkValidation updateWorkValidation) {
+        var work = updateWorkValidation.getExistingWork()
+        var updateWorkDTO = updateWorkValidation.getUpdateWorkDTO()
         if(updateWorkDTO !=null && updateWorkDTO.workflowStateUpdate() != null) {
             var statusModelValue = domainMapper.toModel(updateWorkDTO.workflowStateUpdate())
             if(statusModelValue.getNewState() == WorkflowState.ReadyForWork) {
                 // only area manage and root users can move to ready for work
-                String areaManagerUserId = Objects.requireNonNull(workDTO.location()).locationManagerUserId()
+                String areaManagerUserId = Objects.requireNonNull(work.getLocation()).getLocationManagerUserId()
                 boolean isRoot = authService.checkForRoot(userId)
                 if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
                     throw WorkflowDeniedAction.byErrorMessage()

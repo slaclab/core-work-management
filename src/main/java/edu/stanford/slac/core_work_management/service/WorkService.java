@@ -417,17 +417,29 @@ public class WorkService {
      * Check if the user can update the work
      *
      * @param userId        the id of the user
-     * @param workDTO       the work to update
+     * @param domainId      the domain id of the work
+     * @param workId        the id of the work
      * @param updateWorkDTO the update information
      * @return true if the user can update the work
      */
-    public boolean checkWorkflowForUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+    public boolean checkWorkflowForUpdate(String userId, String domainId, String workId, UpdateWorkDTO updateWorkDTO) {
+        var foundWork = wrapCatch(
+                () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+        var wInstance = (BaseWorkflow) applicationContext.getBean(foundWork.getWorkType().getWorkflow().getImplementation());
         // get validator for the work type
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
-                workDTO.workType().validatorName(),
+                foundWork.getWorkType().getValidatorName(),
                 WorkTypeValidation.class
         );
-        return wtv.isUserAuthorizedToUpdate(userId, workDTO, updateWorkDTO);
+        return wtv.isUserAuthorizedToUpdate(userId, UpdateWorkValidation.builder().existingWork(foundWork).workflow(wInstance).updateWorkDTO(updateWorkDTO).build());
     }
 
     /**
@@ -439,6 +451,9 @@ public class WorkService {
      * @return the list of authorization
      */
     public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkDTO workDTO) {
+        if(userId==null || workDTO==null){
+            return emptyList();
+        }
         // get validator for the work type
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
                 workDTO.workType().validatorName(),
@@ -456,6 +471,9 @@ public class WorkService {
      * @return the list of authorization
      */
     public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkSummaryDTO workDTO) {
+        if (userId == null || workDTO == null) {
+            return emptyList();
+        }
         // get validator for the work type
         WorkTypeValidation wtv = scriptService.getInterfaceImplementationFromFile(
                 workDTO.workType().validatorName(),

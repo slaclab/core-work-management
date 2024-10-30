@@ -24,18 +24,23 @@ public class RequestWorkflow extends BaseWorkflow {
     public RequestWorkflow() {
         validTransitions = Map.of(
                 // Rule: Work gets put into a bucket
-                WorkflowState.Created, Set.of(WorkflowState.PendingApproval),
+                // who: by the creator or one of the assign to
+                WorkflowState.Created, Set.of(WorkflowState.PendingApproval,WorkflowState.Closed),
 
                 // Rule: Area manager approves, if a safety form = true, then it needs to be attached
-                WorkflowState.PendingApproval, Set.of(WorkflowState.ReadyForWork),
+                // who: by the creator or one of the assign to
+                WorkflowState.PendingApproval, Set.of(WorkflowState.ReadyForWork,WorkflowState.Closed),
 
                 // Rule: Start date has begun
-                WorkflowState.ReadyForWork, Set.of(WorkflowState.InProgress),
+                // who: by the area manage, creator or one of the assign to
+                WorkflowState.ReadyForWork, Set.of(WorkflowState.InProgress,WorkflowState.WorkComplete),
 
                 // Rule: Work is marked as complete by user, admin gets notified
+                // who: by the area manage, creator or one of the assign to
                 WorkflowState.InProgress, Set.of(WorkflowState.WorkComplete),
 
                 // Rule: Admin manually closes
+                // who: by the are manager
                 WorkflowState.WorkComplete, Set.of(WorkflowState.Closed)
         );
     }

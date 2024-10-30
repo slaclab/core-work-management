@@ -207,13 +207,44 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
     }
 
     @Override
-    boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+    boolean isUserAuthorizedToUpdate(String userId, UpdateWorkValidation updateWorkValidation) {
+        var work = updateWorkValidation.getExistingWork()
+        var updateWorkDTO = updateWorkValidation.getUpdateWorkDTO()
+        var currentWorkStatus = work.getCurrentStatus().getStatus()
+
+        // check superclass validations
+        super.isUserAuthorizedToUpdate(userId, updateWorkValidation)
+
+        String areaManagerUserId = Objects.requireNonNull(work.getLocation()).getLocationManagerUserId()
+        switch(currentWorkStatus) {
+            case WorkflowState.ReadyForWork, WorkflowState.InProgress->{
+                // check if the current user s the creator or the assign to
+                boolean canModify = areaManagerUserId.compareToIgnoreCase(userId) != 0 ||
+                        work.getCreatedBy().compareToIgnoreCase(userId) != 0 ||
+                        work.getAssignedTo().contains(userId)
+                if(!canModify) {
+                    throw WorkflowDeniedAction.byErrorMessage()
+                            .errorCode(-1)
+                            .errorMessage("The work can be updated only by the area manager, creator or one of the assignee ")
+                            .build()
+                }
+            }
+            case WorkflowState.WorkComplete ->{
+                // when in these state only are manage can update it
+                if(areaManagerUserId.compareToIgnoreCase(userId) != 0) {
+                    throw WorkflowDeniedAction.byErrorMessage()
+                            .errorCode(-1)
+                            .errorMessage("Only the area manager can update the work in the current state")
+                            .build()
+                }
+            }
+            default -> {}
+        }
         if(updateWorkDTO !=null && updateWorkDTO.workflowStateUpdate() != null) {
             var statusModelValue = domainMapper.toModel(updateWorkDTO.workflowStateUpdate())
             if(statusModelValue.getNewState() == WorkflowState.ReadyForWork) {
-                // only area manage and root users can move to ready for work
-                String areaManagerUserId = Objects.requireNonNull(workDTO.location()).locationManagerUserId()
                 boolean isRoot = authService.checkForRoot(userId)
+                // only area manage and root users can move to ready for work
                 if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
                     throw WorkflowDeniedAction.byErrorMessage()
                             .errorCode(-1)
@@ -240,7 +271,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
      * @param validationResults the list of validation results
      */
     private void checkPlannedDataAgainstBucket(Work work, ArrayList<ValidationResult<String>> validationResults) {
-// check that or we have a planned data or bucket or none
+        // check that or we have a planned data or bucket or none
         var plannedStartDate = checkWorkFieldPresence(work, "plannedStartDateTime", Optional.empty());
         var haveABucket = work.getCurrentBucketAssociation() != null && work.getCurrentBucketAssociation().getBucketId() != null;
         // verify that if we have a planned start date we don't have a bucket

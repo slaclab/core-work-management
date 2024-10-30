@@ -1,15 +1,15 @@
 package validation
 
+import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException
+import edu.stanford.slac.ad.eed.baselib.service.AuthService
 import edu.stanford.slac.core_work_management.api.v1.dto.BucketSlotDTO
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO
 import edu.stanford.slac.core_work_management.api.v1.mapper.DomainMapper
 import edu.stanford.slac.core_work_management.exception.WorkflowDeniedAction
 import edu.stanford.slac.core_work_management.model.UpdateWorkflowState
 import edu.stanford.slac.core_work_management.model.Work
 import edu.stanford.slac.core_work_management.repository.WorkRepository
 import edu.stanford.slac.core_work_management.service.ShopGroupService
-import edu.stanford.slac.core_work_management.service.validation.ValidationResult
 import edu.stanford.slac.core_work_management.service.validation.WorkTypeValidation
 import edu.stanford.slac.core_work_management.service.workflow.*
 import groovy.util.logging.Slf4j
@@ -25,12 +25,14 @@ import java.time.LocalDateTime
 @Slf4j
 class TECSoftwareReportValidation extends WorkTypeValidation {
     private final Clock clock;
+    private final AuthService authService;
     private final DomainMapper domainMapper;
     private final WorkRepository workRepository;
     private final ShopGroupService shopGroupService;
 
-    TECSoftwareReportValidation(Clock clock, DomainMapper domainMapper, WorkRepository workRepository, ShopGroupService shopGroupService) {
+    TECSoftwareReportValidation(Clock clock, AuthService authService, DomainMapper domainMapper, WorkRepository workRepository, ShopGroupService shopGroupService) {
         this.clock = clock
+        this.authService = authService
         this.domainMapper = domainMapper
         this.workRepository = workRepository
         this.shopGroupService = shopGroupService
@@ -121,15 +123,24 @@ class TECSoftwareReportValidation extends WorkTypeValidation {
     }
 
     @Override
-    void admitChildren(AdmitChildrenValidation canHaveChildValidation) {}
+    void admitChildren(AdmitChildrenValidation canHaveChildValidation) {
+        throw ControllerLogicException.builder()
+                .errorCode(-1)
+                .errorMessage("The software record cannot have children")
+                .errorDomain("TECSoftwareReportValidation::admitChildren")
+                .build()
+    }
 
     @Override
-    boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+    boolean isUserAuthorizedToUpdate(String userId, UpdateWorkValidation updateWorkValidation) {
+        var work = updateWorkValidation.getExistingWork()
+        var updateWorkDTO = updateWorkValidation.getUpdateWorkDTO()
+
         if(updateWorkDTO !=null && updateWorkDTO.workflowStateUpdate() != null) {
             var statusModelValue = domainMapper.toModel(updateWorkDTO.workflowStateUpdate())
             if(statusModelValue.getNewState() == WorkflowState.ReadyForWork) {
                 // only area manage and root users can move to ready for work
-                String areaManagerUserId = Objects.requireNonNull(workDTO.location()).locationManagerUserId()
+                String areaManagerUserId = Objects.requireNonNull(work.getLocation()).getLocationManagerUserId()
                 boolean isRoot = authService.checkForRoot(userId)
                 if((areaManagerUserId==null || areaManagerUserId.compareToIgnoreCase(userId) != 0) && !isRoot) {
                     throw WorkflowDeniedAction.byErrorMessage()
