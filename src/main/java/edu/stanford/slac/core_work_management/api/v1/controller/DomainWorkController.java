@@ -20,6 +20,8 @@ package edu.stanford.slac.core_work_management.api.v1.controller;
 import java.util.List;
 import java.util.Optional;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.service.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -37,12 +39,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
-import edu.stanford.slac.core_work_management.api.v1.dto.NewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.ReviewWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkDetailsOptionDTO;
-import edu.stanford.slac.core_work_management.api.v1.dto.WorkQueryParameterDTO;
 import edu.stanford.slac.core_work_management.service.WorkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -196,5 +192,73 @@ public class DomainWorkController {
     ) {
         workService.associateWorkToBucketSlot(domainId, workId, bucketId, move);
         return ApiResultResponse.of(true);
+    }
+
+    @Operation(summary = "Create a comment for the work")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Comment saved")
+    })
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(
+            path = "/{domainId}/work/{workId}/comments",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.canCreateComment(#authentication, #domainId, #workId)")
+    public ApiResultResponse<Boolean> createWorkComment(
+            Authentication authentication,
+            @Schema(description = "Is the domain id to use to create the work")
+            @PathVariable String domainId,
+            @Schema(description = "Is the id tof the work to comment")
+            @PathVariable String workId,
+            @Schema(description = "The new comment to create", implementation = NewCommentDTO.class)
+            @Validated @RequestBody NewCommentDTO newWorkDTO
+    ) {
+        workService.createCommentOnWork(domainId, workId, newWorkDTO);
+        return ApiResultResponse.of(true);
+    }
+
+    @Operation(summary = "Create a comment for the work")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Comment saved")
+    })
+    @ResponseStatus(HttpStatus.CREATED)
+    @PutMapping(
+            path = "/{domainId}/work/{workId}/comments/{commentId}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.canCreateComment(#authentication, #domainId, #workId)")
+    public ApiResultResponse<Boolean> updateWorkComment(
+            Authentication authentication,
+            @Schema(description = "Is the domain id to use to create the work")
+            @PathVariable String domainId,
+            @Schema(description = "Is the id tof the work to comment")
+            @PathVariable String workId,
+            @Schema(description = "Is the id of the comment to update")
+            @PathVariable String commentId,
+            @Schema(description = "The new comment to create", implementation = UpdateCommentDTO.class)
+            @Validated @RequestBody UpdateCommentDTO updateCommentDTO
+    ) {
+        workService.updateWorkComment(domainId, workId, commentId, updateCommentDTO);
+        return ApiResultResponse.of(true);
+    }
+
+    @Operation(summary = "Get the list of all comment for the work")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(
+            path = "/{domainId}/work/{workId}/comments",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) and @workAuthorizationService.canCreateComment(#authentication, #domainId, #workId)")
+    public ApiResultResponse<List<CommentDTO>> getWorkComments(
+            Authentication authentication,
+            @Schema(description = "Is the domain id to use to create the work")
+            @PathVariable String domainId,
+            @Schema(description = "Is the id tof the work to comment")
+            @PathVariable String workId
+    ) {
+        return ApiResultResponse.of(workService.findAllCommentsForWork(domainId, workId));
     }
 }

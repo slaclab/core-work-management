@@ -109,6 +109,7 @@ public class WorkControllerTest {
     private final List<String> testWorkTypeIds = new ArrayList<>();
     private final List<String> testActivityTypeIds = new ArrayList<>();
     private List<LOVElementDTO> projectLovValues;
+
     @BeforeAll
     public void init() {
         mongoTemplate.remove(new Query(), Domain.class);
@@ -356,6 +357,74 @@ public class WorkControllerTest {
         assertThat(fullWorkDTO.getPayload().shopGroup().id()).isEqualTo(testShopGroupIds.get(0));
         assertThat(fullWorkDTO.getPayload().createdBy()).isNotNull().extracting(PersonDTO::mail).isEqualTo("user1@slac.stanford.edu");
         assertThat(fullWorkDTO.getPayload().lastModifiedBy()).isNotNull().extracting(PersonDTO::mail).isEqualTo("user1@slac.stanford.edu");
+    }
+
+    @Test
+    public void testCreateWorkComment() {
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        // create new comment
+        var newCommentResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNewComment(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                newWorkIdResult.getPayload(),
+                                NewCommentDTO.builder()
+                                        .content("comment 1")
+                                        .build()
+                        )
+                );
+        assertThat(newCommentResult.getErrorCode()).isEqualTo(0);
+
+        // create another comment
+        var newCommentResult2 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNewComment(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                newWorkIdResult.getPayload(),
+                                NewCommentDTO.builder()
+                                        .content("comment 2")
+                                        .build()
+                        )
+                );
+
+        // get all comments
+        var comments = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerGetAllComment(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload()
+                )
+        );
+        assertThat(comments.getPayload()).hasSize(2);
+
+        // try to update the first comment
     }
 
     @Test

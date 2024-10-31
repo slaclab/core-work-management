@@ -64,7 +64,15 @@ public class WorkController {
             @Schema(name = "domainIds", description = "Return all the works that belong ot one of the domain id")
             @RequestParam(value = "domainIds") Optional<List<String>> domainIds,
             @Schema(name = "workTypeIds", description = "Return all the works that belong ot one of the work type id")
-            @RequestParam(value = "workTypeIds") Optional<List<String>> workTypeIds
+            @RequestParam(value = "workTypeIds") Optional<List<String>> workTypeIds,
+            @Schema(name = "createdBy", description = "Filter by users that created the work")
+            @RequestParam(value = "createdBy") Optional<List<String>> createdBy,
+            @Schema(name = "assignedTo",description = "Filter by users that are assigned to the work")
+            @RequestParam(value = "assignedTo") Optional<List<String>> assignedTo,
+            @Schema(name = "workflowName",description = "Filter by workflow name")
+            @RequestParam(value = "workflowName") Optional<List<String>> workflowName,
+            @Schema(name = "workflowState",description = "Filter by workflow state")
+            @RequestParam(value = "workflowState") Optional<List<WorkflowStateDTO>> workflowState
     ) {
         return ApiResultResponse.of(
                 workService.searchAllWork(
@@ -75,6 +83,10 @@ public class WorkController {
                                 .contextSize(contextSize.orElse(null))
                                 .limit(limit.orElse(null))
                                 .search(search.orElse(null))
+                                .createdBy(createdBy.orElse(null))
+                                .assignedTo(assignedTo.orElse(null))
+                                .workflowName(workflowName.orElse(null))
+                                .workflowState(workflowState.orElse(null))
                                 .build()
                 )
         );

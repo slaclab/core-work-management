@@ -17,6 +17,7 @@
 
 package edu.stanford.slac.core_work_management.model;
 
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkflowStateDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,4 +37,8 @@ public class WorkQueryParameter {
     private Integer contextSize;
     private Integer limit;
     private String search;
+    List<String> createdBy;
+    List<String> assignedTo;
+    List<String> workflowName;
+    List<WorkflowStateDTO> workflowState;
 }

@@ -20,8 +20,16 @@ public record WorkQueryParameterDTO(
         String anchorID,
         @Schema(description = "Include this number of element before the anchor")
         Integer contextSize,
-        @Schema(description = "Limit the number of element after the anchor.")
+        @Schema(description = "Limit the number of element after the anchor")
         Integer limit,
-        @Schema(description = "Typical search functionality.")
-        String search
+        @Schema(description = "Typical search functionality")
+        String search,
+        @Schema(description = "Filter by users that created the work")
+        List<String> createdBy,
+        @Schema(description = "Filter by users that are assigned to the work")
+        List<String> assignedTo,
+        @Schema(description = "Filter by workflow name")
+        List<String> workflowName,
+        @Schema(description = "Filter by workflow state")
+        List<WorkflowStateDTO> workflowState
         ) {}

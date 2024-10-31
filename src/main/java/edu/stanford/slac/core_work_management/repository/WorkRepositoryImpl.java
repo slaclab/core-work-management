@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Repository
 @AllArgsConstructor
@@ -117,6 +119,45 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
         } else {
             query = new Query();
         }
+        if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("domainId").in(queryParameter.getDomainIds())
+            );
+        }
+
+        if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
+            );
+        }
+
+        if (queryParameter.getCreatedBy() != null && !queryParameter.getCreatedBy().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("createdBy").in(queryParameter.getCreatedBy())
+            );
+        }
+
+        if (queryParameter.getAssignedTo() != null && !queryParameter.getAssignedTo().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("assignedTo").in(queryParameter.getAssignedTo())
+            );
+        }
+
+        if (queryParameter.getWorkflowName() != null && !queryParameter.getWorkflowName().isEmpty()) {
+            List< Pattern > patterns = queryParameter.getWorkflowName().stream()
+                    .map(name -> Pattern.compile(name, Pattern.CASE_INSENSITIVE))
+                    .collect(Collectors.toList());
+            query.addCriteria(
+                    Criteria.where("workType.name").in(patterns)
+            );
+        }
+
+        if (queryParameter.getWorkflowState() != null && !queryParameter.getWorkflowState().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("currentStatus.status").in(queryParameter.getAssignedTo())
+            );
+        }
+
         return query;
     }
 
@@ -137,17 +178,17 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
                 );
             }
 
-            if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
-                allCriteria.add(
-                        Criteria.where("domainId").in(queryParameter.getDomainIds())
-                );
-            }
-
-            if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
-                allCriteria.add(
-                        Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
-                );
-            }
+//            if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
+//                allCriteria.add(
+//                        Criteria.where("domainId").in(queryParameter.getDomainIds())
+//                );
+//            }
+//
+//            if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
+//                allCriteria.add(
+//                        Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
+//                );
+//            }
 
             if(!allCriteria.isEmpty()) {
                 query.addCriteria(
@@ -189,17 +230,17 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
                     Criteria.where("createdDate").lte(anchorCreatedDate)
             );
 
-            if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
-                allCriteria.add(
-                        Criteria.where("domainId").in(queryParameter.getDomainIds())
-                );
-            }
-
-            if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
-                allCriteria.add(
-                        Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
-                );
-            }
+//            if(queryParameter.getDomainIds() != null && !queryParameter.getDomainIds().isEmpty()) {
+//                allCriteria.add(
+//                        Criteria.where("domainId").in(queryParameter.getDomainIds())
+//                );
+//            }
+//
+//            if (queryParameter.getWorkTypeIds() != null && !queryParameter.getWorkTypeIds().isEmpty()) {
+//                allCriteria.add(
+//                        Criteria.where("workType.id").in(queryParameter.getWorkTypeIds())
+//                );
+//            }
 
             // at this point the anchor id is not null
             Query query = getQuery(queryParameter);
