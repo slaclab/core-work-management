@@ -108,17 +108,6 @@ public abstract class WorkMapper {
     abstract public WorkStatusLogDTO toWorkStatusLog(WorkStatusLog workStatusLog);
 
     /**
-     * Get the person by email
-     *
-     * @param email the email of the person
-     * @return the person
-     */
-    public PersonDTO getPersonDTO(String email) {
-        if(email==null) return null;
-        return peopleGroupService.findPersonByEMail(email);
-    }
-
-    /**
      * Convert the {@link Work} to a {@link WorkDTO}
      *
      * @param work the entity to convert
@@ -128,6 +117,8 @@ public abstract class WorkMapper {
     @Mapping(target = "customFields", expression = "java(toCustomFieldValuesDTOForWork(work.getWorkType().getId(), work.getCustomFields()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
     @Mapping(target = "changesHistory", expression = "java(getChanges(work.getId(), workDetailsOptionDTO))")
+    @Mapping(target = "createdBy", expression = "java(getPersonDTO(work.getCreatedBy()))")
+    @Mapping(target = "lastModifiedBy", expression = "java(getPersonDTO(work.getLastModifiedBy()))")
     abstract public WorkDTO toDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
 
     /**
@@ -138,6 +129,8 @@ public abstract class WorkMapper {
      */
     @Mapping(target = "workType", expression = "java(toWorkTypeDTOFromWorkTypeId(work.getDomainId(), work.getWorkType()))")
     @Mapping(target = "domain", expression = "java(toDomainDTO(work.getDomainId()))")
+    @Mapping(target = "createdBy", expression = "java(getPersonDTO(work.getCreatedBy()))")
+    @Mapping(target = "lastModifiedBy", expression = "java(getPersonDTO(work.getLastModifiedBy()))")
     abstract public WorkSummaryDTO toSummaryDTO(Work work, WorkDetailsOptionDTO workDetailsOptionDTO);
 
     /**
@@ -148,6 +141,17 @@ public abstract class WorkMapper {
      */
     @Mapping(target = "bucket", expression = "java(fetchBucket(bucketAssociation.getBucketId()))")
     abstract public WorkBucketAssociationDTO toDTO(WorkBucketAssociation bucketAssociation);
+
+    /**
+     * Get the person by email
+     *
+     * @param email the email of the person
+     * @return the person
+     */
+    public PersonDTO getPersonDTO(String email) {
+        if(email==null) return null;
+        return peopleGroupService.findPersonByEMail(email);
+    }
 
     /**
      * Fetch the bucket

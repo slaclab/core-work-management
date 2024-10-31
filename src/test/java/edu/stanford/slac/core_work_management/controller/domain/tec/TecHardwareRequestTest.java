@@ -402,7 +402,7 @@ public class TecHardwareRequestTest  {
                 () -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
+                        Optional.of("user10@slac.stanford.edu"),
                         domainTestInfo.domain.id(),
                         newWorkResult.getPayload(),
                         UpdateWorkDTO

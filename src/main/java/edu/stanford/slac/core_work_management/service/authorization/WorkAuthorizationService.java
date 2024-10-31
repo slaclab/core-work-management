@@ -18,6 +18,7 @@
 package edu.stanford.slac.core_work_management.service.authorization;
 
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.ApiResultResponse;
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationTypeDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
@@ -56,62 +57,8 @@ public class WorkAuthorizationService {
      * @return true if the user can update the work, false otherwise
      */
     public boolean checkUpdate(Authentication authentication, String domainId, String workId, UpdateWorkDTO updateWorkDTO) {
-        // get stored work for check authorization on all fields
-        var currentStoredWork = wrapCatch(
-                () -> workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build()),
-                -1
-        );
-        boolean isRoot = authService.checkForRoot(authentication);
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, updateWorkDTO)")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be one of these
-                () -> any(
-                        // a root users
-                        () -> isRoot,
-                        // or a user that has the right as writer on the work
-                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                AuthorizationTypeDTO.Write,
-                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                        ),
-                        // user of the shop group are always treated as admin on the work
-                        () -> shopGroupService.checkContainsAUserEmail(
-                                // fire not found work exception
-                                domainId,
-                                workService.getShopGroupIdByWorkId(workId),
-                                authentication.getCredentials().toString()
-                        )
-                )
-        );
-
-        // only admin can update the location
-        if (updateWorkDTO.locationId() != null) {
-            assertion(
-                    NotAuthorized.notAuthorizedBuilder()
-                            .errorCode(-1)
-                            .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, updateWorkDTO)")
-                            .build(),
-                    // should be one of these
-                    () -> any(
-                            // a root users
-                            () -> isRoot,
-                            // or a user that has the right as admin on the work
-                            () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                    authentication,
-                                    AuthorizationTypeDTO.Admin,
-                                    WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                            )
-                    )
-            );
-        }
         // call workflow validation
-        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(), currentStoredWork, updateWorkDTO);
+        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(),  domainId, workId, updateWorkDTO);
     }
 
     /**
@@ -124,41 +71,8 @@ public class WorkAuthorizationService {
      * @return true if the user can associate the work to the bucket, false otherwise
      */
     public boolean canAssociateToBucket(Authentication authentication, String domainId, String workId, String buketId, Optional<Boolean> move) {
-        // get stored work for check authorization on all fields
-        var currentStoredWork = wrapCatch(
-                () -> workService.findWorkById(domainId, workId, WorkDetailsOptionDTO.builder().build()),
-                -1
-        );
-        boolean isRoot = authService.checkForRoot(authentication);
-        // check for auth
-        assertion(
-                NotAuthorized.notAuthorizedBuilder()
-                        .errorCode(-1)
-                        .errorDomain("WorkAuthorizationService::checkUpdate(authentication, workId, updateWorkDTO)")
-                        .build(),
-                // should be authenticated
-                () -> authService.checkAuthentication(authentication),
-                // should be one of these
-                () -> any(
-                        // a root users
-                        () -> isRoot,
-                        // or a user that has the right as writer on the work
-                        () -> authService.checkAuthorizationForOwnerAuthTypeAndResourcePrefix(
-                                authentication,
-                                AuthorizationTypeDTO.Write,
-                                WORK_AUTHORIZATION_TEMPLATE.formatted(workId)
-                        ),
-                        // user of the shop group are always treated as admin on the work
-                        () -> shopGroupService.checkContainsAUserEmail(
-                                // fire not found work exception
-                                domainId,
-                                workService.getShopGroupIdByWorkId(workId),
-                                authentication.getCredentials().toString()
-                        )
-                )
-        );
-        // call workflow validation
-        return true;
+        // the authorization, for now reflex the update one
+        return workService.checkWorkflowForUpdate(authentication.getCredentials().toString(),  domainId, workId, UpdateWorkDTO.builder().build());
     }
 
     /**
@@ -214,14 +128,13 @@ public class WorkAuthorizationService {
     public boolean applyCompletionDTOList(ApiResultResponse<List<WorkSummaryDTO>> workDTOS, Authentication authentication) {
         List<WorkSummaryDTO> filledDTOs = workDTOS.getPayload().stream().map(
                 workDTO -> {
-                    // check for auth
-                    var authList = workService.getAuthorizationByWork(
-                            workDTO.domain().id(),
-                            workDTO.id(),
-                            workDTO.shopGroup()!=null?workDTO.shopGroup().id():null,
-                            authentication
-                    );
-                    return workDTO.toBuilder().accessList(authList).build();
+                    // call workflow validation
+                    return workDTO.toBuilder().accessList(
+                            workService.getUserAuthorizationOnWork(
+                                    authentication.getPrincipal().toString(),
+                                    workDTO
+                            )
+                    ).build();
                 }
         ).toList();
         workDTOS.setPayload(filledDTOs);
@@ -241,12 +154,10 @@ public class WorkAuthorizationService {
                         .toBuilder()
                         .accessList
                                 (
-                                        workService.getAuthorizationByWork
+                                        workService.getUserAuthorizationOnWork
                                                 (
-                                                        w.domain().id(),
-                                                        w.id(),
-                                                        w.shopGroup()!=null?w.shopGroup().id():null,
-                                                        authentication
+                                                        authentication.getPrincipal().toString(),
+                                                        w
                                                 )
                                 )
                         .build()

@@ -91,11 +91,10 @@ public abstract class BaseWorkflow {
     /**
      * Check if the user can update the work
      *
-     * @param identityId the user that is trying to update the work
      * @param work       the work
      * @throws ControllerLogicException if the user cannot update the work
      */
-    public void canUpdate(String identityId, Work work) {
+    public void canBeUpdate(Work work) {
         if (isCompleted(work)) {
             throw ControllerLogicException
                     .builder()

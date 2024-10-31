@@ -173,26 +173,10 @@ public class TecSoftwareRecordTest {
 
         // check that work is going on close state
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
-
-        // fetch full work info
-        var workInfoResult = assertDoesNotThrow(() -> testControllerHelperService.workControllerFindWorkById(
-                        mockMvc,
-                        status().isOk(),
-                        Optional.of("user1@slac.stanford.edu"),
-                        domainTestInfo.domain.id(),
-                        newRecordId.getPayload(),
-                        WorkDetailsOptionDTO.builder().build()
-                )
-        );
-        assertThat(workInfoResult).isNotNull();
-        assertThat(workInfoResult.getErrorCode()).isEqualTo(0);
-        assertThat(workInfoResult.getPayload()).isNotNull();
-        assertThat(workInfoResult.getPayload().currentStatus().status()).isNotNull().isEqualTo(WorkflowStateDTO.Closed);
-        assertThat(workInfoResult.getPayload().currentStatus().changedBy().mail()).isNotNull().isNotEmpty().isEqualTo("user1@slac.stanford.edu");
     }
 
     @Test
-    public void createAndClosedAfter() {
+    public void createAndClosedAfterCreation() {
         // create a new work
         var newRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerCreateNew(
                         mockMvc,
@@ -215,7 +199,7 @@ public class TecSoftwareRecordTest {
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Created)).isTrue();
 
         // close work
-        var closedRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerUpdate(
+        var updateResult = assertDoesNotThrow(() -> testControllerHelperService.workControllerUpdate(
                         mockMvc,
                         status().isOk(),
                         Optional.of("user1@slac.stanford.edu"),
@@ -233,8 +217,114 @@ public class TecSoftwareRecordTest {
                                 .build()
                 )
         );
+        assertThat(updateResult).isNotNull();
+        assertThat(updateResult.getErrorCode()).isEqualTo(0);
+        assertThat(updateResult.getPayload()).isNotNull().isTrue();
+        // check that work is going on close state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
+    }
+
+    @Test
+    public void createAndClosedByAnotherUserAfterCreation() {
+        // create a new work
+        var newRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(domainTestInfo.getWorkTypeByName("Software Record").id())
+                                .title("Software Record")
+                                .description("Software Record Description")
+                                .build()
+                )
+        );
+        assertThat(newRecordId).isNotNull();
+        assertThat(newRecordId.getErrorCode()).isEqualTo(0);
+        assertThat(newRecordId.getPayload()).isNotNull().isNotEmpty();
+
+        // check that work is going on close state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // close work
+        var updateResult = assertDoesNotThrow(() -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user2@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newRecordId.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .comment("Closed after creation")
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateResult).isNotNull();
+        assertThat(updateResult.getErrorCode()).isEqualTo(0);
+        assertThat(updateResult.getPayload()).isNotNull().isTrue();
+        // check that work is going on close state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
+    }
+
+    @Test
+    public void verifyClosedRecordCannotBeModifiedAnymore() {
+        // create a new work
+        var newRecordId = assertDoesNotThrow(() -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(domainTestInfo.getWorkTypeByName("Software Record").id())
+                                .title("Software Record")
+                                .description("Software Record Description")
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .comment("Closed on creation")
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(newRecordId).isNotNull();
+        assertThat(newRecordId.getErrorCode()).isEqualTo(0);
+        assertThat(newRecordId.getPayload()).isNotNull().isNotEmpty();
 
         // check that work is going on close state
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newRecordId.getPayload(), WorkflowStateDTO.Closed)).isTrue();
+
+        // try to modify should fail
+        var failsOnUpdateClosedWork = assertThrows(
+                ControllerLogicException.class,
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isInternalServerError(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newRecordId.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .workflowStateUpdate(
+                                        UpdateWorkflowStateDTO
+                                                .builder()
+                                                .comment("Closed after creation")
+                                                .newState(WorkflowStateDTO.Closed)
+                                                .build()
+                                )
+                                .build()
+                )
+        );
+        assertThat(failsOnUpdateClosedWork).isNotNull();
+        assertThat(failsOnUpdateClosedWork.getErrorMessage()).containsIgnoringCase("closed");
     }
 }

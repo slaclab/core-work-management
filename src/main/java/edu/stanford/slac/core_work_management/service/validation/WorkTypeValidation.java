@@ -1,10 +1,12 @@
 package edu.stanford.slac.core_work_management.service.validation;
 
+import edu.stanford.slac.ad.eed.baselib.api.v1.dto.AuthorizationResourceDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.UpdateWorkDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WorkDTO;
+import edu.stanford.slac.core_work_management.api.v1.dto.WorkSummaryDTO;
 import edu.stanford.slac.core_work_management.api.v1.dto.WriteCustomFieldDTO;
 import edu.stanford.slac.core_work_management.model.CustomField;
 import edu.stanford.slac.core_work_management.model.WATypeCustomField;
@@ -70,12 +72,20 @@ public abstract class WorkTypeValidation {
     /**
      * Check if the current user is authorized to update the work
      *
-     * @param userId        the domain id
-     * @param workDTO       the work id
-     * @param updateWorkDTO the work update information
+     * @param userId               the user id
+     * @param updateWorkValidation then information to check work authorization
      * @return true if the user is authorized to update the work
      */
-    public boolean isUserAuthorizedToUpdate(String userId, WorkDTO workDTO, UpdateWorkDTO updateWorkDTO) {
+    public boolean isUserAuthorizedToUpdate(String userId, UpdateWorkValidation updateWorkValidation) {
+        // Check if the user is authorized to update the work
+        if (isCompleted(updateWorkValidation.getWorkflow(), updateWorkValidation.getExistingWork())) {
+            throw ControllerLogicException
+                    .builder()
+                    .errorCode(-1)
+                    .errorMessage("The work %s is closed and cannot be updated".formatted(updateWorkValidation.getExistingWork().getTitle()))
+                    .errorDomain("WorkTypeValidation::isUserAuthorizedToUpdate")
+                    .build();
+        }
         return true;
     }
 
@@ -87,10 +97,32 @@ public abstract class WorkTypeValidation {
      * @return true if the work is completed
      */
     public boolean isCompleted(BaseWorkflow workflow, Work work) {
-        if(workflow==null || work==null) {
+        if (workflow == null || work == null) {
             return true;
         }
         return workflow.isCompleted(work);
+    }
+
+    /**
+     * Return all the authorization on work filed for the current input user
+     *
+     * @param userId  the user id
+     * @param workDTO the work
+     * @return the list of the authorization resource
+     */
+    public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkDTO workDTO) {
+        return emptyList();
+    }
+
+    /**
+     * Return all the authorization on work filed for the current input user
+     *
+     * @param userId  the user id
+     * @param workDTO the work
+     * @return the list of the authorization resource
+     */
+    public List<AuthorizationResourceDTO> getUserAuthorizationOnWork(String userId, WorkSummaryDTO workDTO) {
+        return emptyList();
     }
 
     /**
@@ -190,11 +222,11 @@ public abstract class WorkTypeValidation {
      */
     protected void checkAndFireError(ArrayList<ValidationResult<String>> validationResults) {
 // Check if any validation failed
-        var hasErrors = validationResults.stream().anyMatch(vr->!vr.isValid());
+        var hasErrors = validationResults.stream().anyMatch(vr -> !vr.isValid());
 
 // If there are errors, throw a ControllerLogicException with all error messages
         if (hasErrors) {
-            var errorMessages = validationResults.stream().filter(vr->!vr.isValid()).map(ValidationResult::getErrorMessage).toList();
+            var errorMessages = validationResults.stream().filter(vr -> !vr.isValid()).map(ValidationResult::getErrorMessage).toList();
             throw ControllerLogicException
                     .builder()
                     .errorCode(-1)
@@ -211,7 +243,7 @@ public abstract class WorkTypeValidation {
      * @throws ControllerLogicException if the field is null or empty or with unalloyed user
      */
     protected void checkAssignedTo(PeopleGroupService peopleGroupService, Work work, ArrayList<ValidationResult<String>> validationResults) {
-        List<String> assignedUsers = work.getAssignedTo()!=null ?work.getAssignedTo(): emptyList();
+        List<String> assignedUsers = work.getAssignedTo() != null ? work.getAssignedTo() : emptyList();
         if (assignedUsers.isEmpty()) {
             validationResults.add(ValidationResult.failure("The work must be assigned to someone"));
             return;
@@ -230,6 +262,7 @@ public abstract class WorkTypeValidation {
 
     /**
      * Validate the attachments
+     *
      * @param attachmentsValue the attachments to validate
      */
     protected void validateAttachment(AttachmentService attachmentService, AttachmentsValue attachmentsValue, String fieldName, List<ValidationResult<String>> validationResult) {
@@ -237,7 +270,7 @@ public abstract class WorkTypeValidation {
             return;
         }
         attachmentsValue.getValue().forEach(
-                attachmentId ->{
+                attachmentId -> {
                     if (!attachmentService.exists(attachmentId)) {
                         validationResult.addFirst(ValidationResult.failure("The '%s' attachment %s does not exist".formatted(fieldName, attachmentId)));
                     }
