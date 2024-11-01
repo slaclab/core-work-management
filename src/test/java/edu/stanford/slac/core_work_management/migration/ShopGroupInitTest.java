@@ -52,7 +52,7 @@ public class ShopGroupInitTest {
     public void initTest() {
         M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
         assertDoesNotThrow(initLOV::initLOV);
-        M1001_InitTECDomain initDomain = new M1001_InitTECDomain(lovService, domainService);
+        M1001_InitTECDomain initDomain = new M1001_InitTECDomain(domainService);
         assertDoesNotThrow(initDomain::changeSet);
         M2000InitShopGroup initShopGroup = new M2000InitShopGroup(domainService, shopGroupService);
         assertDoesNotThrow(initShopGroup::changeSet);

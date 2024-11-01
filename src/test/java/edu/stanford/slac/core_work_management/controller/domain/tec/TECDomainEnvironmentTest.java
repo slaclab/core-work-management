@@ -77,7 +77,7 @@ public class TECDomainEnvironmentTest extends BaseWorkflowDomainTest {
         domainTestInfo.lovElementBucketStatus = lovService.findAllByGroupName("BucketStatus");
 
         // init tec domain
-        M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(lovService, domainService);
+        M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(domainService);
         DomainDTO tecDomain = assertDoesNotThrow(initWorkType::initTECDomain);
         AssertionsForClassTypes.assertThat(tecDomain).isNotNull();
         domainTestInfo.domain = tecDomain;

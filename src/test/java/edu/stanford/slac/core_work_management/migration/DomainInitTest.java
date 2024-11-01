@@ -45,7 +45,7 @@ public class DomainInitTest {
     public void test() {
         M1000_InitLOV initLOV = new M1000_InitLOV(lovService);
         assertDoesNotThrow(initLOV::initLOV);
-        M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(lovService, domainService);
+        M1001_InitTECDomain initWorkType = new M1001_InitTECDomain(domainService);
         var tecDomain = assertDoesNotThrow(initWorkType::initTECDomain);
         assertThat(tecDomain).isNotNull();
     }
