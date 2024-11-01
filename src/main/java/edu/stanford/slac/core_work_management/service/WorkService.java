@@ -192,6 +192,7 @@ public class WorkService {
 
         // log the creation of the work
         if (logIf.isPresent() && logIf.get()) {
+            log.info("[work-creation-{}] creating new elog entry for the work {}", savedWork.getWorkNumber(), savedWork.getTitle());
             logService.createNewLogEntry
                     (
                             savedWork.getDomainId(),
