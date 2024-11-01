@@ -228,7 +228,7 @@ public class LogControllerTest {
     }
 
     @Test
-    public void testCreateMewLogEntryOnWork() {
+    public void testCreateNewLogEntryOnWork() {
         Faker faker = new Faker();
         try (
                 InputStream isPng = assertDoesNotThrow(() -> documentGenerationService.getTestPng());
@@ -295,7 +295,7 @@ public class LogControllerTest {
 
 
     @Test
-    public void testCreateMewLogOnWorkCreation() {
+    public void testCreateNewLogOnWorkCreation() {
         var newWorkLogIdResult = assertDoesNotThrow(
                 () -> testControllerHelperService.workControllerCreateNew(
                         mockMvc,

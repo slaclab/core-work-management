@@ -151,7 +151,7 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
 
         if (queryParameter.getWorkflowState() != null && !queryParameter.getWorkflowState().isEmpty()) {
             query.addCriteria(
-                    Criteria.where("currentStatus.status").in(queryParameter.getAssignedTo())
+                    Criteria.where("currentStatus.status").in(queryParameter.getWorkflowState())
             );
         }
 
