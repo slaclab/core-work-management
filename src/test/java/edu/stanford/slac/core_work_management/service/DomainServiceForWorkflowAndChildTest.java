@@ -78,7 +78,7 @@ public class DomainServiceForWorkflowAndChildTest {
         assertThat(fullDomain).isNotNull();
         assertThat(fullDomain.workflows()).isNotNull().isNotEmpty().hasSize(1);
         assertThat(fullDomain.workflows().stream().map(WorkflowDTO::name)).containsExactlyInAnyOrder(
-                "TestWorkflowOne"
+                "DummyParentWorkflow"
         );
     }
 

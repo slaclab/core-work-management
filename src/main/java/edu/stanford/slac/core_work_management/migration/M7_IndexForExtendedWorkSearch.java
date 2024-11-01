@@ -27,6 +27,66 @@ public class M7_IndexForExtendedWorkSearch {
                         )
                         .named("domain-id")
         );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "createdDate",
+                                Sort.Direction.ASC
+                        )
+                        .named("created-date")
+        );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "workType.id",
+                                Sort.Direction.ASC
+                        )
+                        .named("workType-id")
+        );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "createdBy",
+                                Sort.Direction.ASC
+                        )
+                        .named("created-by")
+        );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "assignedTo",
+                                Sort.Direction.ASC
+                        )
+                        .named("assigned-to")
+        );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "workType.workflow.name",
+                                Sort.Direction.ASC
+                        )
+                        .named("workType-name")
+        );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "currentStatus.status",
+                                Sort.Direction.ASC
+                        )
+                        .named("currentStatus-status")
+        );
     }
 
     @RollbackExecution

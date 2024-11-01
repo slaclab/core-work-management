@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -536,6 +537,82 @@ public class TestControllerHelperService {
 
     /**
      * Create new work
+     * @param mockMvc
+     * @param resultMatcher
+     * @param userInfo
+     * @param domainId
+     * @param workId
+     * @param newCommentDTO
+     * @return
+     * @throws Exception
+     */
+    public ApiResultResponse<String> workControllerCreateNewComment(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String domainId,
+            String workId,
+            NewCommentDTO newCommentDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/domain/{domainId}/work/{workId}/comments", domainId, workId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newCommentDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<String> workControllerCreateUpdateComment(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String domainId,
+            String workId,
+            String commentId,
+            UpdateCommentDTO updateCommentDTO
+    ) throws Exception {
+        var requestBuilder = post("/v1/domain/{domainId}/work/{workId}/comments/{commentId}", domainId, workId,commentId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateCommentDTO));
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    public ApiResultResponse<List<CommentDTO>> workControllerGetAllComment(
+            MockMvc mockMvc,
+            ResultMatcher resultMatcher,
+            Optional<String> userInfo,
+            String domainId,
+            String workId
+    ) throws Exception {
+        var requestBuilder = get("/v1/domain/{domainId}/work/{workId}/comments", domainId, workId)
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON);
+        return executeHttpRequest(
+                new TypeReference<>() {
+                },
+                mockMvc,
+                resultMatcher,
+                userInfo,
+                requestBuilder
+        );
+    }
+
+    /**
+     * Create new work
      *
      * @param mockMvc       the mock mvc
      * @param resultMatcher the result matcher
@@ -724,6 +801,10 @@ public class TestControllerHelperService {
                 limit,
                 search,
                 Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
                 Optional.empty()
         );
     }
@@ -751,7 +832,11 @@ public class TestControllerHelperService {
             Optional<Integer> limit,
             Optional<String> search,
             Optional<List<String>> domainIds,
-            Optional<List<String>> workTypeIds
+            Optional<List<String>> workTypeIds,
+            Optional<List<String>> createdBy,
+            Optional<List<String>> assignedTo,
+            Optional<List<String>> workflowName,
+            Optional<List<WorkflowStateDTO>> workflowState
     ) throws Exception {
         var requestBuilder = get("/v1/work")
                 .contentType(MediaType.APPLICATION_JSON);
@@ -761,6 +846,14 @@ public class TestControllerHelperService {
         search.ifPresent(s -> requestBuilder.param("search", s));
         domainIds.ifPresent(strings -> requestBuilder.param("domainIds", String.join(",", strings)));
         workTypeIds.ifPresent(strings -> requestBuilder.param("workTypeIds", String.join(",", strings)));
+        createdBy.ifPresent(strings -> requestBuilder.param("createdBy", String.join(",", strings)));
+        assignedTo.ifPresent(strings -> requestBuilder.param("assignedTo", String.join(",", strings)));
+        workflowName.ifPresent(strings -> requestBuilder.param("workflowName", String.join(",", strings)));
+        workflowState.ifPresent(states -> requestBuilder.param("workflowState",
+                states.stream()
+                        .map(Enum::name)
+                        .collect(Collectors.joining(","))
+        ));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

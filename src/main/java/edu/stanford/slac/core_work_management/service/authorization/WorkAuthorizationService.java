@@ -44,7 +44,25 @@ public class WorkAuthorizationService {
     private final WorkService workService;
     private final ShopGroupService shopGroupService;
 
+    /**
+     * Check if the user can create a new work
+     *
+     * @param authentication the authentication object
+     * @param newWorkDTO     the new work dto
+     * @return true if the user can create a new work, false otherwise
+     */
     public boolean checkCanCreate(Authentication authentication, String domainId, NewWorkDTO newWorkDTO) {
+        return true;
+    }
+
+    /**
+     * Check if the user can create a comment the work
+     *
+     * @param authentication the authentication object
+     * @param workId         the work id
+     * @return true if the user can create a new work, false otherwise
+     */
+    public boolean canCreateComment(Authentication authentication, String domainId, String workId) {
         return true;
     }
 

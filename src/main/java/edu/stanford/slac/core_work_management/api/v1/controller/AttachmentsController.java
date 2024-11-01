@@ -6,6 +6,7 @@ import edu.stanford.slac.core_work_management.api.v1.dto.StorageObjectDTO;
 import edu.stanford.slac.core_work_management.service.AttachmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -28,7 +29,7 @@ public class AttachmentsController {
     AttachmentService attachmentService;
 
     @PostMapping(
-            consumes = {"multipart/form-data"},
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @ResponseStatus(HttpStatus.CREATED)
@@ -36,7 +37,14 @@ public class AttachmentsController {
     @PreAuthorize("@baseAuthorizationService.checkAuthenticated(#authentication) ")//and @attachmentAuthorizationService.canCreate(#authentication)
     public ApiResultResponse<String> newAttachment(
             Authentication authentication,
-            @Schema(name = "uploadFile", description = "The file to upload", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The file to upload",
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(type = "string", format = "binary")
+                    )
+            )
             @RequestParam("uploadFile") MultipartFile uploadFile
     ) throws Exception {
         return ApiResultResponse.of(

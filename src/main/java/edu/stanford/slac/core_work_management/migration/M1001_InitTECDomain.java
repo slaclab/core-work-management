@@ -22,7 +22,6 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 @Profile({"init-domain", "init-default-data"})
 @ChangeUnit(id = "init-tec-domain", order = "1001", author = "bisegni")
 public class M1001_InitTECDomain {
-    private final LOVService lovService;
     private final DomainService domainService;
 
     @Execution

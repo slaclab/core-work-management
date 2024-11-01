@@ -49,6 +49,7 @@ public class WorkService {
     private final LocationMapper locationMapper;
     private final ShopGroupMapper shopGroupMapper;
 
+    private final CommentService commentService;
     private final ScriptService scriptService;
     private final DomainService domainService;
     private final BucketService bucketService;
@@ -101,8 +102,9 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public String createNew(String domainId, Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
+        log.debug("[work-creation-{}] Creating new work for domain '{}'", workSequence, domainId);
         // point, if the work is a sub work, to the parent work
         Work parentWork;
 
@@ -177,7 +179,6 @@ public class WorkService {
                 -5
         );
 
-        log.info("New Work '{}-{}' has been created by '{}'", savedWork.getWorkNumber(), savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
 
         // after this work is update we need to update all the
@@ -186,7 +187,7 @@ public class WorkService {
             updateParentWorkWorkflow(parentWork);
         }
 
-        log.info("Update domain statistic");
+//        log.info("Update domain statistic");
         domainService.updateDomainStatistics(savedWork.getDomainId());
 
         // log the creation of the work
@@ -202,6 +203,7 @@ public class WorkService {
                             null
                     );
         }
+        log.info("[work-creation-{}] New Work '{}' has been created by '{}'", savedWork.getWorkNumber(), savedWork.getTitle(), savedWork.getCreatedBy());
         return savedWork.getId();
     }
 
@@ -875,4 +877,67 @@ public class WorkService {
                 -1
         );
     }
+
+    /**
+     * Return the work by his id
+     *
+     * @param domainId the id of the domain
+     * @param workId   the id of the work
+     * @param newWorkDTO the DTO to create the work
+     */
+    public void createCommentOnWork(String domainId, String workId, NewCommentDTO newWorkDTO) {
+        // get the work
+        var work = wrapCatch(
+                () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+        // create the comment
+        commentService.createComment(workId, newWorkDTO);
+    }
+
+    /**
+     * Return the work by his id
+     *
+     * @param domainId the id of the domain
+     * @param workId   the id of the work
+     * @param commentId the id of the comment
+     * @param updateCommentDTO the DTO to update comment
+     */
+    public void updateWorkComment(String domainId, String workId, String commentId, UpdateCommentDTO updateCommentDTO) {
+        // get the work
+        var work = wrapCatch(
+                () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+        // update the comment
+        commentService.updateComment(commentId, updateCommentDTO);
+    }
+
+    public List<CommentDTO> findAllCommentsForWork(String domainId, String workId) {
+        // get the work
+        var work = wrapCatch(
+                () -> workRepository.findByDomainIdAndId(domainId, workId).orElseThrow(
+                        () -> WorkNotFound
+                                .notFoundById()
+                                .errorCode(-1)
+                                .workId(workId)
+                                .build()
+                ),
+                -1
+        );
+        return commentService.getCommentsByRelatedDocumentId(workId);
+    }
+
 }

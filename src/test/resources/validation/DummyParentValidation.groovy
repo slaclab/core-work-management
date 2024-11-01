@@ -36,13 +36,12 @@ class DummyParentValidation extends WorkTypeValidation{
             return;
         }
 
-        List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
-
-        // check if all the children are closed
-        boolean allChildrenClosed = children.stream().allMatch(w -> w.getCurrentStatus().getStatus() == Closed);
-
         switch (work.currentStatus?.status) {
             case Created:
+                if(work.getId()==null) break;
+                List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
+                // check if all the children are closed
+                boolean allChildrenClosed = children.stream().allMatch(w -> w.getCurrentStatus().getStatus() == Closed);
                 if (children.isEmpty()) return
 
                 if (allChildrenClosed) {
@@ -57,6 +56,9 @@ class DummyParentValidation extends WorkTypeValidation{
                 break
 
             case InProgress:
+                List<Work> children = workRepository.findByDomainIdAndParentWorkId(work.getDomainId(), work.getId());
+                // check if all the children are closed
+                boolean allChildrenClosed = children.stream().allMatch(w -> w.getCurrentStatus().getStatus() == Closed);
                 if (!allChildrenClosed) return
                 workflow.moveToState(work, UpdateWorkflowState.builder().newState(ReviewToClose).build())
                 break
