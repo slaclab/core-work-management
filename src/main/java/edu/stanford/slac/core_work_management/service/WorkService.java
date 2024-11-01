@@ -188,7 +188,7 @@ public class WorkService {
         }
 
 //        log.info("Update domain statistic");
-//        domainService.updateDomainStatistics(savedWork.getDomainId());
+        domainService.updateDomainStatistics(savedWork.getDomainId());
 
         // log the creation of the work
         if (logIf.isPresent() && logIf.get()) {
