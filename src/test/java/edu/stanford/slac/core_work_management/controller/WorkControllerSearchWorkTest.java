@@ -610,7 +610,11 @@ public class WorkControllerSearchWorkTest {
                                 Optional.of(100),
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(List.of(testWorkTypeIds.get(0)))
+                                Optional.of(List.of(testWorkTypeIds.get(0))),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()
                         )
                 );
         assertThat(searchResultWT1D1.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
@@ -630,7 +634,11 @@ public class WorkControllerSearchWorkTest {
                                 Optional.of(100),
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(List.of(testAlternateWorkTypeIds.get(0)))
+                                Optional.of(List.of(testAlternateWorkTypeIds.get(0))),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()
                         )
                 );
         assertThat(searchResultWT1D2.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
