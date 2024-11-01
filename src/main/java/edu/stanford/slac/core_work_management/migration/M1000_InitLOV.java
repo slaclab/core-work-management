@@ -19,7 +19,7 @@ import static edu.stanford.slac.ad.eed.baselib.exception.Utility.wrapCatch;
 
 @Log4j2
 @AllArgsConstructor
-@Profile({"init-domain"})
+@Profile({"init-domain","init-default-data"})
 @ChangeUnit(id = "init-lov", order = "1000", author = "bisegni")
 public class M1000_InitLOV {
     private final LOVService lovService;

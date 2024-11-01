@@ -29,7 +29,7 @@ public class AttachmentsController {
     AttachmentService attachmentService;
 
     @PostMapping(
-            consumes = {"multipart/form-data"},
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @ResponseStatus(HttpStatus.CREATED)
@@ -45,9 +45,7 @@ public class AttachmentsController {
                             schema = @Schema(type = "string", format = "binary")
                     )
             )
-            @Schema(name = "uploadFile", description = "The file to upload", required = true)
-            @Parameter(description = "The file to upload", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            MultipartFile uploadFile
+            @RequestParam("uploadFile") MultipartFile uploadFile
     ) throws Exception {
         return ApiResultResponse.of(
                 attachmentService.createAttachment(
