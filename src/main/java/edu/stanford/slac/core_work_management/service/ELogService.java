@@ -59,7 +59,7 @@ public class ELogService implements LogService{
     @Transactional
     public String createNewLogEntry(String domainId, String workId, NewLogEntry entry, MultipartFile[] files) {
         var foundWork = workRepository.findById(workId).orElseThrow(()-> WorkNotFound.notFoundById().workId(workId).errorCode(-1).build());
-        log.info("Creating new log entry for work {}", foundWork.getWorkNumber());
+        log.info("[logging work number {}] Creating new log entry", foundWork.getWorkNumber());
         List<String> attachmentIds = new ArrayList<>();
         //store attachments
         if (files != null) {

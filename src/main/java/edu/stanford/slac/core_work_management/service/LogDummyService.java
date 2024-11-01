@@ -24,6 +24,7 @@ public class LogDummyService implements LogService{
      */
     @Transactional
     public String createNewLogEntry(String workId, NewLogEntry entry, MultipartFile[] files) {
+        log.info("LogDummyService.createNewLogEntry: workId={}, entry={}, files={}", workId, entry, files);
         return "fake id";
     }
 
@@ -36,6 +37,7 @@ public class LogDummyService implements LogService{
      * @param files  The files to be attached to the log entry
      */
     public String createNewLogEntry(String workId, String activityId, NewLogEntry entry, MultipartFile[] files) {
+        log.info("LogDummyService.createNewLogEntry: workId={}, activityId={}, entry={}, files={}", workId, activityId, entry, files);
         return "fake id";
     }
 }
