@@ -98,7 +98,6 @@ public class WorkControllerSearchWorkTest {
 
     private DomainDTO domainDTO;
     private DomainDTO alternateDomainDTO;
-    private WorkflowDTO workflowDTO;
     private final List<String> testShopGroupIds = new ArrayList<>();
     private final List<String> testLocationIds = new ArrayList<>();
     private final List<String> testWorkTypeIds = new ArrayList<>();
@@ -110,10 +109,13 @@ public class WorkControllerSearchWorkTest {
 
     @BeforeAll
     public void init() {
+        mongoTemplate.remove(new Query(), "jv_head_id");
+        mongoTemplate.remove(new Query(), "jv_snapshots");
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), ShopGroup.class);
         mongoTemplate.remove(new Query(), Location.class);
         mongoTemplate.remove(new Query(), WorkType.class);
+        mongoTemplate.remove(new Query(), Work.class);
         mongoTemplate.remove(new Query(), LOVElement.class);
 
         // init index
@@ -128,7 +130,7 @@ public class WorkControllerSearchWorkTest {
                                 .name("domain1")
                                 .description("domain1 description")
                                 .workflowImplementations(
-                                        of("DummyParentWorkflow")
+                                        of("DummyParentWorkflow", "DummyChildWorkflow")
                                 )
                                 .build()
                 )
@@ -141,7 +143,7 @@ public class WorkControllerSearchWorkTest {
                                 .name("domain2")
                                 .description("domain2 description")
                                 .workflowImplementations(
-                                        of("DummyParentWorkflow")
+                                        of("DummyParentWorkflow", "DummyChildWorkflow")
                                 )
                                 .build()
                 )
@@ -162,8 +164,9 @@ public class WorkControllerSearchWorkTest {
     }
 
     private void createWorkTypes(DomainDTO domainDTO, List<String> workTypeIds, String postfix) {
-        workflowDTO = domainDTO.workflows().stream().findFirst().get();
+        WorkflowDTO[] workflowDTO = domainDTO.workflows().stream().toArray(WorkflowDTO[]::new);
         assertThat(workflowDTO).isNotNull();
+        assertThat(workflowDTO.length).isEqualTo(2);
         // create work 1
         workTypeIds.add(
                 assertDoesNotThrow(
@@ -173,7 +176,7 @@ public class WorkControllerSearchWorkTest {
                                         .builder()
                                         .title("Work type %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .description("Work type %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .workflowId(workflowDTO.id())
+                                        .workflowId(workflowDTO[0].id())
                                         .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
                         )
@@ -188,7 +191,7 @@ public class WorkControllerSearchWorkTest {
                                         .builder()
                                         .title("Work type %s 2".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .description("Work type %s 2 description".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .workflowId(workflowDTO.id())
+                                        .workflowId(workflowDTO[1].id())
                                         .validatorName("validation/DummyChildValidation.groovy")
                                         .build()
                         )
@@ -197,8 +200,6 @@ public class WorkControllerSearchWorkTest {
     }
 
     private void createLocation(DomainDTO domainDTO, List<String> locationIds, String postfix) {
-        workflowDTO = domainDTO.workflows().stream().findFirst().get();
-        assertThat(workflowDTO).isNotNull();
         locationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
@@ -238,8 +239,6 @@ public class WorkControllerSearchWorkTest {
     }
 
     private void createShopGroup(DomainDTO domainDTO, List<String> shopGroupIds, String postfix) {
-        workflowDTO = domainDTO.workflows().stream().findFirst().get();
-        assertThat(workflowDTO).isNotNull();
         shopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
@@ -661,8 +660,6 @@ public class WorkControllerSearchWorkTest {
         for (int i = 0; i < 100; i++) {
             // create new work
             int finalI = i;
-            // select a random number form one and two
-            int workTypeIndex = i % 2;
             var newWorkIdResult =
                     assertDoesNotThrow(
                             () -> testControllerHelperService.workControllerCreateNew(
@@ -672,7 +669,7 @@ public class WorkControllerSearchWorkTest {
                                     domainDTO.id(),
                                     NewWorkDTO.builder()
                                             .locationId(testLocationIds.get(0))
-                                            .workTypeId(testWorkTypeIds.get(workTypeIndex))
+                                            .workTypeId(testWorkTypeIds.get(finalI % 2))
                                             .shopGroupId(testShopGroupIds.get(0))
                                             .title("work %s".formatted(finalI))
                                             .description("work %s description".formatted(finalI))
@@ -704,6 +701,55 @@ public class WorkControllerSearchWorkTest {
         assertThat(searchResultWT1.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
         searchResultWT1.getPayload().forEach(workSummaryDTO -> {
             assertThat(workSummaryDTO.workType().workflow().name()).isEqualToIgnoringCase("DummyParentWorkflow");
+        });
+
+        // search for other workflow name
+        var searchResultWT2 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(List.of("DummyChildWorkflow")),
+                                Optional.empty()
+                        )
+                );
+        assertThat(searchResultWT2.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(50);
+        searchResultWT2.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workSummaryDTO.workType().workflow().name()).isEqualToIgnoringCase("DummyChildWorkflow");
+        });
+        // search both
+        // search for other workflow name
+        var searchResul =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(List.of("DummyParentWorkflow", "DummyChildWorkflow")),
+                                Optional.empty()
+                        )
+                );
+        assertThat(searchResul.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(100);
+        searchResul.getPayload().forEach(workSummaryDTO -> {
+            // the workflow should be "DummyParentWorkflow" or "DummyChildWorkflow"
+            assertThat(workSummaryDTO.workType().workflow().name()).isIn("DummyParentWorkflow", "DummyChildWorkflow");
         });
     }
 }

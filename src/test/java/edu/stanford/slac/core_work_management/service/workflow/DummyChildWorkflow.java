@@ -15,7 +15,7 @@ import java.util.Set;
  * Created -> Closed
  */
 @Workflow(
-        name = "TestWorkflowOne",
+        name = "DummyChildWorkflow",
         description = "The workflow for a test"
 )
 @Component("DummyChildWorkflow")

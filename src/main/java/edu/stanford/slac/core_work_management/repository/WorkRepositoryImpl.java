@@ -144,11 +144,8 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
         }
 
         if (queryParameter.getWorkflowName() != null && !queryParameter.getWorkflowName().isEmpty()) {
-            List< Pattern > patterns = queryParameter.getWorkflowName().stream()
-                    .map(name -> Pattern.compile(name, Pattern.CASE_INSENSITIVE))
-                    .collect(Collectors.toList());
             query.addCriteria(
-                    Criteria.where("workType.name").in(patterns)
+                    Criteria.where("workType.workflow.name").in(queryParameter.getWorkflowName())
             );
         }
 

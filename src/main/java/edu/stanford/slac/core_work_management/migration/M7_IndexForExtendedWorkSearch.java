@@ -72,7 +72,7 @@ public class M7_IndexForExtendedWorkSearch {
                 mongoTemplate,
                 new Index()
                         .on(
-                                "workType.name",
+                                "workType.workflow.name",
                                 Sort.Direction.ASC
                         )
                         .named("workType-name")

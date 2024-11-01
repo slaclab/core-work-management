@@ -16,7 +16,7 @@ import static edu.stanford.slac.core_work_management.service.workflow.WorkflowSt
  * for testing purposes
  */
 @Workflow(
-        name = "TestWorkflowOne",
+        name = "DummyParentWorkflow",
         description = "The workflow for a test"
 )
 @Component("DummyParentWorkflow")

@@ -102,8 +102,9 @@ public class WorkService {
      * @param newWorkDTO the DTO to create the work
      * @return the id of the created work
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public String createNew(String domainId, Long workSequence, @Valid NewWorkDTO newWorkDTO, Optional<Boolean> logIf) {
+        log.debug("[work-creation-{}] Creating new work for domain '{}'", workSequence, domainId);
         // point, if the work is a sub work, to the parent work
         Work parentWork;
 
@@ -178,7 +179,6 @@ public class WorkService {
                 -5
         );
 
-        log.info("New Work '{}-{}' has been created by '{}'", savedWork.getWorkNumber(), savedWork.getTitle(), savedWork.getCreatedBy());
         updateWorkAuthorization(savedWork);
 
         // after this work is update we need to update all the
@@ -187,8 +187,8 @@ public class WorkService {
             updateParentWorkWorkflow(parentWork);
         }
 
-        log.info("Update domain statistic");
-        domainService.updateDomainStatistics(savedWork.getDomainId());
+//        log.info("Update domain statistic");
+//        domainService.updateDomainStatistics(savedWork.getDomainId());
 
         // log the creation of the work
         if (logIf.isPresent() && logIf.get()) {
@@ -203,6 +203,7 @@ public class WorkService {
                             null
                     );
         }
+        log.info("[work-creation-{}] New Work '{}' has been created by '{}'", savedWork.getWorkNumber(), savedWork.getTitle(), savedWork.getCreatedBy());
         return savedWork.getId();
     }
 

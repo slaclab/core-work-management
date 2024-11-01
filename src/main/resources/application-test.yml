@@ -1,3 +1,4 @@
+
 spring:
   ldap:
     embedded:
@@ -22,4 +23,8 @@ edu:
               [{"name":"root-token-1","expiration":"2024-12-31"}]
 logging:
   level:
-    org.springframework.data.mongodb: DEBUG
+    edu.stanford.slac.code_inventory_system: TRACE
+    org.springframework.data.mongodb.repository.query: TRACE
+    org.springframework.data.mongodb.core.MongoTemplate: TRACE
+    org.springframework.transaction: TRACE
+
