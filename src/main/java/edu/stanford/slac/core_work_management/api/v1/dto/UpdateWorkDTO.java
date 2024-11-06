@@ -52,6 +52,8 @@ public record UpdateWorkDTO(
         String shopGroupId,
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments,
         @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
         UpdateWorkflowStateDTO workflowStateUpdate,
         @Valid

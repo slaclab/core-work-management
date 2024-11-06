@@ -38,6 +38,8 @@ public record NewWorkDTO(
         List<String> assignedTo,
         @Schema(description = "The unique identifier of the work which his is related to")
         List<String> relatedToWorkIds,
+        @Schema(description = "The list of the attachment id to associate to the work")
+        List<String> attachments,
         @Valid
         @Schema(description = "The values of the custom attributes for the work")
         List<WriteCustomFieldDTO> customFieldValues,

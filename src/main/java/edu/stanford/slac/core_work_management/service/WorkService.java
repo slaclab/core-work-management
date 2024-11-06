@@ -49,6 +49,7 @@ public class WorkService {
     private final LocationMapper locationMapper;
     private final ShopGroupMapper shopGroupMapper;
 
+    private final AttachmentService attachmentService;
     private final CommentService commentService;
     private final ScriptService scriptService;
     private final DomainService domainService;
@@ -133,8 +134,23 @@ public class WorkService {
                 -3
         );
 
-        // check if the new work that is being created is valid for the workflow
-        //isValidForWorkflow(domainId, NewWorkValidation.builder().newWorkDTO(newWorkDTO).workType(workType).build());
+        // check for the attachments
+        if (newWorkDTO.attachments() != null) {
+            newWorkDTO.attachments().forEach(
+                    (attachmentId) -> {
+                        // check if the attachment exists
+                        assertion(
+                                AttachmentNotFound
+                                        .attachmentNotFoundBuilder()
+                                        .errorCode(-3)
+                                        .attachmentID(attachmentId)
+                                        .errorDomain("WorkService::update")
+                                        .build(),
+                                () -> attachmentService.exists(attachmentId)
+                        );
+                    }
+            );
+        }
 
         // check if the parent id exists, in case new work is a sub work
         if (newWorkDTO.parentWorkId() != null) {
@@ -231,6 +247,24 @@ public class WorkService {
 
         // update the model
         workMapper.updateModel(updateWorkDTO, foundWork);
+
+        // check if the attachment are present
+        if (updateWorkDTO.attachments() != null) {
+            updateWorkDTO.attachments().forEach(
+                    (attachmentId) -> {
+                        // check if the attachment exists
+                        assertion(
+                                AttachmentNotFound
+                                        .attachmentNotFoundBuilder()
+                                        .errorCode(-3)
+                                        .attachmentID(attachmentId)
+                                        .errorDomain("WorkService::update")
+                                        .build(),
+                                () -> attachmentService.exists(attachmentId)
+                        );
+                    }
+            );
+        }
 
         // validate location and group shop against the domain
         if (updateWorkDTO.locationId() != null) {

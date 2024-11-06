@@ -25,6 +25,7 @@ import edu.stanford.slac.ad.eed.baselib.exception.NotAuthorized;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.AttachmentNotFound;
 import edu.stanford.slac.core_work_management.model.*;
 import edu.stanford.slac.core_work_management.service.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -114,8 +115,7 @@ public class WorkControllerTest {
     public void init() {
         mongoTemplate.remove(new Query(), Domain.class);
         mongoTemplate.remove(new Query(), Location.class);
-        mongoTemplate.remove(new Query(), WorkType.class);
-
+        mongoTemplate.remove(new Query(), Attachment.class);
         domainDTO = assertDoesNotThrow(
                 () -> domainService.createNewAndGet(
                         NewDomainDTO.builder()
@@ -170,7 +170,22 @@ public class WorkControllerTest {
                         )
                 )
         );
+    }
 
+    @BeforeEach
+    public void cleanCollection() {
+        mongoTemplate.remove(new Query(), Work.class);
+        mongoTemplate.remove(new Query(), Authorization.class);
+        mongoTemplate.remove(new Query(), ShopGroup.class);
+        mongoTemplate.remove(new Query(), LOVElement.class);
+        mongoTemplate.remove(new Query(), WorkType.class);
+
+        appProperties.getRootUserList().clear();
+        appProperties.getRootUserList().add("user1@slac.stanford.edu");
+        authService.updateRootUser();
+
+        // crete work types
+        testWorkTypeIds.clear();
         // create work 1
         testWorkTypeIds.add(
                 assertDoesNotThrow(
@@ -201,18 +216,6 @@ public class WorkControllerTest {
                         )
                 )
         );
-
-    }
-
-    @BeforeEach
-    public void cleanCollection() {
-        mongoTemplate.remove(new Query(), Work.class);
-        mongoTemplate.remove(new Query(), Authorization.class);
-        mongoTemplate.remove(new Query(), ShopGroup.class);
-        mongoTemplate.remove(new Query(), LOVElement.class);
-        appProperties.getRootUserList().clear();
-        appProperties.getRootUserList().add("user1@slac.stanford.edu");
-        authService.updateRootUser();
 
         // shop group creation need to be moved here because the manage the authorization for the leader
         testShopGroupIds.clear();
@@ -636,5 +639,248 @@ public class WorkControllerTest {
         assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
         assertThat(fullWorkDTO.getPayload().accessList())
                 .hasSize(0);
+    }
+
+    @Test
+    public void testWorkWithAttachment() {
+        // update setting general attachments
+        var pdfAttachmentResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createDummyPDFAttachment(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(pdfAttachmentResult).isNotNull();
+        assertThat(pdfAttachmentResult.getErrorCode()).isEqualTo(0);
+        var pdfAttachmentId = pdfAttachmentResult.getPayload();
+
+        // create work type with attachment
+        var workTypeWithAttachmentId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainDTO.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Work type with attachment")
+                                .description("Work type with attachment description")
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .workflowId(workflowDTO.id())
+                                .customFields(
+                                        List.of(
+                                                WATypeCustomFieldDTO.builder().label("attachment").description("Attachments").valueType(ValueTypeDTO.Attachments).group("Other file to add").isMandatory(false).build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(workTypeWithAttachmentId).isNotNull();
+
+
+        // create new work
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(workTypeWithAttachmentId)
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .attachments(
+                                                List.of(pdfAttachmentId)
+                                        )
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        var fullWorkDTO = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+
+        assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
+        assertThat(fullWorkDTO.getPayload()).isNotNull();
+        assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+        assertThat(fullWorkDTO.getPayload().attachments())
+                .hasSize(1)
+                .contains(pdfAttachmentId);
+        assertThat(fullWorkDTO.getPayload().accessList())
+                .hasSize(0);
+
+        // read with different user is a reader
+        var updateWithAttachment = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .customFieldValues(
+                                        List.of(
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(fullWorkDTO.getPayload().workType().customFields().stream().filter(c -> c.valueType() == ValueTypeDTO.Attachments).findFirst().get().id())
+                                                        .value(
+                                                                ValueDTO.builder()
+                                                                        .value(pdfAttachmentId)
+                                                                        .type(ValueTypeDTO.Attachments)
+                                                                        .build()
+                                                        ).build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(updateWithAttachment.getErrorCode()).isEqualTo(0);
+        assertThat(updateWithAttachment.getPayload()).isNotNull();
+
+        // re-get the full dto to check
+        var fullWorkDTOWithAttachment = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+
+        assertThat(fullWorkDTOWithAttachment.getErrorCode()).isEqualTo(0);
+        assertThat(fullWorkDTOWithAttachment.getPayload()).isNotNull();
+        assertThat(fullWorkDTOWithAttachment.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+        assertThat(fullWorkDTOWithAttachment.getPayload().attachments())
+                .hasSize(1)
+                .contains(pdfAttachmentId);
+        assertThat(fullWorkDTOWithAttachment.getPayload().customFields())
+                .hasSize(1);
+        assertThat(fullWorkDTOWithAttachment.getPayload().customFields().get(0).value().value()).isEqualTo(pdfAttachmentId);
+    }
+
+
+    @Test
+    public void testWorkWithAttachmentFailsWithWrongAttachmentId() {
+        // create work type with attachment
+        var workTypeWithAttachmentId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainDTO.id(),
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Work type with attachment")
+                                .description("Work type with attachment description")
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .workflowId(workflowDTO.id())
+                                .customFields(
+                                        List.of(
+                                                WATypeCustomFieldDTO.builder().label("attachment").description("Attachments").valueType(ValueTypeDTO.Attachments).group("Other file to add").isMandatory(false).build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(workTypeWithAttachmentId).isNotNull();
+
+        // create new work
+        var attachmentNotFoundError =
+                assertThrows(
+                        AttachmentNotFound.class,
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().is4xxClientError(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(workTypeWithAttachmentId)
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .attachments(
+                                                List.of("bad-attachment-id")
+                                        )
+                                        .build()
+                        )
+                );
+        assertThat(attachmentNotFoundError).isNotNull();
+
+        // create new work to test the missing attachment on custom fields
+        var newWorkIdResult =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(workTypeWithAttachmentId)
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work 1")
+                                        .description("work 1 description")
+                                        .build()
+                        )
+                );
+        assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+        var fullWorkDTO = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+
+        assertThat(fullWorkDTO.getErrorCode()).isEqualTo(0);
+        assertThat(fullWorkDTO.getPayload()).isNotNull();
+        assertThat(fullWorkDTO.getPayload().id()).isEqualTo(newWorkIdResult.getPayload());
+        assertThat(fullWorkDTO.getPayload().accessList())
+                .hasSize(0);
+
+        // read with different user is a reader
+        var attachmentNotFoundOnCustomFiledError = assertThrows(
+                AttachmentNotFound.class,
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().is4xxClientError(),
+                        Optional.of("user3@slac.stanford.edu"),
+                        domainDTO.id(),
+                        newWorkIdResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .customFieldValues(
+                                        List.of(
+                                                WriteCustomFieldDTO.builder()
+                                                        .id(fullWorkDTO.getPayload().workType().customFields().stream().filter(c -> c.valueType() == ValueTypeDTO.Attachments).findFirst().get().id())
+                                                        .value(
+                                                                ValueDTO.builder()
+                                                                        .value("bad-attachment-id")
+                                                                        .type(ValueTypeDTO.Attachments)
+                                                                        .build()
+                                                        ).build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+
+        assertThat(attachmentNotFoundOnCustomFiledError).isNotNull();
     }
 }
