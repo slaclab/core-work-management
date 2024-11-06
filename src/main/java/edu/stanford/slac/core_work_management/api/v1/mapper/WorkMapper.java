@@ -8,6 +8,7 @@ import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
 import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.AttachmentNotFound;
 import edu.stanford.slac.core_work_management.exception.CustomAttributeNotFound;
 import edu.stanford.slac.core_work_management.exception.LOVValueNotFound;
 import edu.stanford.slac.core_work_management.model.*;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static edu.stanford.slac.ad.eed.baselib.exception.Utility.assertion;
 import static edu.stanford.slac.core_work_management.config.AuthorizationStringConfig.WORK_AUTHORIZATION_TEMPLATE;
 
 /**
@@ -60,6 +62,8 @@ public abstract class WorkMapper {
     DomainMapper domainMapper;
     @Autowired
     PeopleGroupService peopleGroupService;
+    @Autowired
+    AttachmentService attachmentService;
 
     /**
      * Convert the {@link NewWorkDTO} to a {@link Work}
@@ -414,6 +418,20 @@ public abstract class WorkMapper {
                 }
                 case Attachments -> {
                     List<String> attachmentIds = Arrays.asList(value.value().split(","));
+                    // check if attachment is present
+                    attachmentIds.forEach(
+                            attachmentId -> {
+                                assertion(
+                                        AttachmentNotFound
+                                                .attachmentNotFoundBuilder()
+                                                .errorCode(-3)
+                                                .attachmentID(attachmentId)
+                                                .errorDomain("WorkMapper::toAbstractValue")
+                                                .build(),
+                                        () -> attachmentService.exists(attachmentId)
+                                );
+                            }
+                    );
                     return AttachmentsValue
                             .builder()
                             .value(attachmentIds)
@@ -439,7 +457,7 @@ public abstract class WorkMapper {
                         .errorDomain("WorkMapper::toElementAttributeWithClass")
                         .build();
             }
-        }catch (ControllerLogicException | NumberFormatException e){
+        }catch (NumberFormatException e){
             throw ControllerLogicException.builder()
                     .errorCode(-5)
                     .errorMessage(e.getMessage())
