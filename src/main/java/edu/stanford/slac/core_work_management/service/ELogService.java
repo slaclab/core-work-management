@@ -149,6 +149,15 @@ public class ELogService implements LogService{
             return result;
         });
 
+        // set work has log
+        foundWork.setHasLog(true);
+
+        // update work to set it has logged
+        var savedWork = wrapCatch(
+                ()->workRepository.save(foundWork),
+                -3
+        );
+
         log.info("[logging work number {}] Log entry stored and sent to elog system", foundWork.getWorkNumber());
         return savedLogEntry.getId();
     }

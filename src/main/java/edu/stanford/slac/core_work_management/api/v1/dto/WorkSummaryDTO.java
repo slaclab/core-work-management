@@ -43,6 +43,8 @@ public record WorkSummaryDTO(
         ShopGroupDTO shopGroup,
         @Schema(description = "The list of the bucket association for the work")
         WorkBucketAssociationDTO currentBucketAssociation,
+        @Schema(description = "Identify if the work has a log")
+        Boolean hasLog,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
