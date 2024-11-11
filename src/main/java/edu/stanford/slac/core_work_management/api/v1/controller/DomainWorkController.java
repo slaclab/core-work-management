@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Optional;
 
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.exception.WorkNotFound;
 import edu.stanford.slac.core_work_management.service.CommentService;
+import io.swagger.v3.oas.annotations.media.Content;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -106,8 +108,10 @@ public class DomainWorkController {
     @Operation(
             summary = "Get full work by id",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "The work found"),
-                    @ApiResponse(responseCode = "404", description = "Work not found")
+                    @ApiResponse(responseCode = "200", description = "The work found",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = WorkDTO.class))),
+                    @ApiResponse(responseCode = "404", description = "Work not found",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = WorkNotFound.class)))
             }
     )
     @ResponseStatus(HttpStatus.OK)

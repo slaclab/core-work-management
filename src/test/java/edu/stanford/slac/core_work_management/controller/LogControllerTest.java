@@ -265,6 +265,8 @@ public class LogControllerTest {
 
             //try to fetch the log entry using elog api
             var fullWork = workService.findWorkById(domain.id(), newWorkId, WorkDetailsOptionDTO.builder().build());
+            assertThat(fullWork).isNotNull();
+            assertThat(fullWork.hasLog()).isTrue();
             await()
                     .atMost(30, HOURS)
                     .pollDelay(2, SECONDS)

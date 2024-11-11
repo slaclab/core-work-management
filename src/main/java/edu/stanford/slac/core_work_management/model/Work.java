@@ -108,6 +108,12 @@ public class Work {
      */
     @Builder.Default
     private List<WorkStatusLog> statusHistory = new ArrayList<>();
+
+    /**
+     * indicate when the work has log entries on elog-backend or no
+     */
+    @Builder.Default
+    private Boolean hasLog = false;
     /**
      * The date and time when the work was created.
      * This field is automatically populated with the date and time of creation, using @CreatedDate annotation.

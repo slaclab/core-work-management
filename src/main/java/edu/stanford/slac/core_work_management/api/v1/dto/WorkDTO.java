@@ -51,7 +51,10 @@ public record WorkDTO(
         ShopGroupDTO shopGroup,
         @Schema(description = "The list of the custom fields associated with the work. The custom fields are used to store additional information about the specific work type.")
         List<CustomFieldDTO> customFields,
-        @Schema(description = "The list of the attachment id to associate to the work")
+        @Schema(
+                description = "The list of the attachment id to associate to the work",
+                type = "array",
+                additionalItems = String.class)
         List<String> attachments,
         @Schema(description = "The list of changes on the work, each element represent a change on the work for a single save operation")
         List<ModelChangesHistoryDTO> changesHistory,
@@ -59,6 +62,8 @@ public record WorkDTO(
         WorkBucketAssociationDTO currentBucketAssociation,
         @Schema(description = "The list of the bucket association for the work")
         List<WorkBucketAssociationDTO> bucketAssociationsHistory,
+        @Schema(description = "Identify if the work has a log")
+        Boolean hasLog,
         @Schema(description = "The created date of the work")
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
