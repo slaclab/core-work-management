@@ -155,6 +155,12 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
             );
         }
 
+        if (queryParameter.getBucketId() != null && !queryParameter.getBucketId().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("currentBucketAssociation.bucketId").in(queryParameter.getBucketId())
+            );
+        }
+
         return query;
     }
 

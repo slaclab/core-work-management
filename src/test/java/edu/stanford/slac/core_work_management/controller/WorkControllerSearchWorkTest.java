@@ -21,6 +21,7 @@ import edu.stanford.slac.ad.eed.baselib.config.AppProperties;
 import edu.stanford.slac.ad.eed.baselib.model.Authorization;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
+import edu.stanford.slac.core_work_management.migration.M1003_InitBucketTypeLOV;
 import edu.stanford.slac.core_work_management.migration.M6_IndexForWorkStatistic;
 import edu.stanford.slac.core_work_management.migration.M7_IndexForExtendedWorkSearch;
 import edu.stanford.slac.core_work_management.model.*;
@@ -40,6 +41,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -95,6 +97,8 @@ public class WorkControllerSearchWorkTest {
     private TestControllerHelperService testControllerHelperService;
     @Autowired
     private LOVService lovService;
+    @Autowired
+    private BucketService bucketService;
 
     private DomainDTO domainDTO;
     private DomainDTO alternateDomainDTO;
@@ -106,6 +110,8 @@ public class WorkControllerSearchWorkTest {
     private final List<String> testAlternateLocationIds = new ArrayList<>();
     private final List<String> testAlternateWorkTypeIds = new ArrayList<>();
     private List<LOVElementDTO> projectLovValues;
+    private List<String> bucketTypeLOVIds = null;
+    private List<String> bucketStatusLOVIds = null;
 
     @BeforeAll
     public void init() {
@@ -119,6 +125,8 @@ public class WorkControllerSearchWorkTest {
         mongoTemplate.remove(new Query(), LOVElement.class);
 
         // init index
+        M1003_InitBucketTypeLOV m1003InitBucketTypeLOV = new M1003_InitBucketTypeLOV(lovService);
+        assertDoesNotThrow(m1003InitBucketTypeLOV::changeSet);
         M6_IndexForWorkStatistic m6_indexForWorkStatistic = new M6_IndexForWorkStatistic(mongoTemplate);
         assertDoesNotThrow(m6_indexForWorkStatistic::changeSet);
         M7_IndexForExtendedWorkSearch m7_indexForExtendedWorkSearch = new M7_IndexForExtendedWorkSearch(mongoTemplate);
@@ -161,6 +169,9 @@ public class WorkControllerSearchWorkTest {
         // create work types
         createWorkTypes(domainDTO, testWorkTypeIds, null);
         createWorkTypes(alternateDomainDTO, testAlternateWorkTypeIds, "alternate");
+
+        bucketTypeLOVIds = lovService.findAllByGroupName("BucketType").stream().map(LOVElementDTO::id).toList();
+        bucketStatusLOVIds = lovService.findAllByGroupName("BucketStatus").stream().map(LOVElementDTO::id).toList();
     }
 
     private void createWorkTypes(DomainDTO domainDTO, List<String> workTypeIds, String postfix) {
@@ -512,7 +523,7 @@ public class WorkControllerSearchWorkTest {
                     );
             assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
             assertThat(newWorkIdResult.getPayload()).isNotNull();
-            if(domainIndex == 0) {
+            if (domainIndex == 0) {
                 workIdsDomain1.add(newWorkIdResult.getPayload());
             } else {
                 workIdsDomain2.add(newWorkIdResult.getPayload());
@@ -530,6 +541,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.of(100),
                                 Optional.empty(),
                                 Optional.of(List.of(domainDTO.id())),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
@@ -554,6 +566,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.of(100),
                                 Optional.empty(),
                                 Optional.of(List.of(alternateDomainDTO.id())),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
@@ -597,7 +610,7 @@ public class WorkControllerSearchWorkTest {
                     );
             assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
             assertThat(newWorkIdResult.getPayload()).isNotNull();
-            if(domainIndex == 0) {
+            if (domainIndex == 0) {
                 workIdsDomain1.add(newWorkIdResult.getPayload());
                 workTypeIdDomain1.add(testWorkTypeIds.get(0));
             } else {
@@ -618,6 +631,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of(testWorkTypeIds.get(0))),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
@@ -642,6 +656,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of(testAlternateWorkTypeIds.get(0))),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
@@ -695,6 +710,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of("DummyParentWorkflow")),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -719,6 +735,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of("DummyChildWorkflow")),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -743,6 +760,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of("DummyParentWorkflow", "DummyChildWorkflow")),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -793,7 +811,8 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(List.of(WorkflowStateDTO.Created))
+                                Optional.of(List.of(WorkflowStateDTO.Created)),
+                                Optional.empty()
                         )
                 );
         assertThat(searchResultWT1.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(100);
@@ -816,7 +835,8 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(List.of(WorkflowStateDTO.InProgress))
+                                Optional.of(List.of(WorkflowStateDTO.InProgress)),
+                                Optional.empty()
                         )
                 );
         assertThat(searchResultWT1.getPayload()).isEmpty();
@@ -877,6 +897,7 @@ public class WorkControllerSearchWorkTest {
                                     Optional.of(List.of(getUserEmail(userIndex))),
                                     Optional.empty(),
                                     Optional.empty(),
+                                    Optional.empty(),
                                     Optional.empty()
                             )
                     );
@@ -885,6 +906,94 @@ public class WorkControllerSearchWorkTest {
                 assertThat(workSummaryDTO.createdBy().mail()).isEqualToIgnoringCase(getUserEmail(userIndex));
             });
         }
+    }
+
+    @Test
+    public void testSearchByBucketId() {
+        // create a new bucket
+        // create bucket
+        var bucketId = assertDoesNotThrow(
+                () -> bucketService.createNew(
+                        NewBucketDTO.builder()
+                                .domainIds(Set.of(domainDTO.id()))
+                                .description("Bucket 1 description")
+                                .type(bucketTypeLOVIds.get(0))
+                                .status(bucketStatusLOVIds.get(0))
+                                .from(LocalDateTime.now())
+                                .to(LocalDateTime.now().plusDays(1))
+                                .admittedWorkTypeIds(
+                                        Set.of(BucketSlotWorkTypeDTO.builder().domainId(domainDTO.id()).workTypeId(testWorkTypeIds.get(0)).build())
+                                )
+                                .build()
+                )
+        );
+
+        for (int i = 0; i < 100; i++) {
+            // create new work
+            int finalI = i;
+            // randomize an int starting form 0 to 2
+            int userIndex = i % 3;
+            var newWorkIdResult =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.workControllerCreateNew(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of(getUserEmail(userIndex)),
+                                    domainDTO.id(),
+                                    NewWorkDTO.builder()
+                                            .locationId(testLocationIds.get(0))
+                                            .workTypeId(testWorkTypeIds.get(finalI % 2))
+                                            .shopGroupId(testShopGroupIds.get(0))
+                                            .title("work %s".formatted(finalI))
+                                            .description("work %s description".formatted(finalI))
+                                            .build()
+                            )
+                    );
+            assertThat(newWorkIdResult.getErrorCode()).isEqualTo(0);
+            assertThat(newWorkIdResult.getPayload()).isNotNull();
+
+            if (finalI % 2 == 0) {
+                // assign the work to the bucket
+                var assignResult = assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerAssociateWorkToBucket(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                newWorkIdResult.getPayload(),
+                                bucketId,
+                                Optional.empty()
+                        )
+                );
+                assertThat(assignResult.getErrorCode()).isEqualTo(0);
+                assertThat(assignResult.getPayload()).isNotNull().isTrue();
+            }
+        }
+
+        // search for bucket id
+        var searchResultBucketId =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(100),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(bucketId)
+                        )
+                );
+        assertThat(searchResultBucketId.getPayload()).isNotEmpty().hasSize(50);
+        searchResultBucketId.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workSummaryDTO.workType().id()).isEqualToIgnoringCase(testWorkTypeIds.getFirst());
+        });
 
     }
 }

@@ -72,7 +72,9 @@ public class WorkController {
             @Schema(name = "workflowName",description = "Filter by workflow name")
             @RequestParam(value = "workflowName") Optional<List<String>> workflowName,
             @Schema(name = "workflowState",description = "Filter by workflow state")
-            @RequestParam(value = "workflowState") Optional<List<WorkflowStateDTO>> workflowState
+            @RequestParam(value = "workflowState") Optional<List<WorkflowStateDTO>> workflowState,
+            @Schema(name = "bucketId",description = "Filter by bucket belonging")
+            @RequestParam(value = "bucketId") Optional<String> bucketId
     ) {
         return ApiResultResponse.of(
                 workService.searchAllWork(
@@ -87,6 +89,7 @@ public class WorkController {
                                 .assignedTo(assignedTo.orElse(null))
                                 .workflowName(workflowName.orElse(null))
                                 .workflowState(workflowState.orElse(null))
+                                .bucketId(bucketId.orElse(null))
                                 .build()
                 )
         );

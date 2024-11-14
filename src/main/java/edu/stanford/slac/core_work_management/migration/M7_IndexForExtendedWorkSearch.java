@@ -87,6 +87,17 @@ public class M7_IndexForExtendedWorkSearch {
                         )
                         .named("currentStatus-status")
         );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "currentBucketAssociation.bucketId",
+                                Sort.Direction.ASC
+                        )
+                        .named("currentBucketAssociation.bucketId")
+                        .sparse()
+        );
     }
 
     @RollbackExecution
