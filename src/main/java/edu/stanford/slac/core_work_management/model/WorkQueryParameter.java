@@ -41,4 +41,5 @@ public class WorkQueryParameter {
     List<String> assignedTo;
     List<String> workflowName;
     List<WorkflowStateDTO> workflowState;
+    String bucketId;
 }

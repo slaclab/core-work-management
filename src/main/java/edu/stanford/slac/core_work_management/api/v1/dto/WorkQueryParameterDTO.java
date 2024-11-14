@@ -31,5 +31,7 @@ public record WorkQueryParameterDTO(
         @Schema(description = "Filter by workflow name")
         List<String> workflowName,
         @Schema(description = "Filter by workflow state")
-        List<WorkflowStateDTO> workflowState
+        List<WorkflowStateDTO> workflowState,
+        @Schema(description = "Filter by bucket id")
+        String bucketId
         ) {}
