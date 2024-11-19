@@ -10,6 +10,7 @@ import org.springframework.data.annotation.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a Work entity in the system.
@@ -108,6 +109,11 @@ public class Work {
      */
     @Builder.Default
     private List<WorkStatusLog> statusHistory = new ArrayList<>();
+
+    /**
+     * The list of the user that are watching the work.
+     */
+    private Set<String> userWatchlist;
 
     /**
      * indicate when the work has log entries on elog-backend or no

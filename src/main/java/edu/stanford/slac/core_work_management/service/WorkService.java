@@ -6,6 +6,7 @@ import edu.stanford.slac.ad.eed.baselib.api.v1.dto.NewAuthorizationDTO;
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
 import edu.stanford.slac.ad.eed.baselib.service.AuthService;
 import edu.stanford.slac.ad.eed.baselib.service.ModelHistoryService;
+import edu.stanford.slac.ad.eed.baselib.service.PeopleGroupService;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.api.v1.mapper.*;
 import edu.stanford.slac.core_work_management.exception.*;
@@ -49,12 +50,13 @@ public class WorkService {
     private final LocationMapper locationMapper;
     private final ShopGroupMapper shopGroupMapper;
 
-    private final AttachmentService attachmentService;
-    private final CommentService commentService;
+    private final AuthService authService;
     private final ScriptService scriptService;
     private final DomainService domainService;
     private final BucketService bucketService;
-    private final AuthService authService;
+    private final CommentService commentService;
+    private final AttachmentService attachmentService;
+    private final PeopleGroupService peopleGroupService;
 
     private final WorkRepository workRepository;
     private final WorkTypeRepository workTypeRepository;
@@ -149,6 +151,13 @@ public class WorkService {
                                 () -> attachmentService.exists(attachmentId)
                         );
                     }
+            );
+        }
+
+        // check watch list
+        if(newWorkDTO.userWatchlist()!=null){
+            newWorkDTO.userWatchlist().forEach(
+                    peopleGroupService::findPersonByEMail
             );
         }
 
@@ -263,6 +272,13 @@ public class WorkService {
                                 () -> attachmentService.exists(attachmentId)
                         );
                     }
+            );
+        }
+
+        // check watch list
+        if(updateWorkDTO.userWatchlist()!=null){
+            updateWorkDTO.userWatchlist().forEach(
+                    peopleGroupService::findPersonByEMail
             );
         }
 

@@ -3,6 +3,7 @@ package edu.stanford.slac.core_work_management.api.v1.dto;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -62,6 +63,8 @@ public record WorkDTO(
         WorkBucketAssociationDTO currentBucketAssociation,
         @Schema(description = "The list of the bucket association for the work")
         List<WorkBucketAssociationDTO> bucketAssociationsHistory,
+        @Schema(description = "The list of the user that are watching the work")
+        Set<PersonDTO> userWatchlist,
         @Schema(description = "Identify if the work has a log")
         Boolean hasLog,
         @Schema(description = "The created date of the work")

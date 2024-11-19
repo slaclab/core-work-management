@@ -1,6 +1,8 @@
 package edu.stanford.slac.core_work_management.service;
 
 import edu.stanford.slac.ad.eed.baselib.exception.ControllerLogicException;
+import edu.stanford.slac.ad.eed.baselib.exception.PersonNotFound;
+import edu.stanford.slac.ad.eed.baselib.exception.UserNotFound;
 import edu.stanford.slac.core_work_management.api.v1.dto.*;
 import edu.stanford.slac.core_work_management.exception.LocationNotFound;
 import edu.stanford.slac.core_work_management.exception.ShopGroupNotFound;
@@ -275,6 +277,76 @@ public class WorkServiceTest {
         assertThat(foundWork.location().id()).isEqualTo(locationId);
         // check the shop group
         assertThat(foundWork.shopGroup().id()).isEqualTo(shopGroupId);
+    }
+
+    @Test
+    public void createNewWorkAndGetItCheckingUserWatchList() {
+        String newWorkTypeId = assertDoesNotThrow(
+                () -> domainService.createNew(
+                        domainId,
+                        NewWorkTypeDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workflowId(parentWorkflow.id())
+                                .validatorName("validation/DummyParentValidation.groovy")
+                                .build()
+                )
+        );
+        assertThat(newWorkTypeId).isNotNull();
+        // add wrong user to watchlist to check error
+        var personNotFoundError = assertThrows(
+                PersonNotFound.class,
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .userWatchlist(Set.of("wrong user"))
+                                .build()
+                )
+        );
+        assertThat(personNotFoundError).isNotNull();
+
+        var newWorkId = assertDoesNotThrow(
+                () -> workService.createNew(
+                        domainId,
+                        NewWorkDTO
+                                .builder()
+                                .title("Update the documentation")
+                                .description("Update the documentation description")
+                                .workTypeId(newWorkTypeId)
+                                .locationId(locationId)
+                                .shopGroupId(shopGroupId)
+                                .userWatchlist(Set.of("user1@slac.stanford.edu"))
+                                .build()
+                )
+        );
+        assertThat(newWorkId).isNotNull();
+
+        var foundWork = assertDoesNotThrow(
+                () -> workService.findWorkById(domainId, newWorkId, WorkDetailsOptionDTO.builder().build())
+        );
+        assertThat(foundWork).isNotNull();
+        assertThat(foundWork.id()).isNotNull();
+        assertThat(foundWork.domain().id()).isEqualTo(domainId);
+        // check the work type
+        assertThat(foundWork.workType().id()).isEqualTo(newWorkTypeId);
+        // check the workflow
+        assertThat(foundWork.workType().workflow().id()).isEqualTo(parentWorkflow.id());
+        assertThat(foundWork.workType().workflow().implementation()).isEqualTo(parentWorkflow.implementation());
+        assertThat(foundWork.workType().validatorName()).isEqualTo("validation/DummyParentValidation.groovy");
+        // check the location
+        assertThat(foundWork.location().id()).isEqualTo(locationId);
+        // check the shop group
+        assertThat(foundWork.shopGroup().id()).isEqualTo(shopGroupId);
+        // check the user watch list
+        assertThat(foundWork.userWatchlist()).isNotNull().hasSize(1);
+        assertThat(foundWork.userWatchlist().stream().findFirst().get().mail()).isEqualTo("user1@slac.stanford.edu");
     }
 
     @Test
