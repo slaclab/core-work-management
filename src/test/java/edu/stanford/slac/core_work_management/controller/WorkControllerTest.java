@@ -504,7 +504,7 @@ public class WorkControllerTest {
                         NotAuthorized.class,
                         () -> testControllerHelperService.workControllerCreateNew(
                                 mockMvc,
-                                status().isUnauthorized(),
+                                status().isForbidden(),
                                 Optional.empty(),
                                 domainDTO.id(),
                                 NewWorkDTO.builder()
