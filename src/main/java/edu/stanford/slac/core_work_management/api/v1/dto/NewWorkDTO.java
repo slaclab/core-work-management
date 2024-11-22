@@ -9,6 +9,7 @@ import lombok.Builder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Builder(toBuilder = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -44,7 +45,9 @@ public record NewWorkDTO(
         @Schema(description = "The values of the custom attributes for the work")
         List<WriteCustomFieldDTO> customFieldValues,
         @Schema(description = "Force to change the workflow state(it it will be checked if permitted)")
-        UpdateWorkflowStateDTO workflowStateUpdate
+        UpdateWorkflowStateDTO workflowStateUpdate,
+        @Schema(description = "The list of the user that are watching the work", implementation = Set.class)
+        Set<String> userWatchlist
 ) {
     public NewWorkDTO {
         if (customFieldValues == null) {
