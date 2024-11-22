@@ -344,7 +344,7 @@ public class LocationControllerTest {
                 NotAuthorized.class,
                 () -> testControllerHelperService.locationControllerFindById(
                         mockMvc,
-                        status().isUnauthorized(),
+                        status().isForbidden(),
                         Optional.empty(),
                         domain.id(),
                         createNewLocationResult.getPayload()
