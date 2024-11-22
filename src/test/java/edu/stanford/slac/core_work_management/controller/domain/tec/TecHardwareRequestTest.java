@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class TecHardwareRequestTest  {
+public class TecHardwareRequestTest {
     @SpyBean
     private Clock clock; // Mock the Clock bean
     @Autowired
@@ -1052,5 +1052,133 @@ public class TecHardwareRequestTest  {
         assertThat(updateWorkForPendingApproval.getErrorCode()).isEqualTo(0);
         assertThat(updateWorkForPendingApproval.getPayload()).isTrue();
         assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.ReadyForWork)).isTrue();
+    }
+
+    @Test
+    public void updateAfterBucketAssociation() {
+        var nowLocalDateTime = LocalDateTime.now();
+        // start buket in one month
+        var bucketStartDate = nowLocalDateTime.plusMonths(1);
+        // end buket in two days
+        var buketEndDate = bucketStartDate.plusDays(2);
+        // create new slot to simulate the bucket associate to it
+        var bucketSlotResult = assertDoesNotThrow(
+                () -> testControllerHelperService.maintenanceControllerCreateNewBucket(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user18@slac.stanford.edu"),
+                        NewBucketDTO
+                                .builder()
+                                .description("test")
+                                .domainIds(Set.of(domainTestInfo.domain.id()))
+                                .admittedWorkTypeIds(
+                                        Set.of(
+                                                BucketSlotWorkTypeDTO
+                                                        .builder()
+                                                        .domainId(domainTestInfo.domain.id())
+                                                        .workTypeId(domainTestInfo.workTypes.getFirst().id())
+                                                        .build()
+                                        )
+                                )
+                                .type(domainTestInfo.lovElementBucketType.get(0).id())
+                                .status(domainTestInfo.lovElementBucketStatus.get(0).id())
+                                .from(bucketStartDate)
+                                .to(buketEndDate)
+                                .build()
+                )
+        );
+        assertThat(bucketSlotResult).isNotNull();
+
+        // create a new hardware request with minimal fields
+        var newWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerCreateNew(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        NewWorkDTO
+                                .builder()
+                                .workTypeId(domainTestInfo.workTypes.getFirst().id())
+                                .title("Work 1")
+                                .description("Work 1 description")
+                                .locationId(domainTestInfo.getLocationByName("Location10").id())
+                                .shopGroupId(domainTestInfo.getShopGroupByName("Shop15").id())
+                                .build()
+                )
+        );
+        assertThat(newWorkResult).isNotNull();
+        assertThat(newWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(newWorkResult.getPayload()).isNotNull();
+        // we are in created state
+        assertThat(tecDomainEnvironmentTest.checkWorkflowStatus(domainTestInfo.domain.id(), newWorkResult.getPayload(), WorkflowStateDTO.Created)).isTrue();
+
+        // retrieve full work to get the lov value to fill the custom field
+        var fullWork = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerFindWorkById(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        WorkDetailsOptionDTO.builder().build()
+                )
+        );
+        assertThat(fullWork).isNotNull();
+        assertThat(fullWork.getErrorCode()).isEqualTo(0);
+        assertThat(fullWork.getPayload()).isNotNull();
+
+        // associate work to a bucket
+        var bucketAssociationResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerAssociateWorkToBucket(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        bucketSlotResult.getPayload(),
+                        Optional.empty()
+                )
+        );
+        assertThat(bucketAssociationResult).isNotNull();
+
+
+        // update setting general attachments
+        var pdfAttachmentResult = assertDoesNotThrow(
+                () -> testControllerHelperService.createDummyPDFAttachment(
+                        mockMvc,
+                        status().isCreated(),
+                        Optional.of("user1@slac.stanford.edu")
+                )
+        );
+        assertThat(pdfAttachmentResult).isNotNull();
+        assertThat(pdfAttachmentResult.getErrorCode()).isEqualTo(0);
+        var pdfAttachmentId = pdfAttachmentResult.getPayload();
+
+        // update setting general attachments and some other fields
+        var updateWorkResult = assertDoesNotThrow(
+                () -> testControllerHelperService.workControllerUpdate(
+                        mockMvc,
+                        status().isOk(),
+                        Optional.of("user1@slac.stanford.edu"),
+                        domainTestInfo.domain.id(),
+                        newWorkResult.getPayload(),
+                        UpdateWorkDTO
+                                .builder()
+                                .customFieldValues(
+                                        List.of(
+                                                // set attachmentsAndFiles
+                                                WriteCustomFieldDTO
+                                                        .builder()
+                                                        .id(tecDomainEnvironmentTest.getCustomFileIdByName(domainTestInfo.workTypes.getFirst(), "attachmentsAndFiles"))
+                                                        .value(ValueDTO.builder().value(pdfAttachmentId).type(ValueTypeDTO.Attachments).build())
+                                                        .build()
+                                        )
+                                )
+                                .build()
+                )
+        );
+        assertThat(updateWorkResult).isNotNull();
+        assertThat(updateWorkResult.getErrorCode()).isEqualTo(0);
+        assertThat(updateWorkResult.getPayload()).isTrue();
     }
 }

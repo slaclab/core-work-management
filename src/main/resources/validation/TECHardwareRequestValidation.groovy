@@ -81,7 +81,7 @@ class TECHardwareRequestValidation extends WorkTypeValidation {
                 }
             }
             case WorkflowState.PendingApproval -> {
-                if (updateWorkflowState.getNewState() == WorkflowState.ReadyForWork) {
+                if (updateWorkflowState?.getNewState() == WorkflowState.ReadyForWork) {
                     // if all mandatory field have been filled
                     // the work can be approved
                     canMoveToReadyForWork(work);
