@@ -161,6 +161,12 @@ public class WorkRepositoryImpl implements WorkRepositoryCustom {
             );
         }
 
+        if (queryParameter.getChildrenOf() != null && !queryParameter.getChildrenOf().isEmpty()) {
+            query.addCriteria(
+                    Criteria.where("parentWorkId").is(queryParameter.getChildrenOf())
+            );
+        }
+
         return query;
     }
 

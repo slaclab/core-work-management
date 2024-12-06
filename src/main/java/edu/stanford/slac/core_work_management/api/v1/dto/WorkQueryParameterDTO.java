@@ -33,5 +33,7 @@ public record WorkQueryParameterDTO(
         @Schema(description = "Filter by workflow state")
         List<WorkflowStateDTO> workflowState,
         @Schema(description = "Filter by bucket id")
-        String bucketId
+        String bucketId,
+        @Schema(description = "Filter in all children of the given id")
+        String childrenOf
         ) {}

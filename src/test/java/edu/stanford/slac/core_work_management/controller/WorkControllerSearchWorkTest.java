@@ -178,23 +178,8 @@ public class WorkControllerSearchWorkTest {
         WorkflowDTO[] workflowDTO = domainDTO.workflows().stream().toArray(WorkflowDTO[]::new);
         assertThat(workflowDTO).isNotNull();
         assertThat(workflowDTO.length).isEqualTo(2);
-        // create work 1
-        workTypeIds.add(
-                assertDoesNotThrow(
-                        () -> domainService.createNew(
-                                domainDTO.id(),
-                                NewWorkTypeDTO
-                                        .builder()
-                                        .title("Work type %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .description("Work type %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .workflowId(workflowDTO[0].id())
-                                        .validatorName("validation/DummyParentValidation.groovy")
-                                        .build()
-                        )
-                )
-        );
         // create work 2
-        workTypeIds.add(
+        var workChildId =
                 assertDoesNotThrow(
                         () -> domainService.createNew(
                                 domainDTO.id(),
@@ -202,12 +187,30 @@ public class WorkControllerSearchWorkTest {
                                         .builder()
                                         .title("Work type %s 2".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .description("Work type %s 2 description".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .workflowId(workflowDTO[1].id())
+                                        .workflowId(workflowDTO[0].id())
                                         .validatorName("validation/DummyChildValidation.groovy")
                                         .build()
                         )
-                )
-        );
+                );
+
+        // create work 1
+        var parentWorkId =
+                assertDoesNotThrow(
+                        () -> domainService.createNew(
+                                domainDTO.id(),
+                                NewWorkTypeDTO
+                                        .builder()
+                                        .title("Work type %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .description("Work type %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
+                                        .workflowId(workflowDTO[1].id())
+                                        .childWorkTypeIds(of(workChildId))
+                                        .validatorName("validation/DummyParentValidation.groovy")
+                                        .build()
+                        )
+                );
+
+        workTypeIds.add(parentWorkId);
+        workTypeIds.add(workChildId);
     }
 
     private void createLocation(DomainDTO domainDTO, List<String> locationIds, String postfix) {
@@ -546,6 +549,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -566,6 +570,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.of(100),
                                 Optional.empty(),
                                 Optional.of(List.of(alternateDomainDTO.id())),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
@@ -635,6 +640,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -656,6 +662,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of(testAlternateWorkTypeIds.get(0))),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
@@ -711,6 +718,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.of(List.of("DummyParentWorkflow")),
                                 Optional.empty(),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -736,6 +744,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.of(List.of("DummyChildWorkflow")),
                                 Optional.empty(),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -760,6 +769,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of("DummyParentWorkflow", "DummyChildWorkflow")),
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty()
                         )
@@ -812,6 +822,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of(WorkflowStateDTO.Created)),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -836,6 +847,7 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.of(List.of(WorkflowStateDTO.InProgress)),
+                                Optional.empty(),
                                 Optional.empty()
                         )
                 );
@@ -895,6 +907,7 @@ public class WorkControllerSearchWorkTest {
                                     Optional.empty(),
                                     Optional.empty(),
                                     Optional.of(List.of(getUserEmail(userIndex))),
+                                    Optional.empty(),
                                     Optional.empty(),
                                     Optional.empty(),
                                     Optional.empty(),
@@ -987,13 +1000,88 @@ public class WorkControllerSearchWorkTest {
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
-                                Optional.of(bucketId)
+                                Optional.of(bucketId),
+                                Optional.empty()
                         )
                 );
         assertThat(searchResultBucketId.getPayload()).isNotEmpty().hasSize(50);
         searchResultBucketId.getPayload().forEach(workSummaryDTO -> {
             assertThat(workSummaryDTO.workType().id()).isEqualToIgnoringCase(testWorkTypeIds.getFirst());
         });
+    }
 
+    @Test
+    public void testSearchByChildren() {
+        var parentWorkId =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerCreateNew(
+                                mockMvc,
+                                status().isCreated(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                domainDTO.id(),
+                                NewWorkDTO.builder()
+                                        .locationId(testLocationIds.get(0))
+                                        .workTypeId(testWorkTypeIds.get(0))
+                                        .shopGroupId(testShopGroupIds.get(0))
+                                        .title("work parent")
+                                        .description("work parent description")
+                                        .build()
+                        )
+                );
+
+        assertThat(parentWorkId.getErrorCode()).isEqualTo(0);
+        assertThat(parentWorkId.getPayload()).isNotNull();
+
+        // create 10 children
+        for (int i = 0; i < 10; i++) {
+            int finalI = i;
+            var childrenId =
+                    assertDoesNotThrow(
+                            () -> testControllerHelperService.workControllerCreateNew(
+                                    mockMvc,
+                                    status().isCreated(),
+                                    Optional.of("user1@slac.stanford.edu"),
+                                    domainDTO.id(),
+                                    NewWorkDTO.builder()
+                                            .parentWorkId(parentWorkId.getPayload())
+                                            .locationId(testLocationIds.get(0))
+                                            .workTypeId(testWorkTypeIds.get(1))
+                                            .shopGroupId(testShopGroupIds.get(0))
+                                            .title("work child %s".formatted(finalI))
+                                            .description("work child %s description".formatted(finalI))
+                                            .build()
+                            )
+                    );
+
+            assertThat(childrenId.getErrorCode()).isEqualTo(0);
+            assertThat(childrenId.getPayload()).isNotNull();
+        }
+
+
+        var searchResultWT1 =
+                assertDoesNotThrow(
+                        () -> testControllerHelperService.workControllerSearchAllWork(
+                                mockMvc,
+                                status().isOk(),
+                                Optional.of("user1@slac.stanford.edu"),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(20),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(parentWorkId.getPayload())
+                        )
+                );
+        assertThat(searchResultWT1.getPayload()).isNotEmpty().hasSizeLessThanOrEqualTo(10);
+        // check that every work is a child
+        searchResultWT1.getPayload().forEach(workSummaryDTO -> {
+            assertThat(workSummaryDTO.parentWorkId()).isEqualTo(parentWorkId.getPayload());
+        });
     }
 }

@@ -42,4 +42,5 @@ public class WorkQueryParameter {
     List<String> workflowName;
     List<WorkflowStateDTO> workflowState;
     String bucketId;
+    String childrenOf;
 }
