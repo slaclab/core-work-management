@@ -806,6 +806,7 @@ public class TestControllerHelperService {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()
         );
     }
@@ -838,7 +839,8 @@ public class TestControllerHelperService {
             Optional<List<String>> assignedTo,
             Optional<List<String>> workflowName,
             Optional<List<WorkflowStateDTO>> workflowState,
-            Optional<String> bucketId
+            Optional<String> bucketId,
+            Optional<String> childrenOf
     ) throws Exception {
         var requestBuilder = get("/v1/work")
                 .contentType(MediaType.APPLICATION_JSON);
@@ -857,6 +859,7 @@ public class TestControllerHelperService {
                         .collect(Collectors.joining(","))
         ));
         bucketId.ifPresent(s -> requestBuilder.param("bucketId", s));
+        childrenOf.ifPresent(s -> requestBuilder.param("childrenOf", s));
         return executeHttpRequest(
                 new TypeReference<>() {
                 },

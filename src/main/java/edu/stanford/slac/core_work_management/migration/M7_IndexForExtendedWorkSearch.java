@@ -98,6 +98,17 @@ public class M7_IndexForExtendedWorkSearch {
                         .named("currentBucketAssociation.bucketId")
                         .sparse()
         );
+        MongoDDLOps.createIndex(
+                Work.class,
+                mongoTemplate,
+                new Index()
+                        .on(
+                                "parentWorkId",
+                                Sort.Direction.ASC
+                        )
+                        .named("parentWorkId")
+                        .sparse()
+        );
     }
 
     @RollbackExecution
