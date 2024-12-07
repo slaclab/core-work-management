@@ -113,7 +113,7 @@ public class WorkControllerSearchWorkTest {
     private List<String> bucketTypeLOVIds = null;
     private List<String> bucketStatusLOVIds = null;
 
-    @BeforeAll
+    @BeforeEach
     public void init() {
         mongoTemplate.remove(new Query(), "jv_head_id");
         mongoTemplate.remove(new Query(), "jv_snapshots");
@@ -175,9 +175,11 @@ public class WorkControllerSearchWorkTest {
     }
 
     private void createWorkTypes(DomainDTO domainDTO, List<String> workTypeIds, String postfix) {
-        WorkflowDTO[] workflowDTO = domainDTO.workflows().stream().toArray(WorkflowDTO[]::new);
-        assertThat(workflowDTO).isNotNull();
-        assertThat(workflowDTO.length).isEqualTo(2);
+        workTypeIds.clear();
+        WorkflowDTO parentWorkFlowDTO = domainDTO.workflows().stream().filter(workflowDTO -> workflowDTO.name().equals("DummyParentWorkflow")).findFirst().orElse(null);
+        WorkflowDTO childWorkFlowDTO = domainDTO.workflows().stream().filter(workflowDTO -> workflowDTO.name().equals("DummyChildWorkflow")).findFirst().orElse(null);
+        assertThat(parentWorkFlowDTO).isNotNull();
+        assertThat(childWorkFlowDTO).isNotNull();
         // create work 2
         var workChildId =
                 assertDoesNotThrow(
@@ -187,7 +189,7 @@ public class WorkControllerSearchWorkTest {
                                         .builder()
                                         .title("Work type %s 2".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .description("Work type %s 2 description".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .workflowId(workflowDTO[0].id())
+                                        .workflowId(childWorkFlowDTO.id())
                                         .validatorName("validation/DummyChildValidation.groovy")
                                         .build()
                         )
@@ -202,7 +204,7 @@ public class WorkControllerSearchWorkTest {
                                         .builder()
                                         .title("Work type %s 1".formatted(Objects.requireNonNullElse(postfix, "")))
                                         .description("Work type %s 1 description".formatted(Objects.requireNonNullElse(postfix, "")))
-                                        .workflowId(workflowDTO[1].id())
+                                        .workflowId(parentWorkFlowDTO.id())
                                         .childWorkTypeIds(of(workChildId))
                                         .validatorName("validation/DummyParentValidation.groovy")
                                         .build()
@@ -214,6 +216,7 @@ public class WorkControllerSearchWorkTest {
     }
 
     private void createLocation(DomainDTO domainDTO, List<String> locationIds, String postfix) {
+        locationIds.clear();
         locationIds.add(
                 assertDoesNotThrow(
                         () -> locationService.createNew(
@@ -253,6 +256,7 @@ public class WorkControllerSearchWorkTest {
     }
 
     private void createShopGroup(DomainDTO domainDTO, List<String> shopGroupIds, String postfix) {
+        shopGroupIds.clear();
         shopGroupIds.add(
                 assertDoesNotThrow(
                         () -> shopGroupService.createNew(
